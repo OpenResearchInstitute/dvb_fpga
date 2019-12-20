@@ -27,28 +27,42 @@ library str_format;
 
 package bch_encoder_pkg is
 
-    type crc_192x8_result is record
-        data : std_logic_vector(7 downto 0);
+    type bch_encoder_cfg is record
+        normal_frame_length : std_logic;
+        bch_code            : std_logic_vector(1 downto 0);
+    end record bch_encoder_cfg;
+
+    constant BCH_NORMAL_FRAME_SIZE : integer := 64_800;
+    constant BCH_SHORT_FRAME_SIZE : integer := 16_200;
+
+    -- constant BB_NORMAL_FRAME_SIZE : integer := 64_800;
+    -- constant BB_SHORT_FRAME_SIZE : integer := 16_200;
+
+    type bch_frame_length is (normal, short);
+
+    constant BCH_POLY_8 : integer := 0;
+    constant BCH_POLY_10 : integer := 1;
+    constant BCH_POLY_12 : integer := 2;
+
+    type bch_192x8_context is record
         crc  : std_logic_vector(191 downto 0);
+        data : std_logic_vector(7 downto 0);
     end record;
 
-    function next_bch_192x8 (
-        constant crc      : in std_logic_vector(191 downto 0);
-        constant data     : in std_logic_vector(7 downto 0)) return crc_192x8_result;
+    impure function next_bch_192x8 (
+        constant data     : in std_logic_vector(7 downto 0);
+        constant crc      : in std_logic_vector(191 downto 0)) return std_logic_vector;
 
-    impure function to_string (
-        constant crc : crc_192x8_result) return string;
-
+    impure function to_string (constant crc : bch_192x8_context) return string;
 
 end bch_encoder_pkg;
 
 package body bch_encoder_pkg is
 
-    function next_bch_192x8 (
-        constant crc      : in std_logic_vector(191 downto 0);
-        constant data     : in std_logic_vector(7 downto 0)) return crc_192x8_result is
+    impure function next_bch_192x8 (
+        constant data     : in std_logic_vector(7 downto 0);
+        constant crc      : in std_logic_vector(191 downto 0)) return std_logic_vector is
         variable dq       : std_logic_vector(191 downto 0);
-        variable output   : std_logic_vector(  7 downto 0);
         variable next_crc : std_logic_vector(191 downto 0);
 	begin
 
@@ -245,6 +259,8 @@ package body bch_encoder_pkg is
         dq(190) := data(  7) xor data(  6) xor data(  5) xor data(  3) xor data(  2) xor data(  0);
         dq(191) := data(  7) xor data(  6) xor data(  4) xor data(  3) xor data(  1);
 
+        report sformat("data=%r || dq=%r", fo(data), fo(dq));
+
         next_crc(  0) := crc(184) xor crc(186) xor crc(188) xor crc(189) xor crc(191) xor dq(  0);
         next_crc(  1) := crc(184) xor crc(185) xor crc(186) xor crc(187) xor crc(188) xor crc(190) xor crc(191) xor dq(  1);
         next_crc(  2) := crc(184) xor crc(185) xor crc(187) xor dq(  2);
@@ -438,21 +454,13 @@ package body bch_encoder_pkg is
         next_crc(190) := crc(182) xor crc(184) xor crc(186) xor crc(187) xor crc(189) xor crc(190) xor crc(191) xor dq(190);
         next_crc(191) := crc(183) xor crc(185) xor crc(187) xor crc(188) xor crc(190) xor crc(191) xor dq(191);
 
-        output(  7) := next_crc(191) xor dq(  0);
-        output(  6) := next_crc(190) xor dq(  1);
-        output(  5) := next_crc(189) xor next_crc(191) xor dq(  2);
-        output(  4) := next_crc(188) xor next_crc(190) xor dq(  3);
-        output(  3) := next_crc(187) xor next_crc(189) xor next_crc(191) xor dq(  4);
-        output(  2) := next_crc(186) xor next_crc(188) xor next_crc(190) xor next_crc(191) xor dq(  5);
-        output(  1) := next_crc(185) xor next_crc(187) xor next_crc(189) xor next_crc(190) xor dq(  6);
-        output(  0) := next_crc(184) xor next_crc(186) xor next_crc(188) xor next_crc(189) xor next_crc(191) xor dq(  7);
-
-        return (output, next_crc);
+        return next_crc;
 
     end function next_bch_192x8;
 
+    -- Debug only, return a nice representation of the CRC context
     impure function to_string (
-        constant crc : crc_192x8_result) return string is
+        constant crc : bch_192x8_context) return string is
     begin
     return sformat("crc(data=%r, crc=%r)", fo(crc.data), fo(crc.crc));
     end function to_string;
