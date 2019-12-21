@@ -204,6 +204,8 @@ begin
                 write_frame(random_frame(16, TDATA_WIDTH));
             end if;
 
+            walk(1);
+
             if wr_cnt /= rd_cnt then
                 wait until wr_cnt = rd_cnt;
             end if;
@@ -236,14 +238,9 @@ begin
         end if;
     end process;
 
-    tvalid_rnd_gen : process
+    tvalid_rnd_gen : process(clk)
     begin
-        m_tvalid_en <= '0';
-        wr_cnt      <= 0;
-        rd_cnt      <= 0;
-        wait until rst = '0';
-        while True loop
-            wait until rising_edge(clk);
+        if rising_edge(clk) then
             m_tvalid_en <= '0';
             if rand.RandReal(1.0) < tvalid_probability then
                 m_tvalid_en <= '1';
@@ -256,7 +253,13 @@ begin
                 rd_cnt <= rd_cnt + 1;
             end if;
 
-        end loop;
+            if rst = '1' then
+                m_tvalid_en <= '0';
+                wr_cnt      <= 0;
+                rd_cnt      <= 0;
+            end if;
+
+        end if;
     end process;
 
 end axi_stream_delay_tb;
