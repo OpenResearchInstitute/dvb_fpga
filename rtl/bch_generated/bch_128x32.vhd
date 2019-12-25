@@ -29,9 +29,11 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity bch_128x32 is generic (
+entity bch_128x32 is
+generic  (
 	SEED : in std_ulogic_vector(127 downto 0) := (others => '0')
-); port (
+);
+port (
 	clk   :  in std_ulogic;
 	reset :  in std_ulogic;
 	fd    :  in std_ulogic; -- First data. 1: SEED is used (initialise and calculate), 0: Previous CRC is used (continue and calculate)
@@ -41,9 +43,10 @@ entity bch_128x32 is generic (
 	c    : out std_ulogic_vector(127 downto 0);
  -- CRC output
 	o    : out std_ulogic_vector( 31 downto 0) -- Data output
-); end bch_128x32;
+);
+end entity bch_128x32;
 
-architecture a1 of bch_128x32 is
+architecture bch_128x32 of bch_128x32 is
 	signal                       nd_q : std_ulogic;
 	signal                       fd_q : std_ulogic;
 	signal                       dq : std_ulogic_vector (127 downto 0);
@@ -527,4 +530,4 @@ begin
 	end process;
 	c <= ca;
 	o <= oa;
-end a1;
+end bch_128x32;

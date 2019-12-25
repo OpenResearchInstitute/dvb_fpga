@@ -9,10 +9,10 @@
 --    but WITHOUT ANY WARRANTY; without even the implied warranty of
 --    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 --    GNU General Public License for more details.
---    
+--
 --    You should have received a copy of the GNU General Public License
 --    along with this program.  If not, see <http://www.gnu.org/licenses/>.
---    
+--
 --    Copyright: Levent Ozturk crc@leventozturk.com
 --    https://leventozturk.com/engineering/crc/
 --    Polynomial: x192+x190+x187+x186+x185+x181+x178+x177+x171+x170+x169+x167+x161+x160+x159+x154+x150+x148+x147+x146+x142+x140+x136+x132+x131+x130+x126+x124+x119+x118+x115+x114+x113+x112+x109+x107+x106+x103+x102+x100+x99+x95+x94+x92+x91+x90+x85+x84+x82+x80+x75+x71+x67+x64+x57+x56+x54+x50+x49+x48+x47+x42+x40+x39+x38+x37+x36+x34+x33+x32+x30+x29+x26+x25+x17+x14+x12+x10+x8+x7+x6+x5+x2+x1+1
@@ -30,9 +30,11 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity bch_192x16 is generic (
+entity bch_192x16 is
+generic  (
 	SEED : in std_ulogic_vector(191 downto 0) := (others => '0')
-); port (
+);
+port (
 	clk   :  in std_ulogic;
 	reset :  in std_ulogic;
 	fd    :  in std_ulogic; -- First data. 1: SEED is used (initialise and calculate), 0: Previous CRC is used (continue and calculate)
@@ -42,9 +44,10 @@ entity bch_192x16 is generic (
 	c    : out std_ulogic_vector(191 downto 0);
  -- CRC output
 	o    : out std_ulogic_vector( 15 downto 0) -- Data output
-); end bch_192x16;
+);
+end entity bch_192x16;
 
-architecture a1 of bch_192x16 is
+architecture bch_192x16 of bch_192x16 is
 	signal                       nd_q : std_ulogic;
 	signal                       fd_q : std_ulogic;
 	signal                       dq : std_ulogic_vector (191 downto 0);
@@ -688,4 +691,4 @@ begin
 	end process;
 	c <= ca;
 	o <= oa;
-end a1;
+end bch_192x16;
