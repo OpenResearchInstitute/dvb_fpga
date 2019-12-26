@@ -158,11 +158,11 @@ begin
     procedure trigger_and_wait (variable duration : out time) is
       variable start_time : time;
     begin
+      start <= '1';
+      walk(1);
+      start <= '0';
       for i in 0 to REPEAT_CNT - 1 loop
-        start <= '1';
-        walk(1);
         start_time := now;
-        start <= '0';
         wait until s_tvalid = '1' and s_tready = '1' and s_tlast = '1' and rising_edge(clk);
         duration := now - start_time;
       end loop;

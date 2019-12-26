@@ -166,10 +166,6 @@ begin
       m_tlast_i     <= '0';
       word_cnt      := 0;
 
-      if start /= '1' then
-        wait until start = '1' and rising_edge(clk);
-      end if;
-
       file_open(file_handler, FILE_NAME, read_mode);
       next_data     := get_next_data(DATA_WIDTH);
 
@@ -212,6 +208,11 @@ begin
     while True loop
       wait until rst = '0' and rising_edge(clk);
       completed <= '0';
+
+      if start /= '1' then
+        wait until start = '1' and rising_edge(clk);
+      end if;
+
       for i in 0 to REPEAT_CNT - 1 loop
         read_file;
         info("Done reading " & FILE_NAME);
