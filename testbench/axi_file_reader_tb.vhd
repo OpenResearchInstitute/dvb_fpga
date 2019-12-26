@@ -54,6 +54,30 @@ end axi_file_reader_tb;
 
 architecture axi_file_reader_tb of axi_file_reader_tb is
 
+  procedure create_file (constant length : positive) is
+    type file_type is file of character;
+    file fd             : file_type;
+    variable write_rand : RandomPType;
+    variable data       : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    variable byte       : std_logic_vector(7 downto 0);
+  begin
+    write_rand.InitSeed(0);
+    info("Creating test file: " & FILE_NAME);
+    file_open(fd, FILE_NAME, write_mode);
+
+    for i in 0 to length loop
+      data := write_rand.RandSlv(DATA_WIDTH);
+      -- Data is little endian, write MSB first
+      for byte_index in (DATA_WIDTH + 7) / 8 - 1 downto 0 loop
+        byte := data(8*(byte_index + 1) - 1 downto 8*byte_index);
+        info(sformat("byte %d: %r", fo(byte_index), fo(byte)));
+        write(fd, character'val(to_integer(unsigned(byte))));
+      end loop;
+    end loop;
+
+    file_close(fd);
+  end procedure create_file;
+
   ---------------
   -- Constants --
   ---------------
@@ -62,13 +86,14 @@ architecture axi_file_reader_tb of axi_file_reader_tb is
   -------------
   -- Signals --
   -------------
-  signal clk                : std_logic := '0';
-  signal start_reading      : std_logic;
-  signal end_of_file        : std_logic;
-  signal s_tready           : std_logic;
-  signal s_tdata            : std_logic_vector(DATA_WIDTH - 1 downto 0);
-  signal s_tvalid           : std_logic;
-  signal s_tlast            : std_logic;
+  signal clk           : std_logic := '0';
+  signal rst           : std_logic;
+  signal start_reading : std_logic;
+  signal completed     : std_logic;
+  signal s_tready      : std_logic;
+  signal s_tdata       : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal s_tvalid      : std_logic;
+  signal s_tlast       : std_logic;
 
   signal tvalid_probability : real range 0.0 to 1.0 := 1.0;
   signal tready_probability : real range 0.0 to 1.0 := 1.0;
@@ -90,9 +115,10 @@ begin
     port map (
       -- Usual ports
       clk                => clk,
+      rst                => rst,
       -- Config and status
       start_reading      => start_reading,
-      end_of_file        => end_of_file,
+      completed          => completed,
       tvalid_probability => tvalid_probability,
       -- Data output
       m_tready           => s_tready,
@@ -104,7 +130,7 @@ begin
   -- Asynchronous assignments --
   ------------------------------
   clk <= not clk after CLK_PERIOD/2;
-  test_runner_watchdog(runner, 10 ms);
+  test_runner_watchdog(runner, REPEAT_CNT * 5 ms);
 
   ---------------
   -- Processes --
@@ -119,7 +145,49 @@ begin
       end if;
     end procedure walk;
 
+    procedure trigger_and_wait (variable duration : out time) is
+      variable start : time;
+    begin
+      for i in 0 to REPEAT_CNT - 1 loop
+        start_reading <= '1';
+        walk(1);
+        start := now;
+        start_reading <= '0';
+        wait until s_tvalid = '1' and s_tready = '1' and s_tlast = '1' and rising_edge(clk);
+        duration := now - start;
+      end loop;
+      walk(4);
+    end procedure trigger_and_wait;
+
+    --
+    variable test_duration : time;
+
+    procedure test_tvalid_probability is
+      variable baseline       : time;
+      variable tvalid_half    : time;
+      variable tvalid_quarter : time;
+    begin
+      rst <= '1'; walk(4); rst <= '0';
+      tvalid_probability <= 1.0;
+      trigger_and_wait(baseline);
+
+      rst <= '1'; walk(4); rst <= '0';
+      tvalid_probability <= 0.5;
+      trigger_and_wait(tvalid_half);
+
+      rst <= '1'; walk(4); rst <= '0';
+      tvalid_probability <= 0.25;
+      trigger_and_wait(tvalid_quarter);
+
+      -- Check time taken is the expected +/- 10%
+      check_true((baseline * 0.9 * 2 < tvalid_half) and (tvalid_half < baseline * 1.1 * 2));
+      check_true((baseline * 0.9 * 4 < tvalid_quarter) and (tvalid_quarter < baseline * 1.1 * 4));
+
+    end procedure test_tvalid_probability;
+
   begin
+
+    create_file(256);
 
     start_reading <= '0';
 
@@ -129,50 +197,22 @@ begin
     while test_suite loop
       tvalid_probability <= 1.0;
       tready_probability <= 1.0;
+      start_reading      <= '0';
 
-      start_reading <= '0';
-      walk(16);
+      rst <= '1';
+      walk(4);
+      rst <= '0';
+      walk(4);
 
       if run("back_to_back") then
-
-        start_reading <= '1';
-        walk(1);
-        start_reading <= '0';
-
-        for i in 0 to REPEAT_CNT - 1 loop
-          wait until end_of_file = '1';
-        end loop;
-
-        walk(16);
-
+        trigger_and_wait(test_duration);
       elsif run("slow_read") then
         tready_probability <= 0.5;
-
         walk(4);
-
-        start_reading <= '1';
-        walk(1);
-        start_reading <= '0';
-
-        for i in 0 to REPEAT_CNT - 1 loop
-          wait until end_of_file = '1';
-        end loop;
-        walk(16);
+        trigger_and_wait(test_duration);
 
       elsif run("slow_write") then
-        tvalid_probability <= 0.5;
-
-        walk(4);
-
-        start_reading <= '1';
-        walk(1);
-        start_reading <= '0';
-
-        for i in 0 to REPEAT_CNT - 1 loop
-          wait until end_of_file = '1';
-        end loop;
-        walk(16);
-
+        test_tvalid_probability;
       end if;
 
       walk(16);
@@ -185,28 +225,44 @@ begin
   end process main;
 
   -- Generate a tready enable with the configured probability
-  s_tready_gen : process(clk)
-    variable rand      : RandomPType;
-    variable word_cnt  : integer := 0;
-    variable frame_cnt : integer := 0;
-    variable expected  : unsigned(DATA_WIDTH - 1 downto 0) := (others => '0');
+  s_tready_gen : process
+    variable tready_rand : RandomPType;
+    variable check_rand  : RandomPType;
+    variable word_cnt    : integer := 0;
+    variable frame_cnt   : integer := 0;
+    variable expected    : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
   begin
-    if rising_edge(clk) then
+
+    while True loop
+      if rst = '1' then
+        check_rand.InitSeed(0);
+      else
+        if completed = '1' then
+          check_true(s_tvalid = '0' and s_tlast = '0',
+                     "tvalid and tlast should be '0' when completed is asserted");
+        end if;
+      end if;
       s_tready <= '0';
-      if rand.RandReal(1.0) <= tready_probability then
+      if tready_rand.RandReal(1.0) <= tready_probability then
         s_tready <= '1';
       end if;
       if s_tready = '1' and s_tvalid = '1' then
         -- info(sformat("(%d) Got %r", fo(word_cnt), fo(s_tdata)));
-        check_equal(s_tdata, expected);
-        expected := expected + 1;
+        expected := check_rand.RandSlv(DATA_WIDTH);
+        check_equal(s_tdata, expected, sformat("Expected %r, got %r", fo(expected), fo(s_tdata)));
+
+        word_cnt := word_cnt + 1;
+
         if s_tlast = '1' then
           info(sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
           frame_cnt := frame_cnt + 1;
           word_cnt  := 0;
+          check_rand.InitSeed(0);
         end if;
       end if;
-    end if;
+
+      wait until rising_edge(clk);
+    end loop;
   end process;
 
 

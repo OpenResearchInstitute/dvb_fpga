@@ -56,9 +56,10 @@ entity axi_file_reader is
   port (
     -- Usual ports
     clk                : in  std_logic;
+    rst                : in  std_logic;
     -- Config and status
     start_reading      : in  std_logic;
-    end_of_file        : out std_logic;
+    completed          : out std_logic;
     tvalid_probability : in real range 0.0 to 1.0 := 1.0;
     
     -- Data output
@@ -77,11 +78,11 @@ architecture axi_file_reader of axi_file_reader is
   -------------
   -- Signals --
   -------------
-  signal m_tvalid_i     : std_logic;
-  signal m_tvalid_wr    : std_logic;
-  signal m_tvalid_en    : std_logic := '0';
-  signal m_tlast_i      : std_logic;
-  signal axi_data_valid : boolean;
+  signal m_tvalid_i      : std_logic;
+  signal m_tvalid_wr     : std_logic;
+  signal m_tvalid_en     : std_logic := '0';
+  signal m_tlast_i       : std_logic;
+  signal axi_data_valid  : boolean;
 
 begin
 
@@ -117,13 +118,13 @@ begin
       variable result : std_logic_vector(word_width - 1 downto 0);
       variable byte : std_logic_vector(7 downto 0);
     begin
-      debug(sformat("Reading %d bits", fo(word_width)));
+      -- debug(sformat("Reading %d bits", fo(word_width)));
 
       while byte_cnt < word_width loop
         read(file_handler, char);
 
         byte     := std_logic_vector(to_unsigned(character'pos(char), 8));
-        debug(sformat("byte_cnt = %d, byte = %r", fo(byte_cnt), fo(byte)));
+        -- debug(sformat("byte_cnt = %d, byte = %r", fo(byte_cnt), fo(byte)));
 
         byte_cnt := byte_cnt + byte'length;
 
@@ -147,7 +148,7 @@ begin
         result := read_word_from_file(word_width);
       end if;
 
-      info(sformat("(%d) Result: %r", fo(byte_cnt), fo(result)));
+      -- info(sformat("(%d) Result: %r", fo(byte_cnt), fo(result)));
 
       return result;
 
@@ -159,23 +160,23 @@ begin
       variable next_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
     begin
 
-      file_open(file_handler, FILE_NAME, read_mode);
       byte_cnt := 0;
 
       m_tvalid_wr   <= '0';
       m_tlast_i     <= '0';
-      end_of_file   <= '0';
       word_cnt      := 0;
 
-      wait until start_reading = '1';
+      if start_reading /= '1' then
+        wait until start_reading = '1' and rising_edge(clk);
+      end if;
 
+      file_open(file_handler, FILE_NAME, read_mode);
       next_data     := get_next_data(DATA_WIDTH);
 
       while True loop
         m_tvalid_wr <= '1';
         m_tdata     <= next_data;
         -- Assert tlast at the end of the file
-        end_of_file <= m_tlast_i;
         if endfile(file_handler) then
           m_tlast_i <= '1';
         end if;
@@ -208,13 +209,23 @@ begin
 
     info("Filename: " & FILE_NAME);
 
-    for i in 0 to REPEAT_CNT - 1 loop
-      read_file;
-      debug("Done reading " & FILE_NAME);
-      end_of_file <= '1';
+    while True loop
+      wait until rst = '0' and rising_edge(clk);
+      completed <= '0';
+      for i in 0 to REPEAT_CNT - 1 loop
+        read_file;
+        info("Done reading " & FILE_NAME);
+        m_tvalid_wr <= '0';
+        m_tlast_i   <= '0';
+      end loop;
+
+      completed <= '1';
+
+      wait until rising_edge(clk);
+
     end loop;
 
-    wait;
+    -- wait;
   end process;
 
   -- Generate a tvalid enable with the configured probability

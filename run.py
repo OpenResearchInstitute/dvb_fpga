@@ -69,13 +69,6 @@ def add_axi_file_reader_tb_tests(cli):
 
             filename = p.join(ROOT, "vunit_out", ref_filename)
 
-            last = 0
-            with open(filename, "wb") as fd:
-                for i in range(1024):
-                    last += i
-                    last %= 2**data_width
-                    fd.write(struct.pack('>' + fmt, last % data_width))
-
             for repeat in (1, 4):
                 name = f"data_width={data_width},bytes_are_bits={bytes_are_bits},repeat={repeat}"
 
