@@ -24,17 +24,19 @@
 -- Libraries --
 ---------------
 library	ieee;
-    use ieee.std_logic_1164.all;
-    use ieee.numeric_std.all;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
 
 library vunit_lib;
-    context vunit_lib.vunit_context;
+  context vunit_lib.vunit_context;
 
 library osvvm;
-    use osvvm.RandomPkg.all;
+  use osvvm.RandomPkg.all;
 
 library str_format;
-    use str_format.str_format_pkg.all;
+  use str_format.str_format_pkg.all;
+
+use work.file_utils_pkg.all;
 
 ------------------------
 -- Entity declaration --
@@ -50,42 +52,63 @@ end axi_file_reader_tb;
 
 architecture axi_file_reader_tb of axi_file_reader_tb is
 
-  procedure create_file (constant length : positive) is
-    type file_type is file of character;
-    file fd             : file_type;
+  -- Generates data for when BYTES_ARE_BITS is set to False
+  impure function generate_regular_data ( constant length : positive)
+  return std_logic_vector_array is
+    variable data       : std_logic_vector_array(0 to length - 1)(DATA_WIDTH - 1 downto 0);
     variable write_rand : RandomPType;
-    -- Not really unsigned, just to make converting to string easier
-    variable data       : unsigned(DATA_WIDTH - 1 downto 0);
-    variable byte       : unsigned(7 downto 0);
   begin
     write_rand.InitSeed(0);
-    info("Creating test file: " & FILE_NAME);
-    file_open(fd, FILE_NAME, write_mode);
 
-    for word_cnt in 0 to length loop
-      data := write_rand.RandUnsigned(DATA_WIDTH);
+    for word_cnt in 0 to length - 1 loop
+      data(word_cnt) := write_rand.RandSlv(DATA_WIDTH);
+    end loop;
+
+    return data;
+
+  end function generate_regular_data;
+
+  -- Generates data for when BYTES_ARE_BITS is set to True
+  impure function generate_unpacked_data (constant length : positive)
+  return std_logic_vector_array is
+    variable data       : std_logic_vector_array(0 to length * DATA_WIDTH - 1)(7 downto 0);
+    variable word       : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    variable byte       : std_logic_vector(7 downto 0);
+    variable index      : natural := 0;
+    variable write_rand : RandomPType;
+  begin
+    write_rand.InitSeed(0);
+
+    for word_cnt in 0 to length - 1 loop
+      word := write_rand.RandSlv(DATA_WIDTH);
+
       -- Data is little endian, write MSB first
       for byte_index in (DATA_WIDTH + 7) / 8 - 1 downto 0 loop
-        byte := data(8*(byte_index + 1) - 1 downto 8*byte_index);
+        byte := word(8*(byte_index + 1) - 1 downto 8*byte_index);
 
-        if not BYTES_ARE_BITS then
-          write(fd, character'val(to_integer(byte)));
-        else
-          for i in 7 downto 0 loop
-            -- When BYTES_ARE_BITS is set to True, each bit on a word becomes a byte
-            if byte(i) = '1' then
-              write(fd, character'val(1));
-            else
-              write(fd, character'val(0));
-            end if;
-            -- write(fd, character'val(to_integer(unsigned'(0 downto 0 => byte(i)))));
-          end loop;
-        end if;
+        for i in 7 downto 0 loop
+          -- When BYTES_ARE_BITS is set to True, each bit on a word becomes a byte
+          if byte(i) = '1' then
+            data(index) := x"01";
+          else
+            data(index) := x"00";
+          end if;
+          index := index + 1;
+        end loop;
 
       end loop;
     end loop;
 
-    file_close(fd);
+    return data;
+  end function generate_unpacked_data;
+
+  procedure create_file (constant length : positive) is
+  begin
+    if BYTES_ARE_BITS then
+      write_binary_file(FILE_NAME, generate_unpacked_data(length));
+    else
+      write_binary_file(FILE_NAME, generate_regular_data(length));
+    end if;
   end procedure create_file;
 
   ---------------
