@@ -58,7 +58,7 @@ entity axi_file_reader is
     clk                : in  std_logic;
     rst                : in  std_logic;
     -- Config and status
-    start_reading      : in  std_logic;
+    start              : in  std_logic;
     completed          : out std_logic;
     tvalid_probability : in real range 0.0 to 1.0 := 1.0;
     
@@ -166,8 +166,8 @@ begin
       m_tlast_i     <= '0';
       word_cnt      := 0;
 
-      if start_reading /= '1' then
-        wait until start_reading = '1' and rising_edge(clk);
+      if start /= '1' then
+        wait until start = '1' and rising_edge(clk);
       end if;
 
       file_open(file_handler, FILE_NAME, read_mode);

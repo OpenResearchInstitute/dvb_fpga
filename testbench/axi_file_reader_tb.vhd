@@ -20,10 +20,6 @@
 
 -- vunit: run_all_in_same_sim
 
----------------------------------
--- Block name and description --
---------------------------------
-
 ---------------
 -- Libraries --
 ---------------
@@ -58,20 +54,34 @@ architecture axi_file_reader_tb of axi_file_reader_tb is
     type file_type is file of character;
     file fd             : file_type;
     variable write_rand : RandomPType;
-    variable data       : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    variable byte       : std_logic_vector(7 downto 0);
+    -- Not really unsigned, just to make converting to string easier
+    variable data       : unsigned(DATA_WIDTH - 1 downto 0);
+    variable byte       : unsigned(7 downto 0);
   begin
     write_rand.InitSeed(0);
     info("Creating test file: " & FILE_NAME);
     file_open(fd, FILE_NAME, write_mode);
 
-    for i in 0 to length loop
-      data := write_rand.RandSlv(DATA_WIDTH);
+    for word_cnt in 0 to length loop
+      data := write_rand.RandUnsigned(DATA_WIDTH);
       -- Data is little endian, write MSB first
       for byte_index in (DATA_WIDTH + 7) / 8 - 1 downto 0 loop
         byte := data(8*(byte_index + 1) - 1 downto 8*byte_index);
-        info(sformat("byte %d: %r", fo(byte_index), fo(byte)));
-        write(fd, character'val(to_integer(unsigned(byte))));
+
+        if not BYTES_ARE_BITS then
+          write(fd, character'val(to_integer(byte)));
+        else
+          for i in 7 downto 0 loop
+            -- When BYTES_ARE_BITS is set to True, each bit on a word becomes a byte
+            if byte(i) = '1' then
+              write(fd, character'val(1));
+            else
+              write(fd, character'val(0));
+            end if;
+            -- write(fd, character'val(to_integer(unsigned'(0 downto 0 => byte(i)))));
+          end loop;
+        end if;
+
       end loop;
     end loop;
 
@@ -86,14 +96,14 @@ architecture axi_file_reader_tb of axi_file_reader_tb is
   -------------
   -- Signals --
   -------------
-  signal clk           : std_logic := '0';
-  signal rst           : std_logic;
-  signal start_reading : std_logic;
-  signal completed     : std_logic;
-  signal s_tready      : std_logic;
-  signal s_tdata       : std_logic_vector(DATA_WIDTH - 1 downto 0);
-  signal s_tvalid      : std_logic;
-  signal s_tlast       : std_logic;
+  signal clk                : std_logic := '0';
+  signal rst                : std_logic;
+  signal start              : std_logic;
+  signal completed          : std_logic;
+  signal s_tready           : std_logic;
+  signal s_tdata            : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal s_tvalid           : std_logic;
+  signal s_tlast            : std_logic;
 
   signal tvalid_probability : real range 0.0 to 1.0 := 1.0;
   signal tready_probability : real range 0.0 to 1.0 := 1.0;
@@ -117,7 +127,7 @@ begin
       clk                => clk,
       rst                => rst,
       -- Config and status
-      start_reading      => start_reading,
+      start              => start,
       completed          => completed,
       tvalid_probability => tvalid_probability,
       -- Data output
@@ -146,15 +156,15 @@ begin
     end procedure walk;
 
     procedure trigger_and_wait (variable duration : out time) is
-      variable start : time;
+      variable start_time : time;
     begin
       for i in 0 to REPEAT_CNT - 1 loop
-        start_reading <= '1';
+        start <= '1';
         walk(1);
-        start := now;
-        start_reading <= '0';
+        start_time := now;
+        start <= '0';
         wait until s_tvalid = '1' and s_tready = '1' and s_tlast = '1' and rising_edge(clk);
-        duration := now - start;
+        duration := now - start_time;
       end loop;
       walk(4);
     end procedure trigger_and_wait;
@@ -189,7 +199,7 @@ begin
 
     create_file(256);
 
-    start_reading <= '0';
+    start <= '0';
 
     test_runner_setup(runner, runner_cfg);
     show_all(display_handler);
@@ -197,7 +207,7 @@ begin
     while test_suite loop
       tvalid_probability <= 1.0;
       tready_probability <= 1.0;
-      start_reading      <= '0';
+      start              <= '0';
 
       rst <= '1';
       walk(4);
@@ -247,7 +257,6 @@ begin
         s_tready <= '1';
       end if;
       if s_tready = '1' and s_tvalid = '1' then
-        -- info(sformat("(%d) Got %r", fo(word_cnt), fo(s_tdata)));
         expected := check_rand.RandSlv(DATA_WIDTH);
         check_equal(s_tdata, expected, sformat("Expected %r, got %r", fo(expected), fo(s_tdata)));
 
@@ -257,6 +266,7 @@ begin
           info(sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
           frame_cnt := frame_cnt + 1;
           word_cnt  := 0;
+          -- Frames will repeat, reinitialize seed
           check_rand.InitSeed(0);
         end if;
       end if;
@@ -264,6 +274,5 @@ begin
       wait until rising_edge(clk);
     end loop;
   end process;
-
 
 end axi_file_reader_tb;
