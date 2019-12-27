@@ -77,7 +77,6 @@ architecture axi_file_compare_tb of axi_file_compare_tb is
   -- Signals --
   -------------
   constant ERROR_CNT_WIDTH : natural := 8;
-  constant REPEAT_CNT      : natural := 0;
 
   -- Usual ports
   signal clk                : std_logic := '0';
@@ -109,8 +108,7 @@ begin
   generic map (
     ERROR_CNT_WIDTH => ERROR_CNT_WIDTH,
     DATA_WIDTH      => DATA_WIDTH,
-    BYTES_ARE_BITS  => False,
-    REPEAT_CNT      => REPEAT_CNT)
+    BYTES_ARE_BITS  => False)
   port map (
     -- Usual ports
     clk                => clk,
@@ -131,7 +129,7 @@ begin
   -- Asynchronous assignments --
   ------------------------------
   clk <= not clk after CLK_PERIOD/2;
-  test_runner_watchdog(runner, (REPEAT_CNT + 1) * 2 ms);
+  test_runner_watchdog(runner, 2 ms);
 
   m_tvalid       <= m_tvalid_wr and m_tvalid_en;
   axi_data_valid <= m_tvalid = '1' and m_tready = '1';

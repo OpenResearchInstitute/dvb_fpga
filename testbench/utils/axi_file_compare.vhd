@@ -26,17 +26,14 @@
 -- Libraries --
 ---------------
 library	ieee;
-    use ieee.std_logic_1164.all;
-    use ieee.numeric_std.all;
-
-library vunit_lib;
-    context vunit_lib.vunit_context;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
 
 library osvvm;
-    use osvvm.RandomPkg.all;
+  use osvvm.RandomPkg.all;
 
 library str_format;
-    use str_format.str_format_pkg.all;
+  use str_format.str_format_pkg.all;
 
 ------------------------
 -- Entity declaration --
@@ -44,13 +41,12 @@ library str_format;
 entity axi_file_compare is
   generic (
     ERROR_CNT_WIDTH : natural := 8;
+    REPORT_SEVERITY : severity_level := Warning;
     -- axi_file_reader config
     DATA_WIDTH     : positive := 1;
     -- GNU Radio does not have bit format, so most blocks use 1 bit per byte. Set this to
     -- True to use the LSB to form a data word
-    BYTES_ARE_BITS : boolean := False;
-    -- Repeat the frame whenever reaching EOF
-    REPEAT_CNT     : natural := 1);
+    BYTES_ARE_BITS : boolean := False);
   port (
     -- Usual ports
     clk                : in  std_logic;
@@ -77,7 +73,6 @@ architecture axi_file_compare of axi_file_compare is
   -------------
   -- Signals --
   -------------
-  signal start             : std_logic;
   signal completed         : std_logic;
   signal s_tready_i        : std_logic;
   signal axi_data_valid    : std_logic;
@@ -89,6 +84,7 @@ architecture axi_file_compare of axi_file_compare is
   signal tlast_error_cnt_i : unsigned(ERROR_CNT_WIDTH - 1 downto 0);
 
   signal error_cnt_i       : unsigned(ERROR_CNT_WIDTH - 1 downto 0);
+  signal word_cnt          : integer;
 
   signal expected_tdata    : std_logic_vector(DATA_WIDTH - 1 downto 0);
   signal expected_tvalid   : std_logic;
@@ -102,8 +98,7 @@ begin
   axi_file_reader_u : entity work.axi_file_reader
   generic map (
     DATA_WIDTH     => DATA_WIDTH,
-    BYTES_ARE_BITS => BYTES_ARE_BITS,
-    REPEAT_CNT     => REPEAT_CNT)
+    BYTES_ARE_BITS => BYTES_ARE_BITS)
   port map (
     -- Usual ports
     clk                => clk,
@@ -131,9 +126,6 @@ begin
   axi_data_valid <= '1' when s_tready_i = '1' and s_tvalid = '1' and expected_tvalid = '1'
                     else '0';
 
-  tdata_error_i <= '1' when axi_data_valid = '1' and s_tdata /= expected_tdata else '0';
-  tlast_error_i <= '1' when axi_data_valid = '1' and s_tlast /= expected_tlast else '0';
-
   ---------------
   -- Processes --
   ---------------
@@ -141,17 +133,16 @@ begin
     variable tready_rand : RandomPType;
   begin
     if rst = '1' then
-      start      <= '1';
-      s_tready_i <= '0';
+      s_tready_i        <= '0';
 
       tdata_error_cnt_i <= (others => '0');
       tlast_error_cnt_i <= (others => '0');
       error_cnt_i       <= (others => '0');
+      word_cnt          <= 0;
     elsif rising_edge(clk) then
 
-      if axi_data_valid then
-        start <= '0';
-      end if;
+      tdata_error_i <= '0';
+      tlast_error_i <= '0';
 
       -- Generate a tready enable with the configured probability
       s_tready_i <= '0';
@@ -159,16 +150,30 @@ begin
         s_tready_i <= '1';
       end if;
 
-      -- Count errors
-      if tdata_error_i = '1' or tlast_error_i = '1' then
-        error_cnt_i <= error_cnt_i + 1;
+      if axi_data_valid = '1' then
+        word_cnt <= word_cnt + 1;
+      end if;
 
-        if tdata_error_i = '1' then
+      -- Count errors
+      if axi_data_valid = '1' then
+        if s_tdata /= expected_tdata then
+          tdata_error_i     <= '1';
+          error_cnt_i       <= error_cnt_i + 1;
           tdata_error_cnt_i <= tdata_error_cnt_i + 1;
+
+          report sformat("tdata error in word %r: Expected %r but got %r",
+                         fo(word_cnt), fo(s_tdata), fo(expected_tdata))
+            severity REPORT_SEVERITY;
         end if;
 
-        if tlast_error_i = '1' then
+        if s_tlast /= expected_tlast then
+          tlast_error_i     <= '1';
+          error_cnt_i       <= error_cnt_i + 1;
           tlast_error_cnt_i <= tlast_error_cnt_i + 1;
+
+          report sformat("tlast error in word %r: Expected %r but got %r",
+                         fo(word_cnt), fo(s_tlast), fo(expected_tlast))
+            severity REPORT_SEVERITY;
         end if;
 
       end if;
