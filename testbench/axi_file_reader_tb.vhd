@@ -241,6 +241,11 @@ begin
 
       elsif run("slow_write") then
         test_tvalid_probability;
+      elsif run("multiple_frames") then
+        start <= '1';
+        wait until s_tvalid = '1' and s_tready = '1' and s_tlast = '1' and rising_edge(clk);
+        wait until s_tvalid = '1' and s_tready = '1' and s_tlast = '1' and rising_edge(clk);
+        start <= '0';
       end if;
 
       walk(4);

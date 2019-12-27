@@ -25,21 +25,20 @@
 ---------------
 -- Libraries --
 ---------------
-library	ieee;
-    use ieee.std_logic_1164.all;
-    use ieee.numeric_std.all;
-
 use std.textio.all;
 
+library	ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
 library vunit_lib;
-    context vunit_lib.vunit_context;
+context vunit_lib.vunit_context;
 
 library osvvm;
-    use osvvm.RandomPkg.all;
+use osvvm.RandomPkg.all;
 
 library str_format;
-    use str_format.str_format_pkg.all;
-
+use str_format.str_format_pkg.all;
 
 ------------------------
 -- Entity declaration --
@@ -49,18 +48,16 @@ entity axi_file_reader is
     DATA_WIDTH     : integer  := 1;
     -- GNU Radio does not have bit format, so most blocks use 1 bit per byte. Set this to
     -- True to use the LSB to form a data word
-    BYTES_ARE_BITS : boolean := False;
-    -- Repeat the frame whenever reaching EOF. Setting to 0 loops indefinitely
-    REPEAT_CNT     : natural := 1);
+    BYTES_ARE_BITS : boolean := False);
   port (
     -- Usual ports
     clk                : in  std_logic;
     rst                : in  std_logic;
     -- Config and status
-    file_name          : in string;
+    file_name          : in  string;
     start              : in  std_logic;
     completed          : out std_logic;
-    tvalid_probability : in real range 0.0 to 1.0 := 1.0;
+    tvalid_probability : in  real range 0.0 to 1.0 := 1.0;
 
     -- Data output
     m_tready           : in std_logic;
@@ -74,19 +71,15 @@ architecture axi_file_reader of axi_file_reader is
   -----------
   -- Types --
   -----------
-  type ctrl_fsm_type is (idle_st, reading_st);
 
   -------------
   -- Signals --
   -------------
-  signal ctrl_fsm       : ctrl_fsm_type;
   signal m_tvalid_i     : std_logic;
   signal m_tvalid_wr    : std_logic;
   signal m_tvalid_en    : std_logic := '0';
   signal m_tlast_i      : std_logic;
   signal axi_data_valid : boolean;
-
-  signal m_tdata_next   : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
 begin
 
@@ -111,6 +104,7 @@ begin
     variable tvalid_rand  : RandomPType;
     variable current_file : line;
     variable word_cnt     : integer := 0;
+
     --
     type file_status_type is (opened, closed, unknown);
     variable file_status : file_status_type := unknown;
@@ -156,9 +150,11 @@ begin
 
     end function get_next_data;
 
+    -- Need to read a word in advance to detect the end of file in time to generate tlast
+    variable m_tdata_next : std_logic_vector(DATA_WIDTH - 1 downto 0);
+
   begin
     if rst = '1' then
-      ctrl_fsm    <= idle_st;
       m_tvalid_wr <= '0';
       m_tlast_i   <= '0';
       m_tdata     <= (others => 'U');
@@ -171,55 +167,55 @@ begin
 
       -- Clear out AXI stuff when data has been transferred only
       if axi_data_valid then
+        completed   <= '0';
         m_tvalid_wr <= '0';
         m_tlast_i   <= '0';
         m_tdata     <= (others => 'U');
         word_cnt    := word_cnt + 1;
 
         if m_tlast_i = '1' then
+          file_close(file_handler);
+          file_status  := closed;
+
           info("Read " & integer'image(word_cnt) & " words from " & current_file.all);
           completed <= '1';
           word_cnt  := 0;
           byte_cnt  := 0;
         end if;
-
       end if;
 
-      case ctrl_fsm is
-        when idle_st =>
+      -- If the file hasn't been opened, wait until start is asserted
+      if file_status /= opened  then
+        if start = '1' then
+          info(sformat("file status: %s, start = %s", fo(file_status_type'image(file_status)), fo(start)));
+          deallocate(current_file);
+          write(current_file, file_name);
 
-          if start = '1' and m_tlast_i = '0' then
-            deallocate(current_file);
-            write(current_file, file_name);
-            info("Reading " & current_file.all);
-            file_open(file_handler, current_file.all, read_mode);
-            file_status := opened;
-            -- Need to read a word in advance to detect the end of file in time to
-            -- generate tlast
-            m_tdata      <= get_next_data(DATA_WIDTH);
-            m_tdata_next <= get_next_data(DATA_WIDTH);
-            ctrl_fsm     <= reading_st;
-            m_tvalid_wr  <= '1';
+          info("Reading " & current_file.all);
+          file_open(file_handler, current_file.all, read_mode);
+          file_status  := opened;
 
-            completed    <= '0';
+          m_tdata_next := get_next_data(DATA_WIDTH);
+        end if;
+      else
+        -- If the file has been opened, read the next word whenever the previous one is
+        -- valid
+        if axi_data_valid then
+          info("Getting next data");
+          m_tdata_next := get_next_data(DATA_WIDTH);
+          info(sformat("(2) next data -> %r", fo(m_tdata_next)));
+        end if;
+      end if;
+
+      if file_status = opened then
+        m_tvalid_wr <= '1';
+        m_tdata     <= m_tdata_next;
+        if axi_data_valid then
+          if endfile(file_handler) then
+            m_tlast_i    <= '1';
           end if;
-
-        when reading_st =>
-          m_tvalid_wr <= '1';
-          if axi_data_valid then
-            m_tdata      <= m_tdata_next;
-
-            if not endfile(file_handler) then
-              m_tdata_next <= get_next_data(DATA_WIDTH);
-            else
-              file_close(file_handler);
-              file_status := closed;
-              ctrl_fsm     <= idle_st;
-              m_tdata_next <= (others => 'U');
-              m_tlast_i    <= '1';
-            end if;
-          end if;
-      end case;
+        end if;
+      end if;
 
       -- Generate a tvalid enable with the configured probability
       m_tvalid_en <= '0';
