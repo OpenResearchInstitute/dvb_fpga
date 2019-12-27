@@ -162,7 +162,7 @@ begin
           tdata_error_cnt_i <= tdata_error_cnt_i + 1;
 
           report sformat("tdata error in word %r: Expected %r but got %r",
-                         fo(word_cnt), fo(s_tdata), fo(expected_tdata))
+                         fo(word_cnt), fo(expected_tdata), fo(s_tdata))
             severity REPORT_SEVERITY;
         end if;
 
@@ -172,7 +172,7 @@ begin
           tlast_error_cnt_i <= tlast_error_cnt_i + 1;
 
           report sformat("tlast error in word %r: Expected %r but got %r",
-                         fo(word_cnt), fo(s_tlast), fo(expected_tlast))
+                         fo(word_cnt), fo(expected_tlast), fo(s_tlast))
             severity REPORT_SEVERITY;
         end if;
 

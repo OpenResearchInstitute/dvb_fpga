@@ -18,29 +18,29 @@
 -- You should have received a copy of the GNU General Public License
 -- along with lib IP.  If not, see <http://www.gnu.org/licenses/>.
 
-library ieee;
-    use ieee.std_logic_1164.all;
-    use ieee.numeric_std.all;
+-- vunit: run_all_in_same_sim
 
--- library common_lib;
---     use common_lib.common_pkg.all;
+use std.textio.all;
+
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
 
 library vunit_lib;
-    context vunit_lib.vunit_context;
+  context vunit_lib.vunit_context;
 
 library osvvm;
-    use osvvm.RandomPkg.all;
+  use osvvm.RandomPkg.all;
 
 library str_format;
-    use str_format.str_format_pkg.all;
+  use str_format.str_format_pkg.all;
 
 library lib;
-    use lib.bch_encoder_pkg.all;
+  use lib.bch_encoder_pkg.all;
 
 entity axi_bch_encoder_tb is
-    generic (
-        runner_cfg    : string
-    );
+  generic (
+    runner_cfg : string);
 end axi_bch_encoder_tb;
 
 architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
