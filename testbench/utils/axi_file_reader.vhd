@@ -29,7 +29,7 @@ library	ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
 
--- use std.textio.all;
+use std.textio.all;
 
 library vunit_lib;
     context vunit_lib.vunit_context;
@@ -46,22 +46,22 @@ library str_format;
 ------------------------
 entity axi_file_reader is
   generic (
-    FILE_NAME      : string;
     DATA_WIDTH     : integer  := 1;
     -- GNU Radio does not have bit format, so most blocks use 1 bit per byte. Set this to
     -- True to use the LSB to form a data word
     BYTES_ARE_BITS : boolean := False;
-    -- Repeat the frame whenever reaching EOF
-    REPEAT_CNT     : positive := 1);
+    -- Repeat the frame whenever reaching EOF. Setting to 0 loops indefinitely
+    REPEAT_CNT     : natural := 1);
   port (
     -- Usual ports
     clk                : in  std_logic;
     rst                : in  std_logic;
     -- Config and status
+    file_name          : in string;
     start              : in  std_logic;
     completed          : out std_logic;
     tvalid_probability : in real range 0.0 to 1.0 := 1.0;
-    
+
     -- Data output
     m_tready           : in std_logic;
     m_tdata            : out std_logic_vector(DATA_WIDTH - 1 downto 0);
@@ -74,15 +74,19 @@ architecture axi_file_reader of axi_file_reader is
   -----------
   -- Types --
   -----------
+  type ctrl_fsm_type is (idle_st, reading_st);
 
   -------------
   -- Signals --
   -------------
-  signal m_tvalid_i      : std_logic;
-  signal m_tvalid_wr     : std_logic;
-  signal m_tvalid_en     : std_logic := '0';
-  signal m_tlast_i       : std_logic;
-  signal axi_data_valid  : boolean;
+  signal ctrl_fsm       : ctrl_fsm_type;
+  signal m_tvalid_i     : std_logic;
+  signal m_tvalid_wr    : std_logic;
+  signal m_tvalid_en    : std_logic := '0';
+  signal m_tlast_i      : std_logic;
+  signal axi_data_valid : boolean;
+
+  signal m_tdata_next   : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
 begin
 
@@ -102,32 +106,31 @@ begin
   ---------------
   -- Processes --
   ---------------
-  process
+  process(clk, rst)
     --
-    variable word_cnt : integer;
-
-    -- 
+    variable tvalid_rand  : RandomPType;
+    variable current_file : line;
+    variable word_cnt     : integer := 0;
+    --
+    type file_status_type is (opened, closed, unknown);
+    variable file_status : file_status_type := unknown;
+    --
     type file_type is file of character;
     file file_handler : file_type;
     variable char     : character;
     variable byte_cnt : integer := 0;
     variable data     : std_logic_vector(2*DATA_WIDTH - 1 downto 0);
 
-    --
-    impure function read_word_from_file (constant word_width : in natural) return std_logic_vector is
+    impure function read_word_from_file (constant word_width : in natural)
+    return std_logic_vector is
       variable result : std_logic_vector(word_width - 1 downto 0);
       variable byte : std_logic_vector(7 downto 0);
     begin
-      -- debug(sformat("Reading %d bits", fo(word_width)));
-
       while byte_cnt < word_width loop
         read(file_handler, char);
 
         byte     := std_logic_vector(to_unsigned(character'pos(char), 8));
-        -- debug(sformat("byte_cnt = %d, byte = %r", fo(byte_cnt), fo(byte)));
-
         byte_cnt := byte_cnt + byte'length;
-
         data     := data(data'length - 8 - 1 downto 0) & byte;
       end loop;
 
@@ -136,8 +139,9 @@ begin
 
       return result;
     end function read_word_from_file;
-    
-    impure function get_next_data (constant word_width : in natural) return std_logic_vector is
+
+    impure function get_next_data (constant word_width : in natural)
+    return std_logic_vector is
       variable result : std_logic_vector(word_width - 1 downto 0);
     begin
       if BYTES_ARE_BITS then
@@ -148,94 +152,78 @@ begin
         result := read_word_from_file(word_width);
       end if;
 
-      -- info(sformat("(%d) Result: %r", fo(byte_cnt), fo(result)));
-
       return result;
 
     end function get_next_data;
 
-    -- 
-    ----------------------------
-    procedure read_file is
-      variable next_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    begin
+  begin
+    if rst = '1' then
+      ctrl_fsm    <= idle_st;
+      m_tvalid_wr <= '0';
+      m_tlast_i   <= '0';
+      m_tdata     <= (others => 'U');
+      completed   <= '0';
+      if file_status /= closed then
+          file_status := closed;
+          file_close(file_handler);
+      end if;
+    elsif rising_edge(clk) then
 
-      byte_cnt := 0;
-
-      m_tvalid_wr   <= '0';
-      m_tlast_i     <= '0';
-      word_cnt      := 0;
-
-      file_open(file_handler, FILE_NAME, read_mode);
-      next_data     := get_next_data(DATA_WIDTH);
-
-      while True loop
-        m_tvalid_wr <= '1';
-        m_tdata     <= next_data;
-        -- Assert tlast at the end of the file
-        if endfile(file_handler) then
-          m_tlast_i <= '1';
-        end if;
-
-        wait until axi_data_valid and rising_edge(clk);
-
-        word_cnt    := word_cnt + 1;
-        m_tlast_i   <= '0';
+      -- Clear out AXI stuff when data has been transferred only
+      if axi_data_valid then
         m_tvalid_wr <= '0';
+        m_tlast_i   <= '0';
         m_tdata     <= (others => 'U');
-
-        if not endfile(file_handler) then
-          next_data   := get_next_data(DATA_WIDTH);
-        else
-          next_data := (others => 'U');
-        end if;
+        word_cnt    := word_cnt + 1;
 
         if m_tlast_i = '1' then
-          exit;
+          info("Read " & integer'image(word_cnt) & " words from " & current_file.all);
+          completed <= '1';
+          word_cnt  := 0;
+          byte_cnt  := 0;
         end if;
 
-      end loop;
-
-      file_close(file_handler);
-
-    end procedure read_file;
-  -------------------------
-
-  begin
-
-    info("Filename: " & FILE_NAME);
-
-    while True loop
-      wait until rst = '0' and rising_edge(clk);
-      completed <= '0';
-
-      if start /= '1' then
-        wait until start = '1' and rising_edge(clk);
       end if;
 
-      for i in 0 to REPEAT_CNT - 1 loop
-        read_file;
-        info("Done reading " & FILE_NAME);
-        m_tvalid_wr <= '0';
-        m_tlast_i   <= '0';
-      end loop;
+      case ctrl_fsm is
+        when idle_st =>
 
-      completed <= '1';
+          if start = '1' and m_tlast_i = '0' then
+            deallocate(current_file);
+            write(current_file, file_name);
+            info("Reading " & current_file.all);
+            file_open(file_handler, current_file.all, read_mode);
+            file_status := opened;
+            -- Need to read a word in advance to detect the end of file in time to
+            -- generate tlast
+            m_tdata      <= get_next_data(DATA_WIDTH);
+            m_tdata_next <= get_next_data(DATA_WIDTH);
+            ctrl_fsm     <= reading_st;
+            m_tvalid_wr  <= '1';
 
-      wait until rising_edge(clk);
+            completed    <= '0';
+          end if;
 
-    end loop;
+        when reading_st =>
+          m_tvalid_wr <= '1';
+          if axi_data_valid then
+            m_tdata      <= m_tdata_next;
 
-    -- wait;
-  end process;
+            if not endfile(file_handler) then
+              m_tdata_next <= get_next_data(DATA_WIDTH);
+            else
+              file_close(file_handler);
+              file_status := closed;
+              ctrl_fsm     <= idle_st;
+              m_tdata_next <= (others => 'U');
+              m_tlast_i    <= '1';
+            end if;
+          end if;
+      end case;
 
-  -- Generate a tvalid enable with the configured probability
-  m_tvalid_gen : process(clk)
-    variable rand : RandomPType;
-  begin
-    if rising_edge(clk) then
+      -- Generate a tvalid enable with the configured probability
       m_tvalid_en <= '0';
-      if rand.RandReal(1.0) <= tvalid_probability then
+      if tvalid_rand.RandReal(1.0) <= tvalid_probability then
         m_tvalid_en <= '1';
       end if;
     end if;

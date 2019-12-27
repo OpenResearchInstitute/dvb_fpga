@@ -69,18 +69,16 @@ def add_axi_file_reader_tb_tests(cli):
 
             filename = p.join(ROOT, "vunit_out", ref_filename)
 
-            for repeat in (1, 4):
-                name = f"data_width={data_width},bytes_are_bits={bytes_are_bits},repeat={repeat}"
+            name = f"data_width={data_width},bytes_are_bits={bytes_are_bits}"
 
-                axi_file_reader_tb.add_config(
-                    name=name,
-                    parameters={
-                        "DATA_WIDTH": data_width,
-                        "FILE_NAME": filename,
-                        "BYTES_ARE_BITS": bytes_are_bits,
-                        "REPEAT_CNT": repeat,
-                    },
-                )
+            axi_file_reader_tb.add_config(
+                name=name,
+                parameters={
+                    "DATA_WIDTH": data_width,
+                    "FILE_NAME": filename,
+                    "BYTES_ARE_BITS": bytes_are_bits,
+                },
+            )
 
 
 if __name__ == "__main__":

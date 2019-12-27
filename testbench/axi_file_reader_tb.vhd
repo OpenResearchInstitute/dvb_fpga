@@ -46,8 +46,7 @@ entity axi_file_reader_tb is
     runner_cfg     : string;
     DATA_WIDTH     : integer;
     FILE_NAME      : string;
-    BYTES_ARE_BITS : boolean;
-    REPEAT_CNT     : positive);
+    BYTES_ARE_BITS : boolean);
 end axi_file_reader_tb;
 
 architecture axi_file_reader_tb of axi_file_reader_tb is
@@ -138,18 +137,16 @@ begin
   -------------------
   dut : entity work.axi_file_reader
     generic map (
-      FILE_NAME      => FILE_NAME,
       DATA_WIDTH     => DATA_WIDTH,
       -- GNU Radio does not have bit format, so most blocks use 1 bit per byte. Set this to
       -- True to use the LSB to form a data word
-      BYTES_ARE_BITS => BYTES_ARE_BITS,
-      -- Repeat the frame whenever reaching EOF
-      REPEAT_CNT     => REPEAT_CNT)
+      BYTES_ARE_BITS => BYTES_ARE_BITS)
     port map (
       -- Usual ports
       clk                => clk,
       rst                => rst,
       -- Config and status
+      file_name          => FILE_NAME,
       start              => start,
       completed          => completed,
       tvalid_probability => tvalid_probability,
@@ -163,7 +160,7 @@ begin
   -- Asynchronous assignments --
   ------------------------------
   clk <= not clk after CLK_PERIOD/2;
-  test_runner_watchdog(runner, REPEAT_CNT * 5 ms);
+  test_runner_watchdog(runner, 2 ms);
 
   ---------------
   -- Processes --
@@ -184,11 +181,9 @@ begin
       start <= '1';
       walk(1);
       start <= '0';
-      for i in 0 to REPEAT_CNT - 1 loop
-        start_time := now;
-        wait until s_tvalid = '1' and s_tready = '1' and s_tlast = '1' and rising_edge(clk);
-        duration := now - start_time;
-      end loop;
+      start_time := now;
+      wait until s_tvalid = '1' and s_tready = '1' and s_tlast = '1' and rising_edge(clk);
+      duration := now - start_time;
       walk(4);
     end procedure trigger_and_wait;
 
@@ -248,7 +243,7 @@ begin
         test_tvalid_probability;
       end if;
 
-      walk(16);
+      walk(4);
 
     end loop;
 
@@ -271,8 +266,8 @@ begin
         check_rand.InitSeed(0);
       else
         if completed = '1' then
-          check_true(s_tvalid = '0' and s_tlast = '0',
-                     "tvalid and tlast should be '0' when completed is asserted");
+          -- check_true(s_tvalid = '0' and s_tlast = '0',
+          --            "tvalid and tlast should be '0' when completed is asserted");
         end if;
       end if;
       s_tready <= '0';
@@ -281,7 +276,8 @@ begin
       end if;
       if s_tready = '1' and s_tvalid = '1' then
         expected := check_rand.RandSlv(DATA_WIDTH);
-        check_equal(s_tdata, expected, sformat("Expected %r, got %r", fo(expected), fo(s_tdata)));
+        check_equal(s_tdata, expected,
+                    sformat("Expected %r, got %r", fo(expected), fo(s_tdata)));
 
         word_cnt := word_cnt + 1;
 
