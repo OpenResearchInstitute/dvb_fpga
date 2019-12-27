@@ -31,10 +31,6 @@ def main():
         p.join(ROOT, "third_party", "hdl_string_format", "src", "*.vhd")
     )
 
-    cli.add_library("json").add_source_files(
-        p.join(ROOT, "third_party", "JSON-for-VHDL", "vhdl/*.vhdl")
-    )
-
     add_axi_stream_delay_tb_tests(cli)
     add_axi_file_reader_tb_tests(cli)
 
