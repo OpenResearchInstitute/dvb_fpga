@@ -53,8 +53,9 @@ architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
     ---------------
     -- Constants --
     ---------------
-    constant CLK_PERIOD : time := 5 ns;
-    constant TDATA_WIDTH : integer  := 8;
+    constant CLK_PERIOD      : time := 5 ns;
+    constant TDATA_WIDTH     : integer := 8;
+    constant ERROR_CNT_WIDTH : integer := 8;
 
     -------------
     -- Signals --
@@ -72,26 +73,28 @@ architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
     signal m_tlast  : std_logic;
 
     -- AXI output
-    signal s_cfg    : bch_encoder_cfg;
     signal s_tvalid : std_logic;
     signal s_tdata  : std_logic_vector(TDATA_WIDTH - 1 downto 0);
     signal s_tlast  : std_logic;
     signal s_tready : std_logic;
 
-    shared variable master_gen : RandomPType;
-    shared variable slave_gen  : RandomPType;
-    shared variable rand       : RandomPType;
-
     signal tvalid_probability  : real := 1.0;
     signal tready_probability  : real := 1.0;
 
-    signal m_tvalid_wr : std_logic;
-    signal m_tvalid_en : std_logic;
-
     signal m_data_valid        : boolean;
     signal s_data_valid        : boolean;
-    signal wr_cnt              : integer;
-    signal rd_cnt              : integer;
+
+    signal tdata_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
+    signal tlast_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
+    signal error_cnt          : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
+
+
+    -- shared variable read_filename : line;
+    constant PATH_TO_TEST_FILES : string := "/home/souto/phase4ground/bch_tests/";
+    signal input_file      : string(1 to 15) := "input_16008.bin";
+    signal comparison_file : string(1 to 19) := "reference_16008.bin";
+    signal read_start      : std_logic;
+    signal read_completed  : std_logic;
 
 begin
 
@@ -122,158 +125,134 @@ begin
             m_tdata  => s_tdata);
 
 
-    ------------------------------
-    -- Asynchronous assignments --
-    ------------------------------
-    clk <= not clk after CLK_PERIOD/2;
+  -- AXI file read
+  axi_file_reader_u : entity work.axi_file_reader
+    generic map (
+      DATA_WIDTH     => TDATA_WIDTH,
+      BYTES_ARE_BITS => True)
+    port map (
+      -- Usual ports
+      clk                => clk,
+      rst                => rst,
+      -- Config and status
+      file_name          => PATH_TO_TEST_FILES & input_file,
+      start              => read_start,
+      completed          => read_completed,
+      tvalid_probability => tvalid_probability,
 
-    test_runner_watchdog(runner, 1 ms);
+      -- Data output
+      m_tready           => m_tready,
+      m_tdata            => m_tdata,
+      m_tvalid           => m_tvalid,
+      m_tlast            => m_tlast);
 
-    m_tvalid     <= m_tvalid_wr and m_tvalid_en;
+  axi_file_compare_u : entity work.axi_file_compare
+    generic map (
+      ERROR_CNT_WIDTH => ERROR_CNT_WIDTH,
+      REPORT_SEVERITY => Error,
+      DATA_WIDTH      => TDATA_WIDTH,
+      BYTES_ARE_BITS  => True)
+    port map (
+      -- Usual ports
+      clk                => clk,
+      rst                => rst,
+      -- Config and status
+      file_name          => PATH_TO_TEST_FILES & comparison_file,
+      tdata_error_cnt    => tdata_error_cnt,
+      tlast_error_cnt    => tlast_error_cnt,
+      error_cnt          => error_cnt,
+      tready_probability => tready_probability,
 
-    m_data_valid <= m_tvalid = '1' and m_tready = '1';
-    s_data_valid <= s_tvalid = '1' and s_tready = '1';
+      -- Data input
+      s_tready           => s_tready,
+      s_tdata            => s_tdata,
+      s_tvalid           => s_tvalid,
+      s_tlast            => s_tlast);
 
-    ---------------
-    -- Processes --
-    ---------------
-    main : process
-        procedure walk(constant steps : natural) is
-        begin
-            if steps /= 0 then
-                for step in 0 to steps - 1 loop
-                    wait until rising_edge(clk);
-                end loop;
-            end if;
-        end procedure walk;
+  ------------------------------
+  -- Asynchronous assignments --
+  ------------------------------
+  clk <= not clk after CLK_PERIOD/2;
 
-    -- Writes a single word to the AXI slave
-    procedure write_word (
-        constant data     : std_logic_vector(TDATA_WIDTH - 1 downto 0);
-        constant is_last  : boolean := False) is
+  test_runner_watchdog(runner, 3 ms);
+
+  m_data_valid <= m_tvalid = '1' and m_tready = '1';
+  s_data_valid <= s_tvalid = '1' and s_tready = '1';
+
+  ---------------
+  -- Processes --
+  ---------------
+  main : process
+    ------------------------------------------------------------------------------------
+    procedure walk(constant steps : natural) is
     begin
-        m_tvalid_wr <= '1';
-        m_tdata     <= data;
-        if is_last then
-            m_tlast <= '1';
-        else
-            m_tlast  <= '0';
-        end if;
-
-        wait until m_tvalid = '1' and m_tready = '1' and rising_edge(clk);
-
-        m_tlast     <= '0';
-        m_tvalid_wr <= '0';
-        m_tdata     <= (others => 'U');
-    end procedure write_word;
-
-    procedure write_frame (
-        constant data : std_logic_vector_array;
-        constant code : integer range 0 to 2) is
-    begin
-
-        cfg_bch_code <= std_logic_vector(to_unsigned(code, 2));
-
-        for i in data'range loop
-            write_word(data(i), is_last => i = data'length - 1);
-            cfg_bch_code <= (others => 'U');
+      if steps /= 0 then
+        for step in 0 to steps - 1 loop
+          wait until rising_edge(clk);
         end loop;
+      end if;
+    end procedure walk;
 
-    end procedure write_frame;
-
-    variable normal_frame : std_logic_vector_array(0 to BCH_NORMAL_FRAME_SIZE/TDATA_WIDTH - 1)(TDATA_WIDTH - 1 downto 0);
-    variable short_frame : std_logic_vector_array(0 to 16008/TDATA_WIDTH - 1)(TDATA_WIDTH - 1 downto 0);
-
+    ------------------------------------------------------------------------------------
+    procedure run_test ( constant number_of_frames : in positive := 1) is
     begin
+      cfg_bch_code    <= std_logic_vector(to_unsigned(BCH_POLY_12, 2));
+      input_file      <= "input_16008.bin";
+      comparison_file <= "reference_16008.bin";
 
-        m_tvalid_wr <= '0';
-        m_tlast     <= '0';
+      for i in 0 to number_of_frames - 1 loop
+        read_start      <= '1';
+        wait until m_data_valid and m_tlast = '1' and rising_edge(clk);
+        read_start      <= '0';
+      end loop;
 
-        test_runner_setup(runner, runner_cfg);
-        -- Start both wr and rd data random generators with the same seed so
-        -- we get the same sequence
-        -- wr_data_gen.InitSeed("some_seed");
-        -- rd_data_gen.InitSeed("some_seed");
+      wait until s_data_valid and s_tlast = '1' and rising_edge(clk);
 
-        while test_suite loop
-            rst <= '1';
-            walk(16);
-            rst <= '0';
-            walk(16);
+      walk(1);
 
-            normal_frame := (others => (others => '0'));
-            short_frame := (others => (others => '0'));
+      check_equal(error_cnt, 0);
 
-            tvalid_probability <= 0.5;
-            tready_probability <= 0.5;
+    end procedure run_test;
 
-            if run("basic_normal_frame") then
+  begin
 
-                normal_frame(0) := (TDATA_WIDTH - 1 => '1', others => '0');
+    read_start <= '0';
 
-                walk(1);
+    test_runner_setup(runner, runner_cfg);
 
-                write_frame(normal_frame, code => BCH_POLY_12);
-                wait until s_tvalid = '1' and s_tready = '1' and s_tlast = '1' and rising_edge(clk);
+    while test_suite loop
+      rst <= '1';
+      walk(16);
+      rst <= '0';
+      walk(16);
 
-                info("Done");
-            elsif run("basic_short_frame") then
+      tvalid_probability <= 1.0;
+      tready_probability <= 1.0;
 
-                short_frame(0) := (TDATA_WIDTH - 1 => '1', others => '0');
-                walk(1);
-                write_frame(short_frame, code => BCH_POLY_12);
-                write_frame(short_frame, code => BCH_POLY_12);
-                wait until s_tvalid = '1' and s_tready = '1' and s_tlast = '1' and rising_edge(clk);
+      if run("run_192_16008_back_to_back") then
+        tvalid_probability <= 1.0;
+        tready_probability <= 1.0;
+        run_test(4);
+      elsif run("run_192_16008_slow_master") then
+        tvalid_probability <= 0.5;
+        tready_probability <= 1.0;
+        run_test(4);
+      elsif run("run_192_16008_slow_slave") then
+        tvalid_probability <= 1.0;
+        tready_probability <= 0.5;
+        run_test(4);
+      elsif run("run_192_16008_slow_overall") then
+        tvalid_probability <= 0.75;
+        tready_probability <= 0.75;
+        run_test(4);
+      end if;
 
-                info("Done");
-            end if;
+      walk(16);
 
-            walk(16);
+    end loop;
 
-        end loop;
-
-        test_runner_cleanup(runner);
-        wait;
-    end process;
-
-    axi_slave_p : process(clk)
-    begin
-        if rising_edge(clk) then
-            s_tready <= '0';
-
-            if rand.RandReal(1.0) < tready_probability then
-                s_tready <= '1';
-            end if;
-
-            if s_tready = '1' and s_tvalid = '1' then
-                info(sformat("Received %r", fo(s_tdata)));
-                -- check_equal(s_tdata, slave_gen.RandSlv(TDATA_WIDTH));
-            end if;
-
-        end if;
-    end process;
-
-    tvalid_rnd_gen : process
-    begin
-        m_tvalid_en <= '0';
-        wr_cnt      <= 0;
-        rd_cnt      <= 0;
-        wait until rst = '0';
-        while True loop
-            wait until rising_edge(clk);
-            m_tvalid_en <= '0';
-            if rand.RandReal(1.0) < tvalid_probability then
-                m_tvalid_en <= '1';
-            end if;
-
-            if m_data_valid then
-                wr_cnt <= wr_cnt + 1;
-            end if;
-            if s_data_valid then
-                rd_cnt <= rd_cnt + 1;
-            end if;
-
-        end loop;
-    end process;
+    test_runner_cleanup(runner);
+    wait;
+  end process;
 
 end axi_bch_encoder_tb;
