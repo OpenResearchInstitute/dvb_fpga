@@ -17,7 +17,6 @@ def main():
     library = cli.add_library("lib")
     library.add_source_files(p.join(ROOT, "rtl", "*.vhd"))
     library.add_source_files(p.join(ROOT, "rtl", "bch_generated", "*.vhd"))
-    library.add_source_files(p.join(ROOT, "rtl", "bch_generated", "*.vhd"))
     # We don't really need the entier wb2axip for now, just the skid buffer
     library.add_source_files(
         p.join(ROOT, "third_party", "wb2axip", "rtl", "skidbuffer.v")
