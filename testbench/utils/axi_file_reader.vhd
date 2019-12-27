@@ -187,7 +187,6 @@ begin
       -- If the file hasn't been opened, wait until start is asserted
       if file_status /= opened  then
         if start = '1' then
-          info(sformat("file status: %s, start = %s", fo(file_status_type'image(file_status)), fo(start)));
           deallocate(current_file);
           write(current_file, file_name);
 
@@ -201,9 +200,7 @@ begin
         -- If the file has been opened, read the next word whenever the previous one is
         -- valid
         if axi_data_valid then
-          info("Getting next data");
           m_tdata_next := get_next_data(DATA_WIDTH);
-          info(sformat("(2) next data -> %r", fo(m_tdata_next)));
         end if;
       end if;
 
