@@ -40,22 +40,22 @@ entity axi_bch_encoder is
   );
   port (
     -- Usual ports
-    clk     : in  std_logic;
-    rst     : in  std_logic;
+    clk          : in  std_logic;
+    rst          : in  std_logic;
 
     cfg_bch_code : in  std_logic_vector(1 downto 0);
 
     -- AXI input
-    s_tvalid : in  std_logic;
-    s_tdata  : in  std_logic_vector(TDATA_WIDTH - 1 downto 0);
-    s_tlast  : in  std_logic;
-    s_tready : out std_logic;
+    s_tvalid     : in  std_logic;
+    s_tdata      : in  std_logic_vector(TDATA_WIDTH - 1 downto 0);
+    s_tlast      : in  std_logic;
+    s_tready     : out std_logic;
 
     -- AXI output
-    m_tready : in  std_logic;
-    m_tvalid : out std_logic;
-    m_tlast  : out std_logic;
-    m_tdata  : out std_logic_vector(TDATA_WIDTH - 1 downto 0));
+    m_tready     : in  std_logic;
+    m_tvalid     : out std_logic;
+    m_tlast      : out std_logic;
+    m_tdata      : out std_logic_vector(TDATA_WIDTH - 1 downto 0));
 end axi_bch_encoder;
 
 architecture axi_bch_encoder of axi_bch_encoder is
@@ -90,7 +90,8 @@ architecture axi_bch_encoder of axi_bch_encoder is
   -- Signals --
   -------------
   signal bch_code             : std_logic_vector(1 downto 0);
-  signal s_axi_first_word      : std_logic;
+  signal cfg_bch_code_out     : std_logic_vector(1 downto 0);
+  signal s_axi_first_word     : std_logic;
 
   signal axi_delay_tvalid     : std_logic;
   signal axi_delay_tdata      : std_logic_vector(TDATA_WIDTH - 1 downto 0);
@@ -107,11 +108,11 @@ architecture axi_bch_encoder of axi_bch_encoder is
   signal m_tlast_i            : std_logic := '0';
 
   -- Largest is 192 bits, use a slice when handling polynomials with smaller contexts
-  signal crc_word_cnt         : unsigned(numbits(MAX_WORD_CNT) - 1 downto 0);
-  signal crc_ulogic           : std_ulogic_vector(191 downto 0);
-  signal crc_srl              : std_logic_vector(191 downto 0);
-  signal crc_sample           : std_logic := '0';
-  signal crc_sample_delay     : std_logic := '0';
+  signal crc_word_cnt     : unsigned(numbits(MAX_WORD_CNT) - 1 downto 0);
+  signal crc              : std_logic_vector(191 downto 0);
+  signal crc_srl          : std_logic_vector(191 downto 0);
+  signal crc_sample       : std_logic := '0';
+  signal crc_sample_delay : std_logic := '0';
 
 begin
 
@@ -149,20 +150,23 @@ begin
       m_tdata  => tdata_agg_out);
   end block data_delay_block;
 
-  -- BCH Encders as
-  -- Keep the BCH encoders as similar as possible to what was generated at
-  -- https://leventozturk.com/engineering/crc/
-  bch_u : entity work.bch_192x8
-    generic map (SEED => (others => '0'))
+  -- BCH encoders are wrapped with a mux to hide away unrelated stuff. The idea is to keep
+  -- the generated CRC codes as similar as possible to how they were generated
+  bch_u : entity work.bch_encoder_mux
+    generic map (DATA_WIDTH => TDATA_WIDTH)
     port map (
-      clk   => clk,
-      reset => rst,
-      fd    => s_axi_first_word,
-      nd    => s_axi_data_valid,
-      rdy   => open,
-      d     => std_ulogic_vector(s_tdata),
-      c     => crc_ulogic,
-      o     => open);
+      clk              => clk,
+      rst              => rst,
+
+      cfg_bch_code_in  => bch_code,
+      first_word       => s_axi_first_word,
+      wr_en            => s_axi_data_valid,
+      wr_data          => s_tdata,
+
+      cfg_bch_code_out => cfg_bch_code_out,
+      crc_rdy          => open,
+      crc              => crc,
+      data_out         => open);
 
   ------------------------------
   -- Asynchronous assignments --
@@ -187,7 +191,7 @@ begin
   m_tdata          <= axi_delay_tdata when crc_word_cnt = 0 else
                       crc_srl(crc_srl'length - 1 downto crc_srl'length - TDATA_WIDTH);
 
-  m_tlast_i <= '1' when crc_word_cnt = 1 else '0';
+  m_tlast_i        <= '1' when crc_word_cnt = 1 else '0';
 
   ---------------
   -- Processes --
@@ -195,7 +199,7 @@ begin
   process(clk, rst)
   begin
     if rst = '1' then
-      crc_word_cnt    <= (others => '0');
+      crc_word_cnt     <= (others => '0');
       s_axi_first_word <= '1';
     elsif clk'event and clk = '1' then
 
@@ -215,19 +219,22 @@ begin
         -- Need to sync when the CRC output is actually what we want, since we won't
         -- necessarily stop writing data to the CRC calculation block
         if s_tlast = '1' then
-          crc_sample <= '1';
-        end if;
-
-        -- Sample the BCH code used on the first word
-        if s_axi_first_word = '1' then
-          bch_code <= cfg_bch_code;
+          crc_sample      <= '1';
         end if;
 
       end if;
 
       -- Time when the CRC is actually completed to sample it
       if crc_sample_delay = '1' then
-        crc_srl <= std_logic_vector(crc_ulogic);
+        -- CRC widths vary, by default BCH encoder mux fills in the LSB. Because we use
+        -- the MSB and shift it left, fill in the MSB part of the SRL
+        if unsigned(cfg_bch_code_out) = BCH_POLY_8 then
+          crc_srl <= crc(127 downto 0) & (63 downto 0 => 'U');
+        elsif unsigned(cfg_bch_code_out) = BCH_POLY_10 then
+          crc_srl <= crc(159 downto 0) & (31 downto 0 => 'U');
+        else
+          crc_srl <= crc;
+        end if;
       end if;
 
       -- Handle the completion of AXI delayed data (e.g tlast is high). When that
@@ -235,11 +242,33 @@ begin
       -- mode
       if axi_delay_data_valid = '1' and axi_delay_tlast = '1' then
         -- TODO: Check if this uses the carry bit to reset
-        -- crc_word_cnt   <= 0 - to_unsigned(get_crc_length(bch_code), crc_word_cnt'length);
-        crc_word_cnt     <= to_unsigned(get_crc_length(bch_code), crc_word_cnt'length);
+        crc_word_cnt     <= to_unsigned(get_crc_length(cfg_bch_code_out), crc_word_cnt'length);
       end if;
 
     end if;
   end process;
+
+  -- The BCH code is valid at the first word of the frame, but we must not rely on the
+  -- user keeping it unchanged. Hide this on a block to leave the core code a bit cleaner
+  bch_sample_block : block
+    signal bch_code_ff : std_logic_vector(1 downto 0);
+  begin
+
+    bch_code <= cfg_bch_code when s_axi_first_word = '1' else bch_code_ff;
+   
+    process(clk, rst)
+    begin
+      if rst = '1' then
+      elsif rising_edge(clk) then
+        if s_axi_data_valid = '1' then
+          -- Sample the BCH code used on the first word
+          if s_axi_first_word = '1' then
+            bch_code_ff <= cfg_bch_code;
+          end if;
+
+        end if;
+      end if;
+    end process;
+  end block bch_sample_block;
 
 end axi_bch_encoder;

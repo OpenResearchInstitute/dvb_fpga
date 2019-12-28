@@ -19,28 +19,28 @@
 -- along with DVB IP.  If not, see <http://www.gnu.org/licenses/>.
 
 library ieee;
-    use ieee.std_logic_1164.all;
-    use ieee.numeric_std.all;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library str_format;
-    use str_format.str_format_pkg.all;
+use str_format.str_format_pkg.all;
 
 package bch_encoder_pkg is
 
-    constant BCH_NORMAL_FRAME_SIZE : integer := 64_800;
-    constant BCH_SHORT_FRAME_SIZE : integer := 16_200;
+  constant BCH_NORMAL_FRAME_SIZE : integer := 64_800;
+  constant BCH_SHORT_FRAME_SIZE : integer := 16_200;
 
-    -- constant BB_NORMAL_FRAME_SIZE : integer := 64_800;
-    -- constant BB_SHORT_FRAME_SIZE : integer := 16_200;
+  -- constant BB_NORMAL_FRAME_SIZE : integer := 64_800;
+  -- constant BB_SHORT_FRAME_SIZE : integer := 16_200;
 
-    type bch_frame_length is (normal, short);
+  type bch_frame_length is (normal, short);
 
-    constant BCH_POLY_8 : integer := 0;
-    constant BCH_POLY_10 : integer := 1;
-    constant BCH_POLY_12 : integer := 2;
+  constant BCH_POLY_8 : integer := 0;
+  constant BCH_POLY_10 : integer := 1;
+  constant BCH_POLY_12 : integer := 2;
 
 end bch_encoder_pkg;
 
 package body bch_encoder_pkg is
 
-end package body;
+  end package body;

@@ -12,6 +12,7 @@ ROOT = p.abspath(p.dirname(__file__))
 def main():
     cli = VUnit.from_argv()
     cli.add_osvvm()
+    cli.add_com()
     cli.enable_location_preprocessing()
 
     library = cli.add_library("lib")
@@ -22,10 +23,8 @@ def main():
         p.join(ROOT, "third_party", "wb2axip", "rtl", "skidbuffer.v")
     )
 
-    tb_lib = cli.add_library("tb_lib")
-
-    tb_lib.add_source_files(p.join(ROOT, "testbench", "*.vhd"))
-    tb_lib.add_source_files(p.join(ROOT, "testbench", "*", "*.vhd"))
+    library.add_source_files(p.join(ROOT, "testbench", "*.vhd"))
+    library.add_source_files(p.join(ROOT, "testbench", "*", "*.vhd"))
 
     cli.add_library("str_format").add_source_files(
         p.join(ROOT, "third_party", "hdl_string_format", "src", "*.vhd")
@@ -42,7 +41,7 @@ def main():
 
 
 def add_axi_stream_delay_tb_tests(cli):
-    axi_stream_delay_tb = cli.library("tb_lib").entity("axi_stream_delay_tb")
+    axi_stream_delay_tb = cli.library("lib").entity("axi_stream_delay_tb")
 
     for delay in (1, 2, 8):
         axi_stream_delay_tb.add_config(
@@ -51,7 +50,7 @@ def add_axi_stream_delay_tb_tests(cli):
 
 
 def add_axi_file_reader_tb_tests(cli):
-    axi_file_reader_tb = cli.library("tb_lib").entity("axi_file_reader_tb")
+    axi_file_reader_tb = cli.library("lib").entity("axi_file_reader_tb")
 
     #  filename = "/home/souto/test.bin"
     #  filename = "/home/souto/phase4ground/bch_tests/bch_input.bin"

@@ -33,8 +33,6 @@ library osvvm;
 library str_format;
     use str_format.str_format_pkg.all;
 
-library lib;
-
 entity axi_stream_delay_tb is
     generic (
         RUNNER_CFG   : string;
@@ -95,7 +93,7 @@ begin
     -------------------
     -- Port mappings --
     -------------------
-    dut : entity lib.axi_stream_delay
+    dut : entity work.axi_stream_delay
         generic map (
             DELAY_CYCLES => DELAY_CYCLES,
             TDATA_WIDTH  => TDATA_WIDTH)
