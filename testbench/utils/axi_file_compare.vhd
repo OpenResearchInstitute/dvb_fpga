@@ -52,7 +52,8 @@ entity axi_file_compare is
     clk                : in  std_logic;
     rst                : in  std_logic;
     -- Config and status
-    file_name          : string;
+    start              : in  std_logic := '1';
+    file_name          : in  string;
     tdata_error_cnt    : out std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
     tlast_error_cnt    : out std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
     error_cnt          : out std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
@@ -105,7 +106,7 @@ begin
     rst                => rst,
     -- Config and status
     file_name          => file_name,
-    start              => '1',
+    start              => start,
     completed          => completed,
     tvalid_probability => 1.0,
     
@@ -152,6 +153,9 @@ begin
 
       if axi_data_valid = '1' then
         word_cnt <= word_cnt + 1;
+        if s_tlast = '1' then
+          word_cnt <= 0;
+        end if;
       end if;
 
       -- Count errors

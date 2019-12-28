@@ -104,6 +104,8 @@ begin
     variable tvalid_rand  : RandomPType;
     variable current_file : line;
     variable word_cnt     : integer := 0;
+    -- Need to read a word in advance to detect the end of file in time to generate tlast
+    variable m_tdata_next : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
     --
     type file_status_type is (opened, closed, unknown);
@@ -115,6 +117,7 @@ begin
     variable byte_cnt : integer := 0;
     variable data     : std_logic_vector(2*DATA_WIDTH - 1 downto 0);
 
+    ------------------------------------------------------------------------------------
     impure function read_word_from_file (constant word_width : in natural)
     return std_logic_vector is
       variable result : std_logic_vector(word_width - 1 downto 0);
@@ -134,6 +137,7 @@ begin
       return result;
     end function read_word_from_file;
 
+    ------------------------------------------------------------------------------------
     impure function get_next_data (constant word_width : in natural)
     return std_logic_vector is
       variable result : std_logic_vector(word_width - 1 downto 0);
@@ -149,9 +153,7 @@ begin
       return result;
 
     end function get_next_data;
-
-    -- Need to read a word in advance to detect the end of file in time to generate tlast
-    variable m_tdata_next : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    ------------------------------------------------------------------------------------
 
   begin
     if rst = '1' then
