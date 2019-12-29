@@ -66,36 +66,30 @@ architecture bch_encoder_mux of bch_encoder_mux is
   -------------
   -- Signals --
   -------------
-  signal in_mux_ptr         : integer range 0 to 2;
-  signal out_mux_ptr        : integer range 0 to 2;
+  signal in_mux_ptr     : integer range 0 to 2;
+  signal out_mux_ptr    : integer range 0 to 2;
 
-  signal cfg_bch_code_out_i : std_logic_vector(1 downto 0);
-  signal wr_en_array        : std_logic_vector(NUMBER_OF_ENTRIES - 1 downto 0);
+  signal cfg_bch_code_0 : std_logic_vector(1 downto 0);
+  signal cfg_bch_code_1 : std_logic_vector(1 downto 0);
+  signal wr_en_array    : std_logic_vector(NUMBER_OF_ENTRIES - 1 downto 0);
 
-  signal crc_rdy_array      : std_logic_vector(NUMBER_OF_ENTRIES - 1 downto 0);
-  signal data_out_array     : data_array_type(NUMBER_OF_ENTRIES - 1 downto 0);
-  signal crc_out_array      : crc_array_type(NUMBER_OF_ENTRIES - 1 downto 0);
+  signal crc_rdy_array  : std_logic_vector(NUMBER_OF_ENTRIES - 1 downto 0);
+  signal data_out_array : data_array_type(NUMBER_OF_ENTRIES - 1 downto 0);
+  signal crc_out_array  : crc_array_type(NUMBER_OF_ENTRIES - 1 downto 0);
 
 begin
+
+  -- Supporting other data widths might need quite a bit of work as we might need to deal
+  -- with partially valid words (data + mask)
+  assert DATA_WIDTH = 8
+    report "Unsupported DATA_WIDTH " & integer'image(DATA_WIDTH)
+    severity Failure;
 
   -------------------
   -- Port mappings --
   -------------------
-  -- Data gets ready after a couple of cycles, need to index them independently
-  mux_ptr_delay_u : entity work.sr_delay
-    generic map (
-      DELAY_CYCLES  => 3,
-      DATA_WIDTH    => 2,
-      EXTRACT_SHREG => True)
-    port map (
-      clk     => clk,
-      clken   => '1',
-
-      din     => cfg_bch_code_in,
-      dout    => cfg_bch_code_out_i);
-
   -- instantiate BCH blocks for DATA_WIDTH = 8
-  g_dw_8 : if DATA_WIDTH = 8 generate
+  data_width_8_gen : if DATA_WIDTH = 8 generate
     signal crc_192_ulogic      : std_ulogic_vector(191 downto 0);
     signal data_out_192_ulogic : std_ulogic_vector(7 downto 0);
     
@@ -157,36 +151,42 @@ begin
 
   end generate;
 
-
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  cfg_bch_code_out <= cfg_bch_code_out_i;
+  cfg_bch_code_out         <= cfg_bch_code_1;
 
-  in_mux_ptr       <= to_integer(unsigned(cfg_bch_code_in));
-  out_mux_ptr      <= to_integer(unsigned(cfg_bch_code_out_i));
+  in_mux_ptr               <= to_integer(unsigned(cfg_bch_code_in));
+  out_mux_ptr              <= to_integer(unsigned(cfg_bch_code_1));
 
   wr_en_array(BCH_POLY_8)  <= wr_en when in_mux_ptr = BCH_POLY_8 else '0';
   wr_en_array(BCH_POLY_10) <= wr_en when in_mux_ptr = BCH_POLY_10 else '0';
   wr_en_array(BCH_POLY_12) <= wr_en when in_mux_ptr = BCH_POLY_12 else '0';
 
-  crc_rdy  <= crc_rdy_array(out_mux_ptr);
-  crc      <= crc_out_array(out_mux_ptr);
-  data_out <= data_out_array(out_mux_ptr);
+  crc_rdy                  <= crc_rdy_array(out_mux_ptr);
+  crc                      <= crc_out_array(out_mux_ptr);
+  data_out                 <= data_out_array(out_mux_ptr);
 
-    ---------------
-    -- Processes --
-    ---------------
-    -- process(clk, rst)
-    -- begin
-    --     if rst = '1' then
-    --         null;
-    --     elsif clk'event and clk = '1' then
-    --         if clken = '1' then
+  ---------------
+  -- Processes --
+  ---------------
+  process(clk, rst)
+  begin
+    if rst = '1' then
+      cfg_bch_code_0 <= (others => '0');
+      cfg_bch_code_1 <= (others => '0');
+    elsif rising_edge(clk) then
+      -- Sample the input code whenever a word is written
+      if wr_en = '1' then
+        cfg_bch_code_0 <= cfg_bch_code_in;
+      end if;
 
-    --         end if;
-    --     end if;
-    -- end process;
+      -- Output it when CRC calc is complete
+      if crc_rdy_array(to_integer(unsigned(cfg_bch_code_0))) = '1' then
+        cfg_bch_code_1 <= cfg_bch_code_0;
+      end if;
+    end if;
+  end process;
 
 
 end bch_encoder_mux;
