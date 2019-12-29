@@ -29,6 +29,7 @@ library	ieee;
 
 library vunit_lib;
   context vunit_lib.vunit_context;
+  context vunit_lib.com_context;
 
 library osvvm;
   use osvvm.RandomPkg.all;
@@ -49,8 +50,9 @@ end axi_file_compare_tb;
 
 architecture axi_file_compare_tb of axi_file_compare_tb is
 
-  constant TEST_DEPTH : positive := 256;
-  constant DATA_WIDTH : positive := 32;
+  constant READER_NAME : string   := "dut";
+  constant TEST_DEPTH  : positive := 256;
+  constant DATA_WIDTH  : positive := 32;
 
   -- Generates data for when BYTES_ARE_BITS is set to False
   impure function generate_regular_data ( constant length : positive)
@@ -72,12 +74,11 @@ architecture axi_file_compare_tb of axi_file_compare_tb is
   -- Constants --
   ---------------
   constant CLK_PERIOD : time := 5 ns;
+  constant ERROR_CNT_WIDTH : natural := 8;
 
   -------------
   -- Signals --
   -------------
-  constant ERROR_CNT_WIDTH : natural := 8;
-
   -- Usual ports
   signal clk                : std_logic := '0';
   signal rst                : std_logic;
@@ -93,10 +94,10 @@ architecture axi_file_compare_tb of axi_file_compare_tb is
   signal m_tvalid           : std_logic;
   signal m_tlast            : std_logic;
 
-  signal m_tvalid_wr     : std_logic := '0';
-  signal m_tvalid_en     : std_logic := '0';
+  signal m_tvalid_wr        : std_logic := '0';
+  signal m_tvalid_en        : std_logic := '0';
 
-  signal axi_data_valid  : boolean;
+  signal axi_data_valid     : boolean;
 
 
 begin
@@ -106,6 +107,7 @@ begin
   -------------------
   dut : entity work.axi_file_compare
   generic map (
+    READER_NAME     => READER_NAME,
     ERROR_CNT_WIDTH => ERROR_CNT_WIDTH,
     DATA_WIDTH      => DATA_WIDTH,
     BYTES_ARE_BITS  => False)
@@ -114,7 +116,6 @@ begin
     clk                => clk,
     rst                => rst,
     -- Config and status
-    file_name          => FILE_NAME,
     tdata_error_cnt    => tdata_error_cnt,
     tlast_error_cnt    => tlast_error_cnt,
     error_cnt          => error_cnt,
@@ -170,9 +171,22 @@ begin
     end procedure write_word;
 
     ------------------------------------------------------------------------------------
-    procedure test_no_errors_detected is
-      variable rand : RandomPType;
+    procedure setup_file (constant filename : in string ) is
+      variable msg    : msg_t := new_msg;
+      variable reply  : boolean;
+      variable reader : actor_t := find(READER_NAME);
+      variable start  : time;
     begin
+      push_string(msg, filename);
+      send(net, reader, msg);
+    end procedure setup_file;
+
+    ------------------------------------------------------------------------------------
+    procedure test_no_errors_detected is
+      variable rand   : RandomPType;
+    begin
+      setup_file(FILE_NAME);
+
       rand.InitSeed(0);
       for i in 0 to TEST_DEPTH - 1 loop
         write_word(rand.RandSlv(DATA_WIDTH), is_last => i = TEST_DEPTH - 1);
@@ -190,6 +204,8 @@ begin
     procedure test_tlast_error is
       variable rand : RandomPType;
     begin
+      setup_file(FILE_NAME);
+
       rand.InitSeed(0);
       -- Tlast errors should be detected in any position
       for i in 0 to TEST_DEPTH - 1 loop
@@ -209,6 +225,8 @@ begin
       variable rand : RandomPType;
       variable data : std_logic_vector(DATA_WIDTH - 1 downto 0);
     begin
+      setup_file(FILE_NAME);
+
       rand.InitSeed(0);
       -- Tlast errors should be detected in any position
       for i in 0 to TEST_DEPTH - 1 loop
@@ -233,6 +251,11 @@ begin
       variable rand : RandomPType;
       variable data : std_logic_vector(DATA_WIDTH - 1 downto 0);
     begin
+      -- Setup the AXI reader first to avoid glitches on m_tvalid
+      for iter in 0 to 9 loop
+        setup_file(FILE_NAME);
+      end loop;
+
       for iter in 0 to 9 loop
         rand.InitSeed(0);
         -- Insert a couple of tlast errors so that we ensure checking didn't stop after

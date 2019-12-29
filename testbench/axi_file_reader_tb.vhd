@@ -24,17 +24,18 @@
 -- Libraries --
 ---------------
 library	ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library vunit_lib;
-  context vunit_lib.vunit_context;
+context vunit_lib.vunit_context;
+context vunit_lib.com_context;
 
 library osvvm;
-  use osvvm.RandomPkg.all;
+use osvvm.RandomPkg.all;
 
 library str_format;
-  use str_format.str_format_pkg.all;
+use str_format.str_format_pkg.all;
 
 use work.file_utils_pkg.all;
 
@@ -113,14 +114,14 @@ architecture axi_file_reader_tb of axi_file_reader_tb is
   ---------------
   -- Constants --
   ---------------
-  constant CLK_PERIOD : time := 5 ns;
+  constant READER_NAME : string := "dut";
+  constant CLK_PERIOD  : time := 5 ns;
 
   -------------
   -- Signals --
   -------------
   signal clk                : std_logic := '0';
   signal rst                : std_logic;
-  signal start              : std_logic;
   signal completed          : std_logic;
   signal s_tready           : std_logic;
   signal s_tdata            : std_logic_vector(DATA_WIDTH - 1 downto 0);
@@ -137,6 +138,7 @@ begin
   -------------------
   dut : entity work.axi_file_reader
     generic map (
+      READER_NAME    => READER_NAME,
       DATA_WIDTH     => DATA_WIDTH,
       -- GNU Radio does not have bit format, so most blocks use 1 bit per byte. Set this to
       -- True to use the LSB to form a data word
@@ -146,8 +148,6 @@ begin
       clk                => clk,
       rst                => rst,
       -- Config and status
-      file_name          => FILE_NAME,
-      start              => start,
       completed          => completed,
       tvalid_probability => tvalid_probability,
       -- Data output
@@ -174,58 +174,69 @@ begin
         end loop;
       end if;
     end procedure walk;
+    ------------------------------------------------------------------------------------
 
-    procedure trigger_and_wait (variable duration : out time) is
-      variable start_time : time;
+    procedure run_test (constant frames : in integer := 1) is
+      variable msg    : msg_t;
+      variable reply  : boolean;
+      variable reader : actor_t := find(READER_NAME);
+      variable start  : time;
     begin
-      start <= '1';
-      walk(1);
-      start <= '0';
-      start_time := now;
-      wait until s_tvalid = '1' and s_tready = '1' and s_tlast = '1' and rising_edge(clk);
-      duration := now - start_time;
-      walk(4);
-    end procedure trigger_and_wait;
+      start := now;
+      for i in 0 to frames - 1 loop
+        msg := new_msg;
+        push_string(msg, FILE_NAME);
+        request(net, reader, msg, reply);
+        check_true(reply);
+      end loop;
 
-    --
-    variable test_duration : time;
+      wait until s_tlast = '1' and s_tready = '1' and s_tvalid = '1' and rising_edge(clk);
+
+      warning(sformat("Took %d cycles", fo((now - start) / CLK_PERIOD)));
+    end procedure run_test;
+    ------------------------------------------------------------------------------------
 
     procedure test_tvalid_probability is
+      variable start          : time;
       variable baseline       : time;
       variable tvalid_half    : time;
       variable tvalid_quarter : time;
     begin
       rst <= '1'; walk(4); rst <= '0';
       tvalid_probability <= 1.0;
-      trigger_and_wait(baseline);
+      start := now;
+      run_test;
+      baseline := now - start;
 
       rst <= '1'; walk(4); rst <= '0';
       tvalid_probability <= 0.5;
-      trigger_and_wait(tvalid_half);
+      start := now;
+      run_test;
+      tvalid_half := now - start;
 
       rst <= '1'; walk(4); rst <= '0';
       tvalid_probability <= 0.25;
-      trigger_and_wait(tvalid_quarter);
+      start := now;
+      run_test;
+      tvalid_quarter := now - start;
 
       -- Check time taken is the expected +/- 10%
       check_true((baseline * 0.9 * 2 < tvalid_half) and (tvalid_half < baseline * 1.1 * 2));
       check_true((baseline * 0.9 * 4 < tvalid_quarter) and (tvalid_quarter < baseline * 1.1 * 4));
 
     end procedure test_tvalid_probability;
+    ------------------------------------------------------------------------------------
 
   begin
 
     create_file(256);
 
-    start <= '0';
-
     test_runner_setup(runner, runner_cfg);
-    show_all(display_handler);
+    -- show_all(display_handler);
 
     while test_suite loop
       tvalid_probability <= 1.0;
       tready_probability <= 1.0;
-      start              <= '0';
 
       rst <= '1';
       walk(4);
@@ -233,19 +244,20 @@ begin
       walk(4);
 
       if run("back_to_back") then
-        trigger_and_wait(test_duration);
+        tvalid_probability <= 1.0;
+        tready_probability <= 1.0;
+        run_test;
+
       elsif run("slow_read") then
+        tvalid_probability <= 1.0;
         tready_probability <= 0.5;
-        walk(4);
-        trigger_and_wait(test_duration);
+        run_test;
 
       elsif run("slow_write") then
         test_tvalid_probability;
+
       elsif run("multiple_frames") then
-        start <= '1';
-        wait until s_tvalid = '1' and s_tready = '1' and s_tlast = '1' and rising_edge(clk);
-        wait until s_tvalid = '1' and s_tready = '1' and s_tlast = '1' and rising_edge(clk);
-        start <= '0';
+        run_test(4);
       end if;
 
       walk(4);

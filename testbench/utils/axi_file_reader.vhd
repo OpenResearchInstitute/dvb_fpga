@@ -33,6 +33,7 @@ use ieee.numeric_std.all;
 
 library vunit_lib;
 context vunit_lib.vunit_context;
+context vunit_lib.com_context;
 
 library osvvm;
 use osvvm.RandomPkg.all;
@@ -45,6 +46,7 @@ use str_format.str_format_pkg.all;
 ------------------------
 entity axi_file_reader is
   generic (
+    READER_NAME    : string;
     DATA_WIDTH     : integer  := 1;
     -- GNU Radio does not have bit format, so most blocks use 1 bit per byte. Set this to
     -- True to use the LSB to form a data word
@@ -54,10 +56,8 @@ entity axi_file_reader is
     clk                : in  std_logic;
     rst                : in  std_logic;
     -- Config and status
-    file_name          : in  string;
-    start              : in  std_logic;
-    completed          : out std_logic;
     tvalid_probability : in  real range 0.0 to 1.0 := 1.0;
+    completed          : out std_logic;
 
     -- Data output
     m_tready           : in std_logic;
@@ -99,8 +99,11 @@ begin
   ---------------
   -- Processes --
   ---------------
-  process(clk, rst)
+  process
     --
+    constant self         : actor_t := new_actor(READER_NAME);
+    variable msg          : msg_t;
+
     variable tvalid_rand  : RandomPType;
     variable current_file : line;
     variable word_cnt     : integer := 0;
@@ -165,7 +168,8 @@ begin
           file_status := closed;
           file_close(file_handler);
       end if;
-    elsif rising_edge(clk) then
+    else 
+    -- elsif rising_edge(clk) then
 
       -- Clear out AXI stuff when data has been transferred only
       if axi_data_valid then
@@ -186,11 +190,12 @@ begin
         end if;
       end if;
 
-      -- If the file hasn't been opened, wait until start is asserted
+      -- If the file hasn't been opened, wait we get a msg with the file name
       if file_status /= opened  then
-        if start = '1' then
+        if has_message(self) then
+          receive(net, self, msg);
           deallocate(current_file);
-          write(current_file, file_name);
+          write(current_file, pop_string(msg));
 
           info("Reading " & current_file.all);
           file_open(file_handler, current_file.all, read_mode);
@@ -212,6 +217,7 @@ begin
         if axi_data_valid then
           if endfile(file_handler) then
             m_tlast_i    <= '1';
+            acknowledge(net, msg, True);
           end if;
         end if;
       end if;
@@ -222,6 +228,13 @@ begin
         m_tvalid_en <= '1';
       end if;
     end if;
+    wait until rising_edge(clk); -- or rst = '1';
   end process;
+
+  -- process
+  -- begin
+  --   wait until m_tlast_i = '1';
+  --   wait;
+  -- end process;
 
 end axi_file_reader;
