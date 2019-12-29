@@ -158,6 +158,13 @@ begin
 
     end function get_next_data;
     ------------------------------------------------------------------------------------
+    procedure reply_with_size is
+      variable reply_msg : msg_t := new_msg;
+    begin
+      push_integer(reply_msg, word_cnt);
+      reply_msg.sender := self;
+      reply(net, msg, reply_msg);
+    end procedure reply_with_size;
 
   begin
     if rst = '1' then
@@ -198,7 +205,7 @@ begin
           deallocate(current_file);
           write(current_file, pop_string(msg));
 
-          info(logger, "Reading " & current_file.all);
+          info(logger, "Reading " & current_file.all & " (requested by '" & name(msg.sender) & "')");
           file_open(file_handler, current_file.all, read_mode);
           file_status  := opened;
 
@@ -218,7 +225,7 @@ begin
         if axi_data_valid then
           if endfile(file_handler) then
             m_tlast_i    <= '1';
-            acknowledge(net, msg, True);
+            reply_with_size;
           end if;
         end if;
       end if;

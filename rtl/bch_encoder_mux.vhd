@@ -45,8 +45,8 @@ entity bch_encoder_mux is
     cfg_bch_code_out : out std_logic_vector(1 downto 0);
     crc_rdy          : out std_logic;
     crc              : out std_logic_vector(191 downto 0);
-    data_out         : out std_logic_vector(DATA_WIDTH - 1 downto 0) -- Data output
-  );
+    -- Data output
+    data_out         : out std_logic_vector(DATA_WIDTH - 1 downto 0));
 end bch_encoder_mux;
 
 architecture bch_encoder_mux of bch_encoder_mux is
@@ -54,8 +54,8 @@ architecture bch_encoder_mux of bch_encoder_mux is
   ---------------
   -- Constants --
   ---------------
-  constant NUMBER_OF_ENTRIES : integer := 3;
-  constant CRC_WIDTH         : integer := 192;
+  constant MUX_WIDTH : integer := 3;
+  constant CRC_WIDTH : integer := 192;
 
   -----------
   -- Types --
@@ -71,11 +71,11 @@ architecture bch_encoder_mux of bch_encoder_mux is
 
   signal cfg_bch_code_0 : std_logic_vector(1 downto 0);
   signal cfg_bch_code_1 : std_logic_vector(1 downto 0);
-  signal wr_en_array    : std_logic_vector(NUMBER_OF_ENTRIES - 1 downto 0);
+  signal wr_en_array    : std_logic_vector(MUX_WIDTH - 1 downto 0);
 
-  signal crc_rdy_array  : std_logic_vector(NUMBER_OF_ENTRIES - 1 downto 0);
-  signal data_out_array : data_array_type(NUMBER_OF_ENTRIES - 1 downto 0);
-  signal crc_out_array  : crc_array_type(NUMBER_OF_ENTRIES - 1 downto 0);
+  signal crc_rdy_array  : std_logic_vector(MUX_WIDTH - 1 downto 0);
+  signal data_out_array : data_array_type(MUX_WIDTH - 1 downto 0);
+  signal crc_out_array  : crc_array_type(MUX_WIDTH - 1 downto 0);
 
 begin
 

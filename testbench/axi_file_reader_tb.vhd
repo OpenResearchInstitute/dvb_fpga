@@ -177,17 +177,17 @@ begin
     ------------------------------------------------------------------------------------
 
     procedure run_test (constant frames : in integer := 1) is
-      variable msg    : msg_t;
-      variable reply  : boolean;
-      variable reader : actor_t := find(READER_NAME);
-      variable start  : time;
+      variable msg       : msg_t;
+      variable reply_msg : msg_t;
+      variable reader    : actor_t := find(READER_NAME);
+      variable start     : time;
     begin
       start := now;
       for i in 0 to frames - 1 loop
         msg := new_msg;
         push_string(msg, FILE_NAME);
-        request(net, reader, msg, reply);
-        check_true(reply);
+        send(net, reader, msg);
+        receive_reply(net, msg, reply_msg);
       end loop;
 
       wait until s_tlast = '1' and s_tready = '1' and s_tvalid = '1' and rising_edge(clk);

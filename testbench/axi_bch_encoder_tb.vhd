@@ -40,22 +40,17 @@ use work.bch_encoder_pkg.all;
 
 entity axi_bch_encoder_tb is
   generic (
-    runner_cfg : string);
+    runner_cfg         : string;
+    PATH_TO_TEST_FILES : string := "/home/souto/phase4ground/bch_tests/");
 end axi_bch_encoder_tb;
 
 architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
-
-    -----------
-    -- Types --
-    -----------
-    type std_logic_vector_array is array (natural range <>) of std_logic_vector;
 
     ---------------
     -- Constants --
     ---------------
     constant FILE_READER_NAME   : string := "file_reader";
     constant FILE_CHECKER_NAME  : string := "file_checker";
-    constant PATH_TO_TEST_FILES : string := "/home/souto/phase4ground/bch_tests/";
     constant CLK_PERIOD         : time := 5 ns;
     constant TDATA_WIDTH        : integer := 8;
     constant ERROR_CNT_WIDTH    : integer := 8;
@@ -180,7 +175,7 @@ begin
   -- Processes --
   ---------------
   main : process
-    constant main         : actor_t := new_actor("main");
+    constant self         : actor_t := new_actor("main");
     constant input_cfg_p  : actor_t := find("input_cfg_p");
     constant file_checker : actor_t := find(FILE_CHECKER_NAME);
     ------------------------------------------------------------------------------------
@@ -207,10 +202,12 @@ begin
         file_reader_msg := new_msg;
         file_checker_msg := new_msg;
 
+        file_reader_msg.sender := self;
+        file_checker_msg.sender := self;
+
         push_string(file_reader_msg, PATH_TO_TEST_FILES & input_file);
         push_integer(file_reader_msg, bch_code);
         push_string(file_checker_msg, PATH_TO_TEST_FILES & reference_file);
-
 
         send(net, input_cfg_p, file_reader_msg);
         send(net, file_checker, file_checker_msg);
@@ -323,14 +320,13 @@ begin
     variable cfg_msg           : msg_t;
     constant file_reader       : actor_t := find(FILE_READER_NAME);
     variable file_reader_msg   : msg_t;
-    variable file_reader_reply : boolean;
+    variable file_reader_reply : msg_t;
   begin
 
     receive(net, self, cfg_msg);
 
-    info("Got msg");
-
-    file_reader_msg := new_msg;
+    file_reader_msg        := new_msg;
+    file_reader_msg.sender := self;
     push_string(file_reader_msg, pop_string(cfg_msg));
 
     -- Configure the file reader
@@ -344,17 +340,14 @@ begin
 
     wait until m_data_valid and m_tlast = '1';
 
-    info("Done setup");
-
-    -- Received file reader reply
+    -- When this is received, the file reader has finished reading the file
     receive_reply (net, file_reader_msg, file_reader_reply);
 
-    info("Got reply");
-
+    -- If there's no more messages, notify the main process that we're done here
     if not has_message(self) then
-      info("Sending ack");
       cfg_msg := new_msg;
       push_boolean(cfg_msg, True);
+      cfg_msg.sender := self;
       send(net, main, cfg_msg);
     end if;
     check_equal(error_cnt, 0);

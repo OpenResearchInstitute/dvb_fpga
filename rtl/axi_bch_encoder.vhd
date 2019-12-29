@@ -108,11 +108,11 @@ architecture axi_bch_encoder of axi_bch_encoder is
   signal m_tlast_i            : std_logic := '0';
 
   -- Largest is 192 bits, use a slice when handling polynomials with smaller contexts
-  signal crc_word_cnt     : unsigned(numbits(MAX_WORD_CNT) - 1 downto 0);
-  signal crc              : std_logic_vector(191 downto 0);
-  signal crc_srl          : std_logic_vector(191 downto 0);
-  signal crc_sample       : std_logic := '0';
-  signal crc_sample_delay : std_logic := '0';
+  signal crc_word_cnt         : unsigned(numbits(MAX_WORD_CNT) - 1 downto 0);
+  signal crc                  : std_logic_vector(191 downto 0);
+  signal crc_srl              : std_logic_vector(191 downto 0);
+  signal crc_sample           : std_logic := '0';
+  signal crc_sample_delay     : std_logic := '0';
 
 begin
 
@@ -172,7 +172,8 @@ begin
   -- Asynchronous assignments --
   ------------------------------
   s_axi_data_valid     <= '1' when s_tready_i = '1' and s_tvalid = '1' else '0';
-  axi_delay_data_valid <= '1' when axi_delay_tvalid = '1' and axi_delay_tready = '1' else '0';
+  axi_delay_data_valid <= '1' when axi_delay_tvalid = '1' and axi_delay_tready = '1' else
+                          '0';
   m_axi_data_valid     <= '1' when m_tready = '1' and m_tvalid_i = '1' else '0';
 
   -- Assign internals
@@ -208,7 +209,8 @@ begin
 
       if m_axi_data_valid = '1' and crc_word_cnt /= 0 then
         -- Shift the CRC, tdata will be assigned to the MSB
-        crc_srl      <= crc_srl(crc_srl'length - TDATA_WIDTH - 1 downto 0) & (TDATA_WIDTH - 1 downto 0 => 'U');
+        crc_srl      <= crc_srl(crc_srl'length - TDATA_WIDTH - 1 downto 0)
+                        & (TDATA_WIDTH - 1 downto 0 => 'U');
         crc_word_cnt <= crc_word_cnt - 1;
       end if;
 
@@ -242,7 +244,9 @@ begin
       -- mode
       if axi_delay_data_valid = '1' and axi_delay_tlast = '1' then
         -- TODO: Check if this uses the carry bit to reset
-        crc_word_cnt     <= to_unsigned(get_crc_length(cfg_bch_code_out), crc_word_cnt'length);
+        crc_word_cnt     <= to_unsigned(
+                              get_crc_length(cfg_bch_code_out),
+                              crc_word_cnt'length);
       end if;
 
     end if;
