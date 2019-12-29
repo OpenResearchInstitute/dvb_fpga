@@ -176,8 +176,8 @@ begin
       cfg_bch_code_0 <= (others => '0');
       cfg_bch_code_1 <= (others => '0');
     elsif rising_edge(clk) then
-      -- Sample the input code whenever a word is written
-      if wr_en = '1' then
+      -- Sample the input code whenever the first word is written
+      if wr_en = '1' and first_word = '1' then
         cfg_bch_code_0 <= cfg_bch_code_in;
       end if;
 
