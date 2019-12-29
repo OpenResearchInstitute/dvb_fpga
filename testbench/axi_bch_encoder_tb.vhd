@@ -216,36 +216,31 @@ begin
     end procedure run_test;
 
     ------------------------------------------------------------------------------------
-    procedure wait_for_transfers is
+    procedure wait_for_transfers ( constant count : in natural) is
       variable msg : msg_t;
     begin
-      while has_message(input_cfg_p) loop
-        walk(1);
+      -- Will get one response for each frame from the file checker and one for the input
+      -- config. The order shouldn't matter
+      receive(net, self, msg);
+      debug(sformat("Got reply from '%s'", name(msg.sender)));
+
+      for i in 0 to count - 1 loop
+        receive(net, self, msg);
+        debug(sformat("[%d] Got reply from '%s'", fo(i), name(msg.sender)));
       end loop;
-
-      warning("File reader finished");
-
-      while has_message(file_checker) loop
-        walk(1);
-      end loop;
-
-      warning("File checker finished");
-
-      receive(net, main, msg);
-      info("got an ack...");
-
     end procedure wait_for_transfers;
     ------------------------------------------------------------------------------------
 
   begin
 
     test_runner_setup(runner, runner_cfg);
+    show(display_handler, debug);
 
     while test_suite loop
       rst <= '1';
-      walk(16);
+      walk(4);
       rst <= '0';
-      walk(16);
+      walk(4);
 
       tvalid_probability <= 1.0;
       tready_probability <= 1.0;
@@ -254,37 +249,39 @@ begin
         tvalid_probability <= 1.0;
         tready_probability <= 1.0;
         run_test(BCH_POLY_12, "input_16008.bin", "reference_16008.bin", 4);
-        wait_for_transfers;
+        wait_for_transfers(4);
 
       elsif run("run_192_16008_slow_master") then
         tvalid_probability <= 0.5;
         tready_probability <= 1.0;
         run_test(BCH_POLY_12, "input_16008.bin", "reference_16008.bin", 4);
-        wait_for_transfers;
+        wait_for_transfers(4);
+
       elsif run("run_192_16008_slow_slave") then
         tvalid_probability <= 1.0;
         tready_probability <= 0.5;
         run_test(BCH_POLY_12, "input_16008.bin", "reference_16008.bin", 4);
-        wait_for_transfers;
+        wait_for_transfers(4);
+
       elsif run("run_192_16008_slow_overall") then
         tvalid_probability <= 0.75;
         tready_probability <= 0.75;
         run_test(BCH_POLY_12, "input_16008.bin", "reference_16008.bin", 4);
-        wait_for_transfers;
+        wait_for_transfers(4);
 
       -- Test other encodings
       elsif run("run_160_53840_back_to_back") then
         tvalid_probability <= 1.0;
         tready_probability <= 1.0;
         run_test(BCH_POLY_10, "input_53840.bin", "reference_53840.bin", 4);
-        wait_for_transfers;
+        wait_for_transfers(4);
 
       -- Test other encodings
       elsif run("run_128_58192_back_to_back") then
         tvalid_probability <= 1.0;
         tready_probability <= 1.0;
         run_test(BCH_POLY_8, "input_58192.bin", "reference_58192.bin", 4);
-        wait_for_transfers;
+        wait_for_transfers(4);
 
       elsif run("test_switching_encodings") then
         tvalid_probability <= 1.0;
@@ -296,7 +293,8 @@ begin
         run_test(BCH_POLY_10, "input_53840.bin", "reference_53840.bin", 1);
         run_test(BCH_POLY_8, "input_58192.bin", "reference_58192.bin", 1);
 
-        wait_for_transfers;
+        wait_for_transfers(6);
+
       end if;
 
       walk(1);
@@ -306,7 +304,7 @@ begin
 
       check_equal(error_cnt, 0);
 
-      walk(4);
+      walk(32);
 
     end loop;
 
