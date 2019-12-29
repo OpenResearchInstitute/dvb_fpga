@@ -218,6 +218,7 @@ begin
 
     end procedure run_test;
 
+    ------------------------------------------------------------------------------------
     procedure wait_for_transfers is
       variable msg : msg_t;
     begin
@@ -235,10 +236,9 @@ begin
 
       receive(net, main, msg);
       info("got an ack...");
-      receive(net, main, msg);
-      info("Got all acks");
 
     end procedure wait_for_transfers;
+    ------------------------------------------------------------------------------------
 
   begin
 
@@ -351,7 +351,7 @@ begin
 
     info("Got reply");
 
-    if not has_message(file_reader) then
+    if not has_message(self) then
       info("Sending ack");
       cfg_msg := new_msg;
       push_boolean(cfg_msg, True);

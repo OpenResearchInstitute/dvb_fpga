@@ -102,6 +102,7 @@ begin
   process
     --
     constant self         : actor_t := new_actor(READER_NAME);
+    constant logger       : logger_t := get_logger(READER_NAME);
     variable msg          : msg_t;
 
     variable tvalid_rand  : RandomPType;
@@ -183,7 +184,7 @@ begin
           file_close(file_handler);
           file_status  := closed;
 
-          info("Read " & integer'image(word_cnt) & " words from " & current_file.all);
+          info(logger, "Read " & integer'image(word_cnt) & " words from " & current_file.all);
           completed <= '1';
           word_cnt  := 0;
           byte_cnt  := 0;
@@ -197,7 +198,7 @@ begin
           deallocate(current_file);
           write(current_file, pop_string(msg));
 
-          info("Reading " & current_file.all);
+          info(logger, "Reading " & current_file.all);
           file_open(file_handler, current_file.all, read_mode);
           file_status  := opened;
 
