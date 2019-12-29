@@ -53,6 +53,8 @@ architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
     ---------------
     -- Constants --
     ---------------
+    constant FILE_READER_NAME   : string := "file_reader";
+    constant FILE_CHECKER_NAME  : string := "file_checker";
     constant PATH_TO_TEST_FILES : string := "/home/souto/phase4ground/bch_tests/";
     constant CLK_PERIOD         : time := 5 ns;
     constant TDATA_WIDTH        : integer := 8;
@@ -90,11 +92,7 @@ architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
     signal error_cnt          : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
 
     --
-    signal cfg_input_file     : string(1 to 15 + PATH_TO_TEST_FILES'length); -- := "input_16008.bin";
-    signal cfg_reference_file : string(1 to 19 + PATH_TO_TEST_FILES'length); -- := "reference_16008.bin";
-    signal read_start         : std_logic;
     signal read_completed     : std_logic;
-    signal compare_start      : std_logic;
 
 begin
 
@@ -128,6 +126,7 @@ begin
   -- AXI file read
   axi_file_reader_u : entity work.axi_file_reader
     generic map (
+      READER_NAME    => FILE_READER_NAME,
       DATA_WIDTH     => TDATA_WIDTH,
       BYTES_ARE_BITS => True)
     port map (
@@ -135,8 +134,6 @@ begin
       clk                => clk,
       rst                => rst,
       -- Config and status
-      file_name          => cfg_input_file,
-      start              => read_start,
       completed          => read_completed,
       tvalid_probability => tvalid_probability,
 
@@ -148,6 +145,7 @@ begin
 
   axi_file_compare_u : entity work.axi_file_compare
     generic map (
+      READER_NAME     => FILE_CHECKER_NAME,
       ERROR_CNT_WIDTH => ERROR_CNT_WIDTH,
       REPORT_SEVERITY => Warning,
       DATA_WIDTH      => TDATA_WIDTH,
@@ -157,8 +155,6 @@ begin
       clk                => clk,
       rst                => rst,
       -- Config and status
-      start              => compare_start,
-      file_name          => cfg_reference_file,
       tdata_error_cnt    => tdata_error_cnt,
       tlast_error_cnt    => tlast_error_cnt,
       error_cnt          => error_cnt,
@@ -184,9 +180,9 @@ begin
   -- Processes --
   ---------------
   main : process
-    constant main             : actor_t := new_actor("main");
-    constant file_reader      : actor_t := find("file_reader");
-    constant file_checker     : actor_t := find("file_checker");
+    constant main         : actor_t := new_actor("main");
+    constant input_cfg_p  : actor_t := find("input_cfg_p");
+    constant file_checker : actor_t := find(FILE_CHECKER_NAME);
     ------------------------------------------------------------------------------------
     procedure walk(constant steps : natural) is
     begin
@@ -211,12 +207,12 @@ begin
         file_reader_msg := new_msg;
         file_checker_msg := new_msg;
 
-        push_string(file_reader_msg, input_file);
+        push_string(file_reader_msg, PATH_TO_TEST_FILES & input_file);
         push_integer(file_reader_msg, bch_code);
-        push_string(file_checker_msg, reference_file);
+        push_string(file_checker_msg, PATH_TO_TEST_FILES & reference_file);
 
 
-        send(net, file_reader, file_reader_msg);
+        send(net, input_cfg_p, file_reader_msg);
         send(net, file_checker, file_checker_msg);
       end loop;
 
@@ -225,7 +221,7 @@ begin
     procedure wait_for_transfers is
       variable msg : msg_t;
     begin
-      while has_message(file_reader) loop
+      while has_message(input_cfg_p) loop
         walk(1);
       end loop;
 
@@ -308,7 +304,7 @@ begin
 
       walk(1);
 
-      check_false(has_message(file_reader));
+      check_false(has_message(input_cfg_p));
       check_false(has_message(file_checker));
 
       check_equal(error_cnt, 0);
@@ -321,58 +317,45 @@ begin
     wait;
   end process;
 
-  file_reader_cfg_p : process
-    constant main        : actor_t := find("main");
-    constant file_reader : actor_t := new_actor("file_reader");
-    variable msg         : msg_t;
+  input_cfg_p : process
+    constant self              : actor_t := new_actor("input_cfg_p");
+    constant main              : actor_t := find("main");
+    variable cfg_msg           : msg_t;
+    constant file_reader       : actor_t := find(FILE_READER_NAME);
+    variable file_reader_msg   : msg_t;
+    variable file_reader_reply : boolean;
   begin
-    read_start     <= '0';
-    receive(net, file_reader, msg);
+
+    receive(net, self, cfg_msg);
+
+    info("Got msg");
+
+    file_reader_msg := new_msg;
+    push_string(file_reader_msg, pop_string(cfg_msg));
+
+    -- Configure the file reader
+    send(net, file_reader, file_reader_msg);
+
     -- Keep the config stuff active for a single cycle to make sure blocks use the correct
     -- values
-    cfg_input_file <= PATH_TO_TEST_FILES & pop_string(msg);
-    cfg_bch_code   <= std_logic_vector(to_unsigned(pop_integer(msg), 2));
-    read_start     <= '1';
+    cfg_bch_code   <= std_logic_vector(to_unsigned(pop_integer(cfg_msg), 2));
     wait until m_data_valid and m_tlast = '0' and rising_edge(clk);
-    wait until m_data_valid and m_tlast = '0' and rising_edge(clk);
-    read_start     <= '0';
-    cfg_input_file <= (others => ' ');
     cfg_bch_code   <= (others => 'U');
 
     wait until m_data_valid and m_tlast = '1';
 
+    info("Done setup");
+
+    -- Received file reader reply
+    receive_reply (net, file_reader_msg, file_reader_reply);
+
+    info("Got reply");
+
     if not has_message(file_reader) then
       info("Sending ack");
-      msg := new_msg;
-      push_boolean(msg, True);
-      send(net, main, msg);
-    end if;
-    check_equal(error_cnt, 0);
-  end process;
-
-  file_checker_cfg_p : process
-    constant main         : actor_t := find("main");
-    constant file_checker : actor_t := new_actor("file_checker");
-    variable msg          : msg_t;
-  begin
-    compare_start      <= '0';
-    receive(net, file_checker, msg);
-    -- Keep the config stuff active for a single cycle to make sure blocks use the correct
-    -- values
-    cfg_reference_file <= PATH_TO_TEST_FILES & pop_string(msg);
-    compare_start      <= '1';
-    wait until s_data_valid and s_tlast = '0' and rising_edge(clk);
-
-    cfg_reference_file <= (others => ' ');
-    compare_start      <= '0';
-
-    wait until s_data_valid and s_tlast = '1' and rising_edge(clk);
-
-    if not has_message(file_checker) then
-      info("Sending ack");
-      msg := new_msg;
-      push_boolean(msg, True);
-      send(net, main, msg);
+      cfg_msg := new_msg;
+      push_boolean(cfg_msg, True);
+      send(net, main, cfg_msg);
     end if;
     check_equal(error_cnt, 0);
   end process;
