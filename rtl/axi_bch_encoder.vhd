@@ -66,7 +66,7 @@ architecture axi_bch_encoder of axi_bch_encoder is
   -- To count to the max number of words appended to the frame
   constant MAX_WORD_CNT : integer := 192 / TDATA_WIDTH;
 
-  function get_crc_length (
+  impure function get_crc_length (
     constant bch_code : in std_logic_vector(1 downto 0)) return integer is
     variable result   : integer := -1;
   begin
@@ -77,7 +77,7 @@ architecture axi_bch_encoder of axi_bch_encoder is
     elsif unsigned(bch_code) = BCH_POLY_12 then
       result := 192;
     else
-      report "Invalid BCH code " & integer'image(to_integer(unsigned(bch_code)))
+      report sformat("Invalid BCH code %r", fo(bch_code))
       severity Failure;
     end if;
     -- This is mostly static, so division should not be a problem. In any case,

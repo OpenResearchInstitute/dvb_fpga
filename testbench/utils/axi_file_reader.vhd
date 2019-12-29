@@ -229,13 +229,9 @@ begin
         m_tvalid_en <= '1';
       end if;
     end if;
-    wait until rising_edge(clk); -- or rst = '1';
-  end process;
 
-  -- process
-  -- begin
-  --   wait until m_tlast_i = '1';
-  --   wait;
-  -- end process;
+    wait until rising_edge(clk);
+
+  end process;
 
 end axi_file_reader;

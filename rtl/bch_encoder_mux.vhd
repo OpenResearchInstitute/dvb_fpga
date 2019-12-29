@@ -18,10 +18,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with DVB FPGA.  If not, see <http://www.gnu.org/licenses/>.
 
----------------------------------
--- Block name and description --
---------------------------------
-
 ---------------
 -- Libraries --
 ---------------
@@ -119,7 +115,7 @@ begin
         nd    => wr_en_array(BCH_POLY_12),
         rdy   => crc_rdy_array(BCH_POLY_12),
         d     => std_ulogic_vector(wr_data),
-        c     => crc_192_ulogic, --std_ulogic_vector(),
+        c     => crc_192_ulogic,
         -- CRC output
         o     => data_out_192_ulogic);
 
@@ -132,7 +128,7 @@ begin
         nd    => wr_en_array(BCH_POLY_10),
         rdy   => crc_rdy_array(BCH_POLY_10),
         d     => std_ulogic_vector(wr_data),
-        c     => crc_160_ulogic, --std_ulogic_vector(),
+        c     => crc_160_ulogic,
         -- CRC output
         o     => data_out_160_ulogic);
 
@@ -145,7 +141,7 @@ begin
         nd    => wr_en_array(BCH_POLY_8),
         rdy   => crc_rdy_array(BCH_POLY_8),
         d     => std_ulogic_vector(wr_data),
-        c     => crc_128_ulogic, --std_ulogic_vector(),
+        c     => crc_128_ulogic,
         -- CRC output
         o     => data_out_128_ulogic);
 
