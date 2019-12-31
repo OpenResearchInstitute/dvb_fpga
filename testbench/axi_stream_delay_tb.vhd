@@ -1,7 +1,7 @@
 --
 -- DVB IP
 --
--- Copyright 2019 by Andre Souto (suoto)
+-- Copyright 2019 by Suoto <andre820@gmail.com>
 --
 -- This file is part of DVB IP.
 --
