@@ -29,7 +29,7 @@ library str_format;
     use str_format.str_format_pkg.all;
 
 use work.common_pkg.all;
-use work.bch_encoder_pkg.all;
+use work.dvb_utils_pkg.all;
 
 ------------------------
 -- Entity declaration --

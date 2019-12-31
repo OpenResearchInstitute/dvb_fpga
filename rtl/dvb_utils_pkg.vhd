@@ -22,10 +22,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library str_format;
-use str_format.str_format_pkg.all;
-
-package bch_encoder_pkg is
+package dvb_utils_pkg is
 
   constant BCH_NORMAL_FRAME_SIZE : integer := 64_800;
   constant BCH_SHORT_FRAME_SIZE : integer := 16_200;
@@ -39,8 +36,8 @@ package bch_encoder_pkg is
   constant BCH_POLY_10 : integer := 1;
   constant BCH_POLY_12 : integer := 2;
 
-end bch_encoder_pkg;
+end dvb_utils_pkg;
 
-package body bch_encoder_pkg is
+package body dvb_utils_pkg is
 
-  end package body;
+end package body;
