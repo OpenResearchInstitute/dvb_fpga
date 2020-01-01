@@ -41,6 +41,8 @@ use osvvm.RandomPkg.all;
 library str_format;
 use str_format.str_format_pkg.all;
 
+use work.file_utils_pkg.all;
+
 ------------------------
 -- Entity declaration --
 ------------------------
@@ -50,7 +52,8 @@ entity axi_file_reader is
     DATA_WIDTH     : integer  := 1;
     -- GNU Radio does not have bit format, so most blocks use 1 bit per byte. Set this to
     -- True to use the LSB to form a data word
-    BYTES_ARE_BITS : boolean := False);
+    BYTES_ARE_BITS : boolean := False;
+    INPUT_DATA_RATIO : string := "");
   port (
     -- Usual ports
     clk                : in  std_logic;
@@ -100,6 +103,7 @@ begin
   -- Processes --
   ---------------
   process
+    constant DATA_RATIO : ratio := parse_data_ratio(INPUT_DATA_RATIO, DATA_WIDTH);
     --
     constant self         : actor_t := new_actor(READER_NAME);
     constant logger       : logger_t := get_logger(READER_NAME);
@@ -144,15 +148,27 @@ begin
     ------------------------------------------------------------------------------------
     impure function get_next_data (constant word_width : in natural)
     return std_logic_vector is
-      variable result : std_logic_vector(word_width - 1 downto 0);
+      constant file_reads : positive := word_width / DATA_RATIO.input;
+      variable result     : std_logic_vector(word_width - 1 downto 0);
+      variable temp       : std_logic_vector(DATA_RATIO.input - 1 downto 0);
     begin
-      if BYTES_ARE_BITS then
-        for i in 0 to word_width - 1 loop
-          result(word_width - i - 1) := read_word_from_file(8)(0);
-        end loop;
-      else
-        result := read_word_from_file(word_width);
-      end if;
+      -- info(sformat("ratio=%d:%d | word_width=%d |file_reads=%d",
+      --              fo(DATA_RATIO.input), fo(DATA_RATIO.output), fo(word_width),
+      --              fo(file_reads)));
+
+      for word in file_reads - 1 downto 0 loop
+        temp := read_word_from_file(DATA_RATIO.output)(DATA_RATIO.input - 1 downto 0);
+        -- info(sformat("word=%d, temp=%r => result=%r", fo(word), fo(temp), fo(result)));
+        result((word + 1) * DATA_RATIO.input - 1 downto word*DATA_RATIO.input) := temp;
+      end loop;
+
+      -- if BYTES_ARE_BITS then
+      --   for i in 0 to word_width - 1 loop
+      --     result(word_width - i - 1) := read_word_from_file(8)(0);
+      --   end loop;
+      -- else
+      --   result := read_word_from_file(word_width);
+      -- end if;
 
       return result;
 

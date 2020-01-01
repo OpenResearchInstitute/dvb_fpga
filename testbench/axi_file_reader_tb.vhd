@@ -52,6 +52,8 @@ end axi_file_reader_tb;
 
 architecture axi_file_reader_tb of axi_file_reader_tb is
 
+  constant DATA_RATIO : ratio := parse_data_ratio("1:8", DATA_WIDTH);
+
   -- Generates data for when BYTES_ARE_BITS is set to False
   impure function generate_regular_data ( constant length : positive)
   return std_logic_vector_array is
@@ -71,15 +73,20 @@ architecture axi_file_reader_tb of axi_file_reader_tb is
   -- Generates data for when BYTES_ARE_BITS is set to True
   impure function generate_unpacked_data (constant length : positive)
   return std_logic_vector_array is
-    variable data       : std_logic_vector_array(0 to length * DATA_WIDTH - 1)(7 downto 0);
-    variable word       : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    variable byte       : std_logic_vector(7 downto 0);
-    variable index      : natural := 0;
-    variable write_rand : RandomPType;
+    constant NUMBER_OF_WORDS : integer := length * DATA_RATIO.output / DATA_RATIO.input;
+    variable data            : std_logic_vector_array(0 to NUMBER_OF_WORDS - 1)(7 downto 0);
+    variable word            : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    variable byte            : std_logic_vector(7 downto 0);
+    variable index           : natural := 0;
+    variable write_rand      : RandomPType;
   begin
+    info(sformat("Generating vector with %d x %d = %d",
+                 fo(data'length), fo(data(0)'length), fo(data'length * data(0)'length)));
+
     write_rand.InitSeed(0);
 
     for word_cnt in 0 to length - 1 loop
+      debug(sformat("word_cnt=%d", fo(word_cnt)));
       word := write_rand.RandSlv(DATA_WIDTH);
 
       -- Data is little endian, write MSB first
@@ -142,7 +149,8 @@ begin
       DATA_WIDTH     => DATA_WIDTH,
       -- GNU Radio does not have bit format, so most blocks use 1 bit per byte. Set this to
       -- True to use the LSB to form a data word
-      BYTES_ARE_BITS => BYTES_ARE_BITS)
+      BYTES_ARE_BITS => BYTES_ARE_BITS,
+      INPUT_DATA_RATIO  => "1:8")
     port map (
       -- Usual ports
       clk                => clk,

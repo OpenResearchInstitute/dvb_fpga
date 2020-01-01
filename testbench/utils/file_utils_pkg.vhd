@@ -18,6 +18,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with DVB IP.  If not, see <http://www.gnu.org/licenses/>.
 
+use std.textio.all;
+
 library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
@@ -29,12 +31,21 @@ package file_utils_pkg is
   -----------
   type std_logic_vector_array is array (natural range <>) of std_logic_vector;
 
+  type ratio is record
+    input : positive;
+    output: positive;
+  end record ratio;
+
   -----------------
   -- Subprograms --
   -----------------
   procedure write_binary_file (
     constant name : in string;
     constant data : in std_logic_vector_array);
+
+  function parse_data_ratio (
+    constant s               : string;
+    constant base_data_width : in positive) return ratio;
 
 end file_utils_pkg;
 
@@ -66,6 +77,36 @@ package body file_utils_pkg is
 
     file_close(fd);
   end procedure write_binary_file;
+
+  function parse_data_ratio (
+    constant s               : string;
+    constant base_data_width : in positive) return ratio is
+    variable input    : line;
+    variable output   : line;
+    variable is_input : boolean := True;
+  begin
+    if s = "" then
+      return (base_data_width, base_data_width);
+    end if;
+
+    for i in s'range loop
+      if s(i) = ':' then
+        is_input := False;
+      elsif is_input then
+        write(input, s(i));
+      else
+        write(output, s(i));
+      end if;
+    end loop;
+
+    assert not is_input
+      report "Malformed s: '" & s & "'"
+      severity Failure;
+    
+    return (integer'value(input.all),
+            integer'value(output.all));
+
+  end function parse_data_ratio;
 
 end package body;
 
