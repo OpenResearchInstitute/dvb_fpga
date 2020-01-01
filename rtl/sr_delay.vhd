@@ -1,22 +1,22 @@
 --
--- hdl_lib -- An HDL core library
+-- DVB FPGA
 --
--- Copyright 2014-2016 by Andre Souto (suoto)
+-- Copyright 2019 by Suoto <andre820@gmail.com>
 --
--- This file is part of hdl_lib.
--- 
--- hdl_lib is free software: you can redistribute it and/or modify
+-- This file is part of DVB FPGA.
+--
+-- DVB FPGA is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
 -- the Free Software Foundation, either version 3 of the License, or
 -- (at your option) any later version.
--- 
--- hdl_lib is distributed in the hope that it will be useful,
+--
+-- DVB FPGA is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 -- GNU General Public License for more details.
-
+--
 -- You should have received a copy of the GNU General Public License
--- along with hdl_lib.  If not, see <http://www.gnu.org/licenses/>.
+-- along with DVB FPGA.  If not, see <http://www.gnu.org/licenses/>.
 
 library	ieee;
 use ieee.std_logic_1164.all;  
@@ -73,9 +73,9 @@ architecture sr_delay of sr_delay is
   attribute SHREG_EXTRACT : string;
   attribute SHREG_EXTRACT of din_sr : signal is xilinx_shreg_extract;
 
-  -- Disable X propagation during timing simulation. In the event of a timing violation,
-  -- the previous value is retained on the output instead of going unknown (see Xilinx
-  -- UG625)
+  -- Disable X propagation during timing simulation. In the event of 
+  -- a timing violation, the previous value is retained on the output instead 
+  -- of going unknown (see Xilinx UG625)
   attribute ASYNC_REG : string;
   attribute ASYNC_REG of din_sr : signal is xilinx_async_reg;
 
@@ -84,18 +84,18 @@ begin
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  zd : if DELAY_CYCLES = 0 generate
+  no_delay : if DELAY_CYCLES = 0 generate
     dout <= din;
-  end generate zd;
+  end generate no_delay;
 
-  nzd : if DELAY_CYCLES > 0 generate
+  non_zero_delay : if DELAY_CYCLES > 0 generate
     dout <= din_sr(DELAY_CYCLES - 1);
-  end generate nzd;
+  end generate non_zero_delay;
 
   ---------------
   -- Processes --
   ---------------
-  nzd_p : if DELAY_CYCLES > 0 generate
+  non_zero_delay_p : if DELAY_CYCLES > 0 generate
     process(clk)
     begin
       if clk'event and clk = '1' then
@@ -104,7 +104,6 @@ begin
         end if;
       end if;
     end process;
-  end generate nzd_p;
+  end generate non_zero_delay_p;
 
 end sr_delay;
-
