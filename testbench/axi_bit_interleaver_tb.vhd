@@ -357,5 +357,13 @@ begin
     check_equal(error_cnt, 0);
   end process;
 
+  process
+  begin
+    wait until rising_edge(clk);
+    if rst = '0' then
+      check_equal(error_cnt, 0);
+    end if;
+  end process;
+
 end axi_bit_interleaver_tb;
 
