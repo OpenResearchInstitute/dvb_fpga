@@ -59,8 +59,6 @@ package body common_pkg is
                    "Argument has " & integer'image(v'length)
             severity Failure;
 
-        report "Number of bytes: "  & integer'image(byte_number);
-
         for byte in 0 to byte_number - 1 loop
             result((byte_number - byte) * 8 - 1 downto (byte_number - byte - 1) * 8) := v((byte + 1) * 8 - 1 downto byte * 8);
         end loop;

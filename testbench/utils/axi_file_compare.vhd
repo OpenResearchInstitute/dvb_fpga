@@ -85,7 +85,8 @@ architecture axi_file_compare of axi_file_compare is
   signal tlast_error_cnt_i : unsigned(ERROR_CNT_WIDTH - 1 downto 0);
 
   signal error_cnt_i       : unsigned(ERROR_CNT_WIDTH - 1 downto 0);
-  signal word_cnt          : integer;
+  signal frame_cnt         : integer := 0;
+  signal word_cnt          : integer := 0;
 
   signal expected_tdata    : std_logic_vector(DATA_WIDTH - 1 downto 0);
   signal expected_tvalid   : std_logic;
@@ -138,6 +139,7 @@ begin
       tdata_error_cnt_i <= (others => '0');
       tlast_error_cnt_i <= (others => '0');
       error_cnt_i       <= (others => '0');
+      frame_cnt         <= 0;
       word_cnt          <= 0;
     elsif rising_edge(clk) then
 
@@ -153,7 +155,8 @@ begin
       if axi_data_valid = '1' then
         word_cnt <= word_cnt + 1;
         if s_tlast = '1' then
-          word_cnt <= 0;
+          word_cnt  <= 0;
+          frame_cnt <= frame_cnt + 1;
         end if;
       end if;
 
@@ -164,8 +167,8 @@ begin
           error_cnt_i       <= error_cnt_i + 1;
           tdata_error_cnt_i <= tdata_error_cnt_i + 1;
 
-          report sformat("tdata error in word %r: Expected %r but got %r",
-                         fo(word_cnt), fo(expected_tdata), fo(s_tdata))
+          report sformat("tdata error in frame %d, word %d: Expected %r but got %r",
+                         fo(frame_cnt), fo(word_cnt), fo(expected_tdata), fo(s_tdata))
             severity REPORT_SEVERITY;
         end if;
 
@@ -174,8 +177,8 @@ begin
           error_cnt_i       <= error_cnt_i + 1;
           tlast_error_cnt_i <= tlast_error_cnt_i + 1;
 
-          report sformat("tlast error in word %r: Expected %r but got %r",
-                         fo(word_cnt), fo(expected_tlast), fo(s_tlast))
+          report sformat("tdata error in frame %d, word %d: Expected %r but got %r",
+                         fo(frame_cnt), fo(word_cnt), fo(expected_tlast), fo(s_tlast))
             severity REPORT_SEVERITY;
         end if;
 

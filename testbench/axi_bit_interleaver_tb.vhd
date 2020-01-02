@@ -289,8 +289,12 @@ begin
       if run("run_192_16008_back_to_back") then
         tvalid_probability <= 1.0;
         tready_probability <= 1.0;
-        run_test(mod_16_psk, normal, ldpc_9_10, "interleaver_input.bin", "interleaver_output.bin", 1);
-        -- run_test(ldpc_9_10, "interleaver_input.bin", "interleaver_output.bin", 4);
+        run_test(modulation       => mod_16_psk,
+                 frame_length     => normal,
+                 ldpc_code        => ldpc_9_10,
+                 input_file       => "interleaver_input.bin",
+                 reference_file   => "interleaver_output.bin",
+                 number_of_frames => 1);
         wait_for_transfers(1);
 
       end if;
