@@ -330,6 +330,8 @@ begin
     -- Configure the file reader
     send(net, file_reader, file_reader_msg);
 
+    wait until rising_edge(clk);
+
     -- Keep the config stuff active for a single cycle to make sure blocks use the correct
     -- values
     cfg_bch_code   <= std_logic_vector(to_unsigned(pop_integer(cfg_msg), 2));
