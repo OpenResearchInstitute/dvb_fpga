@@ -43,7 +43,7 @@ entity axi_bit_interleaver is
 
     cfg_modulation   : in  modulation_type;
     cfg_frame_length : in  frame_length_type;
-    cfg_ldpc_code    : in  ldpc_code_type;
+    cfg_code_rate    : in  code_rate_type;
 
     -- AXI input
     s_tvalid         : in  std_logic;
@@ -74,17 +74,17 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
     if frame_length = normal then
       if modulation = mod_8_psk then
         result := 21_600;
-      elsif modulation = mod_16_psk then
+      elsif modulation = mod_16_apsk then
         result := 16_200;
-      elsif modulation = mod_32_psk then
+      elsif modulation = mod_32_apsk then
         result := 12_960;
       end if;
     elsif frame_length = short then
       if modulation = mod_8_psk then
         result := 5_400;
-      elsif modulation = mod_16_psk then
+      elsif modulation = mod_16_apsk then
         result := 4_050;
-      elsif modulation = mod_32_psk then
+      elsif modulation = mod_32_apsk then
         result := 3_240;
       end if;
     end if;
@@ -103,9 +103,9 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   begin
     if modulation = mod_8_psk then
       result := 3;
-    elsif modulation = mod_16_psk then
+    elsif modulation = mod_16_apsk then
       result := 4;
-    elsif modulation = mod_32_psk then
+    elsif modulation = mod_32_apsk then
       result := 5;
     end if;
 
@@ -130,7 +130,7 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   -- Write side config
   signal modulation         : modulation_type;
   signal frame_length       : frame_length_type;
-  signal ldpc_code          : ldpc_code_type;
+  signal code_rate          : code_rate_type;
 
   signal s_axi_dv           : std_logic;
   signal s_tready_i         : std_logic;
@@ -382,13 +382,13 @@ begin
   config_sample_block : block
     signal modulation_ff   : modulation_type;
     signal frame_length_ff : frame_length_type;
-    signal ldpc_code_ff    : ldpc_code_type;
+    signal code_rate_ff    : code_rate_type;
     signal first_word      : std_logic;
   begin
 
     modulation   <= cfg_modulation when first_word = '1' else modulation_ff;
     frame_length <= cfg_frame_length when first_word = '1' else frame_length_ff;
-    ldpc_code    <= cfg_ldpc_code when first_word = '1' else ldpc_code_ff;
+    code_rate    <= cfg_code_rate when first_word = '1' else code_rate_ff;
 
     process(clk, rst)
     begin
@@ -404,7 +404,7 @@ begin
           if first_word = '1' then
             modulation_ff   <= cfg_modulation;
             frame_length_ff <= cfg_frame_length;
-            ldpc_code_ff    <= cfg_ldpc_code;
+            code_rate_ff    <= cfg_code_rate;
 
             wr_row_ptr_max  <= to_unsigned(get_max_row_ptr(cfg_modulation,
                                                            cfg_frame_length),

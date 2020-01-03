@@ -37,6 +37,7 @@ library str_format;
 use str_format.str_format_pkg.all;
 
 use work.dvb_utils_pkg.all;
+use work.testbench_utils_pkg.all;
 
 entity axi_bit_interleaver_tb is
   generic (
@@ -45,40 +46,6 @@ entity axi_bit_interleaver_tb is
 end axi_bit_interleaver_tb;
 
 architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
-
-  procedure push(msg : msg_t; value : modulation_type) is
-  begin
-    -- Push value as a string
-    push(msg.data, modulation_type'image(value));
-  end;
-
-  procedure push(msg : msg_t; value : frame_length_type) is
-  begin
-    -- Push value as a string
-    push(msg.data, frame_length_type'image(value));
-  end;
-
-  procedure push(msg : msg_t; value : ldpc_code_type) is
-  begin
-    -- Push value as a string
-    push(msg.data, ldpc_code_type'image(value));
-  end;
-
-
-  impure function pop(msg : msg_t) return modulation_type is
-  begin
-    return modulation_type'value(pop(msg.data));
-  end;
-
-  impure function pop(msg : msg_t) return frame_length_type is
-  begin
-    return frame_length_type 'value(pop(msg.data));
-  end;
-
-  impure function pop(msg : msg_t) return ldpc_code_type is
-  begin
-    return ldpc_code_type'value(pop(msg.data));
-  end;
 
   ---------------
   -- Constants --
@@ -98,7 +65,7 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
 
   signal cfg_modulation     : modulation_type;
   signal cfg_frame_length   : frame_length_type;
-  signal cfg_ldpc_code      : ldpc_code_type;
+  signal cfg_code_rate      : code_rate_type;
 
   -- AXI input
   signal m_tready           : std_logic;
@@ -139,7 +106,7 @@ begin
 
       cfg_modulation   => cfg_modulation,
       cfg_frame_length => cfg_frame_length,
-      cfg_ldpc_code    => cfg_ldpc_code,
+      cfg_code_rate    => cfg_code_rate,
 
       -- AXI input
       s_tvalid         => m_tvalid,
@@ -229,7 +196,7 @@ begin
     procedure run_test (
       constant modulation       : in  modulation_type;
       constant frame_length     : in  frame_length_type;
-      constant ldpc_code        : in  ldpc_code_type;
+      constant ldpc_code        : in  code_rate_type;
       constant input_file       : in string;
       constant reference_file   : in string;
       constant number_of_frames : in positive) is
@@ -289,7 +256,7 @@ begin
       if run("16_psk_normal_length_ldpc_9/10_back_to_back") then
         tvalid_probability <= 1.0;
         tready_probability <= 1.0;
-        run_test(modulation       => mod_16_psk,
+        run_test(modulation       => mod_16_apsk,
                  frame_length     => normal,
                  ldpc_code        => ldpc_9_10,
                  input_file       => "interleaver_input.bin",
@@ -300,7 +267,18 @@ begin
       elsif run("16_psk_normal_length_ldpc_9/10_slow_master") then
         tvalid_probability <= 0.5;
         tready_probability <= 1.0;
-        run_test(modulation       => mod_16_psk,
+        run_test(modulation       => mod_16_apsk,
+                 frame_length     => normal,
+                 ldpc_code        => ldpc_9_10,
+                 input_file       => "interleaver_input.bin",
+                 reference_file   => "interleaver_output.bin",
+                 number_of_frames => 1);
+        wait_for_transfers(1);
+
+      elsif run("16_psk_normal_length_ldpc_9/10_slow_master_and_slave") then
+        tvalid_probability <= 0.75;
+        tready_probability <= 0.75;
+        run_test(modulation       => mod_16_apsk,
                  frame_length     => normal,
                  ldpc_code        => ldpc_9_10,
                  input_file       => "interleaver_input.bin",
@@ -311,7 +289,7 @@ begin
       -- elsif run("16_psk_normal_length_ldpc_9/10_slow_slave") then
       --   tvalid_probability <= 1.0;
       --   tready_probability <= 0.5;
-      --   run_test(modulation       => mod_16_psk,
+      --   run_test(modulation       => mod_16_apsk,
       --            frame_length     => normal,
       --            ldpc_code        => ldpc_9_10,
       --            input_file       => "interleaver_input.bin",
@@ -360,11 +338,11 @@ begin
     -- values
     cfg_modulation   <= pop(cfg_msg);
     cfg_frame_length <= pop(cfg_msg);
-    cfg_ldpc_code    <= pop(cfg_msg);
+    cfg_code_rate    <= pop(cfg_msg);
     wait until m_data_valid and m_tlast = '0' and rising_edge(clk);
     cfg_modulation   <= not_set;
     cfg_frame_length <= not_set;
-    cfg_ldpc_code    <= not_set;
+    cfg_code_rate    <= not_set;
 
     wait until m_data_valid and m_tlast = '1';
 
