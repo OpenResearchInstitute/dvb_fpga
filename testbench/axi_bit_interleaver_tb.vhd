@@ -286,7 +286,7 @@ begin
       tvalid_probability <= 1.0;
       tready_probability <= 1.0;
 
-      if run("run_192_16008_back_to_back") then
+      if run("16_psk_normal_length_ldpc_9/10_back_to_back") then
         tvalid_probability <= 1.0;
         tready_probability <= 1.0;
         run_test(modulation       => mod_16_psk,
@@ -296,6 +296,28 @@ begin
                  reference_file   => "interleaver_output.bin",
                  number_of_frames => 1);
         wait_for_transfers(1);
+
+      elsif run("16_psk_normal_length_ldpc_9/10_slow_master") then
+        tvalid_probability <= 0.5;
+        tready_probability <= 1.0;
+        run_test(modulation       => mod_16_psk,
+                 frame_length     => normal,
+                 ldpc_code        => ldpc_9_10,
+                 input_file       => "interleaver_input.bin",
+                 reference_file   => "interleaver_output.bin",
+                 number_of_frames => 1);
+        wait_for_transfers(1);
+
+      -- elsif run("16_psk_normal_length_ldpc_9/10_slow_slave") then
+      --   tvalid_probability <= 1.0;
+      --   tready_probability <= 0.5;
+      --   run_test(modulation       => mod_16_psk,
+      --            frame_length     => normal,
+      --            ldpc_code        => ldpc_9_10,
+      --            input_file       => "interleaver_input.bin",
+      --            reference_file   => "interleaver_output.bin",
+      --            number_of_frames => 1);
+      --   wait_for_transfers(1);
 
       end if;
 
@@ -331,6 +353,8 @@ begin
 
     -- Configure the file reader
     send(net, file_reader, file_reader_msg);
+
+    wait until rising_edge(clk);
 
     -- Keep the config stuff active for a single cycle to make sure blocks use the correct
     -- values

@@ -128,43 +128,47 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   -- Signals --
   -------------
   -- Write side config
-  signal modulation     : modulation_type;
-  signal frame_length   : frame_length_type;
-  signal ldpc_code      : ldpc_code_type;
+  signal modulation         : modulation_type;
+  signal frame_length       : frame_length_type;
+  signal ldpc_code          : ldpc_code_type;
 
-  signal s_axi_dv       : std_logic;
-  signal s_tready_i     : std_logic;
+  signal s_axi_dv           : std_logic;
+  signal s_tready_i         : std_logic;
 
-  signal m_axi_dv       : std_logic;
-  signal m_tvalid_i     : std_logic := '0';
-  signal m_tlast_i      : std_logic := '0';
+  signal wr_row_ptr_max     : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal wr_col_ptr_max     : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
 
-  signal wr_row_ptr_max : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal wr_col_ptr_max : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal wr_row_ptr         : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal wr_col_ptr         : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal wr_ram_ptr         : unsigned(1 downto 0);
 
-  signal wr_row_ptr     : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal wr_col_ptr     : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal wr_ram_ptr     : unsigned(1 downto 0);
+  signal ram_wren           : std_logic_vector(MAX_COLUMNS - 1 downto 0);
+  signal ram_wraddr         : std_logic_vector(numbits(MAX_ROWS) downto 0);
+  signal ram_wrdata         : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
-  signal ram_wren       : std_logic_vector(MAX_COLUMNS - 1 downto 0);
-  signal ram_wraddr     : std_logic_vector(numbits(MAX_ROWS) downto 0);
-  signal ram_wrdata     : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal rd_row_ptr_max     : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal rd_col_ptr_max     : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal rd_ram_ptr         : unsigned(1 downto 0);
 
-  signal rd_row_ptr_max : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal rd_col_ptr_max : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
-  signal rd_ram_ptr     : unsigned(1 downto 0);
+  signal rd_row_ptr         : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal rd_col_ptr         : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal rd_col_ptr_0       : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
 
-  signal rd_row_ptr     : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal rd_col_ptr     : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal ram_rdaddr         : std_logic_vector(numbits(MAX_ROWS) downto 0);
+  signal ram_rddata         : data_array_type(0 to MAX_COLUMNS - 1);
 
-  signal ram_rdaddr     : std_logic_vector(numbits(MAX_ROWS) downto 0);
-  signal ram_rddata     : data_array_type(0 to MAX_COLUMNS - 1);
+  signal rd_data_sr         : std_logic_vector(MAX_COLUMNS*DATA_WIDTH - 1 downto 0);
 
-  signal rd_data_sr     : std_logic_vector(MAX_COLUMNS*DATA_WIDTH - 1 downto 0);
+  signal interleaved_3_cols : std_logic_vector(3*DATA_WIDTH - 1 downto 0);
+  signal interleaved_4_cols : std_logic_vector(4*DATA_WIDTH - 1 downto 0);
+  signal interleaved_5_cols : std_logic_vector(5*DATA_WIDTH - 1 downto 0);
 
-  signal interleaved_3_columns : std_logic_vector(3*DATA_WIDTH - 1 downto 0);
-  signal interleaved_4_columns : std_logic_vector(4*DATA_WIDTH - 1 downto 0);
-  signal interleaved_5_columns : std_logic_vector(5*DATA_WIDTH - 1 downto 0);
+  signal m_wr_en            : std_logic := '0';
+  signal m_wr_en_0          : std_logic := '0';
+  signal m_wr_full          : std_logic;
+  signal m_wr_data          : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal m_wr_last          : std_logic := '0';
+  signal m_wr_last_0        : std_logic := '0';
 
 begin
 
@@ -195,50 +199,68 @@ begin
         rddata_b  => ram_rddata(column));
   end generate generate_rams;
 
+  -- Interleaved data takes 1 cycle after the address has changed, add support for
+  -- a couple of cycles to stop the pipeline
+  axi_master_adapter_u : entity work.axi_stream_master_adapter
+    generic map (
+      MAX_SKEW_CYCLES => 2,
+      TDATA_WIDTH     => DATA_WIDTH)
+    port map (
+      -- Usual ports
+      clk      => clk,
+      reset    => rst,
+      -- wanna-be AXI interface
+      wr_en    => m_wr_en_0,
+      wr_full  => m_wr_full,
+      wr_data  => m_wr_data,
+      wr_last  => m_wr_last_0,
+      -- AXI master
+      m_tvalid => m_tvalid,
+      m_tready => m_tready,
+      m_tdata  => m_tdata,
+      m_tlast  => m_tlast);
+
+  ------------------------------
+  -- Asynchronous assignments --
+  ------------------------------
+  m_wr_data <= rd_data_sr(DATA_WIDTH - 1 downto 0);
+
   -- Assign the interleaved data statically
   iter_rows : for row in 0 to DATA_WIDTH - 1 generate
     iter_columns : for column in 0 to 5 generate
 
       interleaved_columns_3 : if column < 3 generate
-        interleaved_3_columns(3*DATA_WIDTH - (3 * row + column) - 1)
+        interleaved_3_cols(3*DATA_WIDTH - (3 * row + column) - 1)
           <= ram_rddata(column)(DATA_WIDTH - row - 1);
       end generate interleaved_columns_3;
 
       interleaved_columns_4 : if column < 4 generate
-        interleaved_4_columns(4*DATA_WIDTH - (4 * row + column) - 1) <=
-          ram_rddata(column)(DATA_WIDTH - row - 1);
+        interleaved_4_cols(4*DATA_WIDTH - (4 * row + column) - 1)
+          <= ram_rddata(column)(DATA_WIDTH - row - 1);
       end generate interleaved_columns_4;
 
       interleaved_columns_5 : if column < 5 generate
-        interleaved_5_columns(5*DATA_WIDTH - (5 * row + column) - 1) <=
-          ram_rddata(column)(DATA_WIDTH - row - 1);
+        interleaved_5_cols(5*DATA_WIDTH - (5 * row + column) - 1)
+          <= ram_rddata(column)(DATA_WIDTH - row - 1);
       end generate interleaved_columns_5;
 
     end generate iter_columns;
   end generate iter_rows;
 
-  ------------------------------
-  -- Asynchronous assignments --
-  ------------------------------
+
   s_axi_dv <= '1' when s_tready_i = '1' and s_tvalid = '1' else '0';
-  m_axi_dv <= '1' when m_tready = '1' and m_tvalid_i = '1' else '0';
 
   s_tready_i <= m_tready when wr_ram_ptr - rd_ram_ptr < 2 else '0';
 
-  m_tvalid   <= m_tvalid_i;
-
   -- Assign internals
   s_tready <= s_tready_i;
-  m_tvalid <= m_tvalid_i;
-  m_tlast  <= m_tlast_i;
 
   ram_rdaddr <= rd_ram_ptr(0) & std_logic_vector(rd_row_ptr);
 
-  ---------------
-  -- Processes --
-  ---------------
-  process(clk, rst)
-    variable rd_data_sr_next : std_logic_vector(MAX_COLUMNS * DATA_WIDTH - 1 downto 0);
+  --------------------------------
+  -- Handle write side pointers --
+  --------------------------------
+  write_side_p : process(clk, rst)
   begin
     if rst = '1' then
       wr_row_ptr     <= (others => '0');
@@ -248,30 +270,26 @@ begin
       rd_row_ptr_max <= (others => '1');
       rd_col_ptr_max <= (others => '1');
 
-      rd_row_ptr     <= (others => '0');
-      rd_col_ptr     <= (others => '0');
-      rd_ram_ptr     <= (others => '0');
     elsif clk'event and clk = '1' then
 
       ram_wren <= (others => '0');
 
-      -- Handle write side pointers
       if s_axi_dv = '1' then
         ram_wren(to_integer(wr_col_ptr)) <= '1';
 
         ram_wrdata <= s_tdata;
         ram_wraddr <= wr_ram_ptr(0) & std_logic_vector(wr_row_ptr);
 
-        if wr_row_ptr = wr_row_ptr_max then
+        if wr_row_ptr /= wr_row_ptr_max then
+          wr_row_ptr <= wr_row_ptr + 1;
+        else
           wr_row_ptr <= (others => '0');
 
-          if wr_col_ptr = wr_col_ptr_max then
-            wr_col_ptr <= (others => '0');
-          else
+          if wr_col_ptr /= wr_col_ptr_max then
             wr_col_ptr <= wr_col_ptr + 1;
+          else
+            wr_col_ptr <= (others => '0');
           end if;
-        else
-          wr_row_ptr <= wr_row_ptr + 1;
         end if;
 
         -- When the frame ends, hand over the parameters to the read side
@@ -283,70 +301,84 @@ begin
           rd_col_ptr_max <= to_unsigned(get_max_column_ptr(modulation),
                                         numbits(MAX_COLUMNS));
 
-          -- -- rd_col_ptr_max is the number of columns - 1
-          -- if wr_col_ptr_max = 2 then -- 3 columns
-          --   rd_data_sr_next := (2*DATA_WIDTH - 1 downto 0 => 'U')
-          --     & swap_bytes(interleaved_3_columns);
-          -- elsif wr_col_ptr_max = 3 then -- 4 columns
-          --   rd_data_sr_next := (DATA_WIDTH - 1 downto 0 => 'U')
-          --     & swap_bytes(interleaved_4_columns);
-          -- elsif wr_col_ptr_max = 4 then -- 5 columns
-          --   rd_data_sr_next := swap_bytes(interleaved_5_columns);
-          -- end if;
-
-          -- rd_data_sr <= rd_data_sr_next;
-
-          -- m_tdata    <= rd_data_sr_next(DATA_WIDTH - 1 downto 0);
-          -- m_tvalid_i <= '1';
-
         end if;
       end if;
+    end if;
+  end process write_side_p;
 
+  -------------------------------
+  -- Handle read side pointers --
+  -------------------------------
+  read_side_p : process(clk, rst)
+  begin
+    if rst = '1' then
+      rd_row_ptr <= (others => '0');
+      rd_col_ptr <= (others => '0');
+      rd_ram_ptr <= (others => '0');
+    elsif clk'event and clk = '1' then
 
-      -- Handle read side pointers
-      if rd_ram_ptr /= wr_ram_ptr then
+      m_wr_en   <= '0';
+      m_wr_last <= '0';
 
-        if rd_col_ptr = 0 then
-          -- rd_col_ptr_max is the number of columns - 1
-          if rd_col_ptr_max = 2 then -- 3 columns
-            rd_data_sr_next := (2*DATA_WIDTH - 1 downto 0 => 'U')
-              & swap_bytes(interleaved_3_columns);
-          elsif rd_col_ptr_max = 3 then -- 4 columns
-            rd_data_sr_next := (DATA_WIDTH - 1 downto 0 => 'U')
-              & swap_bytes(interleaved_4_columns);
-          elsif rd_col_ptr_max = 4 then -- 5 columns
-            rd_data_sr_next := swap_bytes(interleaved_5_columns);
+      -- Data comes out of the RAMs 1 cycle after the address has changed, need to keep
+      -- track of the actual value being handled
+      rd_col_ptr_0 <= rd_col_ptr;
+      m_wr_en_0    <= m_wr_en;
+      m_wr_last_0  <= m_wr_last;
+
+      if m_wr_full = '0' and rd_ram_ptr /= wr_ram_ptr then
+
+        -- If pointers are different and the AXI adapter has space, keep writing
+        m_wr_en <= '1';
+
+        if m_wr_last = '1' then
+          rd_ram_ptr <= rd_ram_ptr + 1;
+          m_wr_en    <= '0';
+        end if;
+
+        -- Read pointers control logic
+        if rd_col_ptr /= rd_col_ptr_max then
+          rd_col_ptr <= rd_col_ptr + 1;
+        else
+          rd_col_ptr <= (others => '0');
+
+          if rd_row_ptr /= rd_row_ptr_max then
+            rd_row_ptr <= rd_row_ptr + 1;
+          else
+            rd_row_ptr <= (others => '0');
+            m_wr_last  <= '1';
+          end if;
+        end if;
+
+        if rd_col_ptr_0 = 0 then
+          -- Assign to undefined so we can track in simulation the parts that we not
+          -- assigned
+          rd_data_sr <= (others => 'U');
+
+          -- Reminder that rd_col_ptr_max is the number of columns - 1
+          -- Also, we'll swap byte ordering (e.g ABCD becomes DCBA) because it's easier to
+          -- assign the write data from the shift register's LSB
+          if rd_col_ptr_max = 2 then                         -- 3 columns
+            rd_data_sr(interleaved_3_cols'range) <= swap_bytes(interleaved_3_cols);
+          elsif rd_col_ptr_max = 3 then                      -- 4 columns
+            rd_data_sr(interleaved_4_cols'range) <= swap_bytes(interleaved_4_cols);
+          elsif rd_col_ptr_max = 4 then                      -- 5 columns
+            rd_data_sr <= swap_bytes(interleaved_5_cols);
           end if;
         else
-          rd_data_sr_next := (DATA_WIDTH - 1 downto 0 => 'U')
+          -- We'll write the LSB, shift data right
+          rd_data_sr <= (DATA_WIDTH - 1 downto 0 => 'U')
             & rd_data_sr(rd_data_sr'length - 1 downto DATA_WIDTH);
         end if;
 
-        m_tdata    <= rd_data_sr_next(DATA_WIDTH - 1 downto 0);
-        m_tvalid_i <= '1';
-
-        rd_data_sr <= rd_data_sr_next;
-
-        if rd_col_ptr = rd_col_ptr_max then
-          rd_col_ptr <= (others => '0');
-
-          if rd_row_ptr = rd_row_ptr_max then
-            rd_row_ptr <= (others => '0');
-            rd_ram_ptr <= rd_ram_ptr + 1;
-          else
-            rd_row_ptr <= rd_row_ptr + 1;
-          end if;
-
-        else
-          rd_col_ptr <= rd_col_ptr + 1;
-        end if;
       end if;
 
     end if;
-  end process;
+  end process read_side_p;
 
-  -- The BCH code is valid at the first word of the frame, but we must not rely on the
-  -- user keeping it unchanged. Hide this on a block to leave the core code a bit cleaner
+  -- The config ports are valid at the first word of the frame, but we must not rely on
+  -- the user keeping it unchanged. Hide this on a block to leave the core code a bit
+  -- cleaner
   config_sample_block : block
     signal modulation_ff   : modulation_type;
     signal frame_length_ff : frame_length_type;
