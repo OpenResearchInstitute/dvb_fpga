@@ -13,13 +13,18 @@ Early work, but the idea is:
 pip install vunit-hdl
 # Clone this repo and submodules
 git clone --recurse-submodules  https://github.com/phase4ground/dvb_fpga
-# Run the tests
 cd dvb_fpga
+# Generate test data
+cd gnuradio_data/
+make all
+cd ..
+# Run the tests
 ./run.py
 ```
 
 ### Requirements
 
+* GNU Radio
 * A mixed language simulator
 * [VUnit][vunit]
 
