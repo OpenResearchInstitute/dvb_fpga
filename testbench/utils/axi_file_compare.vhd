@@ -58,6 +58,9 @@ entity axi_file_compare is
     tlast_error_cnt    : out std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
     error_cnt          : out std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
     tready_probability : in real range 0.0 to 1.0 := 1.0;
+    -- Debug stuff
+    expected_tdata     : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+    expected_tlast     : out std_logic;
     -- Data input
     s_tready           : out std_logic;
     s_tdata            : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
@@ -88,9 +91,9 @@ architecture axi_file_compare of axi_file_compare is
   signal frame_cnt         : integer := 0;
   signal word_cnt          : integer := 0;
 
-  signal expected_tdata    : std_logic_vector(DATA_WIDTH - 1 downto 0);
-  signal expected_tvalid   : std_logic;
-  signal expected_tlast    : std_logic;
+  signal expected_tdata_i  : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal expected_tvalid_i : std_logic;
+  signal expected_tlast_i  : std_logic;
 
 begin
 
@@ -112,9 +115,9 @@ begin
     
     -- Data output
     m_tready           => axi_data_valid,
-    m_tdata            => expected_tdata,
-    m_tvalid           => expected_tvalid,
-    m_tlast            => expected_tlast);
+    m_tdata            => expected_tdata_i,
+    m_tvalid           => expected_tvalid_i,
+    m_tlast            => expected_tlast_i);
 
   ------------------------------
   -- Asynchronous assignments --
@@ -123,8 +126,11 @@ begin
   tdata_error_cnt <= std_logic_vector(tdata_error_cnt_i);
   tlast_error_cnt <= std_logic_vector(tlast_error_cnt_i);
 
-  s_tready       <= s_tready_i when expected_tvalid = '1' else '0';
-  axi_data_valid <= '1' when s_tready_i = '1' and s_tvalid = '1' and expected_tvalid = '1'
+  expected_tdata  <= expected_tdata_i;
+  expected_tlast  <= expected_tlast_i;
+
+  s_tready       <= s_tready_i when expected_tvalid_i = '1' else '0';
+  axi_data_valid <= '1' when s_tready_i = '1' and s_tvalid = '1' and expected_tvalid_i = '1'
                     else '0';
 
   ---------------
@@ -162,23 +168,23 @@ begin
 
       -- Count errors
       if axi_data_valid = '1' then
-        if s_tdata /= expected_tdata then
+        if s_tdata /= expected_tdata_i then
           tdata_error_i     <= '1';
           error_cnt_i       <= error_cnt_i + 1;
           tdata_error_cnt_i <= tdata_error_cnt_i + 1;
 
           report sformat("tdata error in frame %d, word %d: Expected %r but got %r",
-                         fo(frame_cnt), fo(word_cnt), fo(expected_tdata), fo(s_tdata))
+                         fo(frame_cnt), fo(word_cnt), fo(expected_tdata_i), fo(s_tdata))
             severity REPORT_SEVERITY;
         end if;
 
-        if s_tlast /= expected_tlast then
+        if s_tlast /= expected_tlast_i then
           tlast_error_i     <= '1';
           error_cnt_i       <= error_cnt_i + 1;
           tlast_error_cnt_i <= tlast_error_cnt_i + 1;
 
           report sformat("tdata error in frame %d, word %d: Expected %r but got %r",
-                         fo(frame_cnt), fo(word_cnt), fo(expected_tlast), fo(s_tlast))
+                         fo(frame_cnt), fo(word_cnt), fo(expected_tlast_i), fo(s_tlast))
             severity REPORT_SEVERITY;
         end if;
 
