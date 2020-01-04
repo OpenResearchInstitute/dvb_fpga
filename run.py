@@ -20,11 +20,10 @@
 # You should have received a copy of the GNU General Public License
 # along with DVB FPGA.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=bad-continuation
 
 import os.path as p
-import struct
 import sys
-import tempfile
 from collections import namedtuple
 
 from vunit import VUnit  # type: ignore
@@ -53,10 +52,10 @@ def main():
         p.join(ROOT, "third_party", "hdl_string_format", "src", "*.vhd")
     )
 
-    add_axi_stream_delay_tb_tests(cli)
-    add_axi_file_reader_tb_tests(cli)
-    add_axi_bit_interleaver_tests(cli)
-    add_axi_bch_encoder_tests(cli)
+    addAxiStreamDelayTests(cli)
+    addAxiFileReaderTests(cli)
+    addAxiBitInterleaverTests(cli)
+    addAxiBchEncoderTests(cli)
 
     cli.set_compile_option("modelsim.vcom_flags", ["-novopt", "-explicit"])
     cli.set_sim_option("modelsim.vsim_flags", ["-novopt"])
@@ -68,7 +67,7 @@ def main():
 Parameters = namedtuple("Parameters", ("modulation", "frame_length", "code_rate"))
 
 
-def _iter_params():
+def _iterParams():
     for modulation_type in ("mod_8psk", "mod_16apsk", "mod_32apsk"):
         for frame_length in ("normal",):  # "short"):
             for code_rate in (
@@ -87,12 +86,12 @@ def _iter_params():
                 yield Parameters(modulation_type, frame_length, code_rate)
 
 
-def add_axi_bch_encoder_tests(cli):
+def addAxiBchEncoderTests(cli):
     axi_bch_encoder_tb = cli.library("lib").entity("axi_bch_encoder_tb")
 
     test_cfg = []
 
-    for modulation, frame_length, code_rate in _iter_params():
+    for modulation, frame_length, code_rate in _iterParams():
 
         data_files = p.join(
             ROOT,
@@ -124,10 +123,10 @@ def add_axi_bch_encoder_tests(cli):
     axi_bch_encoder_tb.add_config(name="all", generics={"test_cfg": ":".join(test_cfg)})
 
 
-def add_axi_bit_interleaver_tests(cli):
+def addAxiBitInterleaverTests(cli):
     axi_bit_interleaver_tb = cli.library("lib").entity("axi_bit_interleaver_tb")
 
-    for modulation, frame_length, code_rate in _iter_params():
+    for modulation, frame_length, code_rate in _iterParams():
 
         data_files = p.join(
             ROOT,
@@ -152,7 +151,7 @@ def add_axi_bit_interleaver_tests(cli):
         )
 
 
-def add_axi_stream_delay_tb_tests(cli):
+def addAxiStreamDelayTests(cli):
     axi_stream_delay_tb = cli.library("lib").entity("axi_stream_delay_tb")
 
     for delay in (1, 2, 8):
@@ -161,14 +160,14 @@ def add_axi_stream_delay_tb_tests(cli):
         )
 
 
-def add_axi_file_reader_tb_tests(cli):
+def addAxiFileReaderTests(cli):
     axi_file_reader_tb = cli.library("lib").entity("axi_file_reader_tb")
 
     #  filename = "/home/souto/test.bin"
     #  filename = "/home/souto/phase4ground/bch_tests/bch_input.bin"
     filename = "/home/souto/phase4ground/bch_tests/golden_input.bin"
 
-    for data_width, fmt in ((8, "B"), (32, "I")):
+    for data_width in (8, 32):
         for bytes_are_bits in (False, True):
 
             ref_filename = f"dw_{data_width}_bytes_are_bits_{bytes_are_bits}.bin"
