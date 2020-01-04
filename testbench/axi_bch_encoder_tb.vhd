@@ -38,6 +38,7 @@ use str_format.str_format_pkg.all;
 
 use work.dvb_utils_pkg.all;
 use work.testbench_utils_pkg.all;
+use work.file_utils_pkg.all;
 
 entity axi_bch_encoder_tb is
   generic (
@@ -86,12 +87,11 @@ architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
   signal m_data_valid       : boolean;
   signal s_data_valid       : boolean;
 
+  signal expected_tdata     : std_logic_vector(TDATA_WIDTH - 1 downto 0);
+  signal expected_tlast     : std_logic;
   signal tdata_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
   signal tlast_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
   signal error_cnt          : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
-
-  --
-  signal read_completed     : std_logic;
 
 begin
 
@@ -125,15 +125,13 @@ begin
   axi_file_reader_u : entity work.axi_file_reader
     generic map (
       READER_NAME      => FILE_READER_NAME,
-      DATA_WIDTH       => TDATA_WIDTH,
-      BYTES_ARE_BITS   => True,
-      INPUT_DATA_RATIO => "1:8")
+      DATA_WIDTH       => TDATA_WIDTH)
     port map (
       -- Usual ports
       clk                => clk,
       rst                => rst,
       -- Config and status
-      completed          => read_completed,
+      completed          => open,
       tvalid_probability => tvalid_probability,
 
       -- Data output
@@ -147,8 +145,7 @@ begin
       READER_NAME     => FILE_CHECKER_NAME,
       ERROR_CNT_WIDTH => ERROR_CNT_WIDTH,
       REPORT_SEVERITY => Warning,
-      DATA_WIDTH      => TDATA_WIDTH,
-      INPUT_DATA_RATIO => "1:8")
+      DATA_WIDTH      => TDATA_WIDTH)
     port map (
       -- Usual ports
       clk                => clk,
@@ -158,7 +155,9 @@ begin
       tlast_error_cnt    => tlast_error_cnt,
       error_cnt          => error_cnt,
       tready_probability => tready_probability,
-
+      -- Debug stuff
+      expected_tdata     => expected_tdata,
+      expected_tlast     => expected_tlast,
       -- Data input
       s_tready           => s_tready,
       s_tdata            => s_tdata,
@@ -214,10 +213,12 @@ begin
         file_reader_msg.sender := self;
         file_checker_msg.sender := self;
 
-        push(file_reader_msg, config.input_file);
+        push_file_reader_cfg(file_reader_msg, (config.input_file, (1, 8)));
+
         push(file_reader_msg, config.frame_type);
         push(file_reader_msg, config.code_rate);
-        push(file_checker_msg, config.reference_file);
+
+        push_file_reader_cfg(file_checker_msg, (config.reference_file, (1, 8)));
 
         send(net, input_cfg_p, file_reader_msg);
         send(net, file_checker, file_checker_msg);
@@ -321,7 +322,8 @@ begin
 
     file_reader_msg        := new_msg;
     file_reader_msg.sender := self;
-    push(file_reader_msg, pop_string(cfg_msg));
+
+    push_file_reader_cfg(file_reader_msg, pop(cfg_msg));
 
     -- Configure the file reader
     send(net, file_reader, file_reader_msg);
@@ -331,7 +333,7 @@ begin
     -- Keep the config stuff active for a single cycle to make sure blocks use the correct
     -- values
     cfg_frame_type <= pop(cfg_msg);
-    cfg_code_rate    <= pop(cfg_msg);
+    cfg_code_rate  <= pop(cfg_msg);
     wait until m_data_valid and m_tlast = '0' and rising_edge(clk);
     cfg_frame_type <= not_set;
     cfg_code_rate  <= not_set;
@@ -360,4 +362,3 @@ begin
   end process;
 
 end axi_bch_encoder_tb;
-

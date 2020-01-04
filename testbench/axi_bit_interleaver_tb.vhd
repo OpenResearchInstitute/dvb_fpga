@@ -38,6 +38,7 @@ use str_format.str_format_pkg.all;
 
 use work.dvb_utils_pkg.all;
 use work.testbench_utils_pkg.all;
+use work.file_utils_pkg.all;
 
 entity axi_bit_interleaver_tb is
   generic (
@@ -57,6 +58,29 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   constant CLK_PERIOD        : time := 5 ns;
   constant TDATA_WIDTH       : integer := 8;
   constant ERROR_CNT_WIDTH   : integer := 8;
+
+  function get_checker_data_ratio ( constant modulation : in modulation_type)
+  return data_ratio_type is
+  begin
+    if modulation = mod_8psk then
+      Warning("Using data ratio of 3:8");
+      return (output => 3, input => 8);
+    end if;
+    if modulation = mod_16apsk then
+      Warning("Using data ratio of 4:8");
+      return (output => 4, input => 8);
+    end if;
+    if modulation = mod_32apsk then
+      Warning("Using data ratio of 5:8");
+      return (output => 5, input => 8);
+    end if;
+
+    assert False
+      report "Could not get ratio..."
+      severity Failure;
+
+    return (1, 1);
+  end function;
 
   -------------
   -- Signals --
@@ -87,12 +111,11 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   signal m_data_valid       : boolean;
   signal s_data_valid       : boolean;
 
+  signal expected_tdata     : std_logic_vector(TDATA_WIDTH - 1 downto 0);
+  signal expected_tlast     : std_logic;
   signal tdata_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
   signal tlast_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
   signal error_cnt          : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
-
-  --
-  signal read_completed     : std_logic;
 
 begin
 
@@ -103,39 +126,37 @@ begin
     generic map ( DATA_WIDTH => TDATA_WIDTH )
     port map (
       -- Usual ports
-      clk              => clk,
-      rst              => rst,
+      clk            => clk,
+      rst            => rst,
 
-      cfg_modulation   => cfg_modulation,
+      cfg_modulation => cfg_modulation,
       cfg_frame_type => cfg_frame_type,
-      cfg_code_rate    => cfg_code_rate,
+      cfg_code_rate  => cfg_code_rate,
 
       -- AXI input
-      s_tvalid         => m_tvalid,
-      s_tdata          => m_tdata,
-      s_tlast          => m_tlast,
-      s_tready         => m_tready,
+      s_tvalid       => m_tvalid,
+      s_tdata        => m_tdata,
+      s_tlast        => m_tlast,
+      s_tready       => m_tready,
 
       -- AXI output
-      m_tready         => s_tready,
-      m_tvalid         => s_tvalid,
-      m_tlast          => s_tlast,
-      m_tdata          => s_tdata);
+      m_tready       => s_tready,
+      m_tvalid       => s_tvalid,
+      m_tlast        => s_tlast,
+      m_tdata        => s_tdata);
 
 
   -- AXI file read
   axi_file_reader_u : entity work.axi_file_reader
     generic map (
       READER_NAME      => FILE_READER_NAME,
-      DATA_WIDTH       => TDATA_WIDTH,
-      BYTES_ARE_BITS   => False,
-      INPUT_DATA_RATIO => "1:8")
+      DATA_WIDTH       => TDATA_WIDTH)
     port map (
       -- Usual ports
       clk                => clk,
       rst                => rst,
       -- Config and status
-      completed          => read_completed,
+      completed          => open,
       tvalid_probability => tvalid_probability,
 
       -- Data output
@@ -149,8 +170,7 @@ begin
       READER_NAME      => FILE_CHECKER_NAME,
       ERROR_CNT_WIDTH  => ERROR_CNT_WIDTH,
       REPORT_SEVERITY  => Warning,
-      DATA_WIDTH       => TDATA_WIDTH,
-      INPUT_DATA_RATIO => "4:8")
+      DATA_WIDTH       => TDATA_WIDTH)
     port map (
       -- Usual ports
       clk                => clk,
@@ -160,7 +180,9 @@ begin
       tlast_error_cnt    => tlast_error_cnt,
       error_cnt          => error_cnt,
       tready_probability => tready_probability,
-
+      -- Debug stuff
+      expected_tdata     => expected_tdata,
+      expected_tlast     => expected_tlast,
       -- Data input
       s_tready           => s_tready,
       s_tdata            => s_tdata,
@@ -216,11 +238,15 @@ begin
         file_reader_msg.sender := self;
         file_checker_msg.sender := self;
 
-        push(file_reader_msg, config.input_file);
+        push_file_reader_cfg(file_reader_msg, (config.input_file, (1, 8)));
+
         push(file_reader_msg, config.modulation);
         push(file_reader_msg, config.frame_type);
         push(file_reader_msg, config.code_rate);
-        push(file_checker_msg, config.reference_file);
+
+        push_file_reader_cfg(
+          file_checker_msg,
+          (config.reference_file, get_checker_data_ratio(config.modulation)));
 
         send(net, input_cfg_p, file_reader_msg);
         send(net, file_checker, file_checker_msg);
@@ -324,7 +350,8 @@ begin
 
     file_reader_msg        := new_msg;
     file_reader_msg.sender := self;
-    push(file_reader_msg, pop_string(cfg_msg));
+
+    push_file_reader_cfg(file_reader_msg, pop(cfg_msg));
 
     -- Configure the file reader
     send(net, file_reader, file_reader_msg);
@@ -333,13 +360,13 @@ begin
 
     -- Keep the config stuff active for a single cycle to make sure blocks use the correct
     -- values
-    cfg_modulation   <= pop(cfg_msg);
+    cfg_modulation <= pop(cfg_msg);
     cfg_frame_type <= pop(cfg_msg);
-    cfg_code_rate    <= pop(cfg_msg);
+    cfg_code_rate  <= pop(cfg_msg);
     wait until m_data_valid and m_tlast = '0' and rising_edge(clk);
-    cfg_modulation   <= not_set;
+    cfg_modulation <= not_set;
     cfg_frame_type <= not_set;
-    cfg_code_rate    <= not_set;
+    cfg_code_rate  <= not_set;
 
     wait until m_data_valid and m_tlast = '1';
 
@@ -365,4 +392,3 @@ begin
   end process;
 
 end axi_bit_interleaver_tb;
-

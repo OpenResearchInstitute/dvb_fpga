@@ -44,15 +44,14 @@ use work.file_utils_pkg.all;
 ------------------------
 entity axi_file_reader_tb is
   generic (
-    runner_cfg     : string;
-    DATA_WIDTH     : integer;
-    FILE_NAME      : string;
-    BYTES_ARE_BITS : boolean);
+    runner_cfg : string;
+    DATA_WIDTH : integer;
+    FILE_NAME  : string);
 end axi_file_reader_tb;
 
 architecture axi_file_reader_tb of axi_file_reader_tb is
 
-  constant DATA_RATIO : ratio := parse_data_ratio("1:8", DATA_WIDTH);
+  constant DATA_RATIO : data_ratio_type := parse_data_ratio("1:8", DATA_WIDTH);
 
   -- Generates data for when BYTES_ARE_BITS is set to False
   impure function generate_regular_data ( constant length : positive)
@@ -111,11 +110,11 @@ architecture axi_file_reader_tb of axi_file_reader_tb is
 
   procedure create_file (constant length : positive) is
   begin
-    if BYTES_ARE_BITS then
-      write_binary_file(FILE_NAME, generate_unpacked_data(length));
-    else
+    -- if BYTES_ARE_BITS then
+    --   write_binary_file(FILE_NAME, generate_unpacked_data(length));
+    -- else
       write_binary_file(FILE_NAME, generate_regular_data(length));
-    end if;
+    -- end if;
   end procedure create_file;
 
   ---------------
@@ -146,11 +145,7 @@ begin
   dut : entity work.axi_file_reader
     generic map (
       READER_NAME    => READER_NAME,
-      DATA_WIDTH     => DATA_WIDTH,
-      -- GNU Radio does not have bit format, so most blocks use 1 bit per byte. Set this to
-      -- True to use the LSB to form a data word
-      BYTES_ARE_BITS => BYTES_ARE_BITS,
-      INPUT_DATA_RATIO  => "1:8")
+      DATA_WIDTH     => DATA_WIDTH)
     port map (
       -- Usual ports
       clk                => clk,

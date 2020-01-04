@@ -44,11 +44,7 @@ entity axi_file_compare is
     ERROR_CNT_WIDTH : natural := 8;
     REPORT_SEVERITY : severity_level := Warning;
     -- axi_file_reader config
-    DATA_WIDTH      : positive := 1;
-    -- GNU Radio does not have bit format, so most blocks use 1 bit per byte. Set this to
-    -- True to use the LSB to form a data word
-    BYTES_ARE_BITS  : boolean := False;
-    INPUT_DATA_RATIO : string := "");
+    DATA_WIDTH      : positive := 1);
   port (
     -- Usual ports
     clk                : in  std_logic;
@@ -102,9 +98,8 @@ begin
   -------------------
   axi_file_reader_u : entity work.axi_file_reader
   generic map (
-    READER_NAME      => READER_NAME,
-    DATA_WIDTH       => DATA_WIDTH,
-    INPUT_DATA_RATIO => INPUT_DATA_RATIO)
+    READER_NAME => READER_NAME,
+    DATA_WIDTH  => DATA_WIDTH)
   port map (
     -- Usual ports
     clk                => clk,

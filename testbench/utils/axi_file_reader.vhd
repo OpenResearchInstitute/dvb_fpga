@@ -42,18 +42,15 @@ library str_format;
 use str_format.str_format_pkg.all;
 
 use work.file_utils_pkg.all;
+use work.testbench_utils_pkg.all;
 
 ------------------------
 -- Entity declaration --
 ------------------------
 entity axi_file_reader is
   generic (
-    READER_NAME    : string;
-    DATA_WIDTH     : integer  := 1;
-    -- GNU Radio does not have bit format, so most blocks use 1 bit per byte. Set this to
-    -- True to use the LSB to form a data word
-    BYTES_ARE_BITS : boolean := False;
-    INPUT_DATA_RATIO : string := "");
+    READER_NAME : string;
+    DATA_WIDTH  : integer  := 1);
   port (
     -- Usual ports
     clk                : in  std_logic;
@@ -103,14 +100,14 @@ begin
   -- Processes --
   ---------------
   process
-    constant DATA_RATIO : ratio := parse_data_ratio(INPUT_DATA_RATIO, DATA_WIDTH);
+    variable cfg          : file_reader_cfg_type;
+    variable ratio        : data_ratio_type := (DATA_WIDTH, DATA_WIDTH);
     --
     constant self         : actor_t := new_actor(READER_NAME);
     constant logger       : logger_t := get_logger(READER_NAME);
     variable msg          : msg_t;
 
     variable tvalid_rand  : RandomPType;
-    variable current_file : line;
     variable word_cnt     : integer := 0;
     -- Need to read a word in advance to detect the end of file in time to generate tlast
     variable m_tdata_next : std_logic_vector(DATA_WIDTH - 1 downto 0);
@@ -120,27 +117,30 @@ begin
     variable file_status : file_status_type := unknown;
     --
     type file_type is file of character;
-    file file_handler : file_type;
-    variable char     : character;
-    variable byte_cnt : integer := 0;
-    variable data     : std_logic_vector(2*DATA_WIDTH - 1 downto 0);
+    file file_handler     : file_type;
+    variable char         : character;
+    variable char_bit_cnt : natural := 0;
+    variable char_buffer  : std_logic_vector(2*DATA_WIDTH - 1 downto 0);
+
+    variable ratio_bit_cnt : natural := 0;
+    variable ratio_buffer  : std_logic_vector(2*DATA_WIDTH - 1 downto 0);
 
     ------------------------------------------------------------------------------------
     impure function read_word_from_file (constant word_width : in natural)
     return std_logic_vector is
       variable result : std_logic_vector(word_width - 1 downto 0);
-      variable byte : std_logic_vector(7 downto 0);
+      variable byte   : std_logic_vector(7 downto 0);
     begin
-      while byte_cnt < word_width loop
+      while char_bit_cnt < word_width loop
         read(file_handler, char);
 
-        byte     := std_logic_vector(to_unsigned(character'pos(char), 8));
-        byte_cnt := byte_cnt + byte'length;
-        data     := data(data'length - 8 - 1 downto 0) & byte;
+        byte         := std_logic_vector(to_unsigned(character'pos(char), 8));
+        char_bit_cnt := char_bit_cnt + byte'length;
+        char_buffer  := char_buffer(char_buffer'length - 8 - 1 downto 0) & byte;
       end loop;
 
-      byte_cnt := byte_cnt mod word_width;
-      result   := data(word_width - 1 downto 0);
+      char_bit_cnt := char_bit_cnt mod word_width;
+      result       := char_buffer(word_width - 1 downto 0);
 
       return result;
     end function read_word_from_file;
@@ -148,28 +148,17 @@ begin
     ------------------------------------------------------------------------------------
     impure function get_next_data (constant word_width : in natural)
     return std_logic_vector is
-      constant file_reads : positive := word_width / DATA_RATIO.input;
       variable result     : std_logic_vector(word_width - 1 downto 0);
-      variable temp       : std_logic_vector(DATA_RATIO.input - 1 downto 0);
+      variable temp       : std_logic_vector(ratio.output - 1 downto 0);
     begin
-      -- info(sformat("ratio=%d:%d | word_width=%d |file_reads=%d",
-      --              fo(DATA_RATIO.input), fo(DATA_RATIO.output), fo(word_width),
-      --              fo(file_reads)));
-
-      for word in file_reads - 1 downto 0 loop
-        temp := read_word_from_file(DATA_RATIO.output)(DATA_RATIO.input - 1 downto 0);
-        -- info(sformat("word=%d, temp=%r => result=%r", fo(word), fo(temp), fo(result)));
-        result((word + 1) * DATA_RATIO.input - 1 downto word*DATA_RATIO.input) := temp;
+      while ratio_bit_cnt < word_width loop
+        temp          := read_word_from_file(ratio.input)(ratio.output - 1 downto 0);
+        ratio_bit_cnt := ratio_bit_cnt + ratio.output;
+        ratio_buffer  := ratio_buffer(ratio_buffer'length - ratio.output - 1 downto 0) & temp;
       end loop;
 
-      -- if BYTES_ARE_BITS then
-      --   for i in 0 to word_width - 1 loop
-      --     result(word_width - i - 1) := read_word_from_file(8)(0);
-      --   end loop;
-      -- else
-      --   result := read_word_from_file(word_width);
-      -- end if;
-
+      ratio_bit_cnt := ratio_bit_cnt mod word_width;
+      result        := ratio_buffer(word_width + ratio_bit_cnt - 1 downto ratio_bit_cnt);
       return result;
 
     end function get_next_data;
@@ -208,10 +197,14 @@ begin
           file_close(file_handler);
           file_status  := closed;
 
-          info(logger, "Read " & integer'image(word_cnt) & " words from " & current_file.all);
-          completed <= '1';
-          word_cnt  := 0;
-          byte_cnt  := 0;
+          info(
+            logger,
+            sformat("Read %d words from %s", fo(word_cnt), quote(cfg.filename)));
+
+          completed     <= '1';
+          word_cnt      := 0;
+          char_bit_cnt  := 0;
+          ratio_bit_cnt := 0;
         end if;
       end if;
 
@@ -219,11 +212,17 @@ begin
       if file_status /= opened  then
         if has_message(self) then
           receive(net, self, msg);
-          deallocate(current_file);
-          write(current_file, pop_string(msg));
+          cfg   := pop(msg);
+          ratio := cfg.data_ratio;
 
-          info(logger, "Reading " & current_file.all & " (requested by '" & name(msg.sender) & "')");
-          file_open(file_handler, current_file.all, read_mode);
+          info(
+            logger,
+            sformat(
+              "Reading %s. Data ratio is %d:%d (requested by %s)", quote(cfg.filename),
+              fo(cfg.data_ratio.output), fo(cfg.data_ratio.input),
+              quote(name(msg.sender))));
+
+          file_open(file_handler, cfg.filename, read_mode);
           file_status  := opened;
 
           m_tdata_next := get_next_data(DATA_WIDTH);

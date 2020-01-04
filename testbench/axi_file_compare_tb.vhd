@@ -109,8 +109,7 @@ begin
   generic map (
     READER_NAME     => READER_NAME,
     ERROR_CNT_WIDTH => ERROR_CNT_WIDTH,
-    DATA_WIDTH      => DATA_WIDTH,
-    BYTES_ARE_BITS  => False)
+    DATA_WIDTH      => DATA_WIDTH)
   port map (
     -- Usual ports
     clk                => clk,

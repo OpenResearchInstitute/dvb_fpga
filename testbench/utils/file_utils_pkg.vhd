@@ -21,8 +21,12 @@
 use std.textio.all;
 
 library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library vunit_lib;
+context vunit_lib.vunit_context;
+context vunit_lib.com_context;
 
 package file_utils_pkg is
 
@@ -31,10 +35,15 @@ package file_utils_pkg is
   -----------
   type std_logic_vector_array is array (natural range <>) of std_logic_vector;
 
-  type ratio is record
-    input : positive;
-    output: positive;
-  end record ratio;
+  type data_ratio_type is record
+    output : positive;
+    input  : positive;
+  end record data_ratio_type;
+
+  type file_reader_cfg_type is record
+    filename   : string(1 to 1024);
+    data_ratio : data_ratio_type;
+  end record;
 
   -----------------
   -- Subprograms --
@@ -45,7 +54,16 @@ package file_utils_pkg is
 
   function parse_data_ratio (
     constant s               : string;
-    constant base_data_width : in positive) return ratio;
+    constant base_data_width : in positive) return data_ratio_type;
+
+  procedure push(msg : msg_t; value : data_ratio_type);
+  impure function pop(msg : msg_t) return data_ratio_type;
+
+  procedure push(msg : msg_t; value : file_reader_cfg_type);
+  impure function pop(msg : msg_t) return file_reader_cfg_type;
+
+  alias push_data_ratio is push[msg_t, data_ratio_type];
+  alias push_file_reader_cfg is push[msg_t, file_reader_cfg_type];
 
 end file_utils_pkg;
 
@@ -80,10 +98,10 @@ package body file_utils_pkg is
 
   function parse_data_ratio (
     constant s               : string;
-    constant base_data_width : in positive) return ratio is
-    variable input    : line;
-    variable output   : line;
-    variable is_input : boolean := True;
+    constant base_data_width : in positive) return data_ratio_type is
+    variable input           : line;
+    variable output          : line;
+    variable is_input        : boolean := True;
   begin
     if s = "" then
       return (base_data_width, base_data_width);
@@ -102,11 +120,68 @@ package body file_utils_pkg is
     assert not is_input
       report "Malformed s: '" & s & "'"
       severity Failure;
-    
-    return (integer'value(input.all),
-            integer'value(output.all));
+
+    return (integer'value(output.all),
+            integer'value(input.all));
 
   end function parse_data_ratio;
 
-end package body;
+  function encode(value : data_ratio_type) return string is
+  begin
+    return encode(value.output) & encode(value.input);
+  end;
 
+  function decode (
+    constant code   : string)
+    return data_ratio_type is
+    variable input  : positive;
+    variable output : positive;
+    variable index  : positive := code'left;
+  begin
+    decode(code, index, input);
+    decode(code, index, output);
+
+    return (input, output);
+  end;
+
+  function decode ( constant code : string) return file_reader_cfg_type is
+    variable filename : string(1 to 1024);
+    variable input    : positive;
+    variable output   : positive;
+    variable index    : positive := code'left;
+  begin
+    decode(code, index, filename);
+    decode(code, index, output);
+    decode(code, index, input);
+    return (filename, (input => input, output => output));
+  end;
+
+  function encode(value : file_reader_cfg_type) return string is
+  begin
+    return encode(value.filename) & encode(value.data_ratio);
+  end;
+
+
+  procedure push(msg : msg_t; value : data_ratio_type) is
+  begin
+    -- Push value as a string
+    push(msg.data, encode(value));
+  end;
+
+  impure function pop(msg : msg_t) return data_ratio_type is
+  begin
+    return decode(pop(msg.data));
+  end;
+
+  procedure push(msg : msg_t; value : file_reader_cfg_type) is
+  begin
+    -- Push value as a string
+    push(msg.data, encode(value));
+  end;
+
+  impure function pop(msg : msg_t) return file_reader_cfg_type is
+  begin
+    return decode(pop(msg.data));
+  end;
+
+end package body;
