@@ -25,13 +25,13 @@ package dvb_utils_pkg is
 
   type frame_length_type is (not_set, normal, short);
 
-  type modulation_type is ( not_set, mod_8_psk, mod_16_apsk, mod_32_apsk);
+  type modulation_type is ( not_set, mod_8psk, mod_16apsk, mod_32apsk);
 
   -- Enum like type for LDPC codes
   type code_rate_type is (
     not_set, -- Only for sim, to allow setting an invalid value
-    ldpc_1_4, ldpc_1_3, ldpc_2_5, ldpc_1_2, ldpc_3_5, ldpc_2_3, ldpc_3_4, ldpc_4_5,
-    ldpc_5_6, ldpc_8_9, ldpc_9_10);
+    C1_4, C1_3, C2_5, C1_2, C3_5, C2_3, C3_4, C4_5,
+    C5_6, C8_9, C9_10);
 
   constant BCH_POLY_8 : integer := 0;
   constant BCH_POLY_10 : integer := 1;

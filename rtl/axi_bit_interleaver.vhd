@@ -72,19 +72,19 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
     variable result     : integer := -1;
   begin
     if frame_length = normal then
-      if modulation = mod_8_psk then
+      if modulation = mod_8psk then
         result := 21_600;
-      elsif modulation = mod_16_apsk then
+      elsif modulation = mod_16apsk then
         result := 16_200;
-      elsif modulation = mod_32_apsk then
+      elsif modulation = mod_32apsk then
         result := 12_960;
       end if;
     elsif frame_length = short then
-      if modulation = mod_8_psk then
+      if modulation = mod_8psk then
         result := 5_400;
-      elsif modulation = mod_16_apsk then
+      elsif modulation = mod_16apsk then
         result := 4_050;
-      elsif modulation = mod_32_apsk then
+      elsif modulation = mod_32apsk then
         result := 3_240;
       end if;
     end if;
@@ -101,11 +101,11 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
     constant modulation : in modulation_type) return integer is
     variable result     : integer := -1;
   begin
-    if modulation = mod_8_psk then
+    if modulation = mod_8psk then
       result := 3;
-    elsif modulation = mod_16_apsk then
+    elsif modulation = mod_16apsk then
       result := 4;
-    elsif modulation = mod_32_apsk then
+    elsif modulation = mod_32apsk then
       result := 5;
     end if;
 

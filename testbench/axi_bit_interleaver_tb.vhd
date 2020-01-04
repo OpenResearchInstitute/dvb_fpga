@@ -253,49 +253,52 @@ begin
       tvalid_probability <= 1.0;
       tready_probability <= 1.0;
 
-      if run("16_psk_normal_length_ldpc_9/10_back_to_back") then
+      if run("back_to_back") then
         tvalid_probability <= 1.0;
         tready_probability <= 1.0;
-        run_test(modulation       => mod_16_apsk,
-                 frame_length     => normal,
-                 ldpc_code        => ldpc_9_10,
-                 input_file       => "interleaver_input.bin",
-                 reference_file   => "interleaver_output.bin",
-                 number_of_frames => 1);
-        wait_for_transfers(1);
+        for i in configs'range loop
+          run_test(modulation       => configs(i).modulation, --mod_16apsk,
+                   frame_length     => configs(i).frame_length, -- normal,
+                   ldpc_code        => configs(i).code_rate, -- C9_10,
+                   input_file       => configs(i).input_file,
+                   reference_file   => configs(i).reference_file,
+                   number_of_frames => 1);
+        end loop;
 
-      elsif run("16_psk_normal_length_ldpc_9/10_slow_master") then
+        wait_for_transfers(configs'length);
+
+      elsif run("slow_master") then
         tvalid_probability <= 0.5;
         tready_probability <= 1.0;
-        run_test(modulation       => mod_16_apsk,
+        run_test(modulation       => mod_16apsk,
                  frame_length     => normal,
-                 ldpc_code        => ldpc_9_10,
-                 input_file       => "interleaver_input.bin",
-                 reference_file   => "interleaver_output.bin",
+                 ldpc_code        => C9_10,
+                 input_file       => "bit_interleaver_input.bin",
+                 reference_file   => "bit_interleaver_output.bin",
                  number_of_frames => 1);
         wait_for_transfers(1);
 
-      elsif run("16_psk_normal_length_ldpc_9/10_slow_master_and_slave") then
+      elsif run("slow_slave") then
+        tvalid_probability <= 0.5;
+        tready_probability <= 1.0;
+        run_test(modulation       => mod_16apsk,
+                 frame_length     => normal,
+                 ldpc_code        => C9_10,
+                 input_file       => "bit_interleaver_input.bin",
+                 reference_file   => "bit_interleaver_output.bin",
+                 number_of_frames => 1);
+        wait_for_transfers(1);
+
+      elsif run("both_slow") then
         tvalid_probability <= 0.75;
         tready_probability <= 0.75;
-        run_test(modulation       => mod_16_apsk,
+        run_test(modulation       => mod_16apsk,
                  frame_length     => normal,
-                 ldpc_code        => ldpc_9_10,
-                 input_file       => "interleaver_input.bin",
-                 reference_file   => "interleaver_output.bin",
+                 ldpc_code        => C9_10,
+                 input_file       => "bit_interleaver_input.bin",
+                 reference_file   => "bit_interleaver_output.bin",
                  number_of_frames => 1);
         wait_for_transfers(1);
-
-      -- elsif run("16_psk_normal_length_ldpc_9/10_slow_slave") then
-      --   tvalid_probability <= 1.0;
-      --   tready_probability <= 0.5;
-      --   run_test(modulation       => mod_16_apsk,
-      --            frame_length     => normal,
-      --            ldpc_code        => ldpc_9_10,
-      --            input_file       => "interleaver_input.bin",
-      --            reference_file   => "interleaver_output.bin",
-      --            number_of_frames => 1);
-      --   wait_for_transfers(1);
 
       end if;
 
