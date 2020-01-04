@@ -41,8 +41,8 @@ use work.testbench_utils_pkg.all;
 
 entity axi_bit_interleaver_tb is
   generic (
-    runner_cfg  : string;
-    CONFIG_FILE : string);
+    runner_cfg : string;
+    test_cfg   : string);
 end axi_bit_interleaver_tb;
 
 architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
@@ -50,7 +50,7 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   ---------------
   -- Constants --
   ---------------
-  constant configs : config_array_type := get_config_from_file(CONFIG_FILE);
+  constant configs           : config_array_type := get_test_cfg(test_cfg);
 
   constant FILE_READER_NAME  : string := "file_reader";
   constant FILE_CHECKER_NAME : string := "file_checker";
@@ -66,7 +66,7 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   signal rst                : std_logic;
 
   signal cfg_modulation     : modulation_type;
-  signal cfg_frame_length   : frame_length_type;
+  signal cfg_frame_type     : frame_length_type;
   signal cfg_code_rate      : code_rate_type;
 
   -- AXI input
@@ -107,7 +107,7 @@ begin
       rst              => rst,
 
       cfg_modulation   => cfg_modulation,
-      cfg_frame_length => cfg_frame_length,
+      cfg_frame_type => cfg_frame_type,
       cfg_code_rate    => cfg_code_rate,
 
       -- AXI input
@@ -196,22 +196,18 @@ begin
 
     ------------------------------------------------------------------------------------
     procedure run_test (
-      constant modulation       : in  modulation_type;
-      constant frame_length     : in  frame_length_type;
-      constant ldpc_code        : in  code_rate_type;
-      constant input_file       : in string;
-      constant reference_file   : in string;
+      constant config           : config_type;
       constant number_of_frames : in positive) is
       variable file_reader_msg  : msg_t;
       variable file_checker_msg : msg_t;
     begin
 
       info("Running test with:");
-      info(" - modulation     : " & modulation_type'image(modulation));
-      info(" - frame_length   : " & frame_length_type'image(frame_length));
-      info(" - code_rate      : " & code_rate_type'image(ldpc_code));
-      info(" - input_file     : " & input_file);
-      info(" - reference_file : " & reference_file);
+      info(" - modulation     : " & modulation_type'image(config.modulation));
+      info(" - frame_type     : " & frame_length_type'image(config.frame_type));
+      info(" - code_rate      : " & code_rate_type'image(config.code_rate));
+      info(" - input_file     : " & config.input_file);
+      info(" - reference_file : " & config.reference_file);
 
       for i in 0 to number_of_frames - 1 loop
         file_reader_msg := new_msg;
@@ -220,11 +216,11 @@ begin
         file_reader_msg.sender := self;
         file_checker_msg.sender := self;
 
-        push(file_reader_msg, input_file);
-        push(file_reader_msg, modulation);
-        push(file_reader_msg, frame_length);
-        push(file_reader_msg, ldpc_code);
-        push(file_checker_msg, reference_file);
+        push(file_reader_msg, config.input_file);
+        push(file_reader_msg, config.modulation);
+        push(file_reader_msg, config.frame_type);
+        push(file_reader_msg, config.code_rate);
+        push(file_checker_msg, config.reference_file);
 
         send(net, input_cfg_p, file_reader_msg);
         send(net, file_checker, file_checker_msg);
@@ -265,49 +261,38 @@ begin
       if run("back_to_back") then
         tvalid_probability <= 1.0;
         tready_probability <= 1.0;
-        for i in configs'range loop
-          run_test(modulation       => configs(i).modulation, --mod_16apsk,
-                   frame_length     => configs(i).frame_length, -- normal,
-                   ldpc_code        => configs(i).code_rate, -- C9_10,
-                   input_file       => configs(i).input_file,
-                   reference_file   => configs(i).reference_file,
-                   number_of_frames => 1);
-        end loop;
 
+        for i in configs'range loop
+          run_test(configs(i), number_of_frames => 1);
+        end loop;
         wait_for_transfers(configs'length);
 
       elsif run("slow_master") then
         tvalid_probability <= 0.5;
         tready_probability <= 1.0;
-        run_test(modulation       => mod_16apsk,
-                 frame_length     => normal,
-                 ldpc_code        => C9_10,
-                 input_file       => "bit_interleaver_input.bin",
-                 reference_file   => "bit_interleaver_output.bin",
-                 number_of_frames => 1);
-        wait_for_transfers(1);
+
+        for i in configs'range loop
+          run_test(configs(i), number_of_frames => 1);
+        end loop;
+        wait_for_transfers(configs'length);
 
       elsif run("slow_slave") then
         tvalid_probability <= 0.5;
         tready_probability <= 1.0;
-        run_test(modulation       => mod_16apsk,
-                 frame_length     => normal,
-                 ldpc_code        => C9_10,
-                 input_file       => "bit_interleaver_input.bin",
-                 reference_file   => "bit_interleaver_output.bin",
-                 number_of_frames => 1);
-        wait_for_transfers(1);
+
+        for i in configs'range loop
+          run_test(configs(i), number_of_frames => 1);
+        end loop;
+        wait_for_transfers(configs'length);
 
       elsif run("both_slow") then
         tvalid_probability <= 0.75;
         tready_probability <= 0.75;
-        run_test(modulation       => mod_16apsk,
-                 frame_length     => normal,
-                 ldpc_code        => C9_10,
-                 input_file       => "bit_interleaver_input.bin",
-                 reference_file   => "bit_interleaver_output.bin",
-                 number_of_frames => 1);
-        wait_for_transfers(1);
+
+        for i in configs'range loop
+          run_test(configs(i), number_of_frames => 1);
+        end loop;
+        wait_for_transfers(configs'length);
 
       end if;
 
@@ -349,11 +334,11 @@ begin
     -- Keep the config stuff active for a single cycle to make sure blocks use the correct
     -- values
     cfg_modulation   <= pop(cfg_msg);
-    cfg_frame_length <= pop(cfg_msg);
+    cfg_frame_type <= pop(cfg_msg);
     cfg_code_rate    <= pop(cfg_msg);
     wait until m_data_valid and m_tlast = '0' and rising_edge(clk);
     cfg_modulation   <= not_set;
-    cfg_frame_length <= not_set;
+    cfg_frame_type <= not_set;
     cfg_code_rate    <= not_set;
 
     wait until m_data_valid and m_tlast = '1';
@@ -375,7 +360,7 @@ begin
   begin
     wait until rising_edge(clk);
     if rst = '0' then
-      check_equal(error_cnt, 0);
+      check_equal(error_cnt, 0, sformat("Expected 0 errors but got %d", fo(error_cnt)));
     end if;
   end process;
 

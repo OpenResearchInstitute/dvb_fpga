@@ -38,24 +38,24 @@ entity axi_bit_interleaver is
   generic (DATA_WIDTH : positive := 8);
   port (
     -- Usual ports
-    clk              : in  std_logic;
-    rst              : in  std_logic;
+    clk            : in  std_logic;
+    rst            : in  std_logic;
 
-    cfg_modulation   : in  modulation_type;
-    cfg_frame_length : in  frame_length_type;
-    cfg_code_rate    : in  code_rate_type;
+    cfg_modulation : in  modulation_type;
+    cfg_frame_type : in  frame_length_type;
+    cfg_code_rate  : in  code_rate_type;
 
     -- AXI input
-    s_tvalid         : in  std_logic;
-    s_tdata          : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
-    s_tlast          : in  std_logic;
-    s_tready         : out std_logic;
+    s_tvalid       : in  std_logic;
+    s_tdata        : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
+    s_tlast        : in  std_logic;
+    s_tready       : out std_logic;
 
     -- AXI output
-    m_tready         : in  std_logic;
-    m_tvalid         : out std_logic;
-    m_tlast          : out std_logic;
-    m_tdata          : out std_logic_vector(DATA_WIDTH - 1 downto 0));
+    m_tready       : in  std_logic;
+    m_tvalid       : out std_logic;
+    m_tlast        : out std_logic;
+    m_tdata        : out std_logic_vector(DATA_WIDTH - 1 downto 0));
 end axi_bit_interleaver;
 
 architecture axi_bit_interleaver of axi_bit_interleaver is
@@ -67,11 +67,11 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   constant MAX_COLUMNS : integer := 5;
 
   impure function get_max_row_ptr (
-    constant modulation   : in modulation_type;
-    constant frame_length : in frame_length_type) return integer is
+    constant modulation : in modulation_type;
+    constant frame_type : in frame_length_type) return integer is
     variable result     : integer := -1;
   begin
-    if frame_length = normal then
+    if frame_type = normal then
       if modulation = mod_8psk then
         result := 21_600;
       elsif modulation = mod_16apsk then
@@ -79,7 +79,7 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
       elsif modulation = mod_32apsk then
         result := 12_960;
       end if;
-    elsif frame_length = short then
+    elsif frame_type = short then
       if modulation = mod_8psk then
         result := 5_400;
       elsif modulation = mod_16apsk then
@@ -129,7 +129,7 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   -------------
   -- Write side config
   signal modulation         : modulation_type;
-  signal frame_length       : frame_length_type;
+  signal frame_type         : frame_length_type;
   signal code_rate          : code_rate_type;
 
   signal s_axi_dv           : std_logic;
@@ -296,7 +296,7 @@ begin
         if s_tlast = '1' then
           wr_ram_ptr     <= wr_ram_ptr + 1;
           rd_row_ptr_max <= to_unsigned(get_max_row_ptr(modulation,
-                                                        frame_length),
+                                                        frame_type),
                                         numbits(MAX_ROWS));
           rd_col_ptr_max <= to_unsigned(get_max_column_ptr(modulation),
                                         numbits(MAX_COLUMNS));
@@ -380,14 +380,14 @@ begin
   -- the user keeping it unchanged. Hide this on a block to leave the core code a bit
   -- cleaner
   config_sample_block : block
-    signal modulation_ff   : modulation_type;
-    signal frame_length_ff : frame_length_type;
-    signal code_rate_ff    : code_rate_type;
-    signal first_word      : std_logic;
+    signal modulation_ff : modulation_type;
+    signal frame_type_ff : frame_length_type;
+    signal code_rate_ff  : code_rate_type;
+    signal first_word    : std_logic;
   begin
 
     modulation   <= cfg_modulation when first_word = '1' else modulation_ff;
-    frame_length <= cfg_frame_length when first_word = '1' else frame_length_ff;
+    frame_type <= cfg_frame_type when first_word = '1' else frame_type_ff;
     code_rate    <= cfg_code_rate when first_word = '1' else code_rate_ff;
 
     process(clk, rst)
@@ -403,11 +403,11 @@ begin
           -- Sample the BCH code used on the first word
           if first_word = '1' then
             modulation_ff   <= cfg_modulation;
-            frame_length_ff <= cfg_frame_length;
+            frame_type_ff <= cfg_frame_type;
             code_rate_ff    <= cfg_code_rate;
 
             wr_row_ptr_max  <= to_unsigned(get_max_row_ptr(cfg_modulation,
-                                                           cfg_frame_length),
+                                                           cfg_frame_type),
                                            numbits(MAX_ROWS));
             wr_col_ptr_max  <= to_unsigned(get_max_column_ptr(cfg_modulation),
                                            numbits(MAX_COLUMNS));
