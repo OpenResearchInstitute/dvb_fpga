@@ -404,7 +404,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(200, 28)</value>
+      <value>(200, 20)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -432,7 +432,7 @@
     </param>
     <param>
       <key>num_samps</key>
-      <value>7264</value>
+      <value>input_sample_length</value>
     </param>
     <param>
       <key>type</key>
@@ -1425,7 +1425,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(408, 24)</value>
+      <value>(408, 20)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -2095,6 +2095,49 @@
     <param>
       <key>import</key>
       <value>import math</value>
+    </param>
+  </block>
+  <block>
+    <key>parameter</key>
+    <param>
+      <key>alias</key>
+      <value></value>
+    </param>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(8, 548)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>input_sample_length</value>
+    </param>
+    <param>
+      <key>label</key>
+      <value>input_sample_length</value>
+    </param>
+    <param>
+      <key>short_id</key>
+      <value>l</value>
+    </param>
+    <param>
+      <key>type</key>
+      <value>intx</value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>7264</value>
     </param>
   </block>
   <block>

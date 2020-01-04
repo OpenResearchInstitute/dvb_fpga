@@ -1,4 +1,3 @@
 .hdl_checker/
 vunit_out
 gnuradio_data/*/
-gnuradio_data/*.py
