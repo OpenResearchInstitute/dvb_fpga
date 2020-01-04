@@ -40,22 +40,23 @@ entity axi_bch_encoder is
   );
   port (
     -- Usual ports
-    clk          : in  std_logic;
-    rst          : in  std_logic;
+    clk            : in  std_logic;
+    rst            : in  std_logic;
 
-    cfg_bch_code : in  std_logic_vector(1 downto 0);
+    cfg_frame_type : in  frame_length_type;
+    cfg_code_rate  : in  code_rate_type;
 
     -- AXI input
-    s_tvalid     : in  std_logic;
-    s_tdata      : in  std_logic_vector(TDATA_WIDTH - 1 downto 0);
-    s_tlast      : in  std_logic;
-    s_tready     : out std_logic;
+    s_tvalid       : in  std_logic;
+    s_tdata        : in  std_logic_vector(TDATA_WIDTH - 1 downto 0);
+    s_tlast        : in  std_logic;
+    s_tready       : out std_logic;
 
     -- AXI output
-    m_tready     : in  std_logic;
-    m_tvalid     : out std_logic;
-    m_tlast      : out std_logic;
-    m_tdata      : out std_logic_vector(TDATA_WIDTH - 1 downto 0));
+    m_tready       : in  std_logic;
+    m_tvalid       : out std_logic;
+    m_tlast        : out std_logic;
+    m_tdata        : out std_logic_vector(TDATA_WIDTH - 1 downto 0));
 end axi_bch_encoder;
 
 architecture axi_bch_encoder of axi_bch_encoder is
@@ -66,31 +67,15 @@ architecture axi_bch_encoder of axi_bch_encoder is
   -- To count to the max number of words appended to the frame
   constant MAX_WORD_CNT : integer := 192 / TDATA_WIDTH;
 
-  impure function get_crc_length (
-    constant bch_code : in std_logic_vector(1 downto 0)) return integer is
-    variable result   : integer := -1;
-  begin
-    if unsigned(bch_code) = BCH_POLY_8 then
-      result := 128;
-    elsif unsigned(bch_code) = BCH_POLY_10 then
-      result := 160;
-    elsif unsigned(bch_code) = BCH_POLY_12 then
-      result := 192;
-    else
-      report sformat("Invalid BCH code %r", fo(bch_code))
-      severity Failure;
-    end if;
-    -- This is mostly static, so division should not be a problem. In any case,
-    -- TDATA_WIDTH will always be a power of 2, so this division will map to a shift
-    -- operation
-    return (result / TDATA_WIDTH);
-  end function get_crc_length;
-
   -------------
   -- Signals --
   -------------
-  signal bch_code             : std_logic_vector(1 downto 0);
-  signal cfg_bch_code_out     : std_logic_vector(1 downto 0);
+  signal frame_type           : frame_length_type;
+  signal code_rate            : code_rate_type;
+
+  signal cfg_frame_type_out   : frame_length_type;
+  signal cfg_code_rate_out    : code_rate_type;
+
   signal s_axi_first_word     : std_logic;
 
   signal axi_delay_tvalid     : std_logic;
@@ -155,18 +140,24 @@ begin
   bch_u : entity work.bch_encoder_mux
     generic map (DATA_WIDTH => TDATA_WIDTH)
     port map (
-      clk              => clk,
-      rst              => rst,
+      clk                  => clk,
+      rst                  => rst,
 
-      cfg_bch_code_in  => bch_code,
-      first_word       => s_axi_first_word,
-      wr_en            => s_axi_data_valid,
-      wr_data          => s_tdata,
+      -- Input data
+      cfg_frame_type_in  => frame_type,
+      cfg_code_rate_in     => code_rate,
 
-      cfg_bch_code_out => cfg_bch_code_out,
-      crc_rdy          => open,
-      crc              => crc,
-      data_out         => open);
+      first_word           => s_axi_first_word,
+      wr_en                => s_axi_data_valid,
+      wr_data              => s_tdata,
+
+      -- Output data
+      cfg_frame_type_out => cfg_frame_type_out,
+      cfg_code_rate_out    => cfg_code_rate_out,
+
+      crc_rdy              => open,
+      crc                  => crc,
+      data_out             => open);
 
   ------------------------------
   -- Asynchronous assignments --
@@ -230,9 +221,9 @@ begin
       if crc_sample_delay = '1' then
         -- CRC widths vary, by default BCH encoder mux fills in the LSB. Because we use
         -- the MSB and shift it left, fill in the MSB part of the SRL
-        if unsigned(cfg_bch_code_out) = BCH_POLY_8 then
+        if get_crc_length(cfg_frame_type_out, cfg_code_rate_out) = 128 then
           crc_srl <= crc(127 downto 0) & (63 downto 0 => 'U');
-        elsif unsigned(cfg_bch_code_out) = BCH_POLY_10 then
+        elsif get_crc_length(cfg_frame_type_out, cfg_code_rate_out) = 160 then
           crc_srl <= crc(159 downto 0) & (31 downto 0 => 'U');
         else
           crc_srl <= crc;
@@ -244,35 +235,48 @@ begin
       -- mode
       if axi_delay_data_valid = '1' and axi_delay_tlast = '1' then
         -- TODO: Check if this uses the carry bit to reset
-        crc_word_cnt     <= to_unsigned(
-                              get_crc_length(cfg_bch_code_out),
-                              crc_word_cnt'length);
+
+        -- This is mostly static, so division should not be a problem. In any case,
+        -- TDATA_WIDTH will always be a power of 2, so this division will map to a shift
+        -- operation
+        crc_word_cnt <= to_unsigned(
+                          get_crc_length(cfg_frame_type_out, cfg_code_rate_out) / TDATA_WIDTH,
+                          crc_word_cnt'length);
       end if;
 
     end if;
   end process;
 
-  -- The BCH code is valid at the first word of the frame, but we must not rely on the
-  -- user keeping it unchanged. Hide this on a block to leave the core code a bit cleaner
-  bch_sample_block : block
-    signal bch_code_ff : std_logic_vector(1 downto 0);
+  -- The config ports are valid at the first word of the frame, but we must not rely on
+  -- the user keeping it unchanged. Hide this on a block to leave the core code a bit
+  -- cleaner
+  config_sample_block : block
+    signal frame_type_ff : frame_length_type;
+    signal code_rate_ff  : code_rate_type;
+    signal first_word    : std_logic;
   begin
 
-    bch_code <= cfg_bch_code when s_axi_first_word = '1' else bch_code_ff;
-   
+    frame_type <= cfg_frame_type when first_word = '1' else frame_type_ff;
+    code_rate  <= cfg_code_rate when first_word = '1' else code_rate_ff;
+
     process(clk, rst)
     begin
       if rst = '1' then
+        first_word  <= '1';
       elsif rising_edge(clk) then
         if s_axi_data_valid = '1' then
+          first_word <= s_tlast;
+
           -- Sample the BCH code used on the first word
-          if s_axi_first_word = '1' then
-            bch_code_ff <= cfg_bch_code;
+          if first_word = '1' then
+            frame_type_ff <= cfg_frame_type;
+            code_rate_ff  <= cfg_code_rate;
           end if;
 
         end if;
+
       end if;
     end process;
-  end block bch_sample_block;
+  end block config_sample_block;
 
 end axi_bch_encoder;

@@ -30,7 +30,7 @@ package testbench_utils_pkg is
 
   type config_type is record
     modulation : modulation_type;
-    frame_length : frame_length_type;
+    frame_type : frame_length_type;
     code_rate : code_rate_type;
     input_file : string(1 to 1024);
     reference_file : string(1 to 1024);
@@ -38,7 +38,12 @@ package testbench_utils_pkg is
 
   type config_array_type is array (natural range <>) of config_type;
 
-  impure function get_config_from_file ( constant filename : string)
+  function to_string( constant config : config_type ) return string;
+
+  -- Add double quotes around a string
+  function quote ( constant s : string ) return string;
+
+  impure function get_test_cfg ( constant str : string)
   return config_array_type;
 
   procedure push(msg : msg_t; value : modulation_type);
@@ -88,54 +93,81 @@ package body testbench_utils_pkg is
   end;
 
 
-  type config_array_ptr is access config_array_type;
+  -- type config_array_ptr is access config_array_type;
 
-  impure function line_number ( constant filename : string) return natural is
-    file fd         : text;
-    variable L      : line;
-    variable result : natural := 0;
-  begin
-    file_open(fd, filename, read_mode);
-    while not endfile(fd) loop
-      readline(fd, L);
-      result := result + 1;
-    end loop;
-    file_close(fd);
+  -- impure function line_number ( constant str : string) return natural is
+  --   file fd         : text;
+  --   variable L      : line;
+  --   variable result : natural := 0;
+  -- begin
+  --   file_open(fd, str, read_mode);
+  --   while not endfile(fd) loop
+  --     readline(fd, L);
+  --     result := result + 1;
+  --   end loop;
+  --   file_close(fd);
 
-    return result;
-  end function line_number;
+  --   return result;
+  -- end function line_number;
 
   --
-  impure function get_config_from_file ( constant filename : string)
+  impure function get_test_cfg ( constant str : string)
   return config_array_type is
-    file fd          : text;
-    variable L       : line;
-    constant lines   : natural := line_number(filename);
-    variable items   : lines_t;
-    variable result  : config_array_type(0 to lines - 1);
-    variable current : config_type;
+    variable cfg_strings : lines_t := split(str, ":");
+    variable cfg_items   : lines_t;
+    variable result      : config_array_type(0 to cfg_strings'length - 1);
+    variable current     : config_type;
   begin
 
-    file_open(fd, filename, read_mode);
-    for i in 0 to lines - 1 loop
-      readline(fd, L);
-      items := split(L.all, ",");
+    if cfg_strings'length = 0 then
+      warning("Could not parse any config from " & quote(str));
+      return result;
+    end if;
 
-      current.modulation := modulation_type'value(items(0).all);
-      current.frame_length := frame_length_type'value(items(1).all);
-      current.code_rate := code_rate_type'value(items(2).all);
+    for i in 0 to cfg_strings'length - 1 loop
+      cfg_items := split(cfg_strings(i).all, ",");
+      
+      if cfg_items'length /= 5 then
+        failure("Malformed config string " & quote(cfg_strings(i).all));
+      end if;
+
+      current.modulation := modulation_type'value(cfg_items(0).all);
+      current.frame_type := frame_length_type'value(cfg_items(1).all);
+      current.code_rate := code_rate_type'value(cfg_items(2).all);
       current.input_file := (others => nul);
       current.reference_file := (others => nul);
 
-      current.input_file(items(3).all'range) := items(3).all;
-      current.reference_file(items(4).all'range) := items(4).all;
+      current.input_file(cfg_items(3).all'range) := cfg_items(3).all;
+      current.reference_file(cfg_items(4).all'range) := cfg_items(4).all;
 
       result(i) := current;
 
     end loop;
 
+    info("Parsed " & integer'image(result'length) & " configuration(s):");
+    for i in result'range loop
+      info("- " & integer'image(i) & ": " & to_string(result(i)));
+    end loop;
+
     return result;
 
-  end function get_config_from_file;
+  end function get_test_cfg;
+
+  -- Add double quotes around a string
+  function quote ( constant s : string ) return string is
+  begin
+    return '"' & s & '"';
+  end function quote;
+
+  -- Returns a string representation of config_type
+  function to_string( constant config : config_type ) return string is
+  begin
+    return "config("
+      & "modulation=" & quote(modulation_type'image(config.modulation)) & ", "
+      & "frame_type=" & quote(frame_length_type'image(config.frame_type)) & ", "
+      & "code_rate=" & quote(code_rate_type'image(config.code_rate)) & ", "
+      & "input_file=" & quote(config.input_file) & ", "
+      & "reference_file=" & quote(config.reference_file) & ")";
+  end function to_string;
 
 end package body;

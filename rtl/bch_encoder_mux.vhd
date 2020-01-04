@@ -31,22 +31,23 @@ use work.dvb_utils_pkg.all;
 -- Entity declaration --
 ------------------------
 entity bch_encoder_mux is
-  generic  ( DATA_WIDTH : integer := 8);
+  generic ( DATA_WIDTH : integer := 8 );
   port (
-    clk              : in std_logic;
-    rst              : in std_logic;
-    --
-    cfg_bch_code_in  : in  std_logic_vector(1 downto 0);
-    first_word       : in std_logic; -- First data. 1: SEED is used (initialise and calculate), 0: Previous CRC is used (continue and calculate)
-    wr_en            : in std_logic; -- New Data. wr_data input has a valid data. Calculate new CRC
-    wr_data          : in std_logic_vector(DATA_WIDTH - 1 downto 0);  -- Data in
+    clk                : in std_logic;
+    rst                : in std_logic;
+    -- Input config/data
+    cfg_frame_type_in  : in frame_length_type;
+    cfg_code_rate_in   : in code_rate_type;
+    first_word         : in std_logic; -- First data. 1: SEED is used (initialise and calculate), 0: Previous CRC is used (continue and calculate)
+    wr_en              : in std_logic; -- New Data. wr_data input has a valid data. Calculate new CRC
+    wr_data            : in std_logic_vector(DATA_WIDTH - 1 downto 0);  -- Data in
 
-    --
-    cfg_bch_code_out : out std_logic_vector(1 downto 0);
-    crc_rdy          : out std_logic;
-    crc              : out std_logic_vector(191 downto 0);
-    -- Data output
-    data_out         : out std_logic_vector(DATA_WIDTH - 1 downto 0));
+    -- Output config/data
+    cfg_frame_type_out : out frame_length_type;
+    cfg_code_rate_out  : out code_rate_type;
+    crc_rdy            : out std_logic;
+    crc                : out std_logic_vector(191 downto 0);
+    data_out           : out std_logic_vector(DATA_WIDTH - 1 downto 0));
 end bch_encoder_mux;
 
 architecture bch_encoder_mux of bch_encoder_mux is
@@ -57,6 +58,26 @@ architecture bch_encoder_mux of bch_encoder_mux is
   constant MUX_WIDTH : integer := 3;
   constant CRC_WIDTH : integer := 192;
 
+  -- Indexes
+  constant CRC_128_INDEX : integer := 0;
+  constant CRC_160_INDEX : integer := 1;
+  constant CRC_192_INDEX : integer := 2;
+
+  function to_index (
+    constant frame_type : in  frame_length_type;
+    constant code_rate  : in  code_rate_type) return natural is
+    constant crc_length : positive := get_crc_length(frame_type, code_rate);
+  begin
+    if crc_length = 128 then
+      return CRC_128_INDEX;
+    elsif crc_length = 160 then
+      return CRC_160_INDEX;
+    elsif crc_length = 192 then
+      return CRC_192_INDEX;
+    end if;
+  end function to_index;
+
+
   -----------
   -- Types --
   -----------
@@ -66,16 +87,18 @@ architecture bch_encoder_mux of bch_encoder_mux is
   -------------
   -- Signals --
   -------------
-  signal in_mux_ptr     : integer range 0 to 2;
-  signal out_mux_ptr    : integer range 0 to 2;
+  signal in_mux_ptr       : integer range 0 to 2;
+  signal out_mux_ptr      : integer range 0 to 2;
 
-  signal cfg_bch_code_0 : std_logic_vector(1 downto 0);
-  signal cfg_bch_code_1 : std_logic_vector(1 downto 0);
-  signal wr_en_array    : std_logic_vector(MUX_WIDTH - 1 downto 0);
+  signal cfg_frame_type_0 : frame_length_type;
+  signal cfg_code_rate_0  : code_rate_type;
+  signal cfg_frame_type_1 : frame_length_type;
+  signal cfg_code_rate_1  : code_rate_type;
+  signal wr_en_array      : std_logic_vector(MUX_WIDTH - 1 downto 0);
 
-  signal crc_rdy_array  : std_logic_vector(MUX_WIDTH - 1 downto 0);
-  signal data_out_array : data_array_type(MUX_WIDTH - 1 downto 0);
-  signal crc_out_array  : crc_array_type(MUX_WIDTH - 1 downto 0);
+  signal crc_rdy_array    : std_logic_vector(MUX_WIDTH - 1 downto 0);
+  signal data_out_array   : data_array_type(MUX_WIDTH - 1 downto 0);
+  signal crc_out_array    : crc_array_type(MUX_WIDTH - 1 downto 0);
 
 begin
 
@@ -106,8 +129,8 @@ begin
         clk   => clk,
         reset => rst,
         fd    => first_word,
-        nd    => wr_en_array(BCH_POLY_12),
-        rdy   => crc_rdy_array(BCH_POLY_12),
+        nd    => wr_en_array(CRC_192_INDEX),
+        rdy   => crc_rdy_array(CRC_192_INDEX),
         d     => std_ulogic_vector(wr_data),
         c     => crc_192_ulogic,
         -- CRC output
@@ -119,8 +142,8 @@ begin
         clk   => clk,
         reset => rst,
         fd    => first_word,
-        nd    => wr_en_array(BCH_POLY_10),
-        rdy   => crc_rdy_array(BCH_POLY_10),
+        nd    => wr_en_array(CRC_160_INDEX),
+        rdy   => crc_rdy_array(CRC_160_INDEX),
         d     => std_ulogic_vector(wr_data),
         c     => crc_160_ulogic,
         -- CRC output
@@ -132,40 +155,41 @@ begin
         clk   => clk,
         reset => rst,
         fd    => first_word,
-        nd    => wr_en_array(BCH_POLY_8),
-        rdy   => crc_rdy_array(BCH_POLY_8),
+        nd    => wr_en_array(CRC_128_INDEX),
+        rdy   => crc_rdy_array(CRC_128_INDEX),
         d     => std_ulogic_vector(wr_data),
         c     => crc_128_ulogic,
         -- CRC output
         o     => data_out_128_ulogic);
 
     -- Assign vector outpus
-    crc_out_array(BCH_POLY_12)               <= std_logic_vector(crc_192_ulogic);
-    data_out_array(BCH_POLY_12)              <= std_logic_vector(data_out_192_ulogic);
+    crc_out_array(CRC_192_INDEX)               <= std_logic_vector(crc_192_ulogic);
+    data_out_array(CRC_192_INDEX)              <= std_logic_vector(data_out_192_ulogic);
 
-    crc_out_array(BCH_POLY_10)(159 downto 0) <= std_logic_vector(crc_160_ulogic);
-    data_out_array(BCH_POLY_10)              <= std_logic_vector(data_out_160_ulogic);
+    crc_out_array(CRC_160_INDEX)(159 downto 0) <= std_logic_vector(crc_160_ulogic);
+    data_out_array(CRC_160_INDEX)              <= std_logic_vector(data_out_160_ulogic);
 
-    crc_out_array(BCH_POLY_8)(127 downto 0)  <= std_logic_vector(crc_128_ulogic);
-    data_out_array(BCH_POLY_8)               <= std_logic_vector(data_out_128_ulogic);
+    crc_out_array(CRC_128_INDEX)(127 downto 0)  <= std_logic_vector(crc_128_ulogic);
+    data_out_array(CRC_128_INDEX)               <= std_logic_vector(data_out_128_ulogic);
 
   end generate;
 
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  cfg_bch_code_out         <= cfg_bch_code_1;
+  cfg_frame_type_out         <= cfg_frame_type_1;
+  cfg_code_rate_out          <= cfg_code_rate_1;
 
-  in_mux_ptr               <= to_integer(unsigned(cfg_bch_code_in));
-  out_mux_ptr              <= to_integer(unsigned(cfg_bch_code_1));
+  in_mux_ptr                 <= to_index(cfg_frame_type_in, cfg_code_rate_in);
+  out_mux_ptr                <= to_index(cfg_frame_type_1, cfg_code_rate_1);
 
-  wr_en_array(BCH_POLY_8)  <= wr_en when in_mux_ptr = BCH_POLY_8 else '0';
-  wr_en_array(BCH_POLY_10) <= wr_en when in_mux_ptr = BCH_POLY_10 else '0';
-  wr_en_array(BCH_POLY_12) <= wr_en when in_mux_ptr = BCH_POLY_12 else '0';
+  wr_en_array(CRC_128_INDEX) <= wr_en when in_mux_ptr = CRC_128_INDEX else '0';
+  wr_en_array(CRC_160_INDEX) <= wr_en when in_mux_ptr = CRC_160_INDEX else '0';
+  wr_en_array(CRC_192_INDEX) <= wr_en when in_mux_ptr = CRC_192_INDEX else '0';
 
-  crc_rdy                  <= crc_rdy_array(out_mux_ptr);
-  crc                      <= crc_out_array(out_mux_ptr);
-  data_out                 <= data_out_array(out_mux_ptr);
+  crc_rdy                    <= crc_rdy_array(out_mux_ptr);
+  crc                        <= crc_out_array(out_mux_ptr);
+  data_out                   <= data_out_array(out_mux_ptr);
 
   ---------------
   -- Processes --
@@ -173,17 +197,21 @@ begin
   process(clk, rst)
   begin
     if rst = '1' then
-      cfg_bch_code_0 <= (others => '0');
-      cfg_bch_code_1 <= (others => '0');
+      cfg_frame_type_0 <= not_set;
+      cfg_frame_type_1 <= not_set;
+      cfg_code_rate_0  <= not_set;
+      cfg_code_rate_1  <= not_set;
     elsif rising_edge(clk) then
       -- Sample the input code whenever the first word is written
       if wr_en = '1' and first_word = '1' then
-        cfg_bch_code_0 <= cfg_bch_code_in;
+        cfg_frame_type_0 <= cfg_frame_type_in;
+        cfg_code_rate_0  <= cfg_code_rate_in;
       end if;
 
       -- Output it when CRC calc is complete
-      if crc_rdy_array(to_integer(unsigned(cfg_bch_code_0))) = '1' then
-        cfg_bch_code_1 <= cfg_bch_code_0;
+      if crc_rdy_array(to_index(cfg_frame_type_0, cfg_code_rate_0)) = '1' then
+        cfg_frame_type_1 <= cfg_frame_type_0;
+        cfg_code_rate_1  <= cfg_code_rate_0;
       end if;
     end if;
   end process;

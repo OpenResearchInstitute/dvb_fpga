@@ -18,10 +18,14 @@
 -- You should have received a copy of the GNU General Public License
 -- along with DVB IP.  If not, see <http://www.gnu.org/licenses/>.
 
-package dvb_utils_pkg is
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
-  constant BCH_NORMAL_FRAME_SIZE : integer := 64_800;
-  constant BCH_SHORT_FRAME_SIZE : integer := 16_200;
+library str_format;
+use str_format.str_format_pkg.all;
+
+package dvb_utils_pkg is
 
   type frame_length_type is (not_set, normal, short);
 
@@ -33,12 +37,39 @@ package dvb_utils_pkg is
     C1_4, C1_3, C2_5, C1_2, C3_5, C2_3, C3_4, C4_5,
     C5_6, C8_9, C9_10);
 
-  constant BCH_POLY_8 : integer := 0;
-  constant BCH_POLY_10 : integer := 1;
-  constant BCH_POLY_12 : integer := 2;
+  function get_crc_length (
+    constant frame_length : in  frame_length_type;
+    constant code_rate    : in  code_rate_type) return positive;
 
 end dvb_utils_pkg;
 
 package body dvb_utils_pkg is
+
+  function get_crc_length (
+    constant frame_length : in  frame_length_type;
+    constant code_rate    : in  code_rate_type) return positive is
+    variable result       : integer := -1;
+  begin
+    if frame_length = short then
+      result := 192;
+    else
+      if code_rate = C8_9 or code_rate = C9_10 then
+        result := 128;
+      elsif code_rate = C5_6 or code_rate = C2_3 then
+        result := 160;
+      else
+        result := 192;
+      end if;
+    end if;
+
+    assert result /= -1
+      report "Unable to determine CRC length for " &
+             "frame length = " & frame_length_type'image(frame_length) & ", " &
+             "code rate = " & code_rate_type'image(code_rate)
+      severity Failure;
+
+    return result;
+  end function get_crc_length;
+
 
 end package body;

@@ -23,107 +23,111 @@
 use std.textio.all;
 
 library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library vunit_lib;
-  context vunit_lib.vunit_context;
-  context vunit_lib.com_context;
+context vunit_lib.vunit_context;
+context vunit_lib.com_context;
 
 library osvvm;
-  use osvvm.RandomPkg.all;
+use osvvm.RandomPkg.all;
 
 library str_format;
-  use str_format.str_format_pkg.all;
+use str_format.str_format_pkg.all;
 
 use work.dvb_utils_pkg.all;
+use work.testbench_utils_pkg.all;
 
 entity axi_bch_encoder_tb is
   generic (
-    runner_cfg         : string;
-    PATH_TO_TEST_FILES : string := "/home/souto/phase4ground/bch_tests/");
+    runner_cfg : string;
+    test_cfg   : string);
 end axi_bch_encoder_tb;
 
 architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
 
-    ---------------
-    -- Constants --
-    ---------------
-    constant FILE_READER_NAME   : string := "file_reader";
-    constant FILE_CHECKER_NAME  : string := "file_checker";
-    constant CLK_PERIOD         : time := 5 ns;
-    constant TDATA_WIDTH        : integer := 8;
-    constant ERROR_CNT_WIDTH    : integer := 8;
+  ---------------
+  -- Constants --
+  ---------------
+  constant configs           : config_array_type := get_test_cfg(test_cfg);
 
-    -------------
-    -- Signals --
-    -------------
-    -- Usual ports
-    signal clk                : std_logic := '1';
-    signal rst                : std_logic;
+  constant FILE_READER_NAME  : string := "file_reader";
+  constant FILE_CHECKER_NAME : string := "file_checker";
+  constant CLK_PERIOD        : time := 5 ns;
+  constant TDATA_WIDTH       : integer := 8;
+  constant ERROR_CNT_WIDTH   : integer := 8;
 
-    signal cfg_bch_code       : std_logic_vector(1 downto 0);
+  -------------
+  -- Signals --
+  -------------
+  -- Usual ports
+  signal clk                : std_logic := '1';
+  signal rst                : std_logic;
 
-    -- AXI input
-    signal m_tready           : std_logic;
-    signal m_tvalid           : std_logic;
-    signal m_tdata            : std_logic_vector(TDATA_WIDTH - 1 downto 0);
-    signal m_tlast            : std_logic;
+  signal cfg_frame_type     : frame_length_type;
+  signal cfg_code_rate      : code_rate_type;
 
-    -- AXI output
-    signal s_tvalid           : std_logic;
-    signal s_tdata            : std_logic_vector(TDATA_WIDTH - 1 downto 0);
-    signal s_tlast            : std_logic;
-    signal s_tready           : std_logic;
+  -- AXI input
+  signal m_tready           : std_logic;
+  signal m_tvalid           : std_logic;
+  signal m_tdata            : std_logic_vector(TDATA_WIDTH - 1 downto 0);
+  signal m_tlast            : std_logic;
 
-    signal tvalid_probability : real := 1.0;
-    signal tready_probability : real := 1.0;
+  -- AXI output
+  signal s_tvalid           : std_logic;
+  signal s_tdata            : std_logic_vector(TDATA_WIDTH - 1 downto 0);
+  signal s_tlast            : std_logic;
+  signal s_tready           : std_logic;
 
-    signal m_data_valid       : boolean;
-    signal s_data_valid       : boolean;
+  signal tvalid_probability : real := 1.0;
+  signal tready_probability : real := 1.0;
 
-    signal tdata_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
-    signal tlast_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
-    signal error_cnt          : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
+  signal m_data_valid       : boolean;
+  signal s_data_valid       : boolean;
 
-    --
-    signal read_completed     : std_logic;
+  signal tdata_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
+  signal tlast_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
+  signal error_cnt          : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
+
+  --
+  signal read_completed     : std_logic;
 
 begin
 
-    -------------------
-    -- Port mappings --
-    -------------------
-    dut : entity work.axi_bch_encoder
-        generic map (
-            TDATA_WIDTH => TDATA_WIDTH
-        )
-        port map (
-            -- Usual ports
-            clk          => clk,
-            rst          => rst,
+  -------------------
+  -- Port mappings --
+  -------------------
+  dut : entity work.axi_bch_encoder
+    generic map ( TDATA_WIDTH => TDATA_WIDTH)
+    port map (
+      -- Usual ports
+      clk            => clk,
+      rst            => rst,
 
-            cfg_bch_code => cfg_bch_code,
+      cfg_frame_type => cfg_frame_type,
+      cfg_code_rate  => cfg_code_rate,
 
-            -- AXI input
-            s_tvalid     => m_tvalid,
-            s_tdata      => m_tdata,
-            s_tlast      => m_tlast,
-            s_tready     => m_tready,
+      -- AXI input
+      s_tvalid       => m_tvalid,
+      s_tdata        => m_tdata,
+      s_tlast        => m_tlast,
+      s_tready       => m_tready,
 
-            -- AXI output
-            m_tready     => s_tready,
-            m_tvalid     => s_tvalid,
-            m_tlast      => s_tlast,
-            m_tdata      => s_tdata);
+      -- AXI output
+      m_tready       => s_tready,
+      m_tvalid       => s_tvalid,
+      m_tlast        => s_tlast,
+      m_tdata        => s_tdata);
 
 
   -- AXI file read
   axi_file_reader_u : entity work.axi_file_reader
     generic map (
-      READER_NAME    => FILE_READER_NAME,
-      DATA_WIDTH     => TDATA_WIDTH,
-      BYTES_ARE_BITS => True)
+      READER_NAME      => FILE_READER_NAME,
+      DATA_WIDTH       => TDATA_WIDTH,
+      BYTES_ARE_BITS   => True,
+      INPUT_DATA_RATIO => "1:8")
     port map (
       -- Usual ports
       clk                => clk,
@@ -144,7 +148,7 @@ begin
       ERROR_CNT_WIDTH => ERROR_CNT_WIDTH,
       REPORT_SEVERITY => Warning,
       DATA_WIDTH      => TDATA_WIDTH,
-      BYTES_ARE_BITS  => True)
+      INPUT_DATA_RATIO => "1:8")
     port map (
       -- Usual ports
       clk                => clk,
@@ -165,8 +169,6 @@ begin
   -- Asynchronous assignments --
   ------------------------------
   clk <= not clk after CLK_PERIOD/2;
-
-  test_runner_watchdog(runner, 3 ms);
 
   m_data_valid <= m_tvalid = '1' and m_tready = '1';
   s_data_valid <= s_tvalid = '1' and s_tready = '1';
@@ -190,13 +192,20 @@ begin
 
     ------------------------------------------------------------------------------------
     procedure run_test (
-      constant bch_code         : in integer;
-      constant input_file       : in string;
-      constant reference_file   : in string;
+      constant config           : config_type;
       constant number_of_frames : in positive) is
       variable file_reader_msg  : msg_t;
       variable file_checker_msg : msg_t;
     begin
+
+      set_timeout(runner, 3 ms);
+
+      info("Running test with:");
+      info(" - modulation     : " & modulation_type'image(config.modulation));
+      info(" - frame_type     : " & frame_length_type'image(config.frame_type));
+      info(" - code_rate      : " & code_rate_type'image(config.code_rate));
+      info(" - input_file     : " & config.input_file);
+      info(" - reference_file : " & config.reference_file);
 
       for i in 0 to number_of_frames - 1 loop
         file_reader_msg := new_msg;
@@ -205,9 +214,10 @@ begin
         file_reader_msg.sender := self;
         file_checker_msg.sender := self;
 
-        push_string(file_reader_msg, PATH_TO_TEST_FILES & input_file);
-        push_integer(file_reader_msg, bch_code);
-        push_string(file_checker_msg, PATH_TO_TEST_FILES & reference_file);
+        push(file_reader_msg, config.input_file);
+        push(file_reader_msg, config.frame_type);
+        push(file_reader_msg, config.code_rate);
+        push(file_checker_msg, config.reference_file);
 
         send(net, input_cfg_p, file_reader_msg);
         send(net, file_checker, file_checker_msg);
@@ -245,55 +255,41 @@ begin
       tvalid_probability <= 1.0;
       tready_probability <= 1.0;
 
-      if run("run_192_16008_back_to_back") then
+      if run("back_to_back") then
         tvalid_probability <= 1.0;
         tready_probability <= 1.0;
-        run_test(BCH_POLY_12, "input_16008.bin", "reference_16008.bin", 4);
-        wait_for_transfers(4);
 
-      elsif run("run_192_16008_slow_master") then
+        for i in configs'range loop
+          run_test(configs(i), number_of_frames => 1);
+        end loop;
+        wait_for_transfers(configs'length);
+
+      elsif run("slow_master") then
         tvalid_probability <= 0.5;
         tready_probability <= 1.0;
-        run_test(BCH_POLY_12, "input_16008.bin", "reference_16008.bin", 4);
-        wait_for_transfers(4);
 
-      elsif run("run_192_16008_slow_slave") then
-        tvalid_probability <= 1.0;
-        tready_probability <= 0.5;
-        run_test(BCH_POLY_12, "input_16008.bin", "reference_16008.bin", 4);
-        wait_for_transfers(4);
+        for i in configs'range loop
+          run_test(configs(i), number_of_frames => 1);
+        end loop;
+        wait_for_transfers(configs'length);
 
-      elsif run("run_192_16008_slow_overall") then
+      elsif run("slow_slave") then
+        tvalid_probability <= 0.5;
+        tready_probability <= 1.0;
+
+        for i in configs'range loop
+          run_test(configs(i), number_of_frames => 1);
+        end loop;
+        wait_for_transfers(configs'length);
+
+      elsif run("both_slow") then
         tvalid_probability <= 0.75;
         tready_probability <= 0.75;
-        run_test(BCH_POLY_12, "input_16008.bin", "reference_16008.bin", 4);
-        wait_for_transfers(4);
 
-      -- Test other encodings
-      elsif run("run_160_53840_back_to_back") then
-        tvalid_probability <= 1.0;
-        tready_probability <= 1.0;
-        run_test(BCH_POLY_10, "input_53840.bin", "reference_53840.bin", 4);
-        wait_for_transfers(4);
-
-      -- Test other encodings
-      elsif run("run_128_58192_back_to_back") then
-        tvalid_probability <= 1.0;
-        tready_probability <= 1.0;
-        run_test(BCH_POLY_8, "input_58192.bin", "reference_58192.bin", 4);
-        wait_for_transfers(4);
-
-      elsif run("test_switching_encodings") then
-        tvalid_probability <= 1.0;
-        tready_probability <= 1.0;
-        run_test(BCH_POLY_12, "input_16008.bin", "reference_16008.bin", 1);
-        run_test(BCH_POLY_10, "input_53840.bin", "reference_53840.bin", 1);
-        run_test(BCH_POLY_8, "input_58192.bin", "reference_58192.bin", 1);
-        run_test(BCH_POLY_12, "input_16008.bin", "reference_16008.bin", 1);
-        run_test(BCH_POLY_10, "input_53840.bin", "reference_53840.bin", 1);
-        run_test(BCH_POLY_8, "input_58192.bin", "reference_58192.bin", 1);
-
-        wait_for_transfers(6);
+        for i in configs'range loop
+          run_test(configs(i), number_of_frames => 1);
+        end loop;
+        wait_for_transfers(configs'length);
 
       end if;
 
@@ -325,7 +321,7 @@ begin
 
     file_reader_msg        := new_msg;
     file_reader_msg.sender := self;
-    push_string(file_reader_msg, pop_string(cfg_msg));
+    push(file_reader_msg, pop_string(cfg_msg));
 
     -- Configure the file reader
     send(net, file_reader, file_reader_msg);
@@ -334,9 +330,11 @@ begin
 
     -- Keep the config stuff active for a single cycle to make sure blocks use the correct
     -- values
-    cfg_bch_code   <= std_logic_vector(to_unsigned(pop_integer(cfg_msg), 2));
+    cfg_frame_type <= pop(cfg_msg);
+    cfg_code_rate    <= pop(cfg_msg);
     wait until m_data_valid and m_tlast = '0' and rising_edge(clk);
-    cfg_bch_code   <= (others => 'U');
+    cfg_frame_type <= not_set;
+    cfg_code_rate  <= not_set;
 
     wait until m_data_valid and m_tlast = '1';
 
@@ -346,11 +344,20 @@ begin
     -- If there's no more messages, notify the main process that we're done here
     if not has_message(self) then
       cfg_msg := new_msg;
-      push_boolean(cfg_msg, True);
+      push(cfg_msg, True);
       cfg_msg.sender := self;
       send(net, main, cfg_msg);
     end if;
     check_equal(error_cnt, 0);
   end process;
 
+  process
+  begin
+    wait until rising_edge(clk);
+    if rst = '0' then
+      check_equal(error_cnt, 0, sformat("Expected 0 errors but got %d", fo(error_cnt)));
+    end if;
+  end process;
+
 end axi_bch_encoder_tb;
+
