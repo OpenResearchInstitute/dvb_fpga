@@ -1,5 +1,26 @@
 #!/usr/bin/env python3
 
+#
+# DVB FPGA
+#
+# Copyright 2019 by Suoto <andre820@gmail.com>
+#
+# This file is part of DVB FPGA.
+#
+# DVB FPGA is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# DVB FPGA is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with DVB FPGA.  If not, see <http://www.gnu.org/licenses/>.
+
+
 import os.path as p
 import struct
 import sys
@@ -35,6 +56,7 @@ def main():
     add_axi_stream_delay_tb_tests(cli)
     add_axi_file_reader_tb_tests(cli)
     add_axi_bit_interleaver_tests(cli)
+    add_axi_bch_encoder_tests(cli)
 
     cli.set_compile_option("modelsim.vcom_flags", ["-novopt", "-explicit"])
     cli.set_sim_option("modelsim.vsim_flags", ["-novopt"])
@@ -65,6 +87,43 @@ def _iter_params():
                 yield Parameters(modulation_type, frame_length, code_rate)
 
 
+def add_axi_bch_encoder_tests(cli):
+    axi_bch_encoder_tb = cli.library("lib").entity("axi_bch_encoder_tb")
+
+    test_cfg = []
+
+    for modulation, frame_length, code_rate in _iter_params():
+
+        data_files = p.join(
+            ROOT,
+            "gnuradio_data",
+            f"FECFRAME_{frame_length}_{modulation}_{code_rate}".upper(),
+        )
+
+        input_file = p.join(data_files, "bch_encoder_input.bin")
+        reference_file = p.join(data_files, "ldpc_encoder_input.bin")
+
+        if not p.exists(input_file) or not p.exists(reference_file):
+            continue
+
+        test_cfg += [
+            ",".join(
+                map(
+                    str,
+                    (modulation, frame_length, code_rate, input_file, reference_file),
+                )
+            )
+        ]
+
+        # Can add this to run specific configs independently
+        #  test_name = f"test_{frame_length}_frame_{modulation}_{code_rate}"
+        #  axi_bch_encoder_tb.add_config(
+        #      name=test_name, generics={"test_cfg": ":".join(test_cfg)}
+        #  )
+
+    axi_bch_encoder_tb.add_config(name="all", generics={"test_cfg": ":".join(test_cfg)})
+
+
 def add_axi_bit_interleaver_tests(cli):
     axi_bit_interleaver_tb = cli.library("lib").entity("axi_bit_interleaver_tb")
 
@@ -84,27 +143,12 @@ def add_axi_bit_interleaver_tests(cli):
 
         test_name = f"test_{frame_length}_frame_{modulation}_{code_rate}"
 
-        output_path = p.join(ROOT, "vunit_out")
-        config_file = p.join(output_path, test_name + ".csv")
-
-        with open(config_file, "w") as fd:
-            fd.write(
-                ",".join(
-                    map(
-                        str,
-                        (
-                            modulation,
-                            frame_length,
-                            code_rate,
-                            input_file,
-                            reference_file,
-                        ),
-                    )
-                )
-            )
+        test_cfg = ",".join(
+            map(str, (modulation, frame_length, code_rate, input_file, reference_file))
+        )
 
         axi_bit_interleaver_tb.add_config(
-            name=test_name, generics={"CONFIG_FILE": config_file}
+            name=test_name, generics={"test_cfg": test_cfg}
         )
 
 
