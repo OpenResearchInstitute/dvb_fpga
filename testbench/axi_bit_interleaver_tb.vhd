@@ -41,8 +41,8 @@ use work.testbench_utils_pkg.all;
 
 entity axi_bit_interleaver_tb is
   generic (
-    runner_cfg         : string;
-    PATH_TO_TEST_FILES : string := "/home/souto/phase4ground/bch_tests/");
+    runner_cfg  : string;
+    CONFIG_FILE : string);
 end axi_bit_interleaver_tb;
 
 architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
@@ -50,11 +50,13 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   ---------------
   -- Constants --
   ---------------
-  constant FILE_READER_NAME   : string := "file_reader";
-  constant FILE_CHECKER_NAME  : string := "file_checker";
-  constant CLK_PERIOD         : time := 5 ns;
-  constant TDATA_WIDTH        : integer := 8;
-  constant ERROR_CNT_WIDTH    : integer := 8;
+  constant configs : config_array_type := get_config_from_file(CONFIG_FILE);
+
+  constant FILE_READER_NAME  : string := "file_reader";
+  constant FILE_CHECKER_NAME : string := "file_checker";
+  constant CLK_PERIOD        : time := 5 ns;
+  constant TDATA_WIDTH       : integer := 8;
+  constant ERROR_CNT_WIDTH   : integer := 8;
 
   -------------
   -- Signals --
@@ -204,6 +206,13 @@ begin
       variable file_checker_msg : msg_t;
     begin
 
+      info("Running test with:");
+      info(" - modulation     : " & modulation_type'image(modulation));
+      info(" - frame_length   : " & frame_length_type'image(frame_length));
+      info(" - code_rate      : " & code_rate_type'image(ldpc_code));
+      info(" - input_file     : " & input_file);
+      info(" - reference_file : " & reference_file);
+
       for i in 0 to number_of_frames - 1 loop
         file_reader_msg := new_msg;
         file_checker_msg := new_msg;
@@ -211,11 +220,11 @@ begin
         file_reader_msg.sender := self;
         file_checker_msg.sender := self;
 
-        push(file_reader_msg, path_to_test_files & input_file);
+        push(file_reader_msg, input_file);
         push(file_reader_msg, modulation);
         push(file_reader_msg, frame_length);
         push(file_reader_msg, ldpc_code);
-        push(file_checker_msg, path_to_test_files & reference_file);
+        push(file_checker_msg, reference_file);
 
         send(net, input_cfg_p, file_reader_msg);
         send(net, file_checker, file_checker_msg);
