@@ -140,24 +140,24 @@ begin
   bch_u : entity work.bch_encoder_mux
     generic map (DATA_WIDTH => TDATA_WIDTH)
     port map (
-      clk                  => clk,
-      rst                  => rst,
+      clk                => clk,
+      rst                => rst,
 
       -- Input data
       cfg_frame_type_in  => frame_type,
-      cfg_code_rate_in     => code_rate,
+      cfg_code_rate_in   => code_rate,
 
-      first_word           => s_axi_first_word,
-      wr_en                => s_axi_data_valid,
-      wr_data              => s_tdata,
+      first_word         => s_axi_first_word,
+      wr_en              => s_axi_data_valid,
+      wr_data            => s_tdata,
 
       -- Output data
       cfg_frame_type_out => cfg_frame_type_out,
-      cfg_code_rate_out    => cfg_code_rate_out,
+      cfg_code_rate_out  => cfg_code_rate_out,
 
-      crc_rdy              => open,
-      crc                  => crc,
-      data_out             => open);
+      crc_rdy            => open,
+      crc                => crc,
+      data_out           => open);
 
   ------------------------------
   -- Asynchronous assignments --
