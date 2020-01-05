@@ -128,9 +128,9 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   -- Signals --
   -------------
   -- Write side config
-  signal modulation         : modulation_type;
-  signal frame_type         : frame_length_type;
-  signal code_rate          : code_rate_type;
+  signal wr_cfg_modulation  : modulation_type;
+  signal wr_cfg_frame_type  : frame_length_type;
+  signal wr_cfg_code_rate   : code_rate_type;
 
   signal s_axi_dv           : std_logic;
   signal s_tready_i         : std_logic;
@@ -156,6 +156,11 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
 
   signal ram_rdaddr         : std_logic_vector(numbits(MAX_ROWS) downto 0);
   signal ram_rddata         : data_array_type(0 to MAX_COLUMNS - 1);
+
+  -- Read side config
+  signal rd_cfg_modulation  : modulation_type;
+  signal rd_cfg_frame_type  : frame_length_type;
+  signal rd_cfg_code_rate   : code_rate_type;
 
   signal rd_data_sr         : std_logic_vector(MAX_COLUMNS*DATA_WIDTH - 1 downto 0);
 
@@ -295,11 +300,16 @@ begin
         -- When the frame ends, hand over the parameters to the read side
         if s_tlast = '1' then
           wr_ram_ptr     <= wr_ram_ptr + 1;
-          rd_row_ptr_max <= to_unsigned(get_max_row_ptr(modulation,
-                                                        frame_type),
+          rd_row_ptr_max <= to_unsigned(get_max_row_ptr(wr_cfg_modulation,
+                                                        wr_cfg_frame_type),
                                         numbits(MAX_ROWS));
-          rd_col_ptr_max <= to_unsigned(get_max_column_ptr(modulation),
+          rd_col_ptr_max <= to_unsigned(get_max_column_ptr(wr_cfg_modulation),
                                         numbits(MAX_COLUMNS));
+
+          -- This will be used for the reading side
+          rd_cfg_modulation <= wr_cfg_modulation;
+          rd_cfg_frame_type <= wr_cfg_frame_type;
+          rd_cfg_code_rate  <= wr_cfg_code_rate;
 
         end if;
       end if;
@@ -331,11 +341,6 @@ begin
         -- If pointers are different and the AXI adapter has space, keep writing
         m_wr_en <= '1';
 
-        if m_wr_last = '1' then
-          rd_ram_ptr <= rd_ram_ptr + 1;
-          m_wr_en    <= '0';
-        end if;
-
         -- Read pointers control logic
         if rd_col_ptr /= rd_col_ptr_max then
           rd_col_ptr <= rd_col_ptr + 1;
@@ -350,19 +355,31 @@ begin
           end if;
         end if;
 
+        if m_wr_last = '1' then
+          rd_ram_ptr <= rd_ram_ptr + 1;
+          m_wr_en    <= '0';
+          rd_col_ptr <= (others => '0');
+          rd_row_ptr <= (others => '0');
+        end if;
+
+
         if rd_col_ptr_0 = 0 then
           -- Assign to undefined so we can track in simulation the parts that we not
           -- assigned
           rd_data_sr <= (others => 'U');
 
-          -- Reminder that rd_col_ptr_max is the number of columns - 1
-          -- Also, we'll swap byte ordering (e.g ABCD becomes DCBA) because it's easier to
+          -- We'll swap byte ordering (e.g ABCD becomes DCBA) because it's easier to
           -- assign the write data from the shift register's LSB
-          if rd_col_ptr_max = 2 then                         -- 3 columns
-            rd_data_sr(interleaved_3_cols'range) <= swap_bytes(interleaved_3_cols);
-          elsif rd_col_ptr_max = 3 then                      -- 4 columns
+          if rd_cfg_modulation = mod_8psk then
+            if rd_cfg_code_rate = C3_5 then
+              rd_data_sr(interleaved_3_cols'range)
+                <= swap_bytes(swap_bits(interleaved_3_cols));
+            else
+              rd_data_sr(interleaved_3_cols'range) <= swap_bytes(interleaved_3_cols);
+            end if;
+          elsif rd_cfg_modulation = mod_16apsk then
             rd_data_sr(interleaved_4_cols'range) <= swap_bytes(interleaved_4_cols);
-          elsif rd_col_ptr_max = 4 then                      -- 5 columns
+          elsif rd_cfg_modulation = mod_32apsk then
             rd_data_sr <= swap_bytes(interleaved_5_cols);
           end if;
         else
@@ -386,9 +403,9 @@ begin
     signal first_word    : std_logic;
   begin
 
-    modulation   <= cfg_modulation when first_word = '1' else modulation_ff;
-    frame_type <= cfg_frame_type when first_word = '1' else frame_type_ff;
-    code_rate    <= cfg_code_rate when first_word = '1' else code_rate_ff;
+    wr_cfg_modulation <= cfg_modulation when first_word = '1' else modulation_ff;
+    wr_cfg_frame_type <= cfg_frame_type when first_word = '1' else frame_type_ff;
+    wr_cfg_code_rate  <= cfg_code_rate when first_word = '1' else code_rate_ff;
 
     process(clk, rst)
     begin
@@ -402,15 +419,15 @@ begin
 
           -- Sample the BCH code used on the first word
           if first_word = '1' then
-            modulation_ff   <= cfg_modulation;
-            frame_type_ff <= cfg_frame_type;
-            code_rate_ff    <= cfg_code_rate;
+            modulation_ff  <= cfg_modulation;
+            frame_type_ff  <= cfg_frame_type;
+            code_rate_ff   <= cfg_code_rate;
 
-            wr_row_ptr_max  <= to_unsigned(get_max_row_ptr(cfg_modulation,
-                                                           cfg_frame_type),
-                                           numbits(MAX_ROWS));
-            wr_col_ptr_max  <= to_unsigned(get_max_column_ptr(cfg_modulation),
-                                           numbits(MAX_COLUMNS));
+            wr_row_ptr_max <= to_unsigned(get_max_row_ptr(cfg_modulation,
+                                                          cfg_frame_type),
+                                          numbits(MAX_ROWS));
+            wr_col_ptr_max <= to_unsigned(get_max_column_ptr(cfg_modulation),
+                                          numbits(MAX_COLUMNS));
           end if;
 
         end if;

@@ -90,22 +90,21 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   signal cfg_frame_type     : frame_length_type;
   signal cfg_code_rate      : code_rate_type;
 
+  signal tvalid_probability : real := 1.0;
+  signal tready_probability : real := 1.0;
+
   -- AXI input
   signal m_tready           : std_logic;
   signal m_tvalid           : std_logic;
   signal m_tdata            : std_logic_vector(TDATA_WIDTH - 1 downto 0);
   signal m_tlast            : std_logic;
+  signal m_data_valid       : boolean;
 
   -- AXI output
   signal s_tvalid           : std_logic;
   signal s_tdata            : std_logic_vector(TDATA_WIDTH - 1 downto 0);
   signal s_tlast            : std_logic;
   signal s_tready           : std_logic;
-
-  signal tvalid_probability : real := 1.0;
-  signal tready_probability : real := 1.0;
-
-  signal m_data_valid       : boolean;
   signal s_data_valid       : boolean;
 
   signal expected_tdata     : std_logic_vector(TDATA_WIDTH - 1 downto 0);

@@ -28,6 +28,7 @@ package common_pkg is
     function numbits (constant v : integer) return integer;
 
     function swap_bytes (constant v : std_logic_vector) return std_logic_vector;
+    function swap_bits (constant v : std_logic_vector) return std_logic_vector;
 
 end common_pkg;
 
@@ -64,6 +65,16 @@ package body common_pkg is
         end loop;
         return result;
     end function swap_bytes;
+
+    function swap_bits (constant v : std_logic_vector) return std_logic_vector is
+      variable result : std_logic_vector(v'range);
+    begin
+      for i in v'range loop
+        result(v'length - i - 1) := v(i);
+      end loop;
+
+      return result;
+    end;
 
 end package body;
 
