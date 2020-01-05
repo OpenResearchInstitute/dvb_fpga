@@ -149,12 +149,18 @@ begin
     impure function get_next_data (constant word_width : in natural)
     return std_logic_vector is
       variable result     : std_logic_vector(word_width - 1 downto 0);
-      variable temp       : std_logic_vector(ratio.first - 1 downto 0);
+      variable word       : std_logic_vector(ratio.second - 1 downto 0);
     begin
       while ratio_bit_cnt < word_width loop
-        temp          := read_word_from_file(ratio.second)(ratio.first - 1 downto 0);
+        word          := read_word_from_file(ratio.second);
         ratio_bit_cnt := ratio_bit_cnt + ratio.first;
-        ratio_buffer  := ratio_buffer(ratio_buffer'length - ratio.first - 1 downto 0) & temp;
+        ratio_buffer  := ratio_buffer(ratio_buffer'length - ratio.first - 1 downto 0)
+                         & word(ratio.first - 1 downto 0);
+
+        if unsigned(word(ratio.second - 1 downto ratio.first)) /= 0 then
+          warning(logger, sformat("Something looks wrong here, expected 0s for got %r",
+                  fo(word(ratio.second - 1 downto ratio.first))));
+        end if;
       end loop;
 
       ratio_bit_cnt := ratio_bit_cnt mod word_width;
