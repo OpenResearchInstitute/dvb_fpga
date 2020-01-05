@@ -149,12 +149,12 @@ begin
     impure function get_next_data (constant word_width : in natural)
     return std_logic_vector is
       variable result     : std_logic_vector(word_width - 1 downto 0);
-      variable temp       : std_logic_vector(ratio.output - 1 downto 0);
+      variable temp       : std_logic_vector(ratio.first - 1 downto 0);
     begin
       while ratio_bit_cnt < word_width loop
-        temp          := read_word_from_file(ratio.input)(ratio.output - 1 downto 0);
-        ratio_bit_cnt := ratio_bit_cnt + ratio.output;
-        ratio_buffer  := ratio_buffer(ratio_buffer'length - ratio.output - 1 downto 0) & temp;
+        temp          := read_word_from_file(ratio.second)(ratio.first - 1 downto 0);
+        ratio_bit_cnt := ratio_bit_cnt + ratio.first;
+        ratio_buffer  := ratio_buffer(ratio_buffer'length - ratio.first - 1 downto 0) & temp;
       end loop;
 
       ratio_bit_cnt := ratio_bit_cnt mod word_width;
@@ -219,7 +219,7 @@ begin
             logger,
             sformat(
               "Reading %s. Data ratio is %d:%d (requested by %s)", quote(cfg.filename),
-              fo(cfg.data_ratio.output), fo(cfg.data_ratio.input),
+              fo(cfg.data_ratio.first), fo(cfg.data_ratio.second),
               quote(name(msg.sender))));
 
           file_open(file_handler, cfg.filename, read_mode);

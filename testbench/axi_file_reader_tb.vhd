@@ -72,7 +72,7 @@ architecture axi_file_reader_tb of axi_file_reader_tb is
   -- Generates data for when BYTES_ARE_BITS is set to True
   impure function generate_unpacked_data (constant length : positive)
   return std_logic_vector_array is
-    constant NUMBER_OF_WORDS : integer := length * DATA_RATIO.output / DATA_RATIO.input;
+    constant NUMBER_OF_WORDS : integer := length * DATA_RATIO.first / DATA_RATIO.second;
     variable data            : std_logic_vector_array(0 to NUMBER_OF_WORDS - 1)(7 downto 0);
     variable word            : std_logic_vector(DATA_WIDTH - 1 downto 0);
     variable byte            : std_logic_vector(7 downto 0);

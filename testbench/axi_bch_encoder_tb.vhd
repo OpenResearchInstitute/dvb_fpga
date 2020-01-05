@@ -178,7 +178,7 @@ begin
   main : process
     constant self         : actor_t := new_actor("main");
     constant input_cfg_p  : actor_t := find("input_cfg_p");
-    constant file_checker : actor_t := find(FILE_CHECKER_NAME);
+    variable file_checker : file_reader_t := new_file_reader(FILE_CHECKER_NAME);
     ------------------------------------------------------------------------------------
     procedure walk(constant steps : natural) is
     begin
@@ -194,7 +194,6 @@ begin
       constant config           : config_type;
       constant number_of_frames : in positive) is
       variable file_reader_msg  : msg_t;
-      variable file_checker_msg : msg_t;
     begin
 
       set_timeout(runner, 3 ms);
@@ -208,20 +207,15 @@ begin
 
       for i in 0 to number_of_frames - 1 loop
         file_reader_msg := new_msg;
-        file_checker_msg := new_msg;
-
         file_reader_msg.sender := self;
-        file_checker_msg.sender := self;
 
-        push_file_reader_cfg(file_reader_msg, (config.input_file, (1, 8)));
-
+        push(file_reader_msg, config.input_file);
         push(file_reader_msg, config.frame_type);
         push(file_reader_msg, config.code_rate);
 
-        push_file_reader_cfg(file_checker_msg, (config.reference_file, (1, 8)));
-
         send(net, input_cfg_p, file_reader_msg);
-        send(net, file_checker, file_checker_msg);
+        enqueue_file(net, file_checker, config.reference_file, "1:8");
+
       end loop;
 
     end procedure run_test;
@@ -235,10 +229,7 @@ begin
       receive(net, self, msg);
       debug(sformat("Got reply from '%s'", name(msg.sender)));
 
-      for i in 0 to count - 1 loop
-        receive(net, self, msg);
-        debug(sformat("[%d] Got reply from '%s'", fo(i), name(msg.sender)));
-      end loop;
+      wait_all_read(net, file_checker);
     end procedure wait_for_transfers;
     ------------------------------------------------------------------------------------
 
@@ -297,7 +288,6 @@ begin
       walk(1);
 
       check_false(has_message(input_cfg_p));
-      check_false(has_message(file_checker));
 
       check_equal(error_cnt, 0);
 
@@ -310,23 +300,16 @@ begin
   end process;
 
   input_cfg_p : process
-    constant self              : actor_t := new_actor("input_cfg_p");
-    constant main              : actor_t := find("main");
-    variable cfg_msg           : msg_t;
-    constant file_reader       : actor_t := find(FILE_READER_NAME);
-    variable file_reader_msg   : msg_t;
-    variable file_reader_reply : msg_t;
+    constant self        : actor_t := new_actor("input_cfg_p");
+    constant main        : actor_t := find("main");
+    variable cfg_msg     : msg_t;
+    variable file_reader : file_reader_t := new_file_reader(FILE_READER_NAME);
   begin
 
     receive(net, self, cfg_msg);
 
-    file_reader_msg        := new_msg;
-    file_reader_msg.sender := self;
-
-    push_file_reader_cfg(file_reader_msg, pop(cfg_msg));
-
     -- Configure the file reader
-    send(net, file_reader, file_reader_msg);
+    enqueue_file(net, file_reader, pop(cfg_msg), "1:8");
 
     wait until rising_edge(clk);
 
@@ -341,7 +324,7 @@ begin
     wait until m_data_valid and m_tlast = '1';
 
     -- When this is received, the file reader has finished reading the file
-    receive_reply (net, file_reader_msg, file_reader_reply);
+    wait_file_read(net, file_reader);
 
     -- If there's no more messages, notify the main process that we're done here
     if not has_message(self) then
