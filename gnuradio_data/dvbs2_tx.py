@@ -61,7 +61,7 @@ CODE_RATES = {
 
 def get_crc_length(frame_type, code_rate):
     if frame_type == dtv.FECFRAME_SHORT:
-        return 192
+        return 168
 
     if code_rate in (dtv.C8_9, dtv.C9_10):
         return 128

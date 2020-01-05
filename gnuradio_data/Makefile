@@ -1,4 +1,4 @@
-frame_lengths := FECFRAME_NORMAL
+frame_lengths := FECFRAME_NORMAL FECFRAME_SHORT
 modulation_values := MOD_8PSK MOD_16APSK MOD_32APSK
 code_rates := C1_2 C1_3 C1_4 C2_3 C2_5 C3_4 C3_5 C4_5 C5_6 C8_9 C9_10
 
