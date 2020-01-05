@@ -114,10 +114,10 @@ def addAxiBchEncoderTests(cli):
             )
         ]
 
-        # Can add this to run specific configs independently
+        #  #  Can add this to run specific configs independently
         #  test_name = f"test_{frame_length}_frame_{modulation}_{code_rate}"
         #  axi_bch_encoder_tb.add_config(
-        #      name=test_name, generics={"test_cfg": ":".join(test_cfg)}
+        #      name=test_name, generics={"test_cfg": test_cfg[-1]}
         #  )
 
     axi_bch_encoder_tb.add_config(name="all", generics={"test_cfg": ":".join(test_cfg)})
@@ -126,8 +126,9 @@ def addAxiBchEncoderTests(cli):
 def addAxiBitInterleaverTests(cli):
     axi_bit_interleaver_tb = cli.library("lib").entity("axi_bit_interleaver_tb")
 
-    for modulation, frame_length, code_rate in _iterParams():
+    test_cfg = []
 
+    for modulation, frame_length, code_rate in _iterParams():
         data_files = p.join(
             ROOT,
             "gnuradio_data",
@@ -142,13 +143,24 @@ def addAxiBitInterleaverTests(cli):
 
         test_name = f"test_{frame_length}_frame_{modulation}_{code_rate}"
 
-        test_cfg = ",".join(
-            map(str, (modulation, frame_length, code_rate, input_file, reference_file))
+        test_cfg += [
+            ",".join(
+                map(
+                    str,
+                    (modulation, frame_length, code_rate, input_file, reference_file),
+                )
+            )
+        ]
+
+        #  Can add this to run specific configs independently
+        test_name = f"test_{frame_length}_frame_{modulation}_{code_rate}"
+        axi_bit_interleaver_tb.add_config(
+            name=test_name, generics={"test_cfg": test_cfg[-1]}
         )
 
-        axi_bit_interleaver_tb.add_config(
-            name=test_name, generics={"test_cfg": test_cfg}
-        )
+    #  axi_bit_interleaver_tb.add_config(
+    #      name="all", generics={"test_cfg": ":".join(test_cfg)}
+    #  )
 
 
 def addAxiStreamDelayTests(cli):
