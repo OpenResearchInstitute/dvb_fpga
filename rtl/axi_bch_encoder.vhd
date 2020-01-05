@@ -225,6 +225,8 @@ begin
           crc_srl <= crc(127 downto 0) & (63 downto 0 => 'U');
         elsif get_crc_length(cfg_frame_type_out, cfg_code_rate_out) = 160 then
           crc_srl <= crc(159 downto 0) & (31 downto 0 => 'U');
+        elsif get_crc_length(cfg_frame_type_out, cfg_code_rate_out) = 168 then
+          crc_srl <= crc(167 downto 0) & (23 downto 0 => 'U');
         else
           crc_srl <= crc;
         end if;

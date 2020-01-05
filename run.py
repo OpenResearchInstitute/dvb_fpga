@@ -69,7 +69,7 @@ Parameters = namedtuple("Parameters", ("modulation", "frame_length", "code_rate"
 
 def _iterParams():
     for modulation_type in ("mod_8psk", "mod_16apsk", "mod_32apsk"):
-        for frame_length in ("normal",):  # "short"):
+        for frame_length in ("normal", "short"):
             for code_rate in (
                 "C1_4",
                 "C1_3",

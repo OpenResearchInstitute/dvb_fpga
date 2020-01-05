@@ -51,7 +51,7 @@ package body dvb_utils_pkg is
     variable result       : integer := -1;
   begin
     if frame_length = short then
-      result := 192;
+      result := 168;
     else
       if code_rate = C8_9 or code_rate = C9_10 then
         result := 128;
