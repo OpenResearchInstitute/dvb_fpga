@@ -128,52 +128,52 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   -- Signals --
   -------------
   -- Write side config
-  signal wr_cfg_modulation  : modulation_type;
-  signal wr_cfg_frame_type  : frame_length_type;
-  signal wr_cfg_code_rate   : code_rate_type;
+  signal wr_cfg_modulation : modulation_type;
+  signal wr_cfg_frame_type : frame_length_type;
+  signal wr_cfg_code_rate  : code_rate_type;
 
-  signal s_axi_dv           : std_logic;
-  signal s_tready_i         : std_logic;
+  signal s_axi_dv          : std_logic;
+  signal s_tready_i        : std_logic;
 
-  signal wr_row_ptr_max     : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal wr_col_ptr_max     : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal wr_row_ptr_max    : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal wr_col_ptr_max    : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
 
-  signal wr_row_ptr         : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal wr_col_ptr         : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal wr_ram_ptr         : unsigned(1 downto 0);
+  signal wr_row_ptr        : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal wr_col_ptr        : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal wr_ram_ptr        : unsigned(1 downto 0);
 
-  signal ram_wren           : std_logic_vector(MAX_COLUMNS - 1 downto 0);
-  signal ram_wraddr         : std_logic_vector(numbits(MAX_ROWS) downto 0);
-  signal ram_wrdata         : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal ram_wren          : std_logic_vector(MAX_COLUMNS - 1 downto 0);
+  signal ram_wraddr        : std_logic_vector(numbits(MAX_ROWS) downto 0);
+  signal ram_wrdata        : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
-  signal rd_row_ptr_max     : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal rd_col_ptr_max     : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
-  signal rd_ram_ptr         : unsigned(1 downto 0);
+  signal rd_row_ptr_max    : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal rd_col_ptr_max    : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal rd_ram_ptr        : unsigned(1 downto 0);
 
-  signal rd_row_ptr         : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal rd_col_ptr         : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
-  signal rd_col_ptr_0       : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal rd_row_ptr        : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal rd_col_ptr        : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal rd_col_ptr_0      : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
 
-  signal ram_rdaddr         : std_logic_vector(numbits(MAX_ROWS) downto 0);
-  signal ram_rddata         : data_array_type(0 to MAX_COLUMNS - 1);
+  signal ram_rdaddr        : std_logic_vector(numbits(MAX_ROWS) downto 0);
+  signal ram_rddata        : data_array_type(0 to MAX_COLUMNS - 1);
 
   -- Read side config
-  signal rd_cfg_modulation  : modulation_type;
-  signal rd_cfg_frame_type  : frame_length_type;
-  signal rd_cfg_code_rate   : code_rate_type;
+  signal rd_cfg_modulation : modulation_type;
+  signal rd_cfg_frame_type : frame_length_type;
+  signal rd_cfg_code_rate  : code_rate_type;
 
-  signal rd_data_sr         : std_logic_vector(MAX_COLUMNS*DATA_WIDTH - 1 downto 0);
+  signal rd_data_sr        : std_logic_vector(MAX_COLUMNS*DATA_WIDTH - 1 downto 0);
 
-  signal interleaved_3_cols : std_logic_vector(3*DATA_WIDTH - 1 downto 0);
-  signal interleaved_4_cols : std_logic_vector(4*DATA_WIDTH - 1 downto 0);
-  signal interleaved_5_cols : std_logic_vector(5*DATA_WIDTH - 1 downto 0);
+  signal interleaved_3c    : std_logic_vector(3*DATA_WIDTH - 1 downto 0);
+  signal interleaved_4c    : std_logic_vector(4*DATA_WIDTH - 1 downto 0);
+  signal interleaved_5c    : std_logic_vector(5*DATA_WIDTH - 1 downto 0);
 
-  signal m_wr_en            : std_logic := '0';
-  signal m_wr_en_0          : std_logic := '0';
-  signal m_wr_full          : std_logic;
-  signal m_wr_data          : std_logic_vector(DATA_WIDTH - 1 downto 0);
-  signal m_wr_last          : std_logic := '0';
-  signal m_wr_last_0        : std_logic := '0';
+  signal m_wr_en           : std_logic := '0';
+  signal m_wr_en_0         : std_logic := '0';
+  signal m_wr_full         : std_logic;
+  signal m_wr_data         : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal m_wr_last         : std_logic := '0';
+  signal m_wr_last_0       : std_logic := '0';
 
 begin
 
@@ -235,17 +235,17 @@ begin
     iter_columns : for column in 0 to 5 generate
 
       interleaved_columns_3 : if column < 3 generate
-        interleaved_3_cols(3*DATA_WIDTH - (3 * row + column) - 1)
+        interleaved_3c(3*DATA_WIDTH - (3 * row + column) - 1)
           <= ram_rddata(column)(DATA_WIDTH - row - 1);
       end generate interleaved_columns_3;
 
       interleaved_columns_4 : if column < 4 generate
-        interleaved_4_cols(4*DATA_WIDTH - (4 * row + column) - 1)
+        interleaved_4c(4*DATA_WIDTH - (4 * row + column) - 1)
           <= ram_rddata(column)(DATA_WIDTH - row - 1);
       end generate interleaved_columns_4;
 
       interleaved_columns_5 : if column < 5 generate
-        interleaved_5_cols(5*DATA_WIDTH - (5 * row + column) - 1)
+        interleaved_5c(5*DATA_WIDTH - (5 * row + column) - 1)
           <= ram_rddata(column)(DATA_WIDTH - row - 1);
       end generate interleaved_columns_5;
 
@@ -367,15 +367,14 @@ begin
           -- assign the write data from the shift register's LSB
           if rd_cfg_modulation = mod_8psk then
             if rd_cfg_code_rate = C3_5 then
-              rd_data_sr(interleaved_3_cols'range)
-                <= swap_bytes(swap_bits(interleaved_3_cols));
+              rd_data_sr(interleaved_3c'range) <= swap_bytes(interleaved_3c);
             else
-              rd_data_sr(interleaved_3_cols'range) <= swap_bytes(interleaved_3_cols);
+              rd_data_sr(interleaved_3c'range) <= swap_bytes(interleaved_3c);
             end if;
           elsif rd_cfg_modulation = mod_16apsk then
-            rd_data_sr(interleaved_4_cols'range) <= swap_bytes(interleaved_4_cols);
+            rd_data_sr(interleaved_4c'range) <= swap_bytes(interleaved_4c);
           elsif rd_cfg_modulation = mod_32apsk then
-            rd_data_sr <= swap_bytes(interleaved_5_cols);
+            rd_data_sr <= swap_bytes(interleaved_5c);
           end if;
         else
           -- We'll write the LSB, shift data right
