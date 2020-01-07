@@ -351,18 +351,13 @@ begin
             rd_row_ptr <= rd_row_ptr + 1;
           else
             rd_row_ptr <= (others => '0');
+            rd_ram_ptr <= rd_ram_ptr + 1;
             m_wr_last  <= '1';
           end if;
         end if;
+      end if;
 
-        if m_wr_last = '1' then
-          rd_ram_ptr <= rd_ram_ptr + 1;
-          m_wr_en    <= '0';
-          rd_col_ptr <= (others => '0');
-          rd_row_ptr <= (others => '0');
-        end if;
-
-
+      if m_wr_en = '1' then
         if rd_col_ptr_0 = 0 then
           -- Assign to undefined so we can track in simulation the parts that we not
           -- assigned
