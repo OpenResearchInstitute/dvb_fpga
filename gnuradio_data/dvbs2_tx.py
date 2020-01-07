@@ -70,6 +70,22 @@ def get_crc_length(frame_type, code_rate):
 
     return 192
 
+
+def get_ratio(modulation):
+    ratio = None
+
+    if modulation == dtv.MOD_8PSK:
+        ratio = 3, 8
+    if modulation == dtv.MOD_16APSK:
+        ratio = 4, 8
+    if modulation == dtv.MOD_32APSK:
+        ratio = 5, 8
+
+    print("Ratio is %s" % (ratio, ))
+
+    assert ratio is not None, '??'
+    return ratio
+
 class dvbs2_tx(gr.top_block):
 
     def __init__(self, modulation, frame_type, code_rate):
@@ -90,6 +106,8 @@ class dvbs2_tx(gr.top_block):
         frame_length /= 8
         print("Base frame length: %d" % frame_length)
         self.frame_length = frame_length
+
+        bits_per_input, bits_per_output = get_ratio(modulation)
 
         ##################################################
         # Variables
@@ -125,6 +143,7 @@ class dvbs2_tx(gr.top_block):
         self.digital_costas_loop_cc_0 = digital.costas_loop_cc(math.pi/100.0, 4, False)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_float*1, samp_rate/10,True)
         self.blocks_sub_xx_0 = blocks.sub_cc(1)
+        self.blocks_repack_bits_bb_0 = blocks.repack_bits_bb(bits_per_input, bits_per_output, "", False, gr.GR_MSB_FIRST)
         self.blocks_multiply_xx_0 = blocks.multiply_vcc(1)
         self.blocks_multiply_const_vxx_0 = blocks.multiply_const_vcc((gain, ))
         self.blocks_max_xx_0 = blocks.max_ff(1,1)
@@ -136,6 +155,8 @@ class dvbs2_tx(gr.top_block):
         self.blocks_complex_to_mag_0 = blocks.complex_to_mag(1)
         self.blocks_add_xx_2 = blocks.add_vcc(1)
         self.blocks_add_xx_0 = blocks.add_vcc(1)
+        self.bit_interleaver_output_packed = blocks.file_sink(gr.sizeof_char*1, 'bit_interleaver_output_packed.bin', False)
+        self.bit_interleaver_output_packed.set_unbuffered(False)
         self.bit_interleaver_output = blocks.file_sink(gr.sizeof_char*1, 'bit_interleaver_output.bin', False)
         self.bit_interleaver_output.set_unbuffered(False)
         self.bit_interleaver_input = blocks.file_sink(gr.sizeof_char*1, 'bit_interleaver_input.bin', False)
@@ -163,6 +184,7 @@ class dvbs2_tx(gr.top_block):
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.fft_filter_xxx_0, 0))
         self.connect((self.blocks_multiply_xx_0, 0), (self.fir_filter_xxx_0, 0))
         self.connect((self.blocks_multiply_xx_0, 0), (self.fir_filter_xxx_0_0, 0))
+        self.connect((self.blocks_repack_bits_bb_0, 0), (self.bit_interleaver_output_packed, 0))
         self.connect((self.blocks_sub_xx_0, 0), (self.blocks_complex_to_mag_0_0, 0))
         self.connect((self.blocks_throttle_0, 0), (self.blocks_file_sink_1, 0))
         self.connect((self.digital_costas_loop_cc_0, 0), (self.blocks_conjugate_cc_0, 0))
@@ -176,6 +198,7 @@ class dvbs2_tx(gr.top_block):
         self.connect((self.dtv_dvb_ldpc_bb_0, 0), (self.bit_interleaver_input, 0))
         self.connect((self.dtv_dvb_ldpc_bb_0, 0), (self.dtv_dvbs2_interleaver_bb_0, 0))
         self.connect((self.dtv_dvbs2_interleaver_bb_0, 0), (self.bit_interleaver_output, 0))
+        self.connect((self.dtv_dvbs2_interleaver_bb_0, 0), (self.blocks_repack_bits_bb_0, 0))
         self.connect((self.dtv_dvbs2_interleaver_bb_0, 0), (self.dtv_dvbs2_modulator_bc_0, 0))
         self.connect((self.dtv_dvbs2_modulator_bc_0, 0), (self.dtv_dvbs2_physical_cc_0, 0))
         self.connect((self.dtv_dvbs2_physical_cc_0, 0), (self.blocks_multiply_const_vxx_0, 0))
