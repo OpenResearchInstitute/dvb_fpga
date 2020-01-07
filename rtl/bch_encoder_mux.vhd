@@ -36,15 +36,15 @@ entity bch_encoder_mux is
     clk                : in std_logic;
     rst                : in std_logic;
     -- Input config/data
-    cfg_frame_type_in  : in frame_length_type;
-    cfg_code_rate_in   : in code_rate_type;
+    cfg_frame_type_in  : in frame_type_t;
+    cfg_code_rate_in   : in code_rate_t;
     first_word         : in std_logic; -- First data. 1: SEED is used (initialise and calculate), 0: Previous CRC is used (continue and calculate)
     wr_en              : in std_logic; -- New Data. wr_data input has a valid data. Calculate new CRC
     wr_data            : in std_logic_vector(DATA_WIDTH - 1 downto 0);  -- Data in
 
     -- Output config/data
-    cfg_frame_type_out : out frame_length_type;
-    cfg_code_rate_out  : out code_rate_type;
+    cfg_frame_type_out : out frame_type_t;
+    cfg_code_rate_out  : out code_rate_t;
     crc_rdy            : out std_logic;
     crc                : out std_logic_vector(191 downto 0);
     data_out           : out std_logic_vector(DATA_WIDTH - 1 downto 0));
@@ -65,8 +65,8 @@ architecture bch_encoder_mux of bch_encoder_mux is
   constant CRC_192_INDEX : integer := 3;
 
   function to_index (
-    constant frame_type : in  frame_length_type;
-    constant code_rate  : in  code_rate_type) return natural is
+    constant frame_type : in  frame_type_t;
+    constant code_rate  : in  code_rate_t) return natural is
     constant crc_length : positive := get_crc_length(frame_type, code_rate);
   begin
     if crc_length = 128 then
@@ -84,8 +84,8 @@ architecture bch_encoder_mux of bch_encoder_mux is
   -----------
   -- Types --
   -----------
-  type data_array_type is array(natural range <>) of std_logic_vector(DATA_WIDTH - 1 downto 0);
-  type crc_array_type is array(natural range <>) of std_logic_vector(CRC_WIDTH - 1 downto 0);
+  type data_array_t is array(natural range <>) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+  type crc_array_t is array(natural range <>) of std_logic_vector(CRC_WIDTH - 1 downto 0);
 
   -------------
   -- Signals --
@@ -93,15 +93,15 @@ architecture bch_encoder_mux of bch_encoder_mux is
   signal in_mux_ptr       : integer range 0 to MUX_WIDTH - 1;
   signal out_mux_ptr      : integer range 0 to MUX_WIDTH - 1;
 
-  signal cfg_frame_type_0 : frame_length_type;
-  signal cfg_code_rate_0  : code_rate_type;
-  signal cfg_frame_type_1 : frame_length_type;
-  signal cfg_code_rate_1  : code_rate_type;
+  signal cfg_frame_type_0 : frame_type_t;
+  signal cfg_code_rate_0  : code_rate_t;
+  signal cfg_frame_type_1 : frame_type_t;
+  signal cfg_code_rate_1  : code_rate_t;
   signal wr_en_array      : std_logic_vector(MUX_WIDTH - 1 downto 0);
 
   signal crc_rdy_array    : std_logic_vector(MUX_WIDTH - 1 downto 0);
-  signal data_out_array   : data_array_type(MUX_WIDTH - 1 downto 0);
-  signal crc_out_array    : crc_array_type(MUX_WIDTH - 1 downto 0);
+  signal data_out_array   : data_array_t(MUX_WIDTH - 1 downto 0);
+  signal crc_out_array    : crc_array_t(MUX_WIDTH - 1 downto 0);
 
 begin
 

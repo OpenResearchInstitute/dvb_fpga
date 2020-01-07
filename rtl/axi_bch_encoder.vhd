@@ -43,8 +43,8 @@ entity axi_bch_encoder is
     clk            : in  std_logic;
     rst            : in  std_logic;
 
-    cfg_frame_type : in  frame_length_type;
-    cfg_code_rate  : in  code_rate_type;
+    cfg_frame_type : in  frame_type_t;
+    cfg_code_rate  : in  code_rate_t;
 
     -- AXI input
     s_tvalid       : in  std_logic;
@@ -70,11 +70,11 @@ architecture axi_bch_encoder of axi_bch_encoder is
   -------------
   -- Signals --
   -------------
-  signal frame_type           : frame_length_type;
-  signal code_rate            : code_rate_type;
+  signal frame_type           : frame_type_t;
+  signal code_rate            : code_rate_t;
 
-  signal cfg_frame_type_out   : frame_length_type;
-  signal cfg_code_rate_out    : code_rate_type;
+  signal cfg_frame_type_out   : frame_type_t;
+  signal cfg_code_rate_out    : code_rate_t;
 
   signal s_axi_first_word     : std_logic;
 
@@ -253,8 +253,8 @@ begin
   -- the user keeping it unchanged. Hide this on a block to leave the core code a bit
   -- cleaner
   config_sample_block : block
-    signal frame_type_ff : frame_length_type;
-    signal code_rate_ff  : code_rate_type;
+    signal frame_type_ff : frame_type_t;
+    signal code_rate_ff  : code_rate_t;
     signal first_word    : std_logic;
   begin
 

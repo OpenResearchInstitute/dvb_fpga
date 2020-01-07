@@ -28,95 +28,78 @@ use work.dvb_utils_pkg.all;
 
 package testbench_utils_pkg is
 
-  type config_type is record
-    modulation : modulation_type;
-    frame_type : frame_length_type;
-    code_rate : code_rate_type;
+  type config_t is record
+    modulation : modulation_t;
+    frame_type : frame_type_t;
+    code_rate : code_rate_t;
     input_file : string(1 to 1024);
     reference_file : string(1 to 1024);
   end record;
 
-  type config_array_type is array (natural range <>) of config_type;
+  type config_array_t is array (natural range <>) of config_t;
 
-  function to_string( constant config : config_type ) return string;
+  function to_string( constant config : config_t ) return string;
 
   -- Add double quotes around a string
   function quote ( constant s : string ) return string;
 
   impure function get_test_cfg ( constant str : string)
-  return config_array_type;
+  return config_array_t;
 
-  procedure push(msg : msg_t; value : modulation_type);
-  procedure push(msg : msg_t; value : frame_length_type);
-  procedure push(msg : msg_t; value : code_rate_type);
+  procedure push(msg : msg_t; value : modulation_t);
+  procedure push(msg : msg_t; value : frame_type_t);
+  procedure push(msg : msg_t; value : code_rate_t);
 
-  impure function pop(msg : msg_t) return modulation_type;
-  impure function pop(msg : msg_t) return frame_length_type;
-  impure function pop(msg : msg_t) return code_rate_type;
+  impure function pop(msg : msg_t) return modulation_t;
+  impure function pop(msg : msg_t) return frame_type_t;
+  impure function pop(msg : msg_t) return code_rate_t;
 
 end testbench_utils_pkg;
 
 package body testbench_utils_pkg is
 
-  procedure push(msg : msg_t; value : modulation_type) is
+  procedure push(msg : msg_t; value : modulation_t) is
   begin
     -- Push value as a string
-    push(msg.data, modulation_type'image(value));
+    push(msg.data, modulation_t'image(value));
   end;
 
-  procedure push(msg : msg_t; value : frame_length_type) is
+  procedure push(msg : msg_t; value : frame_type_t) is
   begin
     -- Push value as a string
-    push(msg.data, frame_length_type'image(value));
+    push(msg.data, frame_type_t'image(value));
   end;
 
-  procedure push(msg : msg_t; value : code_rate_type) is
+  procedure push(msg : msg_t; value : code_rate_t) is
   begin
     -- Push value as a string
-    push(msg.data, code_rate_type'image(value));
+    push(msg.data, code_rate_t'image(value));
   end;
 
 
-  impure function pop(msg : msg_t) return modulation_type is
+  impure function pop(msg : msg_t) return modulation_t is
   begin
-    return modulation_type'value(pop(msg.data));
+    return modulation_t'value(pop(msg.data));
   end;
 
-  impure function pop(msg : msg_t) return frame_length_type is
+  impure function pop(msg : msg_t) return frame_type_t is
   begin
-    return frame_length_type 'value(pop(msg.data));
+    return frame_type_t 'value(pop(msg.data));
   end;
 
-  impure function pop(msg : msg_t) return code_rate_type is
+  impure function pop(msg : msg_t) return code_rate_t is
   begin
-    return code_rate_type'value(pop(msg.data));
+    return code_rate_t'value(pop(msg.data));
   end;
 
-
-  -- type config_array_ptr is access config_array_type;
-
-  -- impure function line_number ( constant str : string) return natural is
-  --   file fd         : text;
-  --   variable L      : line;
-  --   variable result : natural := 0;
-  -- begin
-  --   file_open(fd, str, read_mode);
-  --   while not endfile(fd) loop
-  --     readline(fd, L);
-  --     result := result + 1;
-  --   end loop;
-  --   file_close(fd);
-
-  --   return result;
-  -- end function line_number;
 
   --
   impure function get_test_cfg ( constant str : string)
-  return config_array_type is
+  return config_array_t is
     variable cfg_strings : lines_t := split(str, ":");
     variable cfg_items   : lines_t;
-    variable result      : config_array_type(0 to cfg_strings'length - 1);
-    variable current     : config_type;
+    variable result      : config_array_t(0 to cfg_strings'length - 1);
+    variable current     : config_t;
   begin
 
     if cfg_strings'length = 0 then
@@ -131,9 +114,9 @@ package body testbench_utils_pkg is
         failure("Malformed config string " & quote(cfg_strings(i).all));
       end if;
 
-      current.modulation := modulation_type'value(cfg_items(0).all);
-      current.frame_type := frame_length_type'value(cfg_items(1).all);
-      current.code_rate := code_rate_type'value(cfg_items(2).all);
+      current.modulation := modulation_t'value(cfg_items(0).all);
+      current.frame_type := frame_type_t'value(cfg_items(1).all);
+      current.code_rate := code_rate_t'value(cfg_items(2).all);
       current.input_file := (others => nul);
       current.reference_file := (others => nul);
 
@@ -159,13 +142,13 @@ package body testbench_utils_pkg is
     return '"' & s & '"';
   end function quote;
 
-  -- Returns a string representation of config_type
-  function to_string( constant config : config_type ) return string is
+  -- Returns a string representation of config_t
+  function to_string( constant config : config_t ) return string is
   begin
     return "config("
-      & "modulation=" & quote(modulation_type'image(config.modulation)) & ", "
-      & "frame_type=" & quote(frame_length_type'image(config.frame_type)) & ", "
-      & "code_rate=" & quote(code_rate_type'image(config.code_rate)) & ", "
+      & "modulation=" & quote(modulation_t'image(config.modulation)) & ", "
+      & "frame_type=" & quote(frame_type_t'image(config.frame_type)) & ", "
+      & "code_rate=" & quote(code_rate_t'image(config.code_rate)) & ", "
       & "input_file=" & quote(config.input_file) & ", "
       & "reference_file=" & quote(config.reference_file) & ")";
   end function to_string;

@@ -40,14 +40,14 @@ package file_utils_pkg is
   -----------
   type std_logic_vector_array is array (natural range <>) of std_logic_vector;
 
-  type data_ratio_type is record
+  type ratio_t is record
     first  : positive;
     second : positive;
-  end record data_ratio_type;
+  end record ratio_t;
 
-  type file_reader_cfg_type is record
+  type file_reader_cfg_t is record
     filename   : string(1 to 1024);
-    data_ratio : data_ratio_type;
+    data_ratio : ratio_t;
   end record;
 
   type file_reader_t is record
@@ -63,7 +63,7 @@ package file_utils_pkg is
     signal net           : inout network_t;
     variable file_reader : inout file_reader_t;
     constant filename    : string;
-    constant ratio       : data_ratio_type := (8, 8);
+    constant ratio       : ratio_t := (8, 8);
     constant blocking    : boolean := False);
 
   procedure enqueue_file(
@@ -90,16 +90,16 @@ package file_utils_pkg is
 
   function parse_data_ratio (
     constant s               : string;
-    constant base_data_width : in positive) return data_ratio_type;
+    constant base_data_width : in positive) return ratio_t;
 
-  procedure push(msg : msg_t; value : data_ratio_type);
-  impure function pop(msg : msg_t) return data_ratio_type;
+  procedure push(msg : msg_t; value : ratio_t);
+  impure function pop(msg : msg_t) return ratio_t;
 
-  procedure push(msg : msg_t; value : file_reader_cfg_type);
-  impure function pop(msg : msg_t) return file_reader_cfg_type;
+  procedure push(msg : msg_t; value : file_reader_cfg_t);
+  impure function pop(msg : msg_t) return file_reader_cfg_t;
 
-  alias push_data_ratio is push[msg_t, data_ratio_type];
-  alias push_file_reader_cfg is push[msg_t, file_reader_cfg_type];
+  alias push_data_ratio is push[msg_t, ratio_t];
+  alias push_file_reader_cfg is push[msg_t, file_reader_cfg_t];
 
 end file_utils_pkg;
 
@@ -134,7 +134,7 @@ package body file_utils_pkg is
 
   function parse_data_ratio (
     constant s               : string;
-    constant base_data_width : in positive) return data_ratio_type is
+    constant base_data_width : in positive) return ratio_t is
     variable second          : line;
     variable first           : line;
     variable is_first_char   : boolean := True;
@@ -162,14 +162,14 @@ package body file_utils_pkg is
 
   end function parse_data_ratio;
 
-  function encode(value : data_ratio_type) return string is
+  function encode(value : ratio_t) return string is
   begin
     return encode(value.first) & encode(value.second);
   end;
 
   function decode (
     constant code   : string)
-    return data_ratio_type is
+    return ratio_t is
     variable second : positive;
     variable first  : positive;
     variable index  : positive := code'left;
@@ -180,7 +180,7 @@ package body file_utils_pkg is
     return (second, first);
   end;
 
-  function decode ( constant code : string) return file_reader_cfg_type is
+  function decode ( constant code : string) return file_reader_cfg_t is
     variable filename : string(1 to 1024);
     variable second   : positive;
     variable first    : positive;
@@ -192,30 +192,30 @@ package body file_utils_pkg is
     return (filename, (second => second, first => first));
   end;
 
-  function encode(value : file_reader_cfg_type) return string is
+  function encode(value : file_reader_cfg_t) return string is
   begin
     return encode(value.filename) & encode(value.data_ratio);
   end;
 
 
-  procedure push(msg : msg_t; value : data_ratio_type) is
+  procedure push(msg : msg_t; value : ratio_t) is
   begin
     -- Push value as a string
     push(msg.data, encode(value));
   end;
 
-  impure function pop(msg : msg_t) return data_ratio_type is
+  impure function pop(msg : msg_t) return ratio_t is
   begin
     return decode(pop(msg.data));
   end;
 
-  procedure push(msg : msg_t; value : file_reader_cfg_type) is
+  procedure push(msg : msg_t; value : file_reader_cfg_t) is
   begin
     -- Push value as a string
     push(msg.data, encode(value));
   end;
 
-  impure function pop(msg : msg_t) return file_reader_cfg_type is
+  impure function pop(msg : msg_t) return file_reader_cfg_t is
   begin
     return decode(pop(msg.data));
   end;
@@ -238,7 +238,7 @@ package body file_utils_pkg is
     signal net           : inout network_t;
     variable file_reader : inout file_reader_t;
     constant filename    : string;
-    constant ratio       : data_ratio_type := (8, 8);
+    constant ratio       : ratio_t := (8, 8);
     constant blocking    : boolean := False) is
     variable msg         : msg_t := new_msg;
   begin

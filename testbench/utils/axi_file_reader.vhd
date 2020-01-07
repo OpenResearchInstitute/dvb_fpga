@@ -100,8 +100,8 @@ begin
   -- Processes --
   ---------------
   process
-    variable cfg          : file_reader_cfg_type;
-    variable ratio        : data_ratio_type := (DATA_WIDTH, DATA_WIDTH);
+    variable cfg          : file_reader_cfg_t;
+    variable ratio        : ratio_t := (DATA_WIDTH, DATA_WIDTH);
     --
     constant self         : actor_t := new_actor(READER_NAME);
     constant logger       : logger_t := get_logger(READER_NAME);
@@ -113,8 +113,8 @@ begin
     variable m_tdata_next : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
     --
-    type file_status_type is (opened, closed, unknown);
-    variable file_status : file_status_type := unknown;
+    type file_status_t is (opened, closed, unknown);
+    variable file_status : file_status_t := unknown;
     --
     type file_type is file of character;
     file file_handler     : file_type;

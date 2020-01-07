@@ -51,7 +51,7 @@ end axi_file_reader_tb;
 
 architecture axi_file_reader_tb of axi_file_reader_tb is
 
-  constant DATA_RATIO : data_ratio_type := parse_data_ratio("1:8", DATA_WIDTH);
+  constant DATA_RATIO : ratio_t := parse_data_ratio("1:8", DATA_WIDTH);
 
   -- Generates data for when BYTES_ARE_BITS is set to False
   impure function generate_regular_data ( constant length : positive)

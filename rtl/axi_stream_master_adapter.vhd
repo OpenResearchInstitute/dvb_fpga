@@ -58,12 +58,13 @@ architecture axi_stream_master_adapter of axi_stream_master_adapter is
     -----------
     -- Types --
     -----------
-    type data_buffer_type is array (BUFFER_DEPTH - 1 downto 0) of std_logic_vector(TDATA_WIDTH downto 0);
+    type data_array_t is array (BUFFER_DEPTH - 1 downto 0)
+      of std_logic_vector(TDATA_WIDTH downto 0);
 
     -------------
     -- Signals --
     -------------
-    signal data_buffer : data_buffer_type;
+    signal data_buffer : data_array_t;
 
     signal axi_tvalid  : std_logic;
     signal axi_dv      : std_logic;
@@ -87,7 +88,7 @@ begin
     -- tvalid is asserted when pointers are different, regardless of tready. Also, there's
     -- no need to force it to 0 when reset = '1' because both pointers are asynchronously
     -- reset
-    axi_tvalid <= '1' when wr_ptr /= rd_ptr else '0';
+    axi_tvalid <= '1' when ptr_diff /= 0 else '0';
 
     axi_dv     <= '1' when axi_tvalid = '1' and m_tready = '1' else '0';
 

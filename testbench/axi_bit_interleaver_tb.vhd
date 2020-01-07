@@ -51,7 +51,7 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   ---------------
   -- Constants --
   ---------------
-  constant configs           : config_array_type := get_test_cfg(test_cfg);
+  constant configs           : config_array_t := get_test_cfg(test_cfg);
 
   constant FILE_READER_NAME  : string := "file_reader";
   constant FILE_CHECKER_NAME : string := "file_checker";
@@ -59,7 +59,7 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   constant TDATA_WIDTH       : integer := 8;
   constant ERROR_CNT_WIDTH   : integer := 8;
 
-  function get_checker_data_ratio ( constant modulation : in modulation_type)
+  function get_checker_data_ratio ( constant modulation : in modulation_t)
   return string is
   begin
     if modulation = mod_8psk then
@@ -86,9 +86,9 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   signal clk                : std_logic := '1';
   signal rst                : std_logic;
 
-  signal cfg_modulation     : modulation_type;
-  signal cfg_frame_type     : frame_length_type;
-  signal cfg_code_rate      : code_rate_type;
+  signal cfg_modulation     : modulation_t;
+  signal cfg_frame_type     : frame_type_t;
+  signal cfg_code_rate      : code_rate_t;
 
   signal tvalid_probability : real := 1.0;
   signal tready_probability : real := 1.0;
@@ -214,7 +214,7 @@ begin
 
     ------------------------------------------------------------------------------------
     procedure run_test (
-      constant config           : config_type;
+      constant config           : config_t;
       constant number_of_frames : in positive) is
       variable file_reader_msg  : msg_t;
     begin
@@ -222,9 +222,9 @@ begin
       set_timeout(runner, 3 ms);
 
       info("Running test with:");
-      info(" - modulation     : " & modulation_type'image(config.modulation));
-      info(" - frame_type     : " & frame_length_type'image(config.frame_type));
-      info(" - code_rate      : " & code_rate_type'image(config.code_rate));
+      info(" - modulation     : " & modulation_t'image(config.modulation));
+      info(" - frame_type     : " & frame_type_t'image(config.frame_type));
+      info(" - code_rate      : " & code_rate_t'image(config.code_rate));
       info(" - input_file     : " & config.input_file);
       info(" - reference_file : " & config.reference_file);
 

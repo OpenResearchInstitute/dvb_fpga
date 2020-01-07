@@ -41,9 +41,9 @@ entity axi_bit_interleaver is
     clk            : in  std_logic;
     rst            : in  std_logic;
 
-    cfg_modulation : in  modulation_type;
-    cfg_frame_type : in  frame_length_type;
-    cfg_code_rate  : in  code_rate_type;
+    cfg_modulation : in  modulation_t;
+    cfg_frame_type : in  frame_type_t;
+    cfg_code_rate  : in  code_rate_t;
 
     -- AXI input
     s_tvalid       : in  std_logic;
@@ -67,11 +67,11 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   constant MAX_COLUMNS : integer := 5;
 
   impure function get_max_row_ptr (
-    constant modulation : in modulation_type;
-    constant frame_type : in frame_length_type) return integer is
+    constant modulation : in modulation_t;
+    constant frame_type : in frame_type_t) return integer is
     variable result     : integer := -1;
   begin
-    if frame_type = normal then
+    if frame_type = fecframe_normal then
       if modulation = mod_8psk then
         result := 21_600;
       elsif modulation = mod_16apsk then
@@ -79,7 +79,7 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
       elsif modulation = mod_32apsk then
         result := 12_960;
       end if;
-    elsif frame_type = short then
+    elsif frame_type = fecframe_short then
       if modulation = mod_8psk then
         result := 5_400;
       elsif modulation = mod_16apsk then
@@ -98,7 +98,7 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   end function get_max_row_ptr;
 
   impure function get_max_column_ptr (
-    constant modulation : in modulation_type) return integer is
+    constant modulation : in modulation_t) return integer is
     variable result     : integer := -1;
   begin
     if modulation = mod_8psk then
@@ -118,19 +118,19 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   end function get_max_column_ptr;
 
   -- Read data is an array
-  type data_array_type is array (natural range <>)
+  type data_array_t is array (natural range <>)
     of std_logic_vector(DATA_WIDTH - 1 downto 0);
 
-  type column_array_type is array (natural range <>)
+  type column_array_t is array (natural range <>)
     of std_logic_vector(MAX_COLUMNS - 1 downto 0);
 
   -------------
   -- Signals --
   -------------
   -- Write side config
-  signal wr_cfg_modulation : modulation_type;
-  signal wr_cfg_frame_type : frame_length_type;
-  signal wr_cfg_code_rate  : code_rate_type;
+  signal wr_cfg_modulation : modulation_t;
+  signal wr_cfg_frame_type : frame_type_t;
+  signal wr_cfg_code_rate  : code_rate_t;
 
   signal s_axi_dv          : std_logic;
   signal s_tready_i        : std_logic;
@@ -155,12 +155,12 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   signal rd_col_ptr_0      : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
 
   signal ram_rdaddr        : std_logic_vector(numbits(MAX_ROWS) downto 0);
-  signal ram_rddata        : data_array_type(0 to MAX_COLUMNS - 1);
+  signal ram_rddata        : data_array_t(0 to MAX_COLUMNS - 1);
 
   -- Read side config
-  signal rd_cfg_modulation : modulation_type;
-  signal rd_cfg_frame_type : frame_length_type;
-  signal rd_cfg_code_rate  : code_rate_type;
+  signal rd_cfg_modulation : modulation_t;
+  signal rd_cfg_frame_type : frame_type_t;
+  signal rd_cfg_code_rate  : code_rate_t;
 
   signal rd_data_sr        : std_logic_vector(MAX_COLUMNS*DATA_WIDTH - 1 downto 0);
 
@@ -391,9 +391,9 @@ begin
   -- the user keeping it unchanged. Hide this on a block to leave the core code a bit
   -- cleaner
   config_sample_block : block
-    signal modulation_ff : modulation_type;
-    signal frame_type_ff : frame_length_type;
-    signal code_rate_ff  : code_rate_type;
+    signal modulation_ff : modulation_t;
+    signal frame_type_ff : frame_type_t;
+    signal code_rate_ff  : code_rate_t;
     signal first_word    : std_logic;
   begin
 

@@ -27,30 +27,30 @@ use str_format.str_format_pkg.all;
 
 package dvb_utils_pkg is
 
-  type frame_length_type is (not_set, normal, short);
+  type frame_type_t is (not_set, fecframe_normal, fecframe_short);
 
-  type modulation_type is ( not_set, mod_8psk, mod_16apsk, mod_32apsk);
+  type modulation_t is ( not_set, mod_8psk, mod_16apsk, mod_32apsk);
 
   -- Enum like type for LDPC codes
-  type code_rate_type is (
+  type code_rate_t is (
     not_set, -- Only for sim, to allow setting an invalid value
     C1_4, C1_3, C2_5, C1_2, C3_5, C2_3, C3_4, C4_5,
     C5_6, C8_9, C9_10);
 
   function get_crc_length (
-    constant frame_length : in  frame_length_type;
-    constant code_rate    : in  code_rate_type) return positive;
+    constant frame_length : in  frame_type_t;
+    constant code_rate    : in  code_rate_t) return positive;
 
 end dvb_utils_pkg;
 
 package body dvb_utils_pkg is
 
   function get_crc_length (
-    constant frame_length : in  frame_length_type;
-    constant code_rate    : in  code_rate_type) return positive is
+    constant frame_length : in  frame_type_t;
+    constant code_rate    : in  code_rate_t) return positive is
     variable result       : integer := -1;
   begin
-    if frame_length = short then
+    if frame_length = fecframe_short then
       result := 168;
     else
       if code_rate = C8_9 or code_rate = C9_10 then
@@ -64,8 +64,8 @@ package body dvb_utils_pkg is
 
     assert result /= -1
       report "Unable to determine CRC length for " &
-             "frame length = " & frame_length_type'image(frame_length) & ", " &
-             "code rate = " & code_rate_type'image(code_rate)
+             "frame length = " & frame_type_t'image(frame_length) & ", " &
+             "code rate = " & code_rate_t'image(code_rate)
       severity Failure;
 
     return result;
