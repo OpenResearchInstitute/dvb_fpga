@@ -57,8 +57,10 @@ def main():
     addAxiBitInterleaverTests(cli)
     addAxiBchEncoderTests(cli)
 
-    cli.set_compile_option("modelsim.vcom_flags", ["-novopt", "-explicit"])
-    cli.set_sim_option("modelsim.vsim_flags", ["-novopt"])
+    if "-g" in sys.argv[1:]:
+        cli.set_compile_option("modelsim.vcom_flags", ["-novopt", "-explicit"])
+        cli.set_sim_option("modelsim.vsim_flags", ["-novopt"])
+
     cli.set_sim_option("disable_ieee_warnings", True)
     cli.set_sim_option("modelsim.init_file.gui", p.join(ROOT, "wave.do"))
     cli.main()
