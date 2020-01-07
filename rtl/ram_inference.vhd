@@ -75,11 +75,6 @@ begin
     report "Invalid RAM_STYLE: '" & RAM_INFERENCE_STYLE & "'"
     severity Warning;
 
-  assert False
-  report "RAM is " & integer'image(ADDR_WIDTH) & "x" & integer'image(DATA_WIDTH) & " = "
-         & integer'image(2**ADDR_WIDTH * DATA_WIDTH)
-  severity warning;
-
   -------------------
   -- Port mappings --
   -------------------
