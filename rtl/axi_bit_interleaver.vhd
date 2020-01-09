@@ -277,13 +277,12 @@ begin
 
     elsif clk'event and clk = '1' then
 
-      ram_wren <= (others => '0');
+      ram_wren   <= (others => '0');
+      ram_wrdata <= s_tdata;
+      ram_wraddr <= wr_ram_ptr(0) & std_logic_vector(wr_row_ptr);
 
       if s_axi_dv = '1' then
         ram_wren(to_integer(wr_col_ptr)) <= '1';
-
-        ram_wrdata <= s_tdata;
-        ram_wraddr <= wr_ram_ptr(0) & std_logic_vector(wr_row_ptr);
 
         if wr_row_ptr /= wr_row_ptr_max then
           wr_row_ptr <= wr_row_ptr + 1;
@@ -294,12 +293,12 @@ begin
             wr_col_ptr <= wr_col_ptr + 1;
           else
             wr_col_ptr <= (others => '0');
+            wr_ram_ptr <= wr_ram_ptr + 1;
           end if;
         end if;
 
         -- When the frame ends, hand over the parameters to the read side
         if s_tlast = '1' then
-          wr_ram_ptr     <= wr_ram_ptr + 1;
           rd_row_ptr_max <= to_unsigned(get_max_row_ptr(wr_cfg_modulation,
                                                         wr_cfg_frame_type),
                                         numbits(MAX_ROWS));

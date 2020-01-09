@@ -281,7 +281,7 @@ begin
         tready_probability <= 1.0;
 
         for i in configs'range loop
-          run_test(configs(i), number_of_frames => 3);
+          run_test(configs(i), number_of_frames => 1);
         end loop;
         wait_for_transfers(configs'length);
 

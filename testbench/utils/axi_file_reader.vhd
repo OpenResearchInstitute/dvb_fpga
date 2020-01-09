@@ -80,6 +80,7 @@ architecture axi_file_reader of axi_file_reader is
   signal m_tvalid_en    : std_logic := '0';
   signal m_tlast_i      : std_logic;
   signal axi_data_valid : boolean;
+  signal dbg_word_cnt   : integer := 0;
 
 begin
 
@@ -201,6 +202,7 @@ begin
         m_tlast_i   <= '0';
         m_tdata     <= (others => 'U');
         word_cnt    := word_cnt + 1;
+        dbg_word_cnt <= dbg_word_cnt + 1;
 
         if m_tlast_i = '1' then
           file_close(file_handler);
@@ -208,10 +210,11 @@ begin
 
           info(
             logger,
-            sformat("Read %d words from %s", fo(word_cnt), quote(cfg.filename)));
+            sformat("Read %d words from %s", fo(word_cnt), quote(cfg.filename.all)));
 
           completed     <= '1';
           word_cnt      := 0;
+          dbg_word_cnt  <= 0;
           char_bit_cnt  := 0;
           ratio_bit_cnt := 0;
         end if;
@@ -222,16 +225,16 @@ begin
         if has_message(self) then
           receive(net, self, msg);
           cfg   := pop(msg);
-          ratio := cfg.data_ratio;
+          ratio := cfg.ratio;
 
           info(
             logger,
             sformat(
-              "Reading %s. Data ratio is %d:%d (requested by %s)", quote(cfg.filename),
-              fo(cfg.data_ratio.first), fo(cfg.data_ratio.second),
+              "Reading %s. Data ratio is %d:%d (requested by %s)", quote(cfg.filename.all),
+              fo(cfg.ratio.first), fo(cfg.ratio.second),
               quote(name(msg.sender))));
 
-          file_open(file_handler, cfg.filename, read_mode);
+          file_open(file_handler, cfg.filename.all, read_mode);
           file_status  := opened;
 
           m_tdata_next := get_next_data(DATA_WIDTH);

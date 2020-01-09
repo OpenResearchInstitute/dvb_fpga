@@ -23,6 +23,8 @@
 ---------------
 -- Libraries --
 ---------------
+use std.textio.all;
+
 library	ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -46,76 +48,51 @@ entity axi_file_reader_tb is
   generic (
     runner_cfg : string;
     DATA_WIDTH : integer;
-    FILE_NAME  : string);
+    test_cfg   : string);
 end axi_file_reader_tb;
 
 architecture axi_file_reader_tb of axi_file_reader_tb is
 
-  constant DATA_RATIO : ratio_t := parse_data_ratio("1:8", DATA_WIDTH);
+  type config_t is record
+    ratio          : ratio_t;
+    input_file     : line;
+    reference_file : line;
+  end record;
 
-  -- Generates data for when BYTES_ARE_BITS is set to False
-  impure function generate_regular_data ( constant length : positive)
-  return std_logic_vector_array is
-    variable data       : std_logic_vector_array(0 to length - 1)(DATA_WIDTH - 1 downto 0);
-    variable write_rand : RandomPType;
+  type config_ptr_t is access config_t;
+  type config_array_t is array (natural range <>) of config_t;
+  type config_array_ptr_t is access config_array_t;
+
+  impure function decode_line (
+    constant s     : in string) return config_t is
+    constant div_0 : integer := find(s, ",");
+    constant div_1 : integer := find(s(div_0 + 1 to s'length), ",");
   begin
-    write_rand.InitSeed(0);
 
-    for word_cnt in 0 to length - 1 loop
-      data(word_cnt) := write_rand.RandSlv(DATA_WIDTH);
+    return (
+      parse_data_ratio(s(1 to div_0 - 1)),
+      new string'(s(div_0 + 1 to div_1 - 1)),
+      new string'(s(div_1 + 1 to s'length)));
+
+    end;
+
+  impure function get_config (
+    constant s        : in string) return config_array_t is
+    constant num_cfgs : integer := count(s, ";") + 1;
+    variable cfg_list : config_array_t(0 to num_cfgs - 1);
+    variable lines    : lines_t := split(s, ";");
+    -- variable list     : config_list_t;
+    -- variable this_one : config_ptr_t;
+  begin
+
+    for i in lines'range loop
+      info(sformat("%d => decoding '%s'", fo(i), lines(i).all));
+      cfg_list(i) := decode_line(lines(i).all);
     end loop;
 
-    return data;
+    return cfg_list;
+  end;
 
-  end function generate_regular_data;
-
-  -- Generates data for when BYTES_ARE_BITS is set to True
-  impure function generate_unpacked_data (constant length : positive)
-  return std_logic_vector_array is
-    constant NUMBER_OF_WORDS : integer := length * DATA_RATIO.first / DATA_RATIO.second;
-    variable data            : std_logic_vector_array(0 to NUMBER_OF_WORDS - 1)(7 downto 0);
-    variable word            : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    variable byte            : std_logic_vector(7 downto 0);
-    variable index           : natural := 0;
-    variable write_rand      : RandomPType;
-  begin
-    info(sformat("Generating vector with %d x %d = %d",
-                 fo(data'length), fo(data(0)'length), fo(data'length * data(0)'length)));
-
-    write_rand.InitSeed(0);
-
-    for word_cnt in 0 to length - 1 loop
-      debug(sformat("word_cnt=%d", fo(word_cnt)));
-      word := write_rand.RandSlv(DATA_WIDTH);
-
-      -- Data is little endian, write MSB first
-      for byte_index in (DATA_WIDTH + 7) / 8 - 1 downto 0 loop
-        byte := word(8*(byte_index + 1) - 1 downto 8*byte_index);
-
-        for i in 7 downto 0 loop
-          -- When BYTES_ARE_BITS is set to True, each bit on a word becomes a byte
-          if byte(i) = '1' then
-            data(index) := x"01";
-          else
-            data(index) := x"00";
-          end if;
-          index := index + 1;
-        end loop;
-
-      end loop;
-    end loop;
-
-    return data;
-  end function generate_unpacked_data;
-
-  procedure create_file (constant length : positive) is
-  begin
-    -- if BYTES_ARE_BITS then
-    --   write_binary_file(FILE_NAME, generate_unpacked_data(length));
-    -- else
-      write_binary_file(FILE_NAME, generate_regular_data(length));
-    -- end if;
-  end procedure create_file;
 
   ---------------
   -- Constants --
@@ -169,6 +146,9 @@ begin
   -- Processes --
   ---------------
   main : process
+
+    variable config_list : config_array_ptr_t;
+
     procedure walk(constant steps : natural) is
     begin
       if steps /= 0 then
@@ -179,63 +159,74 @@ begin
     end procedure walk;
     ------------------------------------------------------------------------------------
 
-    procedure run_test (constant frames : in integer := 1) is
+    procedure run_test (config_list : inout config_array_t) is
+      variable cfg : config_ptr_t;
       variable msg       : msg_t;
       variable reply_msg : msg_t;
-      variable reader    : actor_t := find(READER_NAME);
-      variable start     : time;
+      constant reader    : actor_t := find(READER_NAME);
     begin
-      start := now;
-      for i in 0 to frames - 1 loop
+      for i in config_list'range loop
+        cfg := new config_t'(config_list(i));
+        info(
+          sformat("Sending config: input_file='%s', reference_file='%s'",
+                  cfg.input_file.all, cfg.reference_file.all));
         msg := new_msg;
-        push_string(msg, FILE_NAME);
+        push(msg, cfg.input_file.all, cfg.ratio);
         send(net, reader, msg);
-        receive_reply(net, msg, reply_msg);
       end loop;
 
-      wait until s_tlast = '1' and s_tready = '1' and s_tvalid = '1' and rising_edge(clk);
+      -- start := now;
+      -- for i in 0 to frames - 1 loop
+      --   push_string(msg, "");
+      --   send(net, reader, msg);
+      --   receive_reply(net, msg, reply_msg);
+      -- end loop;
 
-      warning(sformat("Took %d cycles", fo((now - start) / CLK_PERIOD)));
+      -- wait until s_tlast = '1' and s_tready = '1' and s_tvalid = '1' and rising_edge(clk);
+
+      -- warning(sformat("Took %d cycles", fo((now - start) / CLK_PERIOD)));
     end procedure run_test;
     ------------------------------------------------------------------------------------
 
-    procedure test_tvalid_probability is
-      variable start          : time;
-      variable baseline       : time;
-      variable tvalid_half    : time;
-      variable tvalid_quarter : time;
-    begin
-      rst <= '1'; walk(4); rst <= '0';
-      tvalid_probability <= 1.0;
-      start := now;
-      run_test;
-      baseline := now - start;
+    -- procedure test_tvalid_probability is
+    --   variable start          : time;
+    --   variable baseline       : time;
+    --   variable tvalid_half    : time;
+    --   variable tvalid_quarter : time;
+    -- begin
+    --   rst <= '1'; walk(4); rst <= '0';
+    --   tvalid_probability <= 1.0;
+    --   start := now;
+    --   run_test;
+    --   baseline := now - start;
 
-      rst <= '1'; walk(4); rst <= '0';
-      tvalid_probability <= 0.5;
-      start := now;
-      run_test;
-      tvalid_half := now - start;
+    --   rst <= '1'; walk(4); rst <= '0';
+    --   tvalid_probability <= 0.5;
+    --   start := now;
+    --   run_test;
+    --   tvalid_half := now - start;
 
-      rst <= '1'; walk(4); rst <= '0';
-      tvalid_probability <= 0.25;
-      start := now;
-      run_test;
-      tvalid_quarter := now - start;
+    --   rst <= '1'; walk(4); rst <= '0';
+    --   tvalid_probability <= 0.25;
+    --   start := now;
+    --   run_test;
+    --   tvalid_quarter := now - start;
 
-      -- Check time taken is the expected +/- 10%
-      check_true((baseline * 0.9 * 2 < tvalid_half) and (tvalid_half < baseline * 1.1 * 2));
-      check_true((baseline * 0.9 * 4 < tvalid_quarter) and (tvalid_quarter < baseline * 1.1 * 4));
+    --   -- Check time taken is the expected +/- 10%
+    --   check_true((baseline * 0.9 * 2 < tvalid_half) and (tvalid_half < baseline * 1.1 * 2));
+    --   check_true((baseline * 0.9 * 4 < tvalid_quarter) and (tvalid_quarter < baseline * 1.1 * 4));
 
-    end procedure test_tvalid_probability;
-    ------------------------------------------------------------------------------------
+    -- end procedure test_tvalid_probability;
+    -- ------------------------------------------------------------------------------------
+
+    -- variable a_config : config_ptr_t;
 
   begin
 
     test_runner_setup(runner, runner_cfg);
     show(display_handler, debug);
 
-    create_file(256);
+    config_list := new config_array_t'(get_config(test_cfg));
 
 
     while test_suite loop
@@ -250,18 +241,18 @@ begin
       if run("back_to_back") then
         tvalid_probability <= 1.0;
         tready_probability <= 1.0;
-        run_test;
+        run_test(config_list.all);
 
-      elsif run("slow_read") then
-        tvalid_probability <= 1.0;
-        tready_probability <= 0.5;
-        run_test;
+      -- elsif run("slow_read") then
+      --   tvalid_probability <= 1.0;
+      --   tready_probability <= 0.5;
+      --   run_test;
 
-      elsif run("slow_write") then
-        test_tvalid_probability;
+      -- elsif run("slow_write") then
+      --   test_tvalid_probability;
 
-      elsif run("multiple_frames") then
-        run_test(4);
+      -- elsif run("multiple_frames") then
+      --   run_test(4);
       end if;
 
       walk(4);
@@ -314,5 +305,13 @@ begin
       wait until rising_edge(clk);
     end loop;
   end process;
+--           -- Frames will repeat, reinitialize seed
+--           check_rand.InitSeed(0);
+--         end if;
+--       end if;
+
+--       wait until rising_edge(clk);
+--     end loop;
+--   end process;
 
 end axi_file_reader_tb;

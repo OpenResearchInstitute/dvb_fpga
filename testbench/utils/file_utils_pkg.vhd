@@ -46,8 +46,8 @@ package file_utils_pkg is
   end record ratio_t;
 
   type file_reader_cfg_t is record
-    filename   : string(1 to 1024);
-    data_ratio : ratio_t;
+    filename : line;
+    ratio    : ratio_t;
   end record;
 
   type file_reader_t is record
@@ -81,6 +81,8 @@ package file_utils_pkg is
     signal net           : inout network_t;
     variable file_reader : inout file_reader_t);
 
+  impure function to_std_logic_vector(s : string) return std_logic_vector;
+
   -----------------
   -- Subprograms --
   -----------------
@@ -90,16 +92,21 @@ package file_utils_pkg is
 
   function parse_data_ratio (
     constant s               : string;
-    constant base_data_width : in positive) return ratio_t;
+    constant base_data_width : in positive := 1) return ratio_t;
 
   procedure push(msg : msg_t; value : ratio_t);
   impure function pop(msg : msg_t) return ratio_t;
 
-  procedure push(msg : msg_t; value : file_reader_cfg_t);
+  procedure push(msg : msg_t; variable value : file_reader_cfg_t);
   impure function pop(msg : msg_t) return file_reader_cfg_t;
 
   alias push_data_ratio is push[msg_t, ratio_t];
   alias push_file_reader_cfg is push[msg_t, file_reader_cfg_t];
+
+  procedure push(
+    msg               : msg_t;
+    constant filename : string;
+    constant ratio    : ratio_t);
 
 end file_utils_pkg;
 
@@ -134,7 +141,7 @@ package body file_utils_pkg is
 
   function parse_data_ratio (
     constant s               : string;
-    constant base_data_width : in positive) return ratio_t is
+    constant base_data_width : in positive := 1) return ratio_t is
     variable second          : line;
     variable first           : line;
     variable is_first_char   : boolean := True;
@@ -162,62 +169,39 @@ package body file_utils_pkg is
 
   end function parse_data_ratio;
 
-  function encode(value : ratio_t) return string is
-  begin
-    return encode(value.first) & encode(value.second);
-  end;
-
-  function decode (
-    constant code   : string)
-    return ratio_t is
-    variable second : positive;
-    variable first  : positive;
-    variable index  : positive := code'left;
-  begin
-    decode(code, index, second);
-    decode(code, index, first);
-
-    return (second, first);
-  end;
-
-  function decode ( constant code : string) return file_reader_cfg_t is
-    variable filename : string(1 to 1024);
-    variable second   : positive;
-    variable first    : positive;
-    variable index    : positive := code'left;
-  begin
-    decode(code, index, filename);
-    decode(code, index, first);
-    decode(code, index, second);
-    return (filename, (second => second, first => first));
-  end;
-
-  function encode(value : file_reader_cfg_t) return string is
-  begin
-    return encode(value.filename) & encode(value.data_ratio);
-  end;
-
-
   procedure push(msg : msg_t; value : ratio_t) is
   begin
-    -- Push value as a string
-    push(msg.data, encode(value));
+    push(msg, value.first);
+    push(msg, value.second);
+  end;
+
+  procedure push(
+    msg               : msg_t;
+    constant filename : string;
+    constant ratio    : ratio_t) is
+    variable cfg      : file_reader_cfg_t;
+  begin
+    write(cfg.filename, filename);
+    cfg.ratio := ratio;
+    push(msg, cfg);
+  end;
+
+  procedure push(msg : msg_t; variable value : file_reader_cfg_t) is
+  begin
+    push(msg, value.filename.all);
+    push(msg, value.ratio);
   end;
 
   impure function pop(msg : msg_t) return ratio_t is
   begin
-    return decode(pop(msg.data));
-  end;
-
-  procedure push(msg : msg_t; value : file_reader_cfg_t) is
-  begin
-    -- Push value as a string
-    push(msg.data, encode(value));
+    return (first => pop(msg),
+            second => pop(msg));
   end;
 
   impure function pop(msg : msg_t) return file_reader_cfg_t is
   begin
-    return decode(pop(msg.data));
+    return (new string'(pop_string(msg)),
+            pop(msg));
   end;
 
   -- -----------------------------------------------------------------------------------
@@ -243,7 +227,7 @@ package body file_utils_pkg is
     variable msg         : msg_t := new_msg;
   begin
     msg.sender := file_reader.sender;
-    push_file_reader_cfg(msg, (filename, ratio));
+    push(msg, filename, ratio);
     file_reader.outstanding := file_reader.outstanding + 1;
     send(net, file_reader.reader, msg);
     debug(file_reader.logger,
@@ -280,6 +264,30 @@ package body file_utils_pkg is
     while file_reader.outstanding /= 0 loop
       wait_file_read ( net, file_reader);
     end loop;
+  end;
+
+  impure function to_std_logic_vector(s : string) return std_logic_vector is
+    variable result : std_logic_vector(4 * s'length - 1 downto 0);
+  begin
+    for i in s'range loop
+      result(4*i - 1 downto 4*(i - 1))
+        := std_logic_vector(to_unsigned(character'pos(s(i)), 4));
+    end loop;
+    return result;
+  end;
+
+  impure function decode_std_logic_vector_array(
+    constant s          : string;
+    constant data_width : integer) return std_logic_vector_array is
+    variable items      : lines_t := split(s, ",");
+    variable data       : std_logic_vector_array(0 to items'length - 1)(data_width - 1 downto 0);
+  begin
+    debug("decoding => '" & s & "'");
+    for i in items'range loop
+      data(i) := to_std_logic_vector(items(0).all);
+    end loop;
+    debug("done");
+    return data;
   end;
 
 end package body;
