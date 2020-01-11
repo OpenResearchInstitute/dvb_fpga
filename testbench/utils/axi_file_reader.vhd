@@ -138,77 +138,39 @@ begin
 
         byte         := std_logic_vector(to_unsigned(character'pos(char), 8));
         char_bit_cnt := char_bit_cnt + byte'length;
-
-        info(sformat("char_buffer  := byte & char_buffer(%d - 1 downto %d - %d)", fo(char_buffer'length), fo(char_buffer'length), fo(byte'length)));
-
-
-        -- char_buffer(char_buffer'length - 1 downto char_buffer'length - byte'length) := byte;
-
-        -- char_buffer(char_buffer'length - byte'length - 1 downto 0)
-        --   := char_buffer(char_buffer'length - 1 downto byte'length);
-
-        -- char_buffer(char_buffer'length - 1 downto char_buffer'length - byte'length) := byte;
+        -- Shift the buffer right, we'll send the MSB first
         char_buffer  := byte & char_buffer(char_buffer'length - 1 downto byte'length);
-
-        info(
-          logger,
-          sformat(
-            "char_bit_cnt=%d  | byte=%r | char_buffer=%r",
-            fo(char_bit_cnt),
-            fo(byte),
-            fo(char_buffer)));
 
       end loop;
 
       char_bit_cnt := char_bit_cnt - ratio.second;
-
       result       := char_buffer(char_buffer'length - 1 downto char_buffer'length - ratio.second);
 
-      -- Remove the data being returned
+      -- Remove the data being returned from the buffer
       char_buffer  := char_buffer(char_buffer'length - ratio.second - 1 downto 0)
           & (ratio.second - 1 downto 0 => 'U');
-                      
 
-      info(
-        logger,
-        sformat(
-          "char_bit_cnt=%d  | byte=%r | result=%r | char_buffer=%r",
-          fo(char_bit_cnt),
-          fo(byte),
-          fo(result),
-          fo(char_buffer)));
+      if result'length < 8 then
+        return result;
+      end if;
 
+      return swap_bytes(result);
 
-      return result;
     end function read_word_from_file;
 
     ------------------------------------------------------------------------------------
     impure function get_next_data (constant word_width : in natural)
     return std_logic_vector is
-      variable result     : std_logic_vector(word_width - 1 downto 0);
-      variable word       : std_logic_vector(ratio.second - 1 downto 0);
-      variable valid_word : std_logic_vector(ratio.first - 1 downto 0);
-      variable unused     : std_logic_vector(ratio.second - ratio.first - 1 downto 0);
+      variable result : std_logic_vector(word_width - 1 downto 0);
+      variable word   : std_logic_vector(ratio.second - 1 downto 0);
+      variable unused : std_logic_vector(ratio.second - ratio.first - 1 downto 0);
     begin
       while ratio_bit_cnt < word_width loop
         word          := read_word_from_file;
-        valid_word    := word(ratio.first - 1 downto 0);
         ratio_bit_cnt := ratio_bit_cnt + ratio.first;
-        -- ratio_buffer  := word(ratio.first - 1 downto 0)
-        --   & ratio_buffer(ratio_buffer'length - 1 downto ratio.first);
+
         ratio_buffer  := ratio_buffer(ratio_buffer'length - ratio.first - 1 downto 0)
           & word(ratio.first - 1 downto 0);
-
-        info(
-          logger,
-          sformat(
-           "ratio_bit_cnt=%d | word=%r   | char_buffer=%r | valid_word=%r | ratio_buffer=%r || %b",
-            fo(ratio_bit_cnt),
-            fo(word),
-            fo(char_buffer),
-            fo(valid_word),
-            fo(ratio_buffer),
-            fo(ratio_buffer)));
 
         unused := word(ratio.second - 1 downto ratio.first);
 
@@ -216,29 +178,15 @@ begin
           warning(logger, sformat("Something looks wrong here, expected all 0s, " &
                   "got %r (%b)", fo(unused), fo(unused)));
         end if;
-      end loop;
 
-      -- info(sformat("Assign %d downto %d", fo(ratio_buffer'length - 1), fo(ratio_buffer'length
-      -- - ratio_bit_cnt)));
+      end loop;
 
       ratio_bit_cnt := ratio_bit_cnt - word_width;
       result        := ratio_buffer(ratio_bit_cnt + data_width - 1 downto ratio_bit_cnt);
       ratio_buffer  := (data_width - 1 downto 0 => 'U')
           & ratio_buffer(ratio_buffer'length - 1 downto ratio_bit_cnt + data_width);
 
-      -- info(
-      --   logger,
-      --   sformat(
-      --      "ratio_bit_cnt=%d | word=%r   | char_buffer=%r | ratio_buffer=%r || %b",
-      --     fo(ratio_bit_cnt),
-      --     fo(word),
-      --     fo(char_buffer),
-      --     fo(ratio_buffer),
-      --     fo(ratio_buffer)));
-
-
       return result;
-      -- return swap_bits(result);
 
     end function get_next_data;
     ------------------------------------------------------------------------------------
@@ -262,7 +210,6 @@ begin
           file_close(file_handler);
       end if;
     else
-    -- elsif rising_edge(clk) then
 
       -- Clear out AXI stuff when data has been transferred only
       if axi_data_valid then
@@ -295,6 +242,11 @@ begin
           receive(net, self, msg);
           cfg   := pop(msg);
           ratio := cfg.ratio;
+
+          -- Avoid bit banging too much if everything is valid
+          if ratio.first = ratio.second then
+            ratio := (DATA_WIDTH, DATA_WIDTH);
+          end if;
 
           info(
             logger,

@@ -169,9 +169,15 @@ def addAxiStreamDelayTests(cli):
 
 
 def addAxiFileReaderTests(entity):
-
     for data_width in (8, 32):
-        for ratio in ((8, 8), (1, 8), (2, 8), (2, 4), (1, 4), (1, 1)):
+        all_configs = []
+
+        for ratio in ((8, 8), (1, 8), (2, 8), (2, 4), (1, 4), (1, 1), (8, 32)):
+
+            # Test makes no sense but eaiser doing this than separating a loop
+            # just for data width 4
+            if max(ratio) > data_width:
+                continue
 
             basename = (
                 f"file_reader_data_width_{data_width}_ratio_{ratio[0]}_{ratio[1]}"
@@ -185,21 +191,24 @@ def addAxiFileReaderTests(entity):
                     test_file=test_file,
                     reference_file=reference_file,
                     data_width=data_width,
-                    length=256,
+                    length=256 * data_width,
                     ratio=ratio,
                 )
 
             name = f"single,data_width={data_width},ratio={ratio[0]}:{ratio[1]}"
 
-            test_cfg = [
-                ",".join([f"{ratio[0]}:{ratio[1]}", test_file, reference_file]),
-                ",".join([f"{ratio[0]}:{ratio[1]}", test_file, reference_file]),
-            ]
+            test_cfg = ",".join([f"{ratio[0]}:{ratio[1]}", test_file, reference_file])
+
+            all_configs += [test_cfg]
 
             entity.add_config(
-                name=name,
-                parameters={"DATA_WIDTH": data_width, "test_cfg": "\\;".join(test_cfg)},
+                name=name, parameters={"DATA_WIDTH": data_width, "test_cfg": test_cfg}
             )
+
+        entity.add_config(
+            name=f"multiple,data_width={data_width}",
+            parameters={"DATA_WIDTH": data_width, "test_cfg": "\\;".join(all_configs)},
+        )
 
 
 def swapBits(value, width=8):

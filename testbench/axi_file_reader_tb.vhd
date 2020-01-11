@@ -82,8 +82,6 @@ architecture axi_file_reader_tb of axi_file_reader_tb is
     constant num_cfgs : integer := count(s, ";") + 1;
     variable cfg_list : config_array_t(0 to num_cfgs - 1);
     variable lines    : lines_t := split(s, ";");
-    -- variable list     : config_list_t;
-    -- variable this_one : config_ptr_t;
   begin
 
     for i in lines'range loop
@@ -162,7 +160,7 @@ begin
     end procedure walk;
     ------------------------------------------------------------------------------------
 
-    procedure run_test (config_list : inout config_array_t) is
+    procedure run_test is
       variable cfg : config_ptr_t;
       variable msg : msg_t;
     begin
@@ -174,70 +172,62 @@ begin
         msg := new_msg;
         push(msg, cfg.reference_file.all);
         send(net, check_p, msg);
-        -- info(
-        --   sformat("Sending config: input_file='%s', reference_file='%s'",
-        --           cfg.input_file.all, cfg.reference_file.all));
-        -- msg := new_msg;
-        -- push(msg, cfg.input_file.all, cfg.ratio);
-        -- send(net, reader, msg);
       end loop;
 
+      info("Notifications sent, waiting for files to be read");
       wait_all_read(net, file_reader);
-
-      -- start := now;
-      -- for i in 0 to frames - 1 loop
-      --   push_string(msg, "");
-      --   send(net, reader, msg);
-      --   receive_reply(net, msg, reply_msg);
-      -- end loop;
-
-      -- wait until s_tlast = '1' and s_tready = '1' and s_tvalid = '1' and rising_edge(clk);
-
-      -- warning(sformat("Took %d cycles", fo((now - start) / CLK_PERIOD)));
+      wait until s_tvalid = '1' and s_tready = '1' and s_tlast = '1' and rising_edge(clk);
+      info("All files have now been read");
     end procedure run_test;
     ------------------------------------------------------------------------------------
 
-    -- procedure test_tvalid_probability is
-    --   variable start          : time;
-    --   variable baseline       : time;
-    --   variable tvalid_half    : time;
-    --   variable tvalid_quarter : time;
-    -- begin
-    --   rst <= '1'; walk(4); rst <= '0';
-    --   tvalid_probability <= 1.0;
-    --   start := now;
-    --   run_test;
-    --   baseline := now - start;
+    procedure test_tvalid_probability is
+      variable start          : time;
+      variable baseline       : integer;
+      variable tvalid_half    : integer;
+      variable tvalid_quarter : integer;
+    begin
+      rst <= '1'; walk(4); rst <= '0';
+      tvalid_probability <= 1.0;
+      start := now;
+      run_test;
+      baseline := (now - start) / CLK_PERIOD;
 
-    --   rst <= '1'; walk(4); rst <= '0';
-    --   tvalid_probability <= 0.5;
-    --   start := now;
-    --   run_test;
-    --   tvalid_half := now - start;
+      rst <= '1'; walk(4); rst <= '0';
+      tvalid_probability <= 0.5;
+      start := now;
+      run_test;
+      tvalid_half := (now - start) / CLK_PERIOD;
 
-    --   rst <= '1'; walk(4); rst <= '0';
-    --   tvalid_probability <= 0.25;
-    --   start := now;
-    --   run_test;
-    --   tvalid_quarter := now - start;
+      rst <= '1'; walk(4); rst <= '0';
+      tvalid_probability <= 0.25;
+      start := now;
+      run_test;
+      tvalid_quarter := (now - start) / CLK_PERIOD;
 
-    --   -- Check time taken is the expected +/- 10%
-    --   check_true((baseline * 0.9 * 2 < tvalid_half) and (tvalid_half < baseline * 1.1 * 2));
-    --   check_true((baseline * 0.9 * 4 < tvalid_quarter) and (tvalid_quarter < baseline * 1.1 * 4));
+      -- Check time taken is the expected +/- 10%
+      info(sformat("baseline=%d, half=%d (%d), quarter=%d (%d)",
+                   fo(baseline), fo(tvalid_half), fo(tvalid_half/2),
+                   fo(tvalid_quarter), fo(tvalid_quarter/4)));
 
-    -- end procedure test_tvalid_probability;
-    -- ------------------------------------------------------------------------------------
+      -- Check that time taken is what we expect with a 20% margin
+      check_true(real(tvalid_half) / 2.0 / real(baseline) > 0.85);
+      check_true(real(tvalid_half) / 2.0 / real(baseline) < 1.15);
 
-    -- variable a_config : config_ptr_t;
+      check_true(real(tvalid_quarter) / 4.0 / real(baseline) > 0.85);
+      check_true(real(tvalid_quarter) / 4.0 / real(baseline) < 1.15);
+
+    end procedure test_tvalid_probability;
+    ------------------------------------------------------------------------------------
+
 
   begin
 
     test_runner_setup(runner, runner_cfg);
-    show(display_handler, debug);
-    -- show_all(display_handler);
+    -- show(display_handler, debug);
 
+    -- Extract the config
     config_list := new config_array_t'(get_config(test_cfg));
-
 
     while test_suite loop
       tvalid_probability <= 1.0;
@@ -251,18 +241,16 @@ begin
       if run("back_to_back") then
         tvalid_probability <= 1.0;
         tready_probability <= 1.0;
-        run_test(config_list.all);
+        run_test;
 
-      -- elsif run("slow_read") then
-      --   tvalid_probability <= 1.0;
-      --   tready_probability <= 0.5;
-      --   run_test;
+      elsif run("slow_read") then
+        tvalid_probability <= 1.0;
+        tready_probability <= 0.5;
+        run_test;
 
-      -- elsif run("slow_write") then
-      --   test_tvalid_probability;
+      elsif run("slow_write") then
+        test_tvalid_probability;
 
-      -- elsif run("multiple_frames") then
-      --   run_test(4);
       end if;
 
       walk(4);
@@ -296,12 +284,10 @@ begin
   begin
 
     while True loop
-      if rst = '1' then
-      else
-        if completed = '1' then
-          -- check_true(s_tvalid = '0' and s_tlast = '0',
-          --            "tvalid and tlast should be '0' when completed is asserted");
-        end if;
+      if rst = '1' and file_status = opened then
+        info("Forcing file close due to reset");
+        file_close(file_handler);
+        file_status := closed;
       end if;
 
       s_tready <= '0';
@@ -319,8 +305,9 @@ begin
           s_tready <= '1';
         end if;
         if s_tready = '1' and s_tvalid = '1' then
+          word_cnt := word_cnt + 1;
+
           readline(file_handler, L);
-          info(sformat("line=%s", quote(L.all)));
 
           expected_tlast := '0';
 
@@ -334,19 +321,17 @@ begin
           hread(L, expected);
 
           check_equal(s_tdata, expected,
-                      sformat("Expected %r, got %r", fo(expected), fo(s_tdata)));
+                      sformat("Frame %d, word %d: Expected %r, got %r",
+                      fo(frame_cnt), fo(word_cnt), fo(expected), fo(s_tdata)));
 
           check_equal(s_tlast, expected_tlast,
-                      sformat("Expected tlast to be %r but got %r", fo(expected_tlast), fo(s_tlast)));
-
-          word_cnt := word_cnt + 1;
+                      sformat("Frame %d, word %d: Expected tlast to be %r but got %r",
+                      fo(frame_cnt), fo(word_cnt), fo(expected_tlast), fo(s_tlast)));
 
           if s_tlast = '1' then
             info(sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
             frame_cnt := frame_cnt + 1;
             word_cnt  := 0;
-            -- Frames will repeat, reinitialize seed
-            -- check_rand.InitSeed(0);
           end if;
         end if;
       end if;
@@ -354,15 +339,5 @@ begin
       wait until rising_edge(clk);
     end loop;
   end process;
-
-  
---           -- Frames will repeat, reinitialize seed
---           check_rand.InitSeed(0);
---         end if;
---       end if;
-
---       wait until rising_edge(clk);
---     end loop;
---   end process;
 
 end axi_file_reader_tb;
