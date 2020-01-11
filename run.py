@@ -44,9 +44,9 @@ def main():
     library.add_source_files(p.join(ROOT, "rtl", "*.vhd"))
     library.add_source_files(p.join(ROOT, "rtl", "bch_generated", "*.vhd"))
     # We don't really need the entier wb2axip for now, just the skid buffer
-    #  library.add_source_files(
-    #      p.join(ROOT, "third_party", "wb2axip", "rtl", "skidbuffer.v")
-    #  )
+    library.add_source_files(
+        p.join(ROOT, "third_party", "wb2axip", "rtl", "skidbuffer.v")
+    )
 
     library.add_source_files(p.join(ROOT, "testbench", "*.vhd"))
     library.add_source_files(p.join(ROOT, "testbench", "*", "*.vhd"))
@@ -171,19 +171,14 @@ def addAxiStreamDelayTests(cli):
 def addAxiFileReaderTests(entity):
 
     for data_width in (8, 32):
-        for ratio in ((8, 8), (1, 8), (1, 4), (1, 1)):
+        for ratio in ((8, 8), (1, 8), (2, 8), (2, 4), (1, 4), (1, 1)):
 
-            test_file = p.join(
-                ROOT,
-                "vunit_out",
-                f"file_reader_input_dw_{data_width}_ratio_{ratio[0]}_{ratio[1]}.bin",
+            basename = (
+                f"file_reader_data_width_{data_width}_ratio_{ratio[0]}_{ratio[1]}"
             )
 
-            reference_file = p.join(
-                ROOT,
-                "vunit_out",
-                f"file_reader_reference_dw_{data_width}_ratio_{ratio[0]}_{ratio[1]}.bin",
-            )
+            test_file = p.join(ROOT, "vunit_out", basename + "_input.bin")
+            reference_file = p.join(ROOT, "vunit_out", basename + "_reference.bin")
 
             if not (p.exists(test_file) and p.exists(reference_file)):
                 generateAxiFileReaderTestFile(
@@ -260,9 +255,12 @@ def generateAxiFileReaderTestFile(test_file, reference_file, data_width, length,
         for byte in unpacked_bytes:
             fd.write(struct.pack(">B", byte))
 
-    with open(reference_file, "wb") as fd:
+    # Format will depend on the data width, need to be wide enough for to fit
+    # one character per nibble
+    fmt = "%.{}x\n".format((data_width + 3) // 4)
+    with open(reference_file, "w") as fd:
         for word in packed_data:
-            fd.write(b"%x\n" % word)
+            fd.write(fmt % word)
 
     return packed_data
 

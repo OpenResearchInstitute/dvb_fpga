@@ -41,6 +41,7 @@ use osvvm.RandomPkg.all;
 library str_format;
 use str_format.str_format_pkg.all;
 
+use work.common_pkg.all;
 use work.file_utils_pkg.all;
 use work.testbench_utils_pkg.all;
 
@@ -119,7 +120,6 @@ begin
     --
     type file_type is file of character;
     file file_handler     : file_type;
-    variable char         : character;
     variable char_bit_cnt : natural := 0;
     variable char_buffer  : std_logic_vector(2*DATA_WIDTH - 1 downto 0);
 
@@ -127,21 +127,57 @@ begin
     variable ratio_buffer  : std_logic_vector(2*DATA_WIDTH - 1 downto 0);
 
     ------------------------------------------------------------------------------------
-    impure function read_word_from_file (constant word_width : in natural)
-    return std_logic_vector is
-      variable result : std_logic_vector(word_width - 1 downto 0);
+    impure function read_word_from_file return std_logic_vector is
+      variable char   : character;
+      variable result : std_logic_vector(ratio.second - 1 downto 0);
       variable byte   : std_logic_vector(7 downto 0);
     begin
-      while char_bit_cnt < word_width loop
+      -- Need to read bytes to decode them properly, make sure we have enough first
+      while char_bit_cnt < ratio.second loop
         read(file_handler, char);
 
         byte         := std_logic_vector(to_unsigned(character'pos(char), 8));
         char_bit_cnt := char_bit_cnt + byte'length;
-        char_buffer  := char_buffer(char_buffer'length - 8 - 1 downto 0) & byte;
+
+        info(sformat("char_buffer  := byte & char_buffer(%d - 1 downto %d - %d)", fo(char_buffer'length), fo(char_buffer'length), fo(byte'length)));
+
+
+        -- char_buffer(char_buffer'length - 1 downto char_buffer'length - byte'length) := byte;
+
+        -- char_buffer(char_buffer'length - byte'length - 1 downto 0)
+        --   := char_buffer(char_buffer'length - 1 downto byte'length);
+
+        -- char_buffer(char_buffer'length - 1 downto char_buffer'length - byte'length) := byte;
+        char_buffer  := byte & char_buffer(char_buffer'length - 1 downto byte'length);
+
+        info(
+          logger,
+          sformat(
+            "char_bit_cnt=%d  | byte=%r | char_buffer=%r",
+            fo(char_bit_cnt),
+            fo(byte),
+            fo(char_buffer)));
+
       end loop;
 
-      char_bit_cnt := char_bit_cnt mod word_width;
-      result       := char_buffer(word_width - 1 downto 0);
+      char_bit_cnt := char_bit_cnt - ratio.second;
+
+      result       := char_buffer(char_buffer'length - 1 downto char_buffer'length - ratio.second);
+
+      -- Remove the data being returned
+      char_buffer  := char_buffer(char_buffer'length - ratio.second - 1 downto 0)
+          & (ratio.second - 1 downto 0 => 'U');
+                      
+
+      info(
+        logger,
+        sformat(
+          "char_bit_cnt=%d  | byte=%r | result=%r | char_buffer=%r",
+          fo(char_bit_cnt),
+          fo(byte),
+          fo(result),
+          fo(char_buffer)));
+
 
       return result;
     end function read_word_from_file;
@@ -149,15 +185,30 @@ begin
     ------------------------------------------------------------------------------------
     impure function get_next_data (constant word_width : in natural)
     return std_logic_vector is
-      variable result : std_logic_vector(word_width - 1 downto 0);
-      variable word   : std_logic_vector(ratio.second - 1 downto 0);
-      variable unused : std_logic_vector(ratio.second - ratio.first - 1 downto 0);
+      variable result     : std_logic_vector(word_width - 1 downto 0);
+      variable word       : std_logic_vector(ratio.second - 1 downto 0);
+      variable valid_word : std_logic_vector(ratio.first - 1 downto 0);
+      variable unused     : std_logic_vector(ratio.second - ratio.first - 1 downto 0);
     begin
       while ratio_bit_cnt < word_width loop
-        word          := read_word_from_file(ratio.second);
+        word          := read_word_from_file;
+        valid_word    := word(ratio.first - 1 downto 0);
         ratio_bit_cnt := ratio_bit_cnt + ratio.first;
+        -- ratio_buffer  := word(ratio.first - 1 downto 0)
+        --   & ratio_buffer(ratio_buffer'length - 1 downto ratio.first);
         ratio_buffer  := ratio_buffer(ratio_buffer'length - ratio.first - 1 downto 0)
-                         & word(ratio.first - 1 downto 0);
+          & word(ratio.first - 1 downto 0);
+
+        info(
+          logger,
+          sformat(
+           "ratio_bit_cnt=%d | word=%r   | char_buffer=%r | valid_word=%r | ratio_buffer=%r || %b",
+            fo(ratio_bit_cnt),
+            fo(word),
+            fo(char_buffer),
+            fo(valid_word),
+            fo(ratio_buffer),
+            fo(ratio_buffer)));
 
         unused := word(ratio.second - 1 downto ratio.first);
 
@@ -167,9 +218,27 @@ begin
         end if;
       end loop;
 
-      ratio_bit_cnt := ratio_bit_cnt mod word_width;
-      result        := ratio_buffer(word_width + ratio_bit_cnt - 1 downto ratio_bit_cnt);
+      -- info(sformat("Assign %d downto %d", fo(ratio_buffer'length - 1), fo(ratio_buffer'length
+      -- - ratio_bit_cnt)));
+
+      ratio_bit_cnt := ratio_bit_cnt - word_width;
+      result        := ratio_buffer(ratio_bit_cnt + data_width - 1 downto ratio_bit_cnt);
+      ratio_buffer  := (data_width - 1 downto 0 => 'U')
+          & ratio_buffer(ratio_buffer'length - 1 downto ratio_bit_cnt + data_width);
+
+      -- info(
+      --   logger,
+      --   sformat(
+      --      "ratio_bit_cnt=%d | word=%r   | char_buffer=%r | ratio_buffer=%r || %b",
+      --     fo(ratio_bit_cnt),
+      --     fo(word),
+      --     fo(char_buffer),
+      --     fo(ratio_buffer),
+      --     fo(ratio_buffer)));
+
+
       return result;
+      -- return swap_bits(result);
 
     end function get_next_data;
     ------------------------------------------------------------------------------------
@@ -192,7 +261,7 @@ begin
           file_status := closed;
           file_close(file_handler);
       end if;
-    else 
+    else
     -- elsif rising_edge(clk) then
 
       -- Clear out AXI stuff when data has been transferred only

@@ -40,6 +40,7 @@ library str_format;
 use str_format.str_format_pkg.all;
 
 use work.file_utils_pkg.all;
+use work.testbench_utils_pkg.all;
 
 ------------------------
 -- Entity declaration --
@@ -148,6 +149,8 @@ begin
   main : process
 
     variable config_list : config_array_ptr_t;
+    variable file_reader : file_reader_t := new_file_reader(READER_NAME);
+    constant check_p     : actor_t := find("check_p");
 
     procedure walk(constant steps : natural) is
     begin
@@ -161,19 +164,25 @@ begin
 
     procedure run_test (config_list : inout config_array_t) is
       variable cfg : config_ptr_t;
-      variable msg       : msg_t;
-      variable reply_msg : msg_t;
-      constant reader    : actor_t := find(READER_NAME);
+      variable msg : msg_t;
     begin
       for i in config_list'range loop
         cfg := new config_t'(config_list(i));
-        info(
-          sformat("Sending config: input_file='%s', reference_file='%s'",
-                  cfg.input_file.all, cfg.reference_file.all));
+        -- Notify the DUT
+        enqueue_file(net, file_reader, cfg.input_file.all, cfg.ratio);
+        -- Notify the TB check process
         msg := new_msg;
-        push(msg, cfg.input_file.all, cfg.ratio);
-        send(net, reader, msg);
+        push(msg, cfg.reference_file.all);
+        send(net, check_p, msg);
+        -- info(
+        --   sformat("Sending config: input_file='%s', reference_file='%s'",
+        --           cfg.input_file.all, cfg.reference_file.all));
+        -- msg := new_msg;
+        -- push(msg, cfg.input_file.all, cfg.ratio);
+        -- send(net, reader, msg);
       end loop;
+
+      wait_all_read(net, file_reader);
 
       -- start := now;
       -- for i in 0 to frames - 1 loop
@@ -225,6 +234,7 @@ begin
 
     test_runner_setup(runner, runner_cfg);
     show(display_handler, debug);
+    -- show_all(display_handler);
 
     config_list := new config_array_t'(get_config(test_cfg));
 
@@ -266,45 +276,86 @@ begin
 
   -- Generate a tready enable with the configured probability
   s_tready_gen : process
-    variable tready_rand : RandomPType;
-    variable check_rand  : RandomPType;
-    variable word_cnt    : integer := 0;
-    variable frame_cnt   : integer := 0;
-    variable expected    : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
+    constant self           : actor_t := new_actor("check_p");
+    variable tready_rand    : RandomPType;
+    variable msg            : msg_t;
+    variable word_cnt       : integer := 0;
+    variable frame_cnt      : integer := 0;
+    variable expected       : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
+    variable expected_tlast : std_logic;
+    -- Very similar to axi_file_reader itself, except this file is a std_logic_vector per
+    -- line
+    type file_status_t is (opened, closed, unknown);
+    -- variable file_status : file_status_t := unknown;
+    -- subtype data_t is std_logic_vector(DATA_WIDTH - 1 downto 0);
+    -- type file_t is file of data_t;
+    variable file_status : file_status_t := unknown;
+    file file_handler    : text;
+    variable L           : line;
+
   begin
 
     while True loop
       if rst = '1' then
-        check_rand.InitSeed(0);
       else
         if completed = '1' then
           -- check_true(s_tvalid = '0' and s_tlast = '0',
           --            "tvalid and tlast should be '0' when completed is asserted");
         end if;
       end if;
+
       s_tready <= '0';
-      if tready_rand.RandReal(1.0) <= tready_probability then
-        s_tready <= '1';
+
+      if file_status /= opened and has_message(self) then
+        receive(net, self, msg);
+        info("Opening file");
+        file_open(file_handler, pop(msg), read_mode);
+        info("Opening worked");
+        file_status  := opened;
       end if;
-      if s_tready = '1' and s_tvalid = '1' then
-        expected := check_rand.RandSlv(DATA_WIDTH);
-        check_equal(s_tdata, expected,
-                    sformat("Expected %r, got %r", fo(expected), fo(s_tdata)));
 
-        word_cnt := word_cnt + 1;
+      if file_status = opened then
+        if tready_rand.RandReal(1.0) <= tready_probability then
+          s_tready <= '1';
+        end if;
+        if s_tready = '1' and s_tvalid = '1' then
+          readline(file_handler, L);
+          info(sformat("line=%s", quote(L.all)));
 
-        if s_tlast = '1' then
-          info(sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
-          frame_cnt := frame_cnt + 1;
-          word_cnt  := 0;
-          -- Frames will repeat, reinitialize seed
-          check_rand.InitSeed(0);
+          expected_tlast := '0';
+
+          if endfile(file_handler) then
+            info("Closing file");
+            file_close(file_handler);
+            file_status    := closed;
+            expected_tlast := '1';
+          end if;
+
+          hread(L, expected);
+
+          check_equal(s_tdata, expected,
+                      sformat("Expected %r, got %r", fo(expected), fo(s_tdata)));
+
+          check_equal(s_tlast, expected_tlast,
+                      sformat("Expected tlast to be %r but got %r", fo(expected_tlast), fo(s_tlast)));
+
+          word_cnt := word_cnt + 1;
+
+          if s_tlast = '1' then
+            info(sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
+            frame_cnt := frame_cnt + 1;
+            word_cnt  := 0;
+            -- Frames will repeat, reinitialize seed
+            -- check_rand.InitSeed(0);
+          end if;
         end if;
       end if;
 
       wait until rising_edge(clk);
     end loop;
   end process;
+
+  
 --           -- Frames will repeat, reinitialize seed
 --           check_rand.InitSeed(0);
 --         end if;
