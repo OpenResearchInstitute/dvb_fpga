@@ -23,10 +23,13 @@
 # pylint: disable=bad-continuation
 
 import os.path as p
+import random
+import struct
 import sys
 from collections import namedtuple
+from enum import Enum
 
-from vunit import VUnit  # type: ignore
+from vunit import VUnit, VUnitCLI  # type: ignore
 
 ROOT = p.abspath(p.dirname(__file__))
 
@@ -53,12 +56,26 @@ def main():
     )
 
     addAxiStreamDelayTests(cli)
-    addAxiFileReaderTests(cli)
-    addAxiBitInterleaverTests(cli)
-    addAxiBchEncoderTests(cli)
+    addAxiFileReaderTests(cli.library("lib").entity("axi_file_reader_tb"))
 
-    if "-g" in sys.argv[1:]:
-        cli.set_compile_option("modelsim.vcom_flags", ["-novopt", "-explicit"])
+    parametrizeTests(
+        entity=cli.library("lib").entity("axi_bit_interleaver_tb"),
+        input_file_basename="bit_interleaver_input.bin",
+        reference_file_basename="bit_interleaver_output.bin",
+        detailed=True,
+    )
+
+    parametrizeTests(
+        entity=cli.library("lib").entity("axi_bch_encoder_tb"),
+        input_file_basename="bch_encoder_input.bin",
+        reference_file_basename="ldpc_encoder_input.bin",
+    )
+
+    cli.set_compile_option("modelsim.vcom_flags", ["-explicit"])
+    cli.set_compile_option("ghdl.flags", ["-frelaxed-rules"])
+
+    args = VUnitCLI().parse_args()
+    if args.gui:
         cli.set_sim_option("modelsim.vsim_flags", ["-novopt"])
 
     cli.set_sim_option("disable_ieee_warnings", True)
@@ -69,100 +86,77 @@ def main():
 Parameters = namedtuple("Parameters", ("modulation", "frame_length", "code_rate"))
 
 
-def _iterParams():
-    for modulation_type in ("mod_8psk", "mod_16apsk", "mod_32apsk"):
-        for frame_length in ("normal", "short"):
-            for code_rate in (
-                "C1_4",
-                "C1_3",
-                "C2_5",
-                "C1_2",
-                "C3_5",
-                "C2_3",
-                "C3_4",
-                "C4_5",
-                "C5_6",
-                "C8_9",
-                "C9_10",
-            ):
-                yield Parameters(modulation_type, frame_length, code_rate)
+class ModulationType(Enum):
+    mod_8psk = "MOD_8PSK"
+    mod_16apsk = "MOD_16APSK"
+    mod_32apsk = "MOD_32APSK"
 
 
-def addAxiBchEncoderTests(cli):
-    axi_bch_encoder_tb = cli.library("lib").entity("axi_bch_encoder_tb")
-
-    test_cfg = []
-
-    for modulation, frame_length, code_rate in _iterParams():
-
-        data_files = p.join(
-            ROOT,
-            "gnuradio_data",
-            f"FECFRAME_{frame_length}_{modulation}_{code_rate}".upper(),
-        )
-
-        input_file = p.join(data_files, "bch_encoder_input.bin")
-        reference_file = p.join(data_files, "ldpc_encoder_input.bin")
-
-        if not p.exists(input_file) or not p.exists(reference_file):
-            continue
-
-        test_cfg += [
-            ",".join(
-                map(
-                    str,
-                    (modulation, frame_length, code_rate, input_file, reference_file),
-                )
-            )
-        ]
-
-        #  #  Can add this to run specific configs independently
-        #  test_name = f"test_{frame_length}_frame_{modulation}_{code_rate}"
-        #  axi_bch_encoder_tb.add_config(
-        #      name=test_name, generics={"test_cfg": test_cfg[-1]}
-        #  )
-
-    axi_bch_encoder_tb.add_config(name="all", generics={"test_cfg": ":".join(test_cfg)})
+class FrameLength(Enum):
+    normal = "FECFRAME_NORMAL"
+    short = "FECFRAME_SHORT"
 
 
-def addAxiBitInterleaverTests(cli):
-    axi_bit_interleaver_tb = cli.library("lib").entity("axi_bit_interleaver_tb")
+class CodeRate(Enum):
+    C1_4 = "C1_4"
+    C1_3 = "C1_3"
+    C2_5 = "C2_5"
+    C1_2 = "C1_2"
+    C3_5 = "C3_5"
+    C2_3 = "C2_3"
+    C3_4 = "C3_4"
+    C4_5 = "C4_5"
+    C5_6 = "C5_6"
+    C8_9 = "C8_9"
+    C9_10 = "C9_10"
+
+
+def parametrizeTests(
+    entity, input_file_basename, reference_file_basename, detailed=False
+):
 
     test_cfg = []
 
-    for modulation, frame_length, code_rate in _iterParams():
-        data_files = p.join(
-            ROOT,
-            "gnuradio_data",
-            f"FECFRAME_{frame_length}_{modulation}_{code_rate}".upper(),
-        )
+    for code_rate in CodeRate:
 
-        input_file = p.join(data_files, "bit_interleaver_input.bin")
-        reference_file = p.join(data_files, "bit_interleaver_output.bin")
+        for frame_length in FrameLength:
+            for modulation in ModulationType:
 
-        if not p.exists(input_file) or not p.exists(reference_file):
-            continue
-
-        test_name = f"test_{frame_length}_frame_{modulation}_{code_rate}"
-
-        test_cfg += [
-            ",".join(
-                map(
-                    str,
-                    (modulation, frame_length, code_rate, input_file, reference_file),
+                data_files = p.join(
+                    ROOT,
+                    "gnuradio_data",
+                    f"{frame_length.value}_{modulation.value}_{code_rate.value}".upper(),
                 )
-            )
-        ]
 
-        #  Can add this to run specific configs independently
-        test_name = f"test_{frame_length}_frame_{modulation}_{code_rate}"
-        axi_bit_interleaver_tb.add_config(
-            name=test_name, generics={"test_cfg": test_cfg[-1]}
-        )
+                input_file_path = p.join(data_files, input_file_basename)
+                reference_file_path = p.join(data_files, reference_file_basename)
 
-    #  axi_bit_interleaver_tb.add_config(
-    #      name="all", generics={"test_cfg": ":".join(test_cfg)}
-    #  )
+                if not p.exists(input_file_path) or not p.exists(reference_file_path):
+                    continue
+
+                test_cfg += [
+                    ",".join(
+                        [
+                            modulation.value,
+                            frame_length.value,
+                            code_rate.value,
+                            input_file_path,
+                            reference_file_path,
+                        ]
+                    )
+                ]
+
+                if detailed:
+                    test_name = f"test_{frame_length}_{modulation}_{code_rate}"
+                    entity.add_config(
+                        name=test_name, generics={"test_cfg": ":".join(test_cfg)}
+                    )
+                    test_cfg = []
+
+    if not detailed:
+        assert test_cfg, f"No tests found for {entity.name}"
+
+        entity.add_config(name="all_configs", generics={"test_cfg": ":".join(test_cfg)})
 
 
 def addAxiStreamDelayTests(cli):
@@ -174,30 +168,110 @@ def addAxiStreamDelayTests(cli):
         )
 
 
-def addAxiFileReaderTests(cli):
-    axi_file_reader_tb = cli.library("lib").entity("axi_file_reader_tb")
-
-    #  filename = "/home/souto/test.bin"
-    #  filename = "/home/souto/phase4ground/bch_tests/bch_input.bin"
-    filename = "/home/souto/phase4ground/bch_tests/golden_input.bin"
-
+def addAxiFileReaderTests(entity):
     for data_width in (8, 32):
-        for bytes_are_bits in (False, True):
+        all_configs = []
 
-            ref_filename = f"dw_{data_width}_bytes_are_bits_{bytes_are_bits}.bin"
+        for ratio in ((8, 8), (1, 8), (2, 8), (2, 4), (1, 4), (1, 1), (8, 32)):
 
-            filename = p.join(ROOT, "vunit_out", ref_filename)
+            # Test makes no sense but eaiser doing this than separating a loop
+            # just for data width 4
+            if max(ratio) > data_width:
+                continue
 
-            name = f"data_width={data_width},bytes_are_bits={bytes_are_bits}"
-
-            axi_file_reader_tb.add_config(
-                name=name,
-                parameters={
-                    "DATA_WIDTH": data_width,
-                    "FILE_NAME": filename,
-                    "BYTES_ARE_BITS": bytes_are_bits,
-                },
+            basename = (
+                f"file_reader_data_width_{data_width}_ratio_{ratio[0]}_{ratio[1]}"
             )
+
+            test_file = p.join(ROOT, "vunit_out", basename + "_input.bin")
+            reference_file = p.join(ROOT, "vunit_out", basename + "_reference.bin")
+
+            if not (p.exists(test_file) and p.exists(reference_file)):
+                generateAxiFileReaderTestFile(
+                    test_file=test_file,
+                    reference_file=reference_file,
+                    data_width=data_width,
+                    length=256 * data_width,
+                    ratio=ratio,
+                )
+
+            name = f"single,data_width={data_width},ratio={ratio[0]}:{ratio[1]}"
+
+            test_cfg = ",".join([f"{ratio[0]}:{ratio[1]}", test_file, reference_file])
+
+            all_configs += [test_cfg]
+
+            entity.add_config(
+                name=name, parameters={"DATA_WIDTH": data_width, "test_cfg": test_cfg}
+            )
+
+        entity.add_config(
+            name=f"multiple,data_width={data_width}",
+            parameters={"DATA_WIDTH": data_width, "test_cfg": "\\;".join(all_configs)},
+        )
+
+
+def swapBits(value, width=8):
+    v_in_binary = bin(value)[2:]
+
+    assert len(v_in_binary) <= width, "input is too big"
+
+    v_in_binary = "0" * (width - len(v_in_binary)) + v_in_binary
+    return int(v_in_binary[::-1], 2)
+
+
+def generateAxiFileReaderTestFile(test_file, reference_file, data_width, length, ratio):
+    rand_max = 2 ** data_width - 1
+    ratio_first, ratio_second = ratio
+    packed_data = []
+    unpacked_bytes = []
+
+    buffer_length = 0
+    buffer_data = 0
+    byte = ""
+
+    for _ in range(length):
+        for ratio_i in reversed(range(ratio_second)):
+            if ratio_i < ratio_first:
+                # Generate a new data word every time the previous is read out
+                # completely
+                if buffer_length == 0:
+                    buffer_data = random.randrange(0, rand_max)
+                    packed_data += [buffer_data]
+
+                    buffer_data = swapBits(buffer_data, width=data_width)
+                    buffer_length += data_width
+
+                byte += str(buffer_data & 1)
+
+                buffer_data >>= 1
+                buffer_length -= 1
+            else:
+                # Pad only
+                byte += "0"
+
+            # Every time we get enough data, save it and reset it
+            if len(byte) == 8:
+                unpacked_bytes += [int(byte, 2)]
+                byte = ""
+
+    assert not byte, (
+        f"Data width {data_width}, length {length} is invalid, "
+        "need to make sure data_width*length is divisible by 8"
+    )
+
+    with open(test_file, "wb") as fd:
+        for byte in unpacked_bytes:
+            fd.write(struct.pack(">B", byte))
+
+    # Format will depend on the data width, need to be wide enough for to fit
+    # one character per nibble
+    fmt = "%.{}x\n".format((data_width + 3) // 4)
+    with open(reference_file, "w") as fd:
+        for word in packed_data:
+            fd.write(fmt % word)
+
+    return packed_data
 
 
 if __name__ == "__main__":

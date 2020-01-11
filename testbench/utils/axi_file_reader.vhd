@@ -41,6 +41,7 @@ use osvvm.RandomPkg.all;
 library str_format;
 use str_format.str_format_pkg.all;
 
+use work.common_pkg.all;
 use work.file_utils_pkg.all;
 use work.testbench_utils_pkg.all;
 
@@ -80,6 +81,7 @@ architecture axi_file_reader of axi_file_reader is
   signal m_tvalid_en    : std_logic := '0';
   signal m_tlast_i      : std_logic;
   signal axi_data_valid : boolean;
+  signal dbg_word_cnt   : integer := 0;
 
 begin
 
@@ -118,7 +120,6 @@ begin
     --
     type file_type is file of character;
     file file_handler     : file_type;
-    variable char         : character;
     variable char_bit_cnt : natural := 0;
     variable char_buffer  : std_logic_vector(2*DATA_WIDTH - 1 downto 0);
 
@@ -126,23 +127,35 @@ begin
     variable ratio_buffer  : std_logic_vector(2*DATA_WIDTH - 1 downto 0);
 
     ------------------------------------------------------------------------------------
-    impure function read_word_from_file (constant word_width : in natural)
-    return std_logic_vector is
-      variable result : std_logic_vector(word_width - 1 downto 0);
+    impure function read_word_from_file return std_logic_vector is
+      variable char   : character;
+      variable result : std_logic_vector(ratio.second - 1 downto 0);
       variable byte   : std_logic_vector(7 downto 0);
     begin
-      while char_bit_cnt < word_width loop
+      -- Need to read bytes to decode them properly, make sure we have enough first
+      while char_bit_cnt < ratio.second loop
         read(file_handler, char);
 
         byte         := std_logic_vector(to_unsigned(character'pos(char), 8));
         char_bit_cnt := char_bit_cnt + byte'length;
-        char_buffer  := char_buffer(char_buffer'length - 8 - 1 downto 0) & byte;
+        -- Shift the buffer right, we'll send the MSB first
+        char_buffer  := byte & char_buffer(char_buffer'length - 1 downto byte'length);
+
       end loop;
 
-      char_bit_cnt := char_bit_cnt mod word_width;
-      result       := char_buffer(word_width - 1 downto 0);
+      char_bit_cnt := char_bit_cnt - ratio.second;
+      result       := char_buffer(char_buffer'length - 1 downto char_buffer'length - ratio.second);
 
-      return result;
+      -- Remove the data being returned from the buffer
+      char_buffer  := char_buffer(char_buffer'length - ratio.second - 1 downto 0)
+          & (ratio.second - 1 downto 0 => 'U');
+
+      if result'length < 8 then
+        return result;
+      end if;
+
+      return swap_bytes(result);
+
     end function read_word_from_file;
 
     ------------------------------------------------------------------------------------
@@ -153,10 +166,11 @@ begin
       variable unused : std_logic_vector(ratio.second - ratio.first - 1 downto 0);
     begin
       while ratio_bit_cnt < word_width loop
-        word          := read_word_from_file(ratio.second);
+        word          := read_word_from_file;
         ratio_bit_cnt := ratio_bit_cnt + ratio.first;
+
         ratio_buffer  := ratio_buffer(ratio_buffer'length - ratio.first - 1 downto 0)
-                         & word(ratio.first - 1 downto 0);
+          & word(ratio.first - 1 downto 0);
 
         unused := word(ratio.second - 1 downto ratio.first);
 
@@ -164,10 +178,14 @@ begin
           warning(logger, sformat("Something looks wrong here, expected all 0s, " &
                   "got %r (%b)", fo(unused), fo(unused)));
         end if;
+
       end loop;
 
-      ratio_bit_cnt := ratio_bit_cnt mod word_width;
-      result        := ratio_buffer(word_width + ratio_bit_cnt - 1 downto ratio_bit_cnt);
+      ratio_bit_cnt := ratio_bit_cnt - word_width;
+      result        := ratio_buffer(ratio_bit_cnt + data_width - 1 downto ratio_bit_cnt);
+      ratio_buffer  := (data_width - 1 downto 0 => 'U')
+          & ratio_buffer(ratio_buffer'length - 1 downto ratio_bit_cnt + data_width);
+
       return result;
 
     end function get_next_data;
@@ -191,8 +209,7 @@ begin
           file_status := closed;
           file_close(file_handler);
       end if;
-    else 
-    -- elsif rising_edge(clk) then
+    else
 
       -- Clear out AXI stuff when data has been transferred only
       if axi_data_valid then
@@ -201,6 +218,7 @@ begin
         m_tlast_i   <= '0';
         m_tdata     <= (others => 'U');
         word_cnt    := word_cnt + 1;
+        dbg_word_cnt <= dbg_word_cnt + 1;
 
         if m_tlast_i = '1' then
           file_close(file_handler);
@@ -208,10 +226,11 @@ begin
 
           info(
             logger,
-            sformat("Read %d words from %s", fo(word_cnt), quote(cfg.filename)));
+            sformat("Read %d words from %s", fo(word_cnt), quote(cfg.filename.all)));
 
           completed     <= '1';
           word_cnt      := 0;
+          dbg_word_cnt  <= 0;
           char_bit_cnt  := 0;
           ratio_bit_cnt := 0;
         end if;
@@ -222,16 +241,21 @@ begin
         if has_message(self) then
           receive(net, self, msg);
           cfg   := pop(msg);
-          ratio := cfg.data_ratio;
+          ratio := cfg.ratio;
+
+          -- Avoid bit banging too much if everything is valid
+          if ratio.first = ratio.second then
+            ratio := (DATA_WIDTH, DATA_WIDTH);
+          end if;
 
           info(
             logger,
             sformat(
-              "Reading %s. Data ratio is %d:%d (requested by %s)", quote(cfg.filename),
-              fo(cfg.data_ratio.first), fo(cfg.data_ratio.second),
+              "Reading %s. Data ratio is %d:%d (requested by %s)", quote(cfg.filename.all),
+              fo(cfg.ratio.first), fo(cfg.ratio.second),
               quote(name(msg.sender))));
 
-          file_open(file_handler, cfg.filename, read_mode);
+          file_open(file_handler, cfg.filename.all, read_mode);
           file_status  := opened;
 
           m_tdata_next := get_next_data(DATA_WIDTH);

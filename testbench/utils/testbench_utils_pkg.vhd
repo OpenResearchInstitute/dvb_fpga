@@ -42,6 +42,7 @@ package testbench_utils_pkg is
 
   -- Add double quotes around a string
   function quote ( constant s : string ) return string;
+  function quote ( constant s : character ) return string;
 
   impure function get_test_cfg ( constant str : string)
   return config_array_t;
@@ -137,6 +138,11 @@ package body testbench_utils_pkg is
   end function get_test_cfg;
 
   -- Add double quotes around a string
+  function quote ( constant s : character ) return string is
+  begin
+    return '"' & s & '"';
+  end;
+
   function quote ( constant s : string ) return string is
   begin
     return '"' & s & '"';

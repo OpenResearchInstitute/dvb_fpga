@@ -41,11 +41,6 @@ import math
 import numpy
 
 
-BASE_FRAME_LENGTH = {
-    dtv.FECFRAME_SHORT: 16200,
-    dtv.FECFRAME_NORMAL: 64800
-    }
-
 CODE_RATES = {
     dtv.C1_2:  1./2,
     dtv.C1_3:  1./3,
@@ -59,16 +54,33 @@ CODE_RATES = {
     dtv.C8_9:  8./9,
     dtv.C9_10: 9./10}
 
-def get_crc_length(frame_type, code_rate):
-    if frame_type == dtv.FECFRAME_SHORT:
-        return 168
-
-    if code_rate in (dtv.C8_9, dtv.C9_10):
-        return 128
-    if code_rate in (dtv.C5_6, dtv.C2_3):
-        return 160
-
-    return 192
+BBFRAME_LENGTH = {
+    dtv.FECFRAME_NORMAL: {
+        dtv.C1_4: 16008,
+        dtv.C1_3: 21408,
+        dtv.C2_5: 25728,
+        dtv.C1_2: 32208,
+        dtv.C3_5: 38688,
+        dtv.C2_3: 43040,
+        dtv.C3_4: 48408,
+        dtv.C4_5: 51648,
+        dtv.C5_6: 53840,
+        dtv.C8_9: 57472,
+        dtv.C9_10: 58192,
+    },
+    dtv.FECFRAME_SHORT: {
+        dtv.C1_4: 3072,
+        dtv.C1_3: 5232,
+        dtv.C2_5: 6312,
+        dtv.C1_2: 7032,
+        dtv.C3_5: 9552,
+        dtv.C2_3: 10632,
+        dtv.C3_4: 11712,
+        dtv.C4_5: 12432,
+        dtv.C5_6: 13152,
+        dtv.C8_9: 14232,
+    },
+}
 
 
 def get_ratio(modulation):
@@ -81,10 +93,18 @@ def get_ratio(modulation):
     if modulation == dtv.MOD_32APSK:
         ratio = 5, 8
 
-    print("Ratio is %s" % (ratio, ))
+    #  print("Ratio is %s" % (ratio,))
 
-    assert ratio is not None, '??'
+    assert ratio is not None, "??"
     return ratio
+
+class UnknownFrameLength(Exception):
+    def __init__(self, frame_type, code_rate):
+        self.frame_type = frame_type
+        self.code_rate = code_rate
+
+    def __str__(self):
+        return "Could not get frame length for {}, {}".format(self.frame_type, self.code_rate)
 
 class dvbs2_tx(gr.top_block):
 
@@ -94,17 +114,17 @@ class dvbs2_tx(gr.top_block):
         ##################################################
         # Parameters
         ##################################################
-        frame_length = BASE_FRAME_LENGTH[frame_type]
-        print("Base frame length: %d" % frame_length)
-        frame_length = int(round(CODE_RATES[code_rate] * frame_length))
-        print("Base frame length: %d" % frame_length)
-        # Take off CRC
-        frame_length -= get_crc_length(frame_type, code_rate)
         # Header is 10 bytes
-        frame_length -= 80
-        print("Base frame length: %d" % frame_length)
+        try:
+            frame_length = 1.0*BBFRAME_LENGTH[frame_type][code_rate] - 80
+        except KeyError:
+            raise UnknownFrameLength(frame_type, code_rate)
+
+        #  print("Base frame length: %s" % frame_length)
         frame_length /= 8
-        print("Base frame length: %d" % frame_length)
+        #  print("Base frame length: %s" % frame_length)
+        assert int(frame_length) == 1.0*frame_length, "Frame length {0} won't work because {0}/8 = {1}!".format(frame_length, frame_length / 8.0)
+        frame_length = int(frame_length)
         self.frame_length = frame_length
 
         bits_per_input, bits_per_output = get_ratio(modulation)
@@ -266,9 +286,33 @@ class dvbs2_tx(gr.top_block):
 
 def argument_parser():
     parser = OptionParser(usage="%prog: [options]", option_class=eng_option)
-    parser.add_option("--frame-type", default="FECFRAME_NORMAL", choices=("FECFRAME_NORMAL", "FECFRAME_SHORT"))
-    parser.add_option("--modulation", default="MOD_8PSK", choices=("MOD_8PSK", "MOD_16APSK", "MOD_32APSK"))
-    parser.add_option("--code-rate", default="C1_2", choices=("C1_2", "C1_3", "C1_4", "C2_3", "C2_5", "C3_4", "C3_5", "C4_5", "C5_6", "C8_9", "C9_10"))
+    parser.add_option(
+        "--frame-type",
+        default="FECFRAME_NORMAL",
+        choices=("FECFRAME_NORMAL", "FECFRAME_SHORT"),
+    )
+    parser.add_option(
+        "--modulation",
+        default="MOD_8PSK",
+        choices=("MOD_8PSK", "MOD_16APSK", "MOD_32APSK"),
+    )
+    parser.add_option(
+        "--code-rate",
+        default="C1_2",
+        choices=(
+            "C1_2",
+            "C1_3",
+            "C1_4",
+            "C2_3",
+            "C2_5",
+            "C3_4",
+            "C3_5",
+            "C4_5",
+            "C5_6",
+            "C8_9",
+            "C9_10",
+        ),
+    )
 
     args, _ = parser.parse_args()
 
@@ -276,7 +320,6 @@ def argument_parser():
     args.modulation = getattr(dtv, args.modulation)
     args.code_rate = getattr(dtv, args.code_rate)
 
-    print(args)
 
     return args
 

@@ -23,6 +23,8 @@
 ---------------
 -- Libraries --
 ---------------
+use std.textio.all;
+
 library	ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -38,6 +40,7 @@ library str_format;
 use str_format.str_format_pkg.all;
 
 use work.file_utils_pkg.all;
+use work.testbench_utils_pkg.all;
 
 ------------------------
 -- Entity declaration --
@@ -46,76 +49,49 @@ entity axi_file_reader_tb is
   generic (
     runner_cfg : string;
     DATA_WIDTH : integer;
-    FILE_NAME  : string);
+    test_cfg   : string);
 end axi_file_reader_tb;
 
 architecture axi_file_reader_tb of axi_file_reader_tb is
 
-  constant DATA_RATIO : ratio_t := parse_data_ratio("1:8", DATA_WIDTH);
+  type config_t is record
+    ratio          : ratio_t;
+    input_file     : line;
+    reference_file : line;
+  end record;
 
-  -- Generates data for when BYTES_ARE_BITS is set to False
-  impure function generate_regular_data ( constant length : positive)
-  return std_logic_vector_array is
-    variable data       : std_logic_vector_array(0 to length - 1)(DATA_WIDTH - 1 downto 0);
-    variable write_rand : RandomPType;
+  type config_ptr_t is access config_t;
+  type config_array_t is array (natural range <>) of config_t;
+  type config_array_ptr_t is access config_array_t;
+
+  impure function decode_line (
+    constant s     : in string) return config_t is
+    constant div_0 : integer := find(s, ",");
+    constant div_1 : integer := find(s(div_0 + 1 to s'length), ",");
   begin
-    write_rand.InitSeed(0);
 
-    for word_cnt in 0 to length - 1 loop
-      data(word_cnt) := write_rand.RandSlv(DATA_WIDTH);
+    return (
+      parse_data_ratio(s(1 to div_0 - 1)),
+      new string'(s(div_0 + 1 to div_1 - 1)),
+      new string'(s(div_1 + 1 to s'length)));
+
+    end;
+
+  impure function get_config (
+    constant s        : in string) return config_array_t is
+    constant num_cfgs : integer := count(s, ";") + 1;
+    variable cfg_list : config_array_t(0 to num_cfgs - 1);
+    variable lines    : lines_t := split(s, ";");
+  begin
+
+    for i in lines'range loop
+      info(sformat("%d => decoding '%s'", fo(i), lines(i).all));
+      cfg_list(i) := decode_line(lines(i).all);
     end loop;
 
-    return data;
+    return cfg_list;
+  end;
 
-  end function generate_regular_data;
-
-  -- Generates data for when BYTES_ARE_BITS is set to True
-  impure function generate_unpacked_data (constant length : positive)
-  return std_logic_vector_array is
-    constant NUMBER_OF_WORDS : integer := length * DATA_RATIO.first / DATA_RATIO.second;
-    variable data            : std_logic_vector_array(0 to NUMBER_OF_WORDS - 1)(7 downto 0);
-    variable word            : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    variable byte            : std_logic_vector(7 downto 0);
-    variable index           : natural := 0;
-    variable write_rand      : RandomPType;
-  begin
-    info(sformat("Generating vector with %d x %d = %d",
-                 fo(data'length), fo(data(0)'length), fo(data'length * data(0)'length)));
-
-    write_rand.InitSeed(0);
-
-    for word_cnt in 0 to length - 1 loop
-      debug(sformat("word_cnt=%d", fo(word_cnt)));
-      word := write_rand.RandSlv(DATA_WIDTH);
-
-      -- Data is little endian, write MSB first
-      for byte_index in (DATA_WIDTH + 7) / 8 - 1 downto 0 loop
-        byte := word(8*(byte_index + 1) - 1 downto 8*byte_index);
-
-        for i in 7 downto 0 loop
-          -- When BYTES_ARE_BITS is set to True, each bit on a word becomes a byte
-          if byte(i) = '1' then
-            data(index) := x"01";
-          else
-            data(index) := x"00";
-          end if;
-          index := index + 1;
-        end loop;
-
-      end loop;
-    end loop;
-
-    return data;
-  end function generate_unpacked_data;
-
-  procedure create_file (constant length : positive) is
-  begin
-    -- if BYTES_ARE_BITS then
-    --   write_binary_file(FILE_NAME, generate_unpacked_data(length));
-    -- else
-      write_binary_file(FILE_NAME, generate_regular_data(length));
-    -- end if;
-  end procedure create_file;
 
   ---------------
   -- Constants --
@@ -169,6 +145,11 @@ begin
   -- Processes --
   ---------------
   main : process
+
+    variable config_list : config_array_ptr_t;
+    variable file_reader : file_reader_t := new_file_reader(READER_NAME);
+    constant check_p     : actor_t := find("check_p");
+
     procedure walk(constant steps : natural) is
     begin
       if steps /= 0 then
@@ -179,64 +160,74 @@ begin
     end procedure walk;
     ------------------------------------------------------------------------------------
 
-    procedure run_test (constant frames : in integer := 1) is
-      variable msg       : msg_t;
-      variable reply_msg : msg_t;
-      variable reader    : actor_t := find(READER_NAME);
-      variable start     : time;
+    procedure run_test is
+      variable cfg : config_ptr_t;
+      variable msg : msg_t;
     begin
-      start := now;
-      for i in 0 to frames - 1 loop
+      for i in config_list'range loop
+        cfg := new config_t'(config_list(i));
+        -- Notify the DUT
+        enqueue_file(net, file_reader, cfg.input_file.all, cfg.ratio);
+        -- Notify the TB check process
         msg := new_msg;
-        push_string(msg, FILE_NAME);
-        send(net, reader, msg);
-        receive_reply(net, msg, reply_msg);
+        push(msg, cfg.reference_file.all);
+        send(net, check_p, msg);
       end loop;
 
-      wait until s_tlast = '1' and s_tready = '1' and s_tvalid = '1' and rising_edge(clk);
-
-      warning(sformat("Took %d cycles", fo((now - start) / CLK_PERIOD)));
+      info("Notifications sent, waiting for files to be read");
+      wait_all_read(net, file_reader);
+      wait until s_tvalid = '1' and s_tready = '1' and s_tlast = '1' and rising_edge(clk);
+      info("All files have now been read");
     end procedure run_test;
     ------------------------------------------------------------------------------------
 
     procedure test_tvalid_probability is
       variable start          : time;
-      variable baseline       : time;
-      variable tvalid_half    : time;
-      variable tvalid_quarter : time;
+      variable baseline       : integer;
+      variable tvalid_half    : integer;
+      variable tvalid_quarter : integer;
     begin
       rst <= '1'; walk(4); rst <= '0';
       tvalid_probability <= 1.0;
       start := now;
       run_test;
-      baseline := now - start;
+      baseline := (now - start) / CLK_PERIOD;
 
       rst <= '1'; walk(4); rst <= '0';
       tvalid_probability <= 0.5;
       start := now;
       run_test;
-      tvalid_half := now - start;
+      tvalid_half := (now - start) / CLK_PERIOD;
 
       rst <= '1'; walk(4); rst <= '0';
       tvalid_probability <= 0.25;
       start := now;
       run_test;
-      tvalid_quarter := now - start;
+      tvalid_quarter := (now - start) / CLK_PERIOD;
 
       -- Check time taken is the expected +/- 10%
-      check_true((baseline * 0.9 * 2 < tvalid_half) and (tvalid_half < baseline * 1.1 * 2));
-      check_true((baseline * 0.9 * 4 < tvalid_quarter) and (tvalid_quarter < baseline * 1.1 * 4));
+      info(sformat("baseline=%d, half=%d (%d), quarter=%d (%d)",
+                   fo(baseline), fo(tvalid_half), fo(tvalid_half/2),
+                   fo(tvalid_quarter), fo(tvalid_quarter/4)));
+
+      -- Check that time taken is what we expect with a 20% margin
+      check_true(real(tvalid_half) / 2.0 / real(baseline) > 0.85);
+      check_true(real(tvalid_half) / 2.0 / real(baseline) < 1.15);
+
+      check_true(real(tvalid_quarter) / 4.0 / real(baseline) > 0.85);
+      check_true(real(tvalid_quarter) / 4.0 / real(baseline) < 1.15);
 
     end procedure test_tvalid_probability;
     ------------------------------------------------------------------------------------
 
+
   begin
 
     test_runner_setup(runner, runner_cfg);
-    show(display_handler, debug);
+    -- show(display_handler, debug);
 
-    create_file(256);
-
+    -- Extract the config
+    config_list := new config_array_t'(get_config(test_cfg));
 
     while test_suite loop
       tvalid_probability <= 1.0;
@@ -260,8 +251,6 @@ begin
       elsif run("slow_write") then
         test_tvalid_probability;
 
-      elsif run("multiple_frames") then
-        run_test(4);
       end if;
 
       walk(4);
@@ -275,39 +264,75 @@ begin
 
   -- Generate a tready enable with the configured probability
   s_tready_gen : process
-    variable tready_rand : RandomPType;
-    variable check_rand  : RandomPType;
-    variable word_cnt    : integer := 0;
-    variable frame_cnt   : integer := 0;
-    variable expected    : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
+    constant self           : actor_t := new_actor("check_p");
+    variable tready_rand    : RandomPType;
+    variable msg            : msg_t;
+    variable word_cnt       : integer := 0;
+    variable frame_cnt      : integer := 0;
+    variable expected       : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
+    variable expected_tlast : std_logic;
+    -- Very similar to axi_file_reader itself, except this file is a std_logic_vector per
+    -- line
+    type file_status_t is (opened, closed, unknown);
+    -- variable file_status : file_status_t := unknown;
+    -- subtype data_t is std_logic_vector(DATA_WIDTH - 1 downto 0);
+    -- type file_t is file of data_t;
+    variable file_status : file_status_t := unknown;
+    file file_handler    : text;
+    variable L           : line;
+
   begin
 
     while True loop
-      if rst = '1' then
-        check_rand.InitSeed(0);
-      else
-        if completed = '1' then
-          -- check_true(s_tvalid = '0' and s_tlast = '0',
-          --            "tvalid and tlast should be '0' when completed is asserted");
-        end if;
+      if rst = '1' and file_status = opened then
+        info("Forcing file close due to reset");
+        file_close(file_handler);
+        file_status := closed;
       end if;
+
       s_tready <= '0';
-      if tready_rand.RandReal(1.0) <= tready_probability then
-        s_tready <= '1';
+
+      if file_status /= opened and has_message(self) then
+        receive(net, self, msg);
+        info("Opening file");
+        file_open(file_handler, pop(msg), read_mode);
+        info("Opening worked");
+        file_status  := opened;
       end if;
-      if s_tready = '1' and s_tvalid = '1' then
-        expected := check_rand.RandSlv(DATA_WIDTH);
-        check_equal(s_tdata, expected,
-                    sformat("Expected %r, got %r", fo(expected), fo(s_tdata)));
 
-        word_cnt := word_cnt + 1;
+      if file_status = opened then
+        if tready_rand.RandReal(1.0) <= tready_probability then
+          s_tready <= '1';
+        end if;
+        if s_tready = '1' and s_tvalid = '1' then
+          word_cnt := word_cnt + 1;
 
-        if s_tlast = '1' then
-          info(sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
-          frame_cnt := frame_cnt + 1;
-          word_cnt  := 0;
-          -- Frames will repeat, reinitialize seed
-          check_rand.InitSeed(0);
+          readline(file_handler, L);
+
+          expected_tlast := '0';
+
+          if endfile(file_handler) then
+            info("Closing file");
+            file_close(file_handler);
+            file_status    := closed;
+            expected_tlast := '1';
+          end if;
+
+          hread(L, expected);
+
+          check_equal(s_tdata, expected,
+                      sformat("Frame %d, word %d: Expected %r, got %r",
+                      fo(frame_cnt), fo(word_cnt), fo(expected), fo(s_tdata)));
+
+          check_equal(s_tlast, expected_tlast,
+                      sformat("Frame %d, word %d: Expected tlast to be %r but got %r",
+                      fo(frame_cnt), fo(word_cnt), fo(expected_tlast), fo(s_tlast)));
+
+          if s_tlast = '1' then
+            info(sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
+            frame_cnt := frame_cnt + 1;
+            word_cnt  := 0;
+          end if;
         end if;
       end if;
 

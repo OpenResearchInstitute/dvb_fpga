@@ -62,22 +62,19 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   function get_checker_data_ratio ( constant modulation : in modulation_t)
   return string is
   begin
-    if modulation = mod_8psk then
-      return "3:8";
-    end if;
-    if modulation = mod_16apsk then
-      return "4:8";
-    end if;
-    if modulation = mod_32apsk then
-      return "5:8";
-    end if;
+    case modulation is
+      when   mod_8psk => return "3:8";
+      when mod_16apsk => return "4:8";
+      when mod_32apsk => return "5:8";
+      when others =>
+        report "Invalid modulation: " & modulation_t'image(modulation)
+        severity Failure;
+    end case;
 
-    assert False
-      report "Could not get ratio..."
-      severity Failure;
-
+    -- Just to avoid the warning, should never be reached
     return "";
-  end function;
+
+  end;
 
   -------------
   -- Signals --
@@ -145,8 +142,8 @@ begin
   -- AXI file read
   axi_file_reader_u : entity work.axi_file_reader
     generic map (
-      READER_NAME      => FILE_READER_NAME,
-      DATA_WIDTH       => TDATA_WIDTH)
+      READER_NAME => FILE_READER_NAME,
+      DATA_WIDTH  => TDATA_WIDTH)
     port map (
       -- Usual ports
       clk                => clk,
@@ -281,7 +278,7 @@ begin
         tready_probability <= 1.0;
 
         for i in configs'range loop
-          run_test(configs(i), number_of_frames => 3);
+          run_test(configs(i), number_of_frames => 1);
         end loop;
         wait_for_transfers(configs'length);
 
