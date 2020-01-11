@@ -172,7 +172,18 @@ def addAxiFileReaderTests(entity):
     for data_width in (8, 32):
         all_configs = []
 
-        for ratio in ((8, 8), (1, 8), (2, 8), (2, 4), (1, 4), (1, 1), (8, 32)):
+        for ratio in (
+            (1, 8),
+            (2, 8),
+            (3, 8),
+            (4, 8),
+            (5, 8),
+            (8, 8),
+            (1, 4),
+            (2, 4),
+            (1, 1),
+            (8, 32),
+        ):
 
             # Test makes no sense but eaiser doing this than separating a loop
             # just for data width 4
