@@ -224,7 +224,7 @@ begin
   begin
 
     test_runner_setup(runner, runner_cfg);
-    -- show(display_handler, debug);
+    show(display_handler, debug);
 
     -- Extract the config
     config_list := new config_array_t'(get_config(test_cfg));
