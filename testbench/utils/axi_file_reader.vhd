@@ -141,6 +141,14 @@ begin
         -- Shift the buffer right, we'll send the MSB first
         char_buffer  := byte & char_buffer(char_buffer'length - 1 downto byte'length);
 
+        -- debug(
+        --   logger,
+        --   sformat(
+        --     "char_bit_cnt=%d  | byte=%r | char_buffer=%r",
+        --     fo(char_bit_cnt),
+        --     fo(byte),
+        --     fo(char_buffer)));
+
       end loop;
 
       char_bit_cnt := char_bit_cnt - ratio.second;
@@ -179,12 +187,26 @@ begin
                   "got %r (%b)", fo(unused), fo(unused)));
         end if;
 
+        -- trace(
+        --   logger,
+        --   sformat(
+        --    "ratio_bit_cnt=%d | word=%r | char_buffer=%r | ratio_buffer=%r || %b",
+        --     fo(ratio_bit_cnt),
+        --     fo(word),
+        --     fo(char_buffer),
+        --     fo(ratio_buffer),
+        --     fo(ratio_buffer)));
+
       end loop;
 
+      -- Result is going to be the MSB of the valid section
+      result := ratio_buffer(ratio_bit_cnt - 1 downto ratio_bit_cnt - data_width);
+
+      -- Remove the result from the bit counter and buffer. Assign U's to the
+      -- bit buffer so that we don't get accidently valid outputs when
+      -- something goes wrong
+      ratio_buffer(ratio_bit_cnt - 1 downto ratio_bit_cnt - data_width) := (others => 'U');
       ratio_bit_cnt := ratio_bit_cnt - word_width;
-      result        := ratio_buffer(ratio_bit_cnt + data_width - 1 downto ratio_bit_cnt);
-      ratio_buffer  := (data_width - 1 downto 0 => 'U')
-          & ratio_buffer(ratio_buffer'length - 1 downto ratio_bit_cnt + data_width);
 
       return result;
 
