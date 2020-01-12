@@ -147,7 +147,7 @@ def parametrizeTests(
                 ]
 
                 if detailed:
-                    test_name = f"test_{frame_length}_{modulation}_{code_rate}"
+                    test_name = f"{frame_length},{modulation},{code_rate}"
                     entity.add_config(
                         name=test_name, generics={"test_cfg": ":".join(test_cfg)}
                     )
