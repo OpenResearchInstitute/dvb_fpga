@@ -138,6 +138,8 @@ begin
   -- Processes --
   ---------------
   main : process
+    variable reader : file_reader_t := new_file_reader(READER_NAME);
+
     ------------------------------------------------------------------------------------
     procedure walk(constant steps : natural) is
     begin
@@ -170,21 +172,10 @@ begin
     end procedure write_word;
 
     ------------------------------------------------------------------------------------
-    procedure setup_file (constant filename : in string ) is
-      variable msg    : msg_t := new_msg;
-      variable reply  : boolean;
-      variable reader : actor_t := find(READER_NAME);
-      variable start  : time;
-    begin
-      push_string(msg, filename);
-      send(net, reader, msg);
-    end procedure setup_file;
-
-    ------------------------------------------------------------------------------------
     procedure test_no_errors_detected is
       variable rand   : RandomPType;
     begin
-      setup_file(FILE_NAME);
+      enqueue_file(net, reader, FILE_NAME);
 
       rand.InitSeed(0);
       for i in 0 to TEST_DEPTH - 1 loop
@@ -203,7 +194,7 @@ begin
     procedure test_tlast_error is
       variable rand : RandomPType;
     begin
-      setup_file(FILE_NAME);
+      enqueue_file(net, reader, FILE_NAME);
 
       rand.InitSeed(0);
       -- Tlast errors should be detected in any position
@@ -224,7 +215,7 @@ begin
       variable rand : RandomPType;
       variable data : std_logic_vector(DATA_WIDTH - 1 downto 0);
     begin
-      setup_file(FILE_NAME);
+      enqueue_file(net, reader, FILE_NAME);
 
       rand.InitSeed(0);
       -- Tlast errors should be detected in any position
@@ -243,6 +234,8 @@ begin
       check_equal(tlast_error_cnt, 0);
       check_equal(error_cnt, 1);
 
+      wait_all_read(net, reader);
+
     end procedure test_tdata_error;
 
     ------------------------------------------------------------------------------------
@@ -252,7 +245,7 @@ begin
     begin
       -- Setup the AXI reader first to avoid glitches on m_tvalid
       for iter in 0 to 9 loop
-        setup_file(FILE_NAME);
+        enqueue_file(net, reader, FILE_NAME);
       end loop;
 
       for iter in 0 to 9 loop
@@ -274,6 +267,8 @@ begin
       check_equal(tdata_error_cnt, 0);
       check_equal(tlast_error_cnt, 1);
       check_equal(error_cnt, 1);
+
+      wait_all_read(net, reader);
 
     end procedure test_auto_reset ;
 
