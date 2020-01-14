@@ -66,56 +66,54 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   constant MAX_ROWS    : integer := 21_600 / DATA_WIDTH;
   constant MAX_COLUMNS : integer := 5;
 
-  impure function get_max_row_ptr (
+  type cnt_cfg_t is record
+    row_max       : integer;
+    row_remainder : integer;
+    column_max    : integer;
+  end record;
+
+  impure function get_cnt_cfg (
     constant modulation : in modulation_t;
-    constant frame_type : in frame_type_t) return integer is
-    variable result     : integer := -1;
+    constant frame_type : in frame_type_t) return cnt_cfg_t is
+    variable cfg        : cnt_cfg_t;
   begin
+
     if frame_type = fecframe_normal then
       if modulation = mod_8psk then
-        result := 21_600;
+        cfg.row_max := 21_600;
       elsif modulation = mod_16apsk then
-        result := 16_200;
+        cfg.row_max := 16_200;
       elsif modulation = mod_32apsk then
-        result := 12_960;
+        cfg.row_max := 12_960;
       end if;
     elsif frame_type = fecframe_short then
       if modulation = mod_8psk then
-        result := 5_400;
+        cfg.row_max := 5_400;
       elsif modulation = mod_16apsk then
-        result := 4_050;
+        cfg.row_max := 4_050;
       elsif modulation = mod_32apsk then
-        result := 3_240;
+        cfg.row_max := 3_240;
       end if;
     end if;
 
-    assert result /= -1
-      report "Could not determine max row count!"
-      severity Failure;
-
-    return (result / DATA_WIDTH) - 1;
-
-  end function get_max_row_ptr;
-
-  impure function get_max_column_ptr (
-    constant modulation : in modulation_t) return integer is
-    variable result     : integer := -1;
-  begin
     if modulation = mod_8psk then
-      result := 3;
+      cfg.column_max := 3;
     elsif modulation = mod_16apsk then
-      result := 4;
+      cfg.column_max := 4;
     elsif modulation = mod_32apsk then
-      result := 5;
+      cfg.column_max := 5;
     end if;
 
-    assert result /= -1
-      report "Could not determine max row count!"
-      severity Failure;
+    cfg.row_remainder := cfg.row_max rem DATA_WIDTH;
+    -- cfg.row_max := cfg.row_max / DATA_WIDTH;
+    cfg.row_max := (cfg.row_max + DATA_WIDTH - 1) / DATA_WIDTH;
 
-    return result - 1;
+    -- report "cfg.row_remainder = " & integer'image(cfg.row_remainder)
+    --   severity note;
 
-  end function get_max_column_ptr;
+    return cfg;
+
+  end function get_cnt_cfg;
 
   -- Read data is an array
   type data_array_t is array (natural range <>)
@@ -128,52 +126,63 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   -- Signals --
   -------------
   -- Write side config
-  signal wr_cfg_modulation : modulation_t;
-  signal wr_cfg_frame_type : frame_type_t;
-  signal wr_cfg_code_rate  : code_rate_t;
+  signal wr_cfg_modulation   : modulation_t;
+  signal wr_cfg_frame_type   : frame_type_t;
+  signal wr_cfg_code_rate    : code_rate_t;
 
-  signal s_axi_dv          : std_logic;
-  signal s_tready_i        : std_logic;
+  signal s_axi_dv            : std_logic;
+  signal s_tready_i          : std_logic;
+  signal s_tdata_0           : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
-  signal wr_row_ptr_max    : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal wr_col_ptr_max    : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal wr_row_cnt_max      : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal wr_remainder_max    : unsigned(numbits(DATA_WIDTH) - 1 downto 0);
+  signal wr_column_cnt_max   : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal row_rem_acc         : integer;
 
-  signal wr_row_ptr        : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal wr_col_ptr        : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal wr_ram_ptr        : unsigned(1 downto 0);
+  signal wr_row_cnt          : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal wr_column_cnt       : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal wr_remainder_cnt    : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal wr_ram_ptr          : unsigned(1 downto 0);
 
-  signal ram_wren          : std_logic_vector(MAX_COLUMNS - 1 downto 0);
-  signal ram_wraddr        : std_logic_vector(numbits(MAX_ROWS) downto 0);
-  signal ram_wrdata        : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal ram_wren            : std_logic_vector(MAX_COLUMNS - 1 downto 0);
+  signal ram_wraddr          : std_logic_vector(numbits(MAX_ROWS) downto 0);
+  signal ram_wrdata          : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal dbg_ram_wrdata_2    : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal dbg_ram_wrdata_4    : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal dbg_ram_wrdata_6    : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
-  signal rd_row_ptr_max    : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal rd_col_ptr_max    : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
-  signal rd_ram_ptr        : unsigned(1 downto 0);
+  signal rd_row_cnt_max      : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal rd_remainder_max    : unsigned(numbits(DATA_WIDTH) - 1 downto 0);
+  signal rd_column_cnt_max   : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal rd_ram_ptr          : unsigned(1 downto 0);
 
-  signal rd_row_ptr        : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal rd_col_ptr        : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
-  signal rd_col_ptr_0      : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal rd_row_cnt          : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal rd_column_cnt       : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal rd_column_cnt_delay : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
 
-  signal ram_rdaddr        : std_logic_vector(numbits(MAX_ROWS) downto 0);
-  signal ram_rddata        : data_array_t(0 to MAX_COLUMNS - 1);
+  signal ram_rdaddr          : std_logic_vector(numbits(MAX_ROWS) downto 0);
+  signal ram_rddata          : data_array_t(0 to MAX_COLUMNS - 1);
 
   -- Read side config
-  signal rd_cfg_modulation : modulation_t;
-  signal rd_cfg_frame_type : frame_type_t;
-  signal rd_cfg_code_rate  : code_rate_t;
+  signal rd_cfg_modulation   : modulation_t;
+  signal rd_cfg_frame_type   : frame_type_t;
+  signal rd_cfg_code_rate    : code_rate_t;
 
-  signal rd_data_sr        : std_logic_vector(MAX_COLUMNS*DATA_WIDTH - 1 downto 0);
+  signal rd_data_sr          : std_logic_vector(MAX_COLUMNS*DATA_WIDTH - 1 downto 0);
 
-  signal interleaved_3c    : std_logic_vector(3*DATA_WIDTH - 1 downto 0);
-  signal interleaved_4c    : std_logic_vector(4*DATA_WIDTH - 1 downto 0);
-  signal interleaved_5c    : std_logic_vector(5*DATA_WIDTH - 1 downto 0);
+  signal interleaved_3c      : std_logic_vector(3*DATA_WIDTH - 1 downto 0);
+  signal interleaved_4c      : std_logic_vector(4*DATA_WIDTH - 1 downto 0);
+  signal interleaved_5c      : std_logic_vector(5*DATA_WIDTH - 1 downto 0);
 
-  signal m_wr_en           : std_logic := '0';
-  signal m_wr_en_0         : std_logic := '0';
-  signal m_wr_full         : std_logic;
-  signal m_wr_data         : std_logic_vector(DATA_WIDTH - 1 downto 0);
-  signal m_wr_last         : std_logic := '0';
-  signal m_wr_last_0       : std_logic := '0';
+  signal m_wr_en             : std_logic := '0';
+  signal m_wr_en_0           : std_logic := '0';
+  signal m_wr_full           : std_logic;
+  signal m_wr_data           : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal m_wr_last           : std_logic := '0';
+  signal m_wr_last_0         : std_logic := '0';
+
+  signal tready_bubble       : std_logic;
+  signal first_word          : std_logic;
 
 begin
 
@@ -255,55 +264,106 @@ begin
 
   s_axi_dv <= '1' when s_tready_i = '1' and s_tvalid = '1' else '0';
 
-  s_tready_i <= m_tready when wr_ram_ptr - rd_ram_ptr < 2 else '0';
+  s_tready_i <= '0' when tready_bubble = '1' else
+                m_tready when wr_ram_ptr - rd_ram_ptr < 2 else '0';
 
   -- Assign internals
   s_tready <= s_tready_i;
 
-  ram_rdaddr <= rd_ram_ptr(0) & std_logic_vector(rd_row_ptr);
+  ram_rdaddr <= rd_ram_ptr(0) & std_logic_vector(rd_row_cnt);
+
+  -- ram_wrdata <= s_tdata_0(DATA_WIDTH - 3 downto 0) & s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - 2) when row_rem_acc = 2 else
+  --               s_tdata_0(DATA_WIDTH - 5 downto 0) & s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - 4) when row_rem_acc = 4 else
+  --               s_tdata_0(DATA_WIDTH - 7 downto 0) & s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - 6) when row_rem_acc = 6 else
+  --               s_tdata;
+
+  dbg_ram_wrdata_2 <= s_tdata_0(DATA_WIDTH - 3 downto 0) & s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - 2);
+  dbg_ram_wrdata_4 <= s_tdata_0(DATA_WIDTH - 5 downto 0) & s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - 4);
+  dbg_ram_wrdata_6 <= s_tdata_0(DATA_WIDTH - 7 downto 0) & s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - 6);
 
   --------------------------------
   -- Handle write side pointers --
   --------------------------------
   write_side_p : process(clk, rst)
+    variable cnt_cfg : cnt_cfg_t;
   begin
     if rst = '1' then
-      wr_row_ptr     <= (others => '0');
-      wr_col_ptr     <= (others => '0');
-      wr_ram_ptr     <= (others => '0');
+      wr_row_cnt        <= (others => '0');
+      wr_column_cnt     <= (others => '0');
+      wr_remainder_cnt  <= (others => '0');
+      wr_ram_ptr        <= (others => '0');
 
-      rd_row_ptr_max <= (others => '1');
-      rd_col_ptr_max <= (others => '1');
+
+      first_word        <= '1';
+      wr_row_cnt_max    <= (others => '1');
+      wr_remainder_max  <= (others => '1');
+      wr_column_cnt_max <= (others => '1');
+
+      rd_row_cnt_max    <= (others => '1');
+      rd_column_cnt_max <= (others => '1');
+
+      row_rem_acc       <= 0;
 
     elsif clk'event and clk = '1' then
 
       ram_wren   <= (others => '0');
-      ram_wrdata <= s_tdata;
-      ram_wraddr <= wr_ram_ptr(0) & std_logic_vector(wr_row_ptr);
+      ram_wraddr <= wr_ram_ptr(0) & std_logic_vector(wr_row_cnt);
 
-      if s_axi_dv = '1' then
-        ram_wren(to_integer(wr_col_ptr)) <= '1';
+      if row_rem_acc = 2 then
+        ram_wrdata <= s_tdata_0(DATA_WIDTH - 3 downto 0) & s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - 2);
+      elsif row_rem_acc = 4 then
+        ram_wrdata <= s_tdata_0(DATA_WIDTH - 5 downto 0) & s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - 4);
+      elsif row_rem_acc = 6 then
+        ram_wrdata <= s_tdata_0(DATA_WIDTH - 7 downto 0) & s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - 6);
+      else
+        ram_wrdata <= s_tdata;
+      end if;
 
-        if wr_row_ptr /= wr_row_ptr_max then
-          wr_row_ptr <= wr_row_ptr + 1;
+
+      tready_bubble <= '0';
+
+      if s_axi_dv = '1' or tready_bubble = '1' then
+        first_word <= s_tlast;
+        s_tdata_0  <= s_tdata;
+
+        ram_wren(to_integer(wr_column_cnt)) <= '1';
+
+        if wr_row_cnt /= wr_row_cnt_max then
+          -- At this point we need to write the
+          if wr_remainder_max /= 0 and wr_row_cnt = wr_row_cnt_max - 1 then
+            row_rem_acc <= row_rem_acc + to_integer(wr_remainder_max);
+          end if;
+          wr_row_cnt    <= wr_row_cnt + 1;
+        -- elsif wr_remainder_cnt /= wr_remainder_max then
+        --   wr_remainder_cnt <= wr_remainder_cnt + 2;
+        --   tready_bubble    <= '1';
+        --   wr_row_cnt       <= (others => '0');
+        --   wr_column_cnt <= wr_column_cnt + 1;
         else
-          wr_row_ptr <= (others => '0');
+          -- Only 
+          if wr_remainder_max /= 0 and wr_column_cnt = 0 then
+            wr_row_cnt_max <= wr_row_cnt_max - 1;
+          end if;
 
-          if wr_col_ptr /= wr_col_ptr_max then
-            wr_col_ptr <= wr_col_ptr + 1;
+          wr_row_cnt    <= (others => '0');
+
+          if wr_column_cnt /= wr_column_cnt_max then
+            wr_column_cnt <= wr_column_cnt + 1;
           else
-            wr_col_ptr <= (others => '0');
-            wr_ram_ptr <= wr_ram_ptr + 1;
+            wr_column_cnt      <= (others => '0');
+
+            wr_ram_ptr       <= wr_ram_ptr + 1;
           end if;
         end if;
 
         -- When the frame ends, hand over the parameters to the read side
         if s_tlast = '1' then
-          rd_row_ptr_max <= to_unsigned(get_max_row_ptr(wr_cfg_modulation,
-                                                        wr_cfg_frame_type),
-                                        numbits(MAX_ROWS));
-          rd_col_ptr_max <= to_unsigned(get_max_column_ptr(wr_cfg_modulation),
-                                        numbits(MAX_COLUMNS));
+          ram_wren   <= (others => '0');
+          -- Update the config
+          cnt_cfg           := get_cnt_cfg(wr_cfg_modulation, wr_cfg_frame_type);
+          rd_row_cnt_max    <= to_unsigned(cnt_cfg.row_max - 1, numbits(MAX_ROWS));
+          rd_remainder_max  <= to_unsigned(cnt_cfg.row_remainder, numbits(DATA_WIDTH));
+          rd_column_cnt_max <= to_unsigned(cnt_cfg.column_max - 1, numbits(MAX_COLUMNS));
 
           -- This will be used for the reading side
           rd_cfg_modulation <= wr_cfg_modulation;
@@ -312,6 +372,19 @@ begin
 
         end if;
       end if;
+
+      -- Sample config
+      if s_axi_dv = '1' and first_word = '1' then
+        wr_cfg_modulation  <= cfg_modulation;
+        wr_cfg_frame_type  <= cfg_frame_type;
+        wr_cfg_code_rate   <= cfg_code_rate;
+
+        cnt_cfg           := get_cnt_cfg(cfg_modulation, cfg_frame_type);
+        wr_row_cnt_max    <= to_unsigned(cnt_cfg.row_max - 1, numbits(MAX_ROWS));
+        wr_remainder_max  <= to_unsigned(cnt_cfg.row_remainder, numbits(DATA_WIDTH));
+        wr_column_cnt_max <= to_unsigned(cnt_cfg.column_max - 1, numbits(MAX_COLUMNS));
+      end if;
+
     end if;
   end process write_side_p;
 
@@ -321,8 +394,8 @@ begin
   read_side_p : process(clk, rst)
   begin
     if rst = '1' then
-      rd_row_ptr <= (others => '0');
-      rd_col_ptr <= (others => '0');
+      rd_row_cnt <= (others => '0');
+      rd_column_cnt <= (others => '0');
       rd_ram_ptr <= (others => '0');
     elsif clk'event and clk = '1' then
 
@@ -331,9 +404,9 @@ begin
 
       -- Data comes out of the RAMs 1 cycle after the address has changed, need to keep
       -- track of the actual value being handled
-      rd_col_ptr_0 <= rd_col_ptr;
-      m_wr_en_0    <= m_wr_en;
-      m_wr_last_0  <= m_wr_last;
+      rd_column_cnt_delay <= rd_column_cnt;
+      m_wr_en_0           <= m_wr_en;
+      m_wr_last_0         <= m_wr_last;
 
       if m_wr_full = '0' and rd_ram_ptr /= wr_ram_ptr then
 
@@ -341,15 +414,15 @@ begin
         m_wr_en <= '1';
 
         -- Read pointers control logic
-        if rd_col_ptr /= rd_col_ptr_max then
-          rd_col_ptr <= rd_col_ptr + 1;
+        if rd_column_cnt /= rd_column_cnt_max then
+          rd_column_cnt <= rd_column_cnt + 1;
         else
-          rd_col_ptr <= (others => '0');
+          rd_column_cnt <= (others => '0');
 
-          if rd_row_ptr /= rd_row_ptr_max then
-            rd_row_ptr <= rd_row_ptr + 1;
+          if rd_row_cnt /= rd_row_cnt_max then
+            rd_row_cnt <= rd_row_cnt + 1;
           else
-            rd_row_ptr <= (others => '0');
+            rd_row_cnt <= (others => '0');
             rd_ram_ptr <= rd_ram_ptr + 1;
             m_wr_last  <= '1';
           end if;
@@ -357,7 +430,7 @@ begin
       end if;
 
       if m_wr_en = '1' then
-        if rd_col_ptr_0 = 0 then
+        if rd_column_cnt_delay = 0 then
           -- Assign to undefined so we can track in simulation the parts that we not
           -- assigned
           rd_data_sr <= (others => 'U');
@@ -389,44 +462,56 @@ begin
   -- The config ports are valid at the first word of the frame, but we must not rely on
   -- the user keeping it unchanged. Hide this on a block to leave the core code a bit
   -- cleaner
-  config_sample_block : block
-    signal modulation_ff : modulation_t;
-    signal frame_type_ff : frame_type_t;
-    signal code_rate_ff  : code_rate_t;
-    signal first_word    : std_logic;
-  begin
+  -- config_sample_block : block
+  --   signal modulation_ff : modulation_t;
+  --   signal frame_type_ff : frame_type_t;
+  --   signal code_rate_ff  : code_rate_t;
+  --   signal first_word    : std_logic;
+  -- begin
 
-    wr_cfg_modulation <= cfg_modulation when first_word = '1' else modulation_ff;
-    wr_cfg_frame_type <= cfg_frame_type when first_word = '1' else frame_type_ff;
-    wr_cfg_code_rate  <= cfg_code_rate when first_word = '1' else code_rate_ff;
+  --   wr_cfg_modulation <= cfg_modulation when first_word = '1' else modulation_ff;
+  --   wr_cfg_frame_type <= cfg_frame_type when first_word = '1' else frame_type_ff;
+  --   wr_cfg_code_rate  <= cfg_code_rate when first_word = '1' else code_rate_ff;
 
-    process(clk, rst)
-    begin
-      if rst = '1' then
-        first_word  <= '1';
-        wr_row_ptr_max <= (others => '1');
-        wr_col_ptr_max <= (others => '1');
-      elsif rising_edge(clk) then
-        if s_axi_dv = '1' then
-          first_word <= s_tlast;
+  --   process(clk, rst)
+  --     variable cnt_cfg : cnt_cfg_t;
+  --   begin
+  --     if rst = '1' then
+  --       first_word  <= '1';
+  --       wr_row_cnt_max <= (others => '1');
+  --       wr_column_cnt_max <= (others => '1');
+  --     elsif rising_edge(clk) then
+  --       if s_axi_dv = '1' then
+  --         first_word <= s_tlast;
 
-          -- Sample the BCH code used on the first word
-          if first_word = '1' then
-            modulation_ff  <= cfg_modulation;
-            frame_type_ff  <= cfg_frame_type;
-            code_rate_ff   <= cfg_code_rate;
+  --         -- Sample the BCH code used on the first word
+  --         if first_word = '1' then
+  --           modulation_ff  <= cfg_modulation;
+  --           frame_type_ff  <= cfg_frame_type;
+  --           code_rate_ff   <= cfg_code_rate;
 
-            wr_row_ptr_max <= to_unsigned(get_max_row_ptr(cfg_modulation,
-                                                          cfg_frame_type),
-                                          numbits(MAX_ROWS));
-            wr_col_ptr_max <= to_unsigned(get_max_column_ptr(cfg_modulation),
-                                          numbits(MAX_COLUMNS));
-          end if;
+  --           cnt_cfg        := get_cnt_cfg(cfg_modulation, cfg_frame_type);
+  --           wr_row_cnt_max   <= to_unsigned(cnt_cfg.row_max - 1, numbits(MAX_ROWS));
+  --           wr_remainder_max <= to_unsigned(cnt_cfg.row_remainder, numbits(DATA_WIDTH));
+  --           wr_column_cnt_max   <= to_unsigned(cnt_cfg.column_max - 1, numbits(MAX_COLUMNS));
 
-        end if;
-      end if;
-    end process;
-  end block config_sample_block;
+  --         end if;
+
+  --       end if;
+  --     end if;
+  --   end process;
+  -- end block config_sample_block;
+
+
+  -- process(clk, rst)
+  -- begin
+  --   if rst = '1' then
+  --     row_rem_acc <= 0;
+  --   elsif rising_edge(clk) then
+  --     if ram_wren /= (MAX_COLUMNS - 1 downto 0 => '0') then
+  --     end if;
+  --   end if;
+  -- end process;
 
 end axi_bit_interleaver;
 
