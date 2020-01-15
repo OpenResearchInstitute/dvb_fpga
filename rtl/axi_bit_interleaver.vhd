@@ -105,11 +105,7 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
     end if;
 
     cfg.row_remainder := cfg.row_max rem DATA_WIDTH;
-    -- cfg.row_max := cfg.row_max / DATA_WIDTH;
     cfg.row_max := (cfg.row_max + DATA_WIDTH - 1) / DATA_WIDTH;
-
-    -- report "cfg.row_remainder = " & integer'image(cfg.row_remainder)
-    --   severity note;
 
     return cfg;
 
@@ -145,9 +141,8 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   signal s_tdata_prev        : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
   signal wr_row_cnt_max      : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal wr_remainder_max    : unsigned(numbits(DATA_WIDTH) - 1 downto 0);
   signal wr_column_cnt_max   : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
-  signal row_rem_acc         : integer;
+  signal wr_remainder_cfg    : unsigned(numbits(DATA_WIDTH) - 1 downto 0);
 
   signal wr_row_cnt          : unsigned(numbits(MAX_ROWS) - 1 downto 0);
   -- Using integer to make it easier to use as an index. Because the range has limits set,
@@ -251,24 +246,17 @@ begin
 
   -- Assign the interleaved data statically
   iter_rows : for row in 0 to DATA_WIDTH - 1 generate
-    iter_columns : for column in 0 to 5 generate
+    iter_3_columns : for column in 0 to 2 generate
+      interleaved_3c(3*DATA_WIDTH - (3 * row + column) - 1) <= ram_rddata(column)(DATA_WIDTH - row - 1);
+    end generate;
 
-      interleaved_columns_3 : if column < 3 generate
-        interleaved_3c(3*DATA_WIDTH - (3 * row + column) - 1)
-          <= ram_rddata(column)(DATA_WIDTH - row - 1);
-      end generate interleaved_columns_3;
+    iter_4_columns : for column in 0 to 3 generate
+      interleaved_4c(4*DATA_WIDTH - (4 * row + column) - 1) <= ram_rddata(column)(DATA_WIDTH - row - 1);
+    end generate iter_4_columns;
 
-      interleaved_columns_4 : if column < 4 generate
-        interleaved_4c(4*DATA_WIDTH - (4 * row + column) - 1)
-          <= ram_rddata(column)(DATA_WIDTH - row - 1);
-      end generate interleaved_columns_4;
-
-      interleaved_columns_5 : if column < 5 generate
-        interleaved_5c(5*DATA_WIDTH - (5 * row + column) - 1)
-          <= ram_rddata(column)(DATA_WIDTH - row - 1);
-      end generate interleaved_columns_5;
-
-    end generate iter_columns;
+    iter_5_columns : for column in 0 to 4 generate
+      interleaved_5c(5*DATA_WIDTH - (5 * row + column) - 1) <= ram_rddata(column)(DATA_WIDTH - row - 1);
+    end generate iter_5_columns;
   end generate iter_rows;
 
 
@@ -296,29 +284,25 @@ begin
     variable wr_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
   begin
     if rst = '1' then
-      wr_row_cnt        <= (others => '0');
       wr_column_cnt     <= 0;
+      wr_row_cnt        <= (others => '0');
       wr_remainder_cnt  <= (others => '0');
       wr_ram_ptr        <= (others => '0');
 
 
       first_word        <= '1';
       wr_row_cnt_max    <= (others => '1');
-      wr_remainder_max  <= (others => '1');
+      wr_remainder_cfg  <= (others => '1');
       wr_column_cnt_max <= (others => '1');
-
-      row_rem_acc       <= 0;
 
     elsif clk'event and clk = '1' then
 
-      if row_rem_acc = 2 then
-        wr_data := s_tdata_prev(DATA_WIDTH - 3 downto 0) & s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - 2);
-      elsif row_rem_acc = 4 then
-        wr_data := s_tdata_prev(DATA_WIDTH - 5 downto 0) & s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - 4);
-      elsif row_rem_acc = 6 then
-        wr_data := s_tdata_prev(DATA_WIDTH - 7 downto 0) & s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - 6);
-      else
+      -- 
+      if wr_remainder_cnt = 0 then
         wr_data := s_tdata;
+      else
+        wr_data := s_tdata_prev(DATA_WIDTH - to_integer(wr_remainder_cnt) - 1 downto 0)
+                   & s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - to_integer(wr_remainder_cnt));
       end if;
 
       -- XXX: explain!!
@@ -341,59 +325,51 @@ begin
         ram_wr(wr_column_cnt).en <= '1';
 
         -- Whenever the number of columns is not a integer multiple of the data width
-        -- (e.g. wr_remainder_max is not zero), the first row of each column except the
+        -- (e.g. wr_remainder_cfg is not zero), the first row of each column except the
         -- first will generate an extra write to store the remainder itself
-        if wr_remainder_max /= 0 and wr_column_cnt_prev /= 0 and wr_row_cnt = 0 then
-            ram_wr(wr_column_cnt_prev).addr <= ram_wr(wr_column_cnt_prev).addr + 1;
-            ram_wr(wr_column_cnt_prev).en   <= '1';
+        if wr_remainder_cfg /= 0 and wr_column_cnt_prev /= 0 and wr_row_cnt = 0 then
+          ram_wr(wr_column_cnt_prev).addr <= ram_wr(wr_column_cnt_prev).addr + 1;
+          ram_wr(wr_column_cnt_prev).en   <= '1';
+          ram_wr(wr_column_cnt_prev).data <= (others => 'U');
+          -- ram_wr(wr_column_cnt_prev).data(to_integer(wr_remainder_cfg) - 1 downto 0)
+          --   <= wr_data(DATA_WIDTH - 1 downto DATA_WIDTH - to_integer(wr_remainder_cfg));
         end if;
 
         if wr_row_cnt /= wr_row_cnt_max then
           wr_row_cnt  <= wr_row_cnt + 1;
         else
-          -- Whenever the number of columns is not a integer multiple of the data width
-          -- (e.g. wr_remainder_max is not zero), the end of the first column will need to
-          -- be tweaked to use the correct bits, but the write will take place in the same
-          -- processing pipeline.
-          if wr_remainder_max /= 0 then
-            if wr_column_cnt = 0 then
-              ram_wr(wr_column_cnt_prev).addr <= ram_wr(wr_column_cnt_prev).addr + 1;
-              ram_wr(wr_column_cnt_prev).en   <= '1';
-            end if;
-          end if;
-
-          row_rem_acc <= row_rem_acc + to_integer(wr_remainder_max);
-
-          if wr_remainder_max /= 0 and wr_column_cnt = 0 then
-            wr_row_cnt_max <= wr_row_cnt_max - 1;
-          end if;
-
-          wr_row_cnt    <= (others => '0');
-
+          -- Chain counters
+          wr_row_cnt       <= (others => '0');
           if wr_column_cnt /= wr_column_cnt_max then
             wr_column_cnt <= wr_column_cnt + 1;
           else
-            wr_column_cnt <= 0; -- i-others => '0');
-
+            wr_column_cnt <= 0;
             wr_ram_ptr    <= wr_ram_ptr + 1;
+          end if;
+
+          -- Whenever the number of columns is not a integer multiple of the data width
+          -- (e.g. wr_remainder_cfg is not zero), the end of the first column will need to
+          -- be tweaked to use the correct bits, but the write will take place in the same
+          -- processing pipeline.
+          if wr_remainder_cfg /= 0 then
+            if wr_column_cnt = 0 then
+              ram_wr(wr_column_cnt_prev).addr <= ram_wr(wr_column_cnt_prev).addr + 1;
+              ram_wr(wr_column_cnt_prev).en   <= '1';
+              ram_wr(wr_column_cnt_prev).data <= (others => '0');
+              ram_wr(wr_column_cnt_prev).data(to_integer(wr_remainder_cfg) - 1 downto 0)
+                <= s_tdata_prev(DATA_WIDTH - 1 downto DATA_WIDTH - to_integer(wr_remainder_cfg));
+            end if;
+          end if;
+          -- Each column filled we shift data a bit more
+          wr_remainder_cnt <= wr_remainder_cnt + wr_remainder_cfg;
+
+          -- To handle number of columns not being an integer multiple of the data width,
+          -- we'll count one extra row only when writing the first column
+          if wr_remainder_cfg /= 0 and wr_column_cnt = 0 then
+            wr_row_cnt_max <= wr_row_cnt_max - 1;
           end if;
         end if;
 
-        -- When the frame ends, hand over the parameters to the read side
-        if s_tlast = '1' then
-          -- ram_wren   <= (others => '0');
-          -- Update the config
-          -- cnt_cfg           := get_cnt_cfg(wr_cfg_modulation, wr_cfg_frame_type);
-          -- rd_row_cnt_max    <= to_unsigned(cnt_cfg.row_max - 1, numbits(MAX_ROWS));
-          -- rd_remainder_max  <= to_unsigned(cnt_cfg.row_remainder, numbits(DATA_WIDTH));
-          -- rd_column_cnt_max <= to_unsigned(cnt_cfg.column_max - 1, numbits(MAX_COLUMNS));
-
-          -- -- This will be used for the reading side
-          -- rd_cfg_modulation <= wr_cfg_modulation;
-          -- rd_cfg_frame_type <= wr_cfg_frame_type;
-          -- rd_cfg_code_rate  <= wr_cfg_code_rate;
-
-        end if;
       end if;
 
       -- Sample config
@@ -404,7 +380,7 @@ begin
 
         cnt_cfg           := get_cnt_cfg(cfg_modulation, cfg_frame_type);
         wr_row_cnt_max    <= to_unsigned(cnt_cfg.row_max - 1, numbits(MAX_ROWS));
-        wr_remainder_max  <= to_unsigned(cnt_cfg.row_remainder, numbits(DATA_WIDTH));
+        wr_remainder_cfg  <= to_unsigned(cnt_cfg.row_remainder, numbits(DATA_WIDTH));
         wr_column_cnt_max <= to_unsigned(cnt_cfg.column_max - 1, numbits(MAX_COLUMNS));
       end if;
 
@@ -464,10 +440,6 @@ begin
           else
             rd_row_cnt <= (others => '0');
 
-            -- if rd_remainder_max /= 0 and rd_column_cnt = 0 then
-            --   rd_row_cnt_max <= rd_row_cnt_max - 1;
-            -- end if;
-
             rd_ram_ptr <= rd_ram_ptr + 1;
             m_wr_last  <= '1';
           end if;
@@ -504,59 +476,4 @@ begin
     end if;
   end process read_side_p;
 
-  -- The config ports are valid at the first word of the frame, but we must not rely on
-  -- the user keeping it unchanged. Hide this on a block to leave the core code a bit
-  -- cleaner
-  -- config_sample_block : block
-  --   signal modulation_ff : modulation_t;
-  --   signal frame_type_ff : frame_type_t;
-  --   signal code_rate_ff  : code_rate_t;
-  --   signal first_word    : std_logic;
-  -- begin
-
-  --   wr_cfg_modulation <= cfg_modulation when first_word = '1' else modulation_ff;
-  --   wr_cfg_frame_type <= cfg_frame_type when first_word = '1' else frame_type_ff;
-  --   wr_cfg_code_rate  <= cfg_code_rate when first_word = '1' else code_rate_ff;
-
-  --   process(clk, rst)
-  --     variable cnt_cfg : cnt_cfg_t;
-  --   begin
-  --     if rst = '1' then
-  --       first_word  <= '1';
-  --       wr_row_cnt_max <= (others => '1');
-  --       wr_column_cnt_max <= (others => '1');
-  --     elsif rising_edge(clk) then
-  --       if s_axi_dv = '1' then
-  --         first_word <= s_tlast;
-
-  --         -- Sample the BCH code used on the first word
-  --         if first_word = '1' then
-  --           modulation_ff  <= cfg_modulation;
-  --           frame_type_ff  <= cfg_frame_type;
-  --           code_rate_ff   <= cfg_code_rate;
-
-  --           cnt_cfg        := get_cnt_cfg(cfg_modulation, cfg_frame_type);
-  --           wr_row_cnt_max   <= to_unsigned(cnt_cfg.row_max - 1, numbits(MAX_ROWS));
-  --           wr_remainder_max <= to_unsigned(cnt_cfg.row_remainder, numbits(DATA_WIDTH));
-  --           wr_column_cnt_max   <= to_unsigned(cnt_cfg.column_max - 1, numbits(MAX_COLUMNS));
-
-  --         end if;
-
-  --       end if;
-  --     end if;
-  --   end process;
-  -- end block config_sample_block;
-
-
-  -- process(clk, rst)
-  -- begin
-  --   if rst = '1' then
-  --     row_rem_acc <= 0;
-  --   elsif rising_edge(clk) then
-  --     if ram_wren /= (MAX_COLUMNS - 1 downto 0 => '0') then
-  --     end if;
-  --   end if;
-  -- end process;
-
 end axi_bit_interleaver;
-
