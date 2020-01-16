@@ -178,7 +178,7 @@ begin
           error_cnt_i       <= error_cnt_i + 1;
           tlast_error_cnt_i <= tlast_error_cnt_i + 1;
 
-          report sformat("tdata error in frame %d, word %d: Expected %r but got %r",
+          report sformat("tlast error in frame %d, word %d: Expected %r but got %r",
                          fo(frame_cnt), fo(word_cnt), fo(expected_tlast_i), fo(s_tlast))
             severity REPORT_SEVERITY;
         end if;

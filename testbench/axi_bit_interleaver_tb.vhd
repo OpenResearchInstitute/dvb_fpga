@@ -216,7 +216,7 @@ begin
       variable file_reader_msg  : msg_t;
     begin
 
-      set_timeout(runner, 3 ms);
+      set_timeout(runner, number_of_frames * 50 us);
 
       info("Running test with:");
       info(" - modulation     : " & modulation_t'image(config.modulation));
