@@ -26,14 +26,17 @@
 -- Libraries --
 ---------------
 library	ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library osvvm;
-  use osvvm.RandomPkg.all;
+use osvvm.RandomPkg.all;
 
 library str_format;
-  use str_format.str_format_pkg.all;
+use str_format.str_format_pkg.all;
+
+library vunit_lib;
+context vunit_lib.vunit_context;
 
 ------------------------
 -- Entity declaration --
@@ -168,9 +171,12 @@ begin
           error_cnt_i       <= error_cnt_i + 1;
           tdata_error_cnt_i <= tdata_error_cnt_i + 1;
 
-          report sformat("tdata error in frame %d, word %d: Expected %r but got %r",
-                         fo(frame_cnt), fo(word_cnt), fo(expected_tdata_i), fo(s_tdata))
-            severity REPORT_SEVERITY;
+          warning(
+            sformat(
+              "tdata error in frame %d, word %d: Expected %r but got %r",
+              fo(frame_cnt), fo(word_cnt), fo(expected_tdata_i), fo(s_tdata)));
+
+            -- severity REPORT_SEVERITY;
         end if;
 
         if s_tlast /= expected_tlast_i then
@@ -178,9 +184,11 @@ begin
           error_cnt_i       <= error_cnt_i + 1;
           tlast_error_cnt_i <= tlast_error_cnt_i + 1;
 
-          report sformat("tlast error in frame %d, word %d: Expected %r but got %r",
-                         fo(frame_cnt), fo(word_cnt), fo(expected_tlast_i), fo(s_tlast))
-            severity REPORT_SEVERITY;
+          warning(
+            sformat(
+              "tlast error in frame %d, word %d: Expected %r but got %r",
+              fo(frame_cnt), fo(word_cnt), fo(expected_tlast_i), fo(s_tlast)));
+
         end if;
 
       end if;
