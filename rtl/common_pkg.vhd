@@ -19,16 +19,22 @@
 -- along with DVB IP.  If not, see <http://www.gnu.org/licenses/>.
 
 library ieee;
-    use ieee.std_logic_1164.all;
-    use ieee.numeric_std.all;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use ieee.math_real.all;
 
 package common_pkg is
 
     -- Calculates the number of bits required to represent a given value
-    function numbits (constant v : integer) return integer;
+    function numbits (constant v : natural) return natural;
 
     function swap_bytes (constant v : std_logic_vector) return std_logic_vector;
     function swap_bits (constant v : std_logic_vector) return std_logic_vector;
+
+    -- 
+    type integer_array_t is array (natural range <>) of integer;
+    function minimum(constant a, b : integer) return integer;
+    function minimum(constant values : integer_array_t) return integer;
 
 end common_pkg;
 
@@ -36,16 +42,20 @@ package body common_pkg is
 
     -- Calculates the number of bits required to represent a given value
     function numbits (
-        constant v      : integer) return integer is
-        variable result : integer;
+        constant v : natural) return natural is
     begin
-        result := 1;
-        while True loop
-            if 2**result > v then
-                return result;
-            end if;
-            result := result + 1;
-        end loop;
+      if v <= 1 then
+        return 1;
+      end if;
+
+      return integer(ceil(log2(real(v))));
+        -- result := 1;
+        -- while True loop
+        --     if 2**result > v then
+        --         return result;
+        --     end if;
+        --     result := result + 1;
+        -- end loop;
     end function numbits;
 
     -- Swap bytes
@@ -74,6 +84,26 @@ package body common_pkg is
       end loop;
 
       return result;
+    end;
+
+    function minimum(constant a, b : integer) return integer is
+    begin
+      return minimum(integer_array_t'(a, b));
+    end;
+
+    function minimum(constant values : integer_array_t) return integer is
+      variable result : integer;
+    begin
+      for index in values'range loop
+
+        if values(index) < result then
+          result := values(index);
+        end if;
+
+      end loop;
+
+      return result;
+
     end;
 
 end package body;

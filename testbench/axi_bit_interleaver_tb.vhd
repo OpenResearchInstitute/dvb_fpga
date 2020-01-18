@@ -216,7 +216,7 @@ begin
       variable file_reader_msg  : msg_t;
     begin
 
-      set_timeout(runner, number_of_frames * 50 us);
+      set_timeout(runner, number_of_frames * 100 us);
 
       info("Running test with:");
       info(" - modulation     : " & modulation_t'image(config.modulation));
@@ -253,7 +253,7 @@ begin
       -- Will get one response for each frame from the file checker and one for the input
       -- config. The order shouldn't matter
       receive(net, self, msg);
-      debug(sformat("Got reply from '%s'", name(msg.sender)));
+      -- Failure(sformat("Got reply from '%s'", name(msg.sender)));
 
       wait_all_read(net, file_checker);
     end procedure wait_for_transfers;
@@ -278,8 +278,9 @@ begin
         tready_probability <= 1.0;
 
         for i in configs'range loop
-          run_test(configs(i), number_of_frames => 1);
+          run_test(configs(i), number_of_frames => 2);
         end loop;
+
         wait_for_transfers(configs'length);
 
       elsif run("slow_master") then

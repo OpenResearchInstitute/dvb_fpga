@@ -69,14 +69,16 @@ def main():
         entity=cli.library("lib").entity("axi_bch_encoder_tb"),
         input_file_basename="bch_encoder_input.bin",
         reference_file_basename="ldpc_encoder_input.bin",
+        detailed=True,
     )
 
     cli.set_compile_option("modelsim.vcom_flags", ["-explicit"])
     cli.set_compile_option("ghdl.flags", ["-frelaxed-rules"])
 
-    args = VUnitCLI().parse_args()
-    if args.gui:
-        cli.set_sim_option("modelsim.vsim_flags", ["-novopt"])
+    #  args = VUnitCLI().parse_args()
+    #  if args.gui:
+    cli.set_compile_option("modelsim.vcom_flags", ["-novopt"])
+    cli.set_sim_option("modelsim.vsim_flags", ["-novopt"])
 
     cli.set_sim_option("disable_ieee_warnings", True)
     cli.set_sim_option("modelsim.init_file.gui", p.join(ROOT, "wave.do"))
@@ -102,7 +104,7 @@ class CodeRate(Enum):
     C1_3 = "C1_3"
     C2_5 = "C2_5"
     C1_2 = "C1_2"
-    C3_5 = "C3_5"
+    #  C3_5 = "C3_5"
     C2_3 = "C2_3"
     C3_4 = "C3_4"
     C4_5 = "C4_5"
