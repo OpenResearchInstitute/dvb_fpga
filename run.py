@@ -75,10 +75,9 @@ def main():
     cli.set_compile_option("modelsim.vcom_flags", ["-explicit"])
     cli.set_compile_option("ghdl.flags", ["-frelaxed-rules"])
 
-    #  args = VUnitCLI().parse_args()
-    #  if args.gui:
-    cli.set_compile_option("modelsim.vcom_flags", ["-novopt"])
-    cli.set_sim_option("modelsim.vsim_flags", ["-novopt"])
+    # Needed for older ModelSim versions
+    # cli.set_compile_option("modelsim.vcom_flags", ["-novopt"])
+    # cli.set_sim_option("modelsim.vsim_flags", ["-novopt"])
 
     cli.set_sim_option("disable_ieee_warnings", True)
     cli.set_sim_option("modelsim.init_file.gui", p.join(ROOT, "wave.do"))
