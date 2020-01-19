@@ -84,10 +84,10 @@ def main():
     cli.main()
 
 
-Parameters = namedtuple("Parameters", ("modulation", "frame_length", "code_rate"))
+Parameters = namedtuple("Parameters", ("constellation", "frame_length", "code_rate"))
 
 
-class ModulationType(Enum):
+class ConstellationType(Enum):
     mod_8psk = "MOD_8PSK"
     mod_16apsk = "MOD_16APSK"
     mod_32apsk = "MOD_32APSK"
@@ -121,12 +121,12 @@ def parametrizeTests(
     for code_rate in CodeRate:
 
         for frame_length in FrameLength:
-            for modulation in ModulationType:
+            for constellation in ConstellationType:
 
                 data_files = p.join(
                     ROOT,
                     "gnuradio_data",
-                    f"{frame_length.value}_{modulation.value}_{code_rate.value}".upper(),
+                    f"{frame_length.value}_{constellation.value}_{code_rate.value}".upper(),
                 )
 
                 input_file_path = p.join(data_files, input_file_basename)
@@ -138,7 +138,7 @@ def parametrizeTests(
                 test_cfg += [
                     ",".join(
                         [
-                            modulation.value,
+                            constellation.value,
                             frame_length.value,
                             code_rate.value,
                             input_file_path,
@@ -148,7 +148,7 @@ def parametrizeTests(
                 ]
 
                 if detailed:
-                    test_name = f"{frame_length},{modulation},{code_rate}"
+                    test_name = f"{frame_length},{constellation},{code_rate}"
                     entity.add_config(
                         name=test_name, generics={"test_cfg": ":".join(test_cfg)}
                     )

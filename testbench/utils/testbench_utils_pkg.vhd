@@ -29,7 +29,7 @@ use work.dvb_utils_pkg.all;
 package testbench_utils_pkg is
 
   type config_t is record
-    modulation : modulation_t;
+    constellation : constellation_t;
     frame_type : frame_type_t;
     code_rate : code_rate_t;
     input_file : string(1 to 1024);
@@ -47,11 +47,11 @@ package testbench_utils_pkg is
   impure function get_test_cfg ( constant str : string)
   return config_array_t;
 
-  procedure push(msg : msg_t; value : modulation_t);
+  procedure push(msg : msg_t; value : constellation_t);
   procedure push(msg : msg_t; value : frame_type_t);
   procedure push(msg : msg_t; value : code_rate_t);
 
-  impure function pop(msg : msg_t) return modulation_t;
+  impure function pop(msg : msg_t) return constellation_t;
   impure function pop(msg : msg_t) return frame_type_t;
   impure function pop(msg : msg_t) return code_rate_t;
 
@@ -59,10 +59,10 @@ end testbench_utils_pkg;
 
 package body testbench_utils_pkg is
 
-  procedure push(msg : msg_t; value : modulation_t) is
+  procedure push(msg : msg_t; value : constellation_t) is
   begin
     -- Push value as a string
-    push(msg.data, modulation_t'image(value));
+    push(msg.data, constellation_t'image(value));
   end;
 
   procedure push(msg : msg_t; value : frame_type_t) is
@@ -78,9 +78,9 @@ package body testbench_utils_pkg is
   end;
 
 
-  impure function pop(msg : msg_t) return modulation_t is
+  impure function pop(msg : msg_t) return constellation_t is
   begin
-    return modulation_t'value(pop(msg.data));
+    return constellation_t'value(pop(msg.data));
   end;
 
   impure function pop(msg : msg_t) return frame_type_t is
@@ -115,7 +115,7 @@ package body testbench_utils_pkg is
         failure("Malformed config string " & quote(cfg_strings(i).all));
       end if;
 
-      current.modulation := modulation_t'value(cfg_items(0).all);
+      current.constellation := constellation_t'value(cfg_items(0).all);
       current.frame_type := frame_type_t'value(cfg_items(1).all);
       current.code_rate := code_rate_t'value(cfg_items(2).all);
       current.input_file := (others => nul);
@@ -152,7 +152,7 @@ package body testbench_utils_pkg is
   function to_string( constant config : config_t ) return string is
   begin
     return "config("
-      & "modulation=" & quote(modulation_t'image(config.modulation)) & ", "
+      & "constellation=" & quote(constellation_t'image(config.constellation)) & ", "
       & "frame_type=" & quote(frame_type_t'image(config.frame_type)) & ", "
       & "code_rate=" & quote(code_rate_t'image(config.code_rate)) & ", "
       & "input_file=" & quote(config.input_file) & ", "

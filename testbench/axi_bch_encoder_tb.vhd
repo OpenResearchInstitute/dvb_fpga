@@ -199,7 +199,7 @@ begin
       set_timeout(runner, 3 ms);
 
       info("Running test with:");
-      info(" - modulation     : " & modulation_t'image(config.modulation));
+      info(" - constellation  : " & constellation_t'image(config.constellation));
       info(" - frame_type     : " & frame_type_t'image(config.frame_type));
       info(" - code_rate      : " & code_rate_t'image(config.code_rate));
       info(" - input_file     : " & config.input_file);

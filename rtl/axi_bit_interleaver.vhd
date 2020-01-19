@@ -38,24 +38,24 @@ entity axi_bit_interleaver is
   generic (DATA_WIDTH : positive := 8);
   port (
     -- Usual ports
-    clk            : in  std_logic;
-    rst            : in  std_logic;
+    clk               : in  std_logic;
+    rst               : in  std_logic;
 
-    cfg_modulation : in  modulation_t;
-    cfg_frame_type : in  frame_type_t;
-    cfg_code_rate  : in  code_rate_t;
+    cfg_constellation : in  constellation_t;
+    cfg_frame_type    : in  frame_type_t;
+    cfg_code_rate     : in  code_rate_t;
 
     -- AXI input
-    s_tvalid       : in  std_logic;
-    s_tdata        : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
-    s_tlast        : in  std_logic;
-    s_tready       : out std_logic;
+    s_tvalid          : in  std_logic;
+    s_tdata           : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
+    s_tlast           : in  std_logic;
+    s_tready          : out std_logic;
 
     -- AXI output
-    m_tready       : in  std_logic;
-    m_tvalid       : out std_logic;
-    m_tlast        : out std_logic;
-    m_tdata        : out std_logic_vector(DATA_WIDTH - 1 downto 0));
+    m_tready          : in  std_logic;
+    m_tvalid          : out std_logic;
+    m_tlast           : out std_logic;
+    m_tdata           : out std_logic_vector(DATA_WIDTH - 1 downto 0));
 end axi_bit_interleaver;
 
 architecture axi_bit_interleaver of axi_bit_interleaver is
@@ -73,36 +73,36 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   end record;
 
   impure function get_cnt_cfg (
-    constant modulation : in modulation_t;
-    constant frame_type : in frame_type_t) return cfg_t is
-    variable rows      : natural;
-    variable columns   : natural;
-    variable remainder : natural;
+    constant constellation : in constellation_t;
+    constant frame_type    : in frame_type_t) return cfg_t is
+    variable rows          : natural;
+    variable columns       : natural;
+    variable remainder     : natural;
   begin
 
     if frame_type = fecframe_normal then
-      if modulation = mod_8psk then
+      if constellation = mod_8psk then
         rows := 21_600;
-      elsif modulation = mod_16apsk then
+      elsif constellation = mod_16apsk then
         rows := 16_200;
-      elsif modulation = mod_32apsk then
+      elsif constellation = mod_32apsk then
         rows := 12_960;
       end if;
     elsif frame_type = fecframe_short then
-      if modulation = mod_8psk then
+      if constellation = mod_8psk then
         rows := 5_400;
-      elsif modulation = mod_16apsk then
+      elsif constellation = mod_16apsk then
         rows := 4_050;
-      elsif modulation = mod_32apsk then
+      elsif constellation = mod_32apsk then
         rows := 3_240;
       end if;
     end if;
 
-    if modulation = mod_8psk then
+    if constellation = mod_8psk then
       columns := 3;
-    elsif modulation = mod_16apsk then
+    elsif constellation = mod_16apsk then
       columns := 4;
-    elsif modulation = mod_32apsk then
+    elsif constellation = mod_32apsk then
       columns := 5;
     end if;
 
@@ -118,61 +118,60 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   -------------
   -- Signals --
   -------------
-
-  signal s_axi_dv           : std_logic;
-  signal s_tready_i         : std_logic;
+  signal s_axi_dv             : std_logic;
+  signal s_tready_i           : std_logic;
 
   -- Write side config
-  signal cfg_wr_modulation  : modulation_t;
-  signal cfg_wr_frame_type  : frame_type_t;
-  signal cfg_wr_code_rate   : code_rate_t;
-  signal cfg_wr_cnt         : cfg_t;
+  signal cfg_wr_constellation : constellation_t;
+  signal cfg_wr_frame_type    : frame_type_t;
+  signal cfg_wr_code_rate     : code_rate_t;
+  signal cfg_wr_cnt           : cfg_t;
   -- Write side counters
-  signal wr_row_cnt         : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-  signal wr_column_cnt      : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
-  signal wr_column_cnt_i    : natural range 0 to MAX_COLUMNS - 1;
+  signal wr_row_cnt           : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal wr_column_cnt        : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal wr_column_cnt_i      : natural range 0 to MAX_COLUMNS - 1;
 
-  signal wr_ram_ptr         : unsigned(1 downto 0);
+  signal wr_ram_ptr           : unsigned(1 downto 0);
 
 
-  signal wr_remainder       : unsigned(numbits(DATA_WIDTH) - 1 downto 0);
+  signal wr_remainder         : unsigned(numbits(DATA_WIDTH) - 1 downto 0);
 
   -- RAM write interface
-  signal ram_wr_addr        : addr_array_t(MAX_COLUMNS - 1 downto 0);
-  signal ram_wr_data        : data_array_t(MAX_COLUMNS - 1 downto 0);
-  signal ram_wr_en          : std_logic_vector(MAX_COLUMNS - 1 downto 0);
+  signal ram_wr_addr          : addr_array_t(MAX_COLUMNS - 1 downto 0);
+  signal ram_wr_data          : data_array_t(MAX_COLUMNS - 1 downto 0);
+  signal ram_wr_en            : std_logic_vector(MAX_COLUMNS - 1 downto 0);
 
   -- Read side config
-  signal cfg_rd_modulation  : modulation_t;
-  signal cfg_rd_frame_type  : frame_type_t;
-  signal cfg_rd_code_rate   : code_rate_t;
+  signal cfg_rd_constellation : constellation_t;
+  signal cfg_rd_frame_type    : frame_type_t;
+  signal cfg_rd_code_rate     : code_rate_t;
 
-  signal rd_ram_ptr         : unsigned(1 downto 0);
+  signal rd_ram_ptr           : unsigned(1 downto 0);
 
-  signal cfg_rd_cnt         : cfg_t;
-  signal rd_row_cnt         : unsigned(numbits(MAX_ROWS) - 1 downto 0);
+  signal cfg_rd_cnt           : cfg_t;
+  signal rd_row_cnt           : unsigned(numbits(MAX_ROWS) - 1 downto 0);
 
-  signal rd_column_cnt      : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
-  signal rd_column_cnt_prev : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal rd_column_cnt        : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
+  signal rd_column_cnt_prev   : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
 
   -- RAM read interface
-  signal ram_rd_addr        : unsigned(numbits(MAX_ROWS) downto 0);
-  signal ram_rd_data        : data_array_t(0 to MAX_COLUMNS - 1);
+  signal ram_rd_addr          : unsigned(numbits(MAX_ROWS) downto 0);
+  signal ram_rd_data          : data_array_t(0 to MAX_COLUMNS - 1);
 
-  signal rd_data_sr         : std_logic_vector(MAX_COLUMNS*DATA_WIDTH - 1 downto 0);
+  signal rd_data_sr           : std_logic_vector(MAX_COLUMNS*DATA_WIDTH - 1 downto 0);
 
-  signal interleaved_3c     : std_logic_vector(3*DATA_WIDTH - 1 downto 0);
-  signal interleaved_4c     : std_logic_vector(4*DATA_WIDTH - 1 downto 0);
-  signal interleaved_5c     : std_logic_vector(5*DATA_WIDTH - 1 downto 0);
+  signal interleaved_3c       : std_logic_vector(3*DATA_WIDTH - 1 downto 0);
+  signal interleaved_4c       : std_logic_vector(4*DATA_WIDTH - 1 downto 0);
+  signal interleaved_5c       : std_logic_vector(5*DATA_WIDTH - 1 downto 0);
 
-  signal m_wr_en            : std_logic := '0';
-  signal m_wr_en_prev       : std_logic := '0';
-  signal m_wr_full          : std_logic;
-  signal m_wr_data          : std_logic_vector(DATA_WIDTH - 1 downto 0);
-  signal m_wr_last          : std_logic := '0';
-  signal m_wr_last_prev     : std_logic := '0';
+  signal m_wr_en              : std_logic := '0';
+  signal m_wr_en_prev         : std_logic := '0';
+  signal m_wr_full            : std_logic;
+  signal m_wr_data            : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal m_wr_last            : std_logic := '0';
+  signal m_wr_last_prev       : std_logic := '0';
 
-  signal first_word         : std_logic; -- To sample config
+  signal first_word           : std_logic; -- To sample config
 
 begin
 
@@ -305,12 +304,12 @@ begin
         end if;
 
         if first_word = '1' then
-          cfg_wr_cnt        <= get_cnt_cfg(cfg_modulation, cfg_frame_type);
-          cfg_wr_modulation <= cfg_modulation;
-          cfg_wr_frame_type <= cfg_frame_type;
-          cfg_wr_code_rate  <= cfg_code_rate;
+          cfg_wr_cnt           <= get_cnt_cfg(cfg_constellation, cfg_frame_type);
+          cfg_wr_constellation <= cfg_constellation;
+          cfg_wr_frame_type    <= cfg_frame_type;
+          cfg_wr_code_rate     <= cfg_code_rate;
 
-          ram_wr_addr       <= (others => wr_ram_ptr(0) & (numbits(MAX_ROWS) - 1 downto 0 => '0'));
+          ram_wr_addr          <= (others => wr_ram_ptr(0) & (numbits(MAX_ROWS) - 1 downto 0 => '0'));
         end if;
 
       end if;
@@ -330,12 +329,12 @@ begin
     elsif clk'event and clk = '1' then
 
       if s_axi_dv = '1' and s_tlast = '1' then
-        cfg_rd_cnt <= get_cnt_cfg(cfg_wr_modulation, cfg_wr_frame_type);
+        cfg_rd_cnt           <= get_cnt_cfg(cfg_wr_constellation, cfg_wr_frame_type);
 
         -- This will be used for the reading side
-        cfg_rd_modulation <= cfg_wr_modulation;
-        cfg_rd_frame_type <= cfg_wr_frame_type;
-        cfg_rd_code_rate  <= cfg_wr_code_rate;
+        cfg_rd_constellation <= cfg_wr_constellation;
+        cfg_rd_frame_type    <= cfg_wr_frame_type;
+        cfg_rd_code_rate     <= cfg_wr_code_rate;
 
         ram_rd_addr <= rd_ram_ptr(0) & (numbits(MAX_ROWS) - 1 downto 0 => '0');
 
@@ -380,15 +379,15 @@ begin
 
           -- We'll swap byte ordering (e.g ABCD becomes DCBA) because it's easier to
           -- assign the write data from the shift register's LSB
-          if cfg_rd_modulation = mod_8psk then
+          if cfg_rd_constellation = mod_8psk then
             if cfg_rd_code_rate = C3_5 then
               rd_data_sr(interleaved_3c'range) <= swap_bytes(interleaved_3c);
             else
               rd_data_sr(interleaved_3c'range) <= swap_bytes(interleaved_3c);
             end if;
-          elsif cfg_rd_modulation = mod_16apsk then
+          elsif cfg_rd_constellation = mod_16apsk then
             rd_data_sr(interleaved_4c'range) <= swap_bytes(interleaved_4c);
-          elsif cfg_rd_modulation = mod_32apsk then
+          elsif cfg_rd_constellation = mod_32apsk then
             rd_data_sr <= swap_bytes(interleaved_5c);
           end if;
         else

@@ -59,15 +59,15 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   constant TDATA_WIDTH       : integer := 8;
   constant ERROR_CNT_WIDTH   : integer := 8;
 
-  function get_checker_data_ratio ( constant modulation : in modulation_t)
+  function get_checker_data_ratio ( constant constellation : in constellation_t)
   return string is
   begin
-    case modulation is
+    case constellation is
       when   mod_8psk => return "3:8";
       when mod_16apsk => return "4:8";
       when mod_32apsk => return "5:8";
       when others =>
-        report "Invalid modulation: " & modulation_t'image(modulation)
+        report "Invalid constellation: " & constellation_t'image(constellation)
         severity Failure;
     end case;
 
@@ -83,7 +83,7 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   signal clk                : std_logic := '1';
   signal rst                : std_logic;
 
-  signal cfg_modulation     : modulation_t;
+  signal cfg_constellation  : constellation_t;
   signal cfg_frame_type     : frame_type_t;
   signal cfg_code_rate      : code_rate_t;
 
@@ -119,24 +119,24 @@ begin
     generic map ( DATA_WIDTH => TDATA_WIDTH )
     port map (
       -- Usual ports
-      clk            => clk,
-      rst            => rst,
+      clk               => clk,
+      rst               => rst,
 
-      cfg_modulation => cfg_modulation,
-      cfg_frame_type => cfg_frame_type,
-      cfg_code_rate  => cfg_code_rate,
+      cfg_constellation => cfg_constellation,
+      cfg_frame_type    => cfg_frame_type,
+      cfg_code_rate     => cfg_code_rate,
 
       -- AXI input
-      s_tvalid       => m_tvalid,
-      s_tdata        => m_tdata,
-      s_tlast        => m_tlast,
-      s_tready       => m_tready,
+      s_tvalid          => m_tvalid,
+      s_tdata           => m_tdata,
+      s_tlast           => m_tlast,
+      s_tready          => m_tready,
 
       -- AXI output
-      m_tready       => s_tready,
-      m_tvalid       => s_tvalid,
-      m_tlast        => s_tlast,
-      m_tdata        => s_tdata);
+      m_tready          => s_tready,
+      m_tvalid          => s_tvalid,
+      m_tlast           => s_tlast,
+      m_tdata           => s_tdata);
 
 
   -- AXI file read
@@ -219,7 +219,7 @@ begin
       set_timeout(runner, number_of_frames * 100 us);
 
       info("Running test with:");
-      info(" - modulation     : " & modulation_t'image(config.modulation));
+      info(" - constellation  : " & constellation_t'image(config.constellation));
       info(" - frame_type     : " & frame_type_t'image(config.frame_type));
       info(" - code_rate      : " & code_rate_t'image(config.code_rate));
       info(" - input_file     : " & config.input_file);
@@ -230,7 +230,7 @@ begin
         file_reader_msg.sender := self;
 
         push(file_reader_msg, config.input_file);
-        push(file_reader_msg, config.modulation);
+        push(file_reader_msg, config.constellation);
         push(file_reader_msg, config.frame_type);
         push(file_reader_msg, config.code_rate);
 
@@ -239,7 +239,7 @@ begin
           net,
           file_checker,
           config.reference_file,
-          get_checker_data_ratio(config.modulation)
+          get_checker_data_ratio(config.constellation)
         );
 
       end loop;
@@ -342,13 +342,13 @@ begin
 
     -- Keep the config stuff active for a single cycle to make sure blocks use the correct
     -- values
-    cfg_modulation <= pop(cfg_msg);
-    cfg_frame_type <= pop(cfg_msg);
-    cfg_code_rate  <= pop(cfg_msg);
+    cfg_constellation <= pop(cfg_msg);
+    cfg_frame_type    <= pop(cfg_msg);
+    cfg_code_rate     <= pop(cfg_msg);
     wait until m_data_valid and m_tlast = '0' and rising_edge(clk);
-    cfg_modulation <= not_set;
-    cfg_frame_type <= not_set;
-    cfg_code_rate  <= not_set;
+    cfg_constellation <= not_set;
+    cfg_frame_type    <= not_set;
+    cfg_code_rate     <= not_set;
 
     wait until m_data_valid and m_tlast = '1';
 
