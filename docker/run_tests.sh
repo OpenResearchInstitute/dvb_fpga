@@ -25,8 +25,7 @@ PATH_TO_REPO=$(git rev-parse --show-toplevel)
 
 VUNIT_ARGS="$*"
 
-# CONTAINER=suoto/dvb_fpga:latest
-CONTAINER=628fadc38967
+CONTAINER="suoto/dvb_fpga_ci"
 
 # Need to add some variables so that uploading coverage from witihin the
 # container to codecov works
