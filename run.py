@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 #
 # DVB FPGA
 #
@@ -19,6 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with DVB FPGA.  If not, see <http://www.gnu.org/licenses/>.
+"VUnit test runner for DVB FPGA"
 
 # pylint: disable=bad-continuation
 
@@ -39,6 +39,7 @@ ROOT = p.abspath(p.dirname(__file__))
 
 
 def main():
+    "Main entry point for DVB FPGA test runner"
     cli = VUnit.from_argv()
     cli.add_osvvm()
     cli.add_com()
@@ -57,6 +58,7 @@ def main():
 
     addAxiStreamDelayTests(cli.library("lib").entity("axi_stream_delay_tb"))
     addAxiFileReaderTests(cli.library("lib").entity("axi_file_reader_tb"))
+    addAxiFileCompareTests(cli.library("lib").entity("axi_file_compare_tb"))
 
     parametrizeTests(
         entity=cli.library("lib").entity("axi_bit_interleaver_tb"),
@@ -88,17 +90,34 @@ Parameters = namedtuple("Parameters", ("constellation", "frame_length", "code_ra
 
 
 class ConstellationType(Enum):
+    """
+    Constellation types as defined in the DVB-S2 spec. Enum names should match
+    the C/C++ defines, values are a nice string representation for the test
+    names.
+    """
+
     MOD_8PSK = "8PSK"
     MOD_16APSK = "16APSK"
     MOD_32APSK = "32APSK"
 
 
 class FrameLength(Enum):
+    """
+    Frame types as defined in the DVB-S2 spec. Enum names should match
+    the C/C++ defines, values are a nice string representation for the test
+    names.
+    """
+
     FECFRAME_NORMAL = "normal"
     FECFRAME_SHORT = "short"
 
 
 class CodeRate(Enum):
+    """
+    Code rates as defined in the DVB-S2 spec. Enum names should match the C/C++
+    defines, values are a nice string representation for the test names.
+    """
+
     C1_4 = "1/4"
     C1_3 = "1/3"
     C2_5 = "2/5"
@@ -115,7 +134,15 @@ class CodeRate(Enum):
 def parametrizeTests(
     entity, input_file_basename, reference_file_basename, detailed=False
 ):
+    """
+    Parametrize tests for a given entity by passing strings to it via the
+    'test_cfg' generic.
 
+    Each entry is composed by constellation, frame_type, code_rate, input_file,
+    reference_file (in this order), with commas as separator. There can be
+    multiple config sets, all of them following the same structure; each config
+    set is separated by the pipe ("|") character.
+    """
     test_cfg = []
 
     for code_rate in CodeRate:
@@ -171,11 +198,67 @@ def parametrizeTests(
 
 
 def addAxiStreamDelayTests(entity):
+    "Parametrizes the delays for the AXI stream delay test"
     for delay in (1, 2, 8):
         entity.add_config(name=f"delay={delay}", parameters={"DELAY_CYCLES": delay})
 
 
+def addAxiFileCompareTests(entity):
+    "Parametrizes the AXI file compare testbench"
+    test_file = p.join(ROOT, "vunit_out", "file_compare_input.bin")
+    reference_file = p.join(ROOT, "vunit_out", "file_compare_reference_ok.bin")
+
+    if not (p.exists(test_file) and p.exists(reference_file)):
+        generateAxiFileReaderTestFile(
+            test_file=test_file,
+            reference_file=reference_file,
+            data_width=32,
+            length=256 * 32,
+            ratio=(32, 32),
+        )
+
+    tdata_single_error_file = p.join(
+        ROOT, "vunit_out", "file_compare_reference_tdata_1_error.bin"
+    )
+    tdata_two_errors_file = p.join(
+        ROOT, "vunit_out", "file_compare_reference_tdata_2_errors.bin"
+    )
+
+    if not p.exists(tdata_single_error_file):
+        ref_data = open(reference_file, "rb").read().split(b"\n")
+
+        with open(tdata_single_error_file, "wb") as fd:
+            # Skip one, duplicate another so the size is the same
+            data = ref_data[:7] + [ref_data[8],] + ref_data[8:]
+            fd.write(b"\n".join(data))
+
+    if not p.exists(tdata_two_errors_file):
+        ref_data = open(reference_file, "rb").read().split(b"\n")
+
+        with open(tdata_two_errors_file, "wb") as fd:
+            # Skip one, duplicate another so the size is the same
+            data = (
+                ref_data[:7]
+                + [ref_data[8], ref_data[8]]
+                + ref_data[9:16]
+                + [ref_data[17],]
+                + ref_data[17:]
+            )
+            fd.write(b"\n".join(data))
+
+    entity.add_config(
+        name="all",
+        parameters=dict(
+            input_file=test_file,
+            reference_file=reference_file,
+            tdata_single_error_file=tdata_single_error_file,
+            tdata_two_errors_file=tdata_two_errors_file,
+        ),
+    )
+
+
 def addAxiFileReaderTests(entity):
+    "Parametrizes the AXI file reader testbench"
     for data_width in (8, 32):
         all_configs = []
 
@@ -232,6 +315,7 @@ def addAxiFileReaderTests(entity):
 
 
 def swapBits(value, width=8):
+    "Swaps LSB and MSB bits of <value>, considering its width is <width>"
     v_in_binary = bin(value)[2:]
 
     assert len(v_in_binary) <= width, "input is too big"
@@ -241,6 +325,7 @@ def swapBits(value, width=8):
 
 
 def generateAxiFileReaderTestFile(test_file, reference_file, data_width, length, ratio):
+    "Create a pair of test files for the AXI file reader testbench"
     rand_max = 2 ** data_width - 1
     ratio_first, ratio_second = ratio
     packed_data = []

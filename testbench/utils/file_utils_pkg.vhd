@@ -86,10 +86,6 @@ package file_utils_pkg is
   -----------------
   -- Subprograms --
   -----------------
-  procedure write_binary_file (
-    constant name : in string;
-    constant data : in std_logic_vector_array);
-
   function parse_data_ratio (
     constant s               : string;
     constant base_data_width : in positive := 1) return ratio_t;
@@ -111,33 +107,6 @@ package file_utils_pkg is
 end file_utils_pkg;
 
 package body file_utils_pkg is
-
-  procedure write_binary_file (
-    constant name : in string;
-    constant data : in std_logic_vector_array) is
-    type file_type is file of character;
-    file fd             : file_type;
-    -- Not really unsigned, just to make converting to string easier
-    constant LENGTH     : integer := data'length;
-    constant DATA_WIDTH : integer := data(0)'length;
-    variable word       : unsigned(DATA_WIDTH - 1 downto 0);
-    variable byte       : unsigned(7 downto 0);
-  begin
-    report "Writing data to " & name;
-    file_open(fd, name, write_mode);
-
-    for word_cnt in 0 to LENGTH - 1 loop
-      word := unsigned(data(word_cnt));
-      -- Data is little endian, write MSB first
-      for byte_index in (DATA_WIDTH + 7) / 8 - 1 downto 0 loop
-        byte := word(8*(byte_index + 1) - 1 downto 8*byte_index);
-        write(fd, character'val(to_integer(byte)));
-
-      end loop;
-    end loop;
-
-    file_close(fd);
-  end procedure write_binary_file;
 
   function parse_data_ratio (
     constant s               : string;
@@ -231,7 +200,7 @@ package body file_utils_pkg is
     file_reader.outstanding := file_reader.outstanding + 1;
     send(net, file_reader.reader, msg);
     debug(file_reader.logger,
-          sformat("Outstanding transfers: %d", fo(file_reader.outstanding)));
+          sformat("Enqueued %s, outstanding transfers: %d", quote(filename), fo(file_reader.outstanding)));
   end;
 
   procedure enqueue_file(
@@ -261,9 +230,12 @@ package body file_utils_pkg is
     variable file_reader : inout file_reader_t) is
     variable msg         : msg_t := new_msg;
   begin
-    while file_reader.outstanding /= 0 loop
-      wait_file_read ( net, file_reader);
-    end loop;
+    debug(file_reader.logger, sformat("Waiting for all files to be read. Outstanding now: %d", fo(file_reader.outstanding)));
+    if file_reader.outstanding /= 0 then
+      while file_reader.outstanding /= 0 loop
+        wait_file_read ( net, file_reader);
+      end loop;
+    end if;
   end;
 
   impure function to_std_logic_vector(s : string) return std_logic_vector is

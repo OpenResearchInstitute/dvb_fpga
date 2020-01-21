@@ -23,6 +23,8 @@
 ---------------
 -- Libraries --
 ---------------
+use std.textio.all;
+
 library	ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
@@ -44,31 +46,17 @@ use work.file_utils_pkg.all;
 ------------------------
 entity axi_file_compare_tb is
   generic (
-    runner_cfg : string;
-    FILE_NAME  : string := "/tmp/compare.bin");
+    runner_cfg              : string;
+    input_file              : string;
+    reference_file          : string;
+    tdata_single_error_file : string;
+    tdata_two_errors_file   : string);
 end axi_file_compare_tb;
 
 architecture axi_file_compare_tb of axi_file_compare_tb is
 
   constant READER_NAME : string   := "dut";
-  constant TEST_DEPTH  : positive := 256;
   constant DATA_WIDTH  : positive := 32;
-
-  -- Generates data for when BYTES_ARE_BITS is set to False
-  impure function generate_regular_data ( constant length : positive)
-  return std_logic_vector_array is
-    variable data       : std_logic_vector_array(0 to length - 1)(DATA_WIDTH - 1 downto 0);
-    variable write_rand : RandomPType;
-  begin
-    write_rand.InitSeed(0);
-
-    for word_cnt in 0 to length - 1 loop
-      data(word_cnt) := write_rand.RandSlv(DATA_WIDTH);
-    end loop;
-
-    return data;
-
-  end function generate_regular_data;
 
   ---------------
   -- Constants --
@@ -93,6 +81,9 @@ architecture axi_file_compare_tb of axi_file_compare_tb is
   signal m_tdata            : std_logic_vector(DATA_WIDTH - 1 downto 0);
   signal m_tvalid           : std_logic;
   signal m_tlast            : std_logic;
+
+  signal expected_tdata     : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal expected_tlast     : std_logic;
 
   signal m_tvalid_wr        : std_logic := '0';
   signal m_tvalid_en        : std_logic := '0';
@@ -119,6 +110,9 @@ begin
     tlast_error_cnt    => tlast_error_cnt,
     error_cnt          => error_cnt,
     tready_probability => tready_probability,
+    -- Debug stuff
+    expected_tdata     => expected_tdata,
+    expected_tlast     => expected_tlast,
     -- Data input
     s_tready           => m_tready,
     s_tdata            => m_tdata,
@@ -172,15 +166,41 @@ begin
     end procedure write_word;
 
     ------------------------------------------------------------------------------------
-    procedure test_no_errors_detected is
-      variable rand   : RandomPType;
+    procedure write_data_from_file (
+      constant filename       : string;
+      constant tlast_every    : integer := -1) is
+      file file_handler       : text;
+      variable L              : line;
+      variable expected       : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
+      variable expected_tlast : std_logic;
+      variable cnt            : natural := 0;
     begin
-      enqueue_file(net, reader, FILE_NAME);
+        file_open(file_handler, filename, read_mode);
 
-      rand.InitSeed(0);
-      for i in 0 to TEST_DEPTH - 1 loop
-        write_word(rand.RandSlv(DATA_WIDTH), is_last => i = TEST_DEPTH - 1);
-      end loop;
+        while not endfile(file_handler) loop
+          readline(file_handler, L);
+          hread(L, expected);
+
+          if tlast_every = -1 then
+            write_word(expected, is_last => endfile(file_handler));
+          else
+            write_word(expected, is_last => cnt = tlast_every);
+          end if;
+
+          cnt := cnt + 1;
+
+        end loop;
+
+        file_close(file_handler);
+
+    end;
+
+    ------------------------------------------------------------------------------------
+    procedure test_no_errors_detected is
+    begin
+      enqueue_file(net, reader, input_file);
+      write_data_from_file(reference_file);
+      wait_all_read(net, reader);
 
       walk(1);
 
@@ -192,41 +212,29 @@ begin
 
     ------------------------------------------------------------------------------------
     procedure test_tlast_error is
-      variable rand : RandomPType;
     begin
-      enqueue_file(net, reader, FILE_NAME);
+      info("Starting tlast error");
+      enqueue_file(net, reader, input_file);
+      info("Enqueued file");
+      write_data_from_file(reference_file, tlast_every => 1e9);
+      info("Wrote frame");
+      wait_all_read(net, reader);
+      info("Got reply");
 
-      rand.InitSeed(0);
-      -- Tlast errors should be detected in any position
-      for i in 0 to TEST_DEPTH - 1 loop
-        write_word(rand.RandSlv(DATA_WIDTH), is_last => i = 0);
-      end loop;
-
-      walk(4);
+      walk(1);
 
       check_equal(tdata_error_cnt, 0);
-      check_equal(tlast_error_cnt, 2);
-      check_equal(error_cnt, 2);
+      check_equal(tlast_error_cnt, 1);
+      check_equal(error_cnt, 1);
 
     end procedure test_tlast_error;
 
     ------------------------------------------------------------------------------------
-    procedure test_tdata_error is
-      variable rand : RandomPType;
-      variable data : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    procedure test_tdata_single_error is
     begin
-      enqueue_file(net, reader, FILE_NAME);
-
-      rand.InitSeed(0);
-      -- Tlast errors should be detected in any position
-      for i in 0 to TEST_DEPTH - 1 loop
-        -- Need to waste a sample, otherwise everything will be offset
-        data := rand.RandSlv(DATA_WIDTH);
-        if i = TEST_DEPTH / 2 then
-          data := (others => 'U');
-        end if;
-        write_word(data, is_last => i = TEST_DEPTH - 1);
-      end loop;
+      enqueue_file(net, reader, input_file);
+      write_data_from_file(tdata_single_error_file);
+      wait_all_read(net, reader);
 
       walk(1);
 
@@ -234,9 +242,23 @@ begin
       check_equal(tlast_error_cnt, 0);
       check_equal(error_cnt, 1);
 
+    end procedure test_tdata_single_error;
+
+    ------------------------------------------------------------------------------------
+    procedure test_tdata_2_errors is
+      constant tdata_errors : integer := to_integer(unsigned(tdata_error_cnt));
+    begin
+      enqueue_file(net, reader, input_file);
+      write_data_from_file(tdata_two_errors_file);
       wait_all_read(net, reader);
 
-    end procedure test_tdata_error;
+      walk(1);
+
+      check_equal(tdata_error_cnt, tdata_errors + 2);
+      check_equal(tlast_error_cnt, 0);
+      check_equal(error_cnt, tdata_errors + 2);
+
+    end procedure test_tdata_2_errors;
 
     ------------------------------------------------------------------------------------
     procedure test_auto_reset is
@@ -245,36 +267,24 @@ begin
     begin
       -- Setup the AXI reader first to avoid glitches on m_tvalid
       for iter in 0 to 9 loop
-        enqueue_file(net, reader, FILE_NAME);
+        enqueue_file(net, reader, input_file);
       end loop;
 
       for iter in 0 to 9 loop
-        rand.InitSeed(0);
-        -- Insert a couple of tlast errors so that we ensure checking didn't stop after
-        -- the first frame
-        for i in 0 to TEST_DEPTH - 1 loop
-          if iter = 7 then
-            write_word(rand.RandSlv(DATA_WIDTH), is_last => false);
-          else
-            write_word(rand.RandSlv(DATA_WIDTH), is_last => i = TEST_DEPTH - 1);
-          end if;
-        end loop;
-
+        write_data_from_file(reference_file);
       end loop;
 
       walk(1);
 
       check_equal(tdata_error_cnt, 0);
-      check_equal(tlast_error_cnt, 1);
-      check_equal(error_cnt, 1);
+      check_equal(tlast_error_cnt, 0);
+      check_equal(error_cnt, 0);
 
       wait_all_read(net, reader);
 
     end procedure test_auto_reset ;
 
   begin
-
-    write_binary_file(FILE_NAME, generate_regular_data(TEST_DEPTH));
 
     test_runner_setup(runner, runner_cfg);
     show_all(display_handler);
@@ -307,11 +317,13 @@ begin
 
       elsif run("test_tdata_error_back_to_back") then
         tvalid_probability <= 1.0;
-        test_tdata_error;
+        test_tdata_single_error;
+        test_tdata_2_errors;
 
       elsif run("test_tdata_error_slow_rate") then
         tvalid_probability <= 0.8;
-        test_tdata_error;
+        test_tdata_single_error;
+        test_tdata_2_errors;
 
       elsif run("test_auto_reset") then
         tvalid_probability <= 1.0;
