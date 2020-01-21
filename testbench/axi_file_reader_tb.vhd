@@ -271,12 +271,8 @@ begin
     variable frame_cnt      : integer := 0;
     variable expected       : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
     variable expected_tlast : std_logic;
-    -- Very similar to axi_file_reader itself, except this file is a std_logic_vector per
-    -- line
+
     type file_status_t is (opened, closed, unknown);
-    -- variable file_status : file_status_t := unknown;
-    -- subtype data_t is std_logic_vector(DATA_WIDTH - 1 downto 0);
-    -- type file_t is file of data_t;
     variable file_status : file_status_t := unknown;
     file file_handler    : text;
     variable L           : line;
