@@ -279,7 +279,7 @@ package body file_utils_pkg is
   impure function decode_std_logic_vector_array(
     constant s          : string;
     constant data_width : integer) return std_logic_vector_array is
-    variable items      : lines_t := split(s, ",");
+    variable items      : lines_t := split(s, "|");
     variable data       : std_logic_vector_array(0 to items'length - 1)(data_width - 1 downto 0);
   begin
     debug("decoding => '" & s & "'");

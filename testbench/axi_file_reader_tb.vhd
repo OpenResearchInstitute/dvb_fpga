@@ -79,9 +79,9 @@ architecture axi_file_reader_tb of axi_file_reader_tb is
 
   impure function get_config (
     constant s        : in string) return config_array_t is
-    constant num_cfgs : integer := count(s, ";") + 1;
+    constant num_cfgs : integer := count(s, "|") + 1;
     variable cfg_list : config_array_t(0 to num_cfgs - 1);
-    variable lines    : lines_t := split(s, ";");
+    variable lines    : lines_t := split(s, "|");
   begin
 
     for i in lines'range loop

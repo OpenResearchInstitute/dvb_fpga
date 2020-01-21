@@ -97,7 +97,7 @@ package body testbench_utils_pkg is
   --
   impure function get_test_cfg ( constant str : string)
   return config_array_t is
-    variable cfg_strings : lines_t := split(str, ":");
+    variable cfg_strings : lines_t := split(str, "|");
     variable cfg_items   : lines_t;
     variable result      : config_array_t(0 to cfg_strings'length - 1);
     variable current     : config_t;

@@ -30,7 +30,7 @@ import sys
 from collections import namedtuple
 from enum import Enum
 
-from vunit import VUnit, VUnitCLI  # type: ignore
+from vunit import VUnit  # type: ignore
 
 _logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ def main():
         p.join(ROOT, "third_party", "hdl_string_format", "src", "*.vhd")
     )
 
-    addAxiStreamDelayTests(cli)
+    addAxiStreamDelayTests(cli.library("lib").entity("axi_stream_delay_tb"))
     addAxiFileReaderTests(cli.library("lib").entity("axi_file_reader_tb"))
 
     parametrizeTests(
@@ -160,23 +160,19 @@ def parametrizeTests(
                         ]
                     )
                     entity.add_config(
-                        name=test_name, generics={"test_cfg": ":".join(test_cfg)}
+                        name=test_name, generics={"test_cfg": "|".join(test_cfg)}
                     )
                     test_cfg = []
 
     if not detailed:
         assert test_cfg, f"No tests found for {entity.name}"
 
-        entity.add_config(name="all_configs", generics={"test_cfg": ":".join(test_cfg)})
+        entity.add_config(name="all_configs", generics={"test_cfg": "|".join(test_cfg)})
 
 
-def addAxiStreamDelayTests(cli):
-    axi_stream_delay_tb = cli.library("lib").entity("axi_stream_delay_tb")
-
+def addAxiStreamDelayTests(entity):
     for delay in (1, 2, 8):
-        axi_stream_delay_tb.add_config(
-            name=f"delay={delay}", parameters={"DELAY_CYCLES": delay}
-        )
+        entity.add_config(name=f"delay={delay}", parameters={"DELAY_CYCLES": delay})
 
 
 def addAxiFileReaderTests(entity):
@@ -231,7 +227,7 @@ def addAxiFileReaderTests(entity):
 
         entity.add_config(
             name=f"multiple,data_width={data_width}",
-            parameters={"DATA_WIDTH": data_width, "test_cfg": "\\;".join(all_configs)},
+            parameters={"DATA_WIDTH": data_width, "test_cfg": "|".join(all_configs)},
         )
 
 
