@@ -81,8 +81,8 @@ architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
   signal s_tlast            : std_logic;
   signal s_tready           : std_logic;
 
-  signal tvalid_probability : real := 1.0;
-  signal tready_probability : real := 1.0;
+  signal tvalid_probability : real range 0.0 to 1.0 := 1.0;
+  signal tready_probability : real range 0.0 to 1.0 := 1.0;
 
   signal m_data_valid       : boolean;
   signal s_data_valid       : boolean;

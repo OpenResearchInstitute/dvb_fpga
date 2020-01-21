@@ -87,8 +87,8 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   signal cfg_frame_type     : frame_type_t;
   signal cfg_code_rate      : code_rate_t;
 
-  signal tvalid_probability : real := 1.0;
-  signal tready_probability : real := 1.0;
+  signal tvalid_probability : real range 0.0 to 1.0 := 1.0;
+  signal tready_probability : real range 0.0 to 1.0 := 1.0;
 
   -- AXI input
   signal m_tready           : std_logic;

@@ -60,12 +60,12 @@ architecture ram_inference of ram_inference is
   -------------
   -- Signals --
   -------------
-  shared variable ram : data_array_t(2**ADDR_WIDTH - 1 downto 0);
-  signal rddata_a_i   : std_logic_vector(DATA_WIDTH - 1 downto 0);
-  signal rddata_b_i   : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal ram        : data_array_t(2**ADDR_WIDTH - 1 downto 0);
+  signal rddata_a_i : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal rddata_b_i : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
   attribute RAM_STYLE        : string;
-  attribute RAM_STYLE of ram : variable is RAM_INFERENCE_STYLE;
+  attribute RAM_STYLE of ram : signal  is RAM_INFERENCE_STYLE;
 
 begin
 
@@ -108,7 +108,7 @@ begin
       if clk_a'event and clk_a = '1' then
           if clken_a = '1' then
               if wren_a = '1' then
-                  ram(to_integer(unsigned(addr_a))) := wrdata_a;
+                  ram(to_integer(unsigned(addr_a))) <= wrdata_a;
               end if;
               rddata_a_i <= ram(to_integer(unsigned(addr_a)));
           end if;
