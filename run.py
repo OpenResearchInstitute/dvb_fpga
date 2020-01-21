@@ -22,6 +22,7 @@
 
 # pylint: disable=bad-continuation
 
+import logging
 import os.path as p
 import random
 import struct
@@ -30,6 +31,9 @@ from collections import namedtuple
 from enum import Enum
 
 from vunit import VUnit, VUnitCLI  # type: ignore
+
+_logger = logging.getLogger(__name__)
+
 
 ROOT = p.abspath(p.dirname(__file__))
 
@@ -88,28 +92,28 @@ Parameters = namedtuple("Parameters", ("constellation", "frame_length", "code_ra
 
 
 class ConstellationType(Enum):
-    mod_8psk = "MOD_8PSK"
-    mod_16apsk = "MOD_16APSK"
-    mod_32apsk = "MOD_32APSK"
+    MOD_8PSK = "8PSK"
+    MOD_16APSK = "16APSK"
+    MOD_32APSK = "32APSK"
 
 
 class FrameLength(Enum):
-    normal = "FECFRAME_NORMAL"
-    short = "FECFRAME_SHORT"
+    FECFRAME_NORMAL = "normal"
+    FECFRAME_SHORT = "short"
 
 
 class CodeRate(Enum):
-    C1_4 = "C1_4"
-    C1_3 = "C1_3"
-    C2_5 = "C2_5"
-    C1_2 = "C1_2"
-    #  C3_5 = "C3_5"
-    C2_3 = "C2_3"
-    C3_4 = "C3_4"
-    C4_5 = "C4_5"
-    C5_6 = "C5_6"
-    C8_9 = "C8_9"
-    C9_10 = "C9_10"
+    C1_4 = "1/4"
+    C1_3 = "1/3"
+    C2_5 = "2/5"
+    C1_2 = "1/2"
+    C3_5 = "3/5"
+    C2_3 = "2/3"
+    C3_4 = "3/4"
+    C4_5 = "4/5"
+    C5_6 = "5/6"
+    C8_9 = "8/9"
+    C9_10 = "9/10"
 
 
 def parametrizeTests(
@@ -126,21 +130,25 @@ def parametrizeTests(
                 data_files = p.join(
                     ROOT,
                     "gnuradio_data",
-                    f"{frame_length.value}_{constellation.value}_{code_rate.value}".upper(),
+                    f"{frame_length.name}_{constellation.name}_{code_rate.name}".upper(),
                 )
 
                 input_file_path = p.join(data_files, input_file_basename)
                 reference_file_path = p.join(data_files, reference_file_basename)
 
                 if not p.exists(input_file_path) or not p.exists(reference_file_path):
+                    if not p.exists(input_file_path):
+                        _logger.warning("No such file '%s'", input_file_path)
+                    if not p.exists(reference_file_path):
+                        _logger.warning("No such file '%s'", reference_file_path)
                     continue
 
                 test_cfg += [
                     ",".join(
                         [
-                            constellation.value,
-                            frame_length.value,
-                            code_rate.value,
+                            constellation.name,
+                            frame_length.name,
+                            code_rate.name,
                             input_file_path,
                             reference_file_path,
                         ]
@@ -148,7 +156,13 @@ def parametrizeTests(
                 ]
 
                 if detailed:
-                    test_name = f"{frame_length},{constellation},{code_rate}"
+                    test_name = ",".join(
+                        [
+                            f"FrameLength={frame_length.value}",
+                            f"ConstellationType={constellation.value}",
+                            f"CodeRate={code_rate.value}",
+                        ]
+                    )
                     entity.add_config(
                         name=test_name, generics={"test_cfg": ":".join(test_cfg)}
                     )
