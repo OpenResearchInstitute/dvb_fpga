@@ -8,6 +8,31 @@ Early work, but the idea is:
 
 ## Running tests
 
+Tests can be run locally or on a Docker container. Running locally will require
+GNU Radio, VUnit and a VHDL simulator.
+
+### Using Docker
+
+Uses the same container used for CI
+
+```sh
+# Clone this repo and submodules
+git clone --recurse-submodules  https://github.com/phase4ground/dvb_fpga
+cd dvb_fpga
+# Run the tests
+./docker/run_tests.sh
+```
+
+Arguments passed to `docker/run_tests.sh` will be passed to `run.py` and, by
+extension, to VUnit (no environment variable is passed on though).
+
+### Running locally
+
+* Requirements
+  * GNU Radio
+  * A VHDL simulator
+  * [VUnit][vunit]
+
 ```sh
 # Install VUnit
 pip install vunit-hdl
@@ -22,17 +47,4 @@ cd ..
 ./run.py
 ```
 
-### Requirements
-
-* GNU Radio
-* A mixed language simulator
-* [VUnit][vunit]
-
-**Note:** While VUnit supports many tools and switching should be
-straightforward, code in this repo has been tested mostly with
-[ModelSim][ModelSim].
-
 [vunit]: https://vunit.github.io/
-[ModelSim]: https://www.intel.com/content/www/us/en/software/programmable/quartus-prime/model-sim.html
-[third_party]: https://github.com/phase4ground/dvb_fpga/tree/master/third_party
-[axi_skid_buffer]: https://github.com/ZipCPU/wb2axip/blob/74b27bf0e214c7c28a8cba4ecd17c8cb744b4f02/rtl/skidbuffer.v
