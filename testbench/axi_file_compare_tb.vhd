@@ -167,24 +167,23 @@ begin
 
     ------------------------------------------------------------------------------------
     procedure write_data_from_file (
-      constant filename       : string;
-      constant tlast_every    : integer := -1) is
-      file file_handler       : text;
-      variable L              : line;
-      variable expected       : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
-      variable expected_tlast : std_logic;
-      variable cnt            : natural := 0;
+      constant filename    : string;
+      constant tlast_every : integer := -1) is
+      file file_handler    : text;
+      variable L           : line;
+      variable data        : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
+      variable cnt         : natural := 0;
     begin
         file_open(file_handler, filename, read_mode);
 
         while not endfile(file_handler) loop
           readline(file_handler, L);
-          hread(L, expected);
+          hread(L, data);
 
           if tlast_every = -1 then
-            write_word(expected, is_last => endfile(file_handler));
+            write_word(data, is_last => endfile(file_handler));
           else
-            write_word(expected, is_last => cnt = tlast_every);
+            write_word(data, is_last => cnt = tlast_every);
           end if;
 
           cnt := cnt + 1;
