@@ -106,6 +106,13 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
       columns := 5;
     end if;
 
+    -- We don't handle rows not being an integer multiple of DATA_WIDTH yet
+    assert (rows mod DATA_WIDTH) = 0
+      report "Frame type '" & frame_type_t'image(frame_type) & "', " &
+             "constellation '" & constellation_t'image(constellation) &
+             " is not supported yet with DATA_WIDTH " & integer'image(DATA_WIDTH)
+      severity Error;
+
     return (rows      => to_unsigned((rows + DATA_WIDTH - 1 ) / DATA_WIDTH, numbits(MAX_ROWS)),
             columns   => to_unsigned(columns, numbits(MAX_COLUMNS)),
             remainder => to_unsigned(rows mod DATA_WIDTH, numbits(DATA_WIDTH)));
@@ -160,8 +167,10 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
 
   signal rd_data_sr           : std_logic_vector(MAX_COLUMNS*DATA_WIDTH - 1 downto 0);
 
-  signal interleaved_3c       : std_logic_vector(3*DATA_WIDTH - 1 downto 0);
-  signal interleaved_4c       : std_logic_vector(4*DATA_WIDTH - 1 downto 0);
+  signal interleaved_3c_012   : std_logic_vector(3*DATA_WIDTH - 1 downto 0);
+  signal interleaved_3c_210   : std_logic_vector(3*DATA_WIDTH - 1 downto 0);
+  signal interleaved_4c_0123  : std_logic_vector(4*DATA_WIDTH - 1 downto 0);
+  signal interleaved_4c_3210  : std_logic_vector(4*DATA_WIDTH - 1 downto 0);
   signal interleaved_5c       : std_logic_vector(5*DATA_WIDTH - 1 downto 0);
 
   signal m_wr_en              : std_logic := '0';
@@ -226,16 +235,19 @@ begin
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  m_wr_data <= rd_data_sr(DATA_WIDTH - 1 downto 0);
+  m_wr_data <= mirror_bits(rd_data_sr(DATA_WIDTH - 1 downto 0));
 
   -- Assign the interleaved data statically
   iter_rows : for row in 0 to DATA_WIDTH - 1 generate
+  begin
     iter_3_columns : for column in 0 to 2 generate
-      interleaved_3c(3*DATA_WIDTH - (3 * row + column) - 1) <= ram_rd_data(column)(DATA_WIDTH - row - 1);
+      interleaved_3c_012(3*DATA_WIDTH - (3 * row + column) - 1) <= ram_rd_data(column)(DATA_WIDTH - row - 1);
+      interleaved_3c_210(3*DATA_WIDTH - (3 * row + column) - 1) <= ram_rd_data(2 - column)(DATA_WIDTH - row - 1);
     end generate;
 
     iter_4_columns : for column in 0 to 3 generate
-      interleaved_4c(4*DATA_WIDTH - (4 * row + column) - 1) <= ram_rd_data(column)(DATA_WIDTH - row - 1);
+      interleaved_4c_0123(4*DATA_WIDTH - (4 * row + column) - 1) <= ram_rd_data(column)(DATA_WIDTH - row - 1);
+      interleaved_4c_3210(4*DATA_WIDTH - (4 * row + column) - 1) <= ram_rd_data(3 - column)(DATA_WIDTH - row - 1);
     end generate iter_4_columns;
 
     iter_5_columns : for column in 0 to 4 generate
@@ -376,24 +388,35 @@ begin
           -- Assign to undefined so we can track in simulation the parts that we not
           -- assigned
           rd_data_sr <= (others => 'U');
-
           -- We'll swap byte ordering (e.g ABCD becomes DCBA) because it's easier to
           -- assign the write data from the shift register's LSB
           if cfg_rd_constellation = mod_8psk then
             if cfg_rd_code_rate = C3_5 then
-              rd_data_sr(interleaved_3c'range) <= swap_bytes(interleaved_3c);
+              rd_data_sr(interleaved_3c_210'range) <= mirror_bits(interleaved_3c_210);
             else
-              rd_data_sr(interleaved_3c'range) <= swap_bytes(interleaved_3c);
+              rd_data_sr(interleaved_3c_012'range) <= mirror_bits(interleaved_3c_012);
             end if;
+
           elsif cfg_rd_constellation = mod_16apsk then
-            rd_data_sr(interleaved_4c'range) <= swap_bytes(interleaved_4c);
+            -- TODO: DVB-S2 doesn't specify a different interleaving sequence for code
+            -- rate 3/5 and 16 APSK, only 8 PSK, check if the DVB-S2 extensions spec
+            -- mentions anything. Leave like this for now as this agrees with GNU Radio's
+            -- result
+            if cfg_rd_code_rate = C3_5 then
+              rd_data_sr(interleaved_4c_3210'range) <= mirror_bits(interleaved_4c_3210);
+            else
+              rd_data_sr(interleaved_4c_0123'range) <= mirror_bits(interleaved_4c_0123);
+            end if;
+
           elsif cfg_rd_constellation = mod_32apsk then
-            rd_data_sr <= swap_bytes(interleaved_5c);
+            rd_data_sr <= mirror_bits(interleaved_5c);
           end if;
+
         else
           -- We'll write the LSB, shift data right
           rd_data_sr <= (DATA_WIDTH - 1 downto 0 => 'U')
             & rd_data_sr(rd_data_sr'length - 1 downto DATA_WIDTH);
+
         end if;
 
       end if;

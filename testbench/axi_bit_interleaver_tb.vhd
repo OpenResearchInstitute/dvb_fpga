@@ -216,7 +216,7 @@ begin
       variable file_reader_msg  : msg_t;
     begin
 
-      set_timeout(runner, number_of_frames * 100 us);
+      set_timeout(runner, number_of_frames * 500 us);
 
       info("Running test with:");
       info(" - constellation  : " & constellation_t'image(config.constellation));

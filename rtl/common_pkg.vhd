@@ -25,21 +25,22 @@ use ieee.math_real.all;
 
 package common_pkg is
 
-    -- Calculates the number of bits required to represent a given value
-    function numbits (constant v : natural) return natural;
+  -- Calculates the number of bits required to represent a given value
+  function numbits (constant v : natural) return natural;
 
-    function swap_bytes (constant v : std_logic_vector) return std_logic_vector;
-    function swap_bits (constant v : std_logic_vector) return std_logic_vector;
+  function mirror_bytes (constant v : std_logic_vector) return std_logic_vector;
+  function mirror_bits (constant v : std_logic_vector) return std_logic_vector;
 
-    -- 
-    type integer_array_t is array (natural range <>) of integer;
-    function minimum(constant a, b : integer) return integer;
-    function minimum(constant values : integer_array_t) return integer;
+  -- 
+  type integer_array_t is array (natural range <>) of integer;
+  function minimum(constant a, b : integer) return integer;
+  function minimum(constant values : integer_array_t) return integer;
 
 end common_pkg;
 
 package body common_pkg is
 
+    ------------------------------------------------------------------------------------
     -- Calculates the number of bits required to represent a given value
     function numbits (
         constant v : natural) return natural is
@@ -49,17 +50,10 @@ package body common_pkg is
       end if;
 
       return integer(ceil(log2(real(v))));
-        -- result := 1;
-        -- while True loop
-        --     if 2**result > v then
-        --         return result;
-        --     end if;
-        --     result := result + 1;
-        -- end loop;
     end function numbits;
 
-    -- Swap bytes
-    function swap_bytes (
+    ------------------------------------------------------------------------------------
+    function mirror_bytes (
         constant v           : std_logic_vector) 
     return std_logic_vector is
         constant byte_number : natural := v'length / 8;
@@ -74,9 +68,10 @@ package body common_pkg is
             result((byte_number - byte) * 8 - 1 downto (byte_number - byte - 1) * 8) := v((byte + 1) * 8 - 1 downto byte * 8);
         end loop;
         return result;
-    end function swap_bytes;
+    end function mirror_bytes;
 
-    function swap_bits (constant v : std_logic_vector) return std_logic_vector is
+    ------------------------------------------------------------------------------------
+    function mirror_bits (constant v : std_logic_vector) return std_logic_vector is
       variable result : std_logic_vector(v'range);
     begin
       for i in v'range loop
@@ -86,11 +81,13 @@ package body common_pkg is
       return result;
     end;
 
+    ------------------------------------------------------------------------------------
     function minimum(constant a, b : integer) return integer is
     begin
       return minimum(integer_array_t'(a, b));
     end;
 
+    ------------------------------------------------------------------------------------
     function minimum(constant values : integer_array_t) return integer is
       variable result : integer;
     begin

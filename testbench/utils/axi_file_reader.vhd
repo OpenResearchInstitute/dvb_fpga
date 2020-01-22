@@ -162,7 +162,7 @@ begin
         return result;
       end if;
 
-      return swap_bytes(result);
+      return mirror_bytes(result);
 
     end function read_word_from_file;
 
