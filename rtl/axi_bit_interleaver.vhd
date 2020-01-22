@@ -111,11 +111,12 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
       report "Frame type '" & frame_type_t'image(frame_type) & "', " &
              "constellation '" & constellation_t'image(constellation) &
              " is not supported yet with DATA_WIDTH " & integer'image(DATA_WIDTH)
-      severity Error;
+      severity warning;
 
-    return (rows      => to_unsigned((rows + DATA_WIDTH - 1 ) / DATA_WIDTH, numbits(MAX_ROWS)) - 1,
+    -- return (rows      => to_unsigned((rows + DATA_WIDTH - 1 ) / DATA_WIDTH, numbits(MAX_ROWS)) - 1,
+    return (rows      => to_unsigned(rows / DATA_WIDTH, numbits(MAX_ROWS)) - 1,
             columns   => to_unsigned(columns, numbits(MAX_COLUMNS)) - 1,
-            remainder => to_unsigned(rows mod DATA_WIDTH, numbits(DATA_WIDTH)) - 1);
+            remainder => to_unsigned(rows mod DATA_WIDTH, numbits(DATA_WIDTH)));
 
   end function get_cnt_max_values;
 
@@ -126,7 +127,9 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   -- Signals --
   -------------
   signal s_axi_dv             : std_logic;
+  signal s_axi_dv_reg         : std_logic;
   signal s_tready_i           : std_logic;
+  signal s_tlast_reg          : std_logic;
 
   -- Write side config
   signal cfg_wr_constellation : constellation_t;
@@ -137,8 +140,13 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   -- Write side counters
   signal wr_row_cnt           : unsigned(numbits(MAX_ROWS) - 1 downto 0);
   signal wr_column_cnt        : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
-  signal wr_column_cnt_i      : natural range 0 to MAX_COLUMNS - 1;
+  signal wr_column_cnt_prev   : unsigned(numbits(MAX_COLUMNS) - 1 downto 0);
   signal wr_remainder         : unsigned(numbits(DATA_WIDTH) - 1 downto 0);
+  signal wr_late              : std_logic;
+  
+  signal s_tdata_reg          : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal wr_data_shifted      : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal dbg_data_shifted     : data_array_t(DATA_WIDTH - 1 downto 0);
 
   -- RAM write interface
   signal ram_wr_addr          : addr_array_t(MAX_COLUMNS - 1 downto 0);
@@ -257,12 +265,23 @@ begin
 
   -- Assign internals
   s_tready        <= s_tready_i;
-  wr_column_cnt_i <= to_integer(wr_column_cnt);
+
+  wr_data_shifted <= s_tdata_reg when wr_remainder = 0 else
+                     s_tdata_reg(DATA_WIDTH - to_integer(wr_remainder) - 1 downto 0) &
+                     s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - to_integer(wr_remainder));
+
+  g_dbg : for i in 0 to DATA_WIDTH - 1 generate
+    dbg_data_shifted(i) <= s_tdata_reg(DATA_WIDTH - i - 1 downto 0) &
+                           s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - i);
+  end generate;
+
+  -- wr_data_shifted <= dbg_data_shifted((to_integer(wr_remainder) + 6) mod DATA_WIDTH);
 
   --------------------------------
   -- Handle write side pointers --
   --------------------------------
   write_side_p : process(clk, rst)
+    variable wr_column_cnt_i : natural range 0 to MAX_COLUMNS - 1;
   begin
     if rst = '1' then
       cfg_wr_cnt    <= (others => (others => '1'));
@@ -273,13 +292,21 @@ begin
       wr_ram_ptr    <= (others => '0');
 
       first_word    <= '1';
+      wr_late       <= '0';
 
       ram_wr_addr   <= (others => (others => '0'));
 
     elsif rising_edge(clk) then
 
+      wr_column_cnt_i := to_integer(wr_column_cnt);
+
+      s_axi_dv_reg       <= s_axi_dv;
+      s_tlast_reg        <= s_tlast;
+      wr_late            <= '0';
+      wr_column_cnt_prev <= wr_column_cnt;
+
       ram_wr_en                    <= (others => '0');
-      ram_wr_data(wr_column_cnt_i) <= s_tdata;
+      ram_wr_data(wr_column_cnt_i) <= wr_data_shifted; --s_tdata;
 
       -- Increment RAM addr every time it gets written
       for column in 0 to MAX_COLUMNS - 1 loop
@@ -287,10 +314,35 @@ begin
           ram_wr_addr(column) <= ram_wr_addr(column) + 1;
         end if;
       end loop;
+      
+      if s_axi_dv = '1' then
+        first_word  <= s_tlast;
+        s_tdata_reg <= s_tdata;
+
+        if first_word = '1' then
+          cfg_wr_cnt           <= get_cnt_max_values(cfg_constellation, cfg_frame_type);
+          -- wr_remainder <= to_unsigned(2, wr_remainder'length);
+          cfg_wr_constellation <= cfg_constellation;
+          cfg_wr_frame_type    <= cfg_frame_type;
+          cfg_wr_code_rate     <= cfg_code_rate;
+        end if;
+
+        if s_tlast = '1' then
+          wr_ram_ptr <= wr_ram_ptr + 1;
+            -- -- Need to cast the result to unsigned for GHDL
+            -- ram_wr_addr <= (others => unsigned'(wr_ram_ptr & (numbits(MAX_ROWS) - 1 downto 0 => '0')));
+        end if;
+
+      end if;
+
+      if wr_late = '1' then
+        ram_wr_en(to_integer(wr_column_cnt_prev))   <= '1';
+        ram_wr_data(to_integer(wr_column_cnt_prev)) <= s_tdata_reg;
+      end if;
 
       -- Handle incoming AXI data
-      if s_axi_dv = '1' then
-        first_word <= s_tlast;
+      if s_axi_dv_reg = '1' then
+        -- first_word  <= s_tlast;
 
         ram_wr_en(wr_column_cnt_i)   <= '1';
 
@@ -298,28 +350,23 @@ begin
           wr_row_cnt <= wr_row_cnt + 1;
         else
           wr_row_cnt <= (others => '0');
+          wr_remainder <= wr_remainder + cfg_wr_cnt.remainder;
+
+          if cfg_wr_cnt.remainder /= 0 then
+            if wr_remainder - (cfg_wr_cnt.remainder & '0') = 0 then
+              wr_row_cnt <= (wr_row_cnt'range => '0') - 1; -- cfg_wr_cnt.remainder;
+            elsif wr_remainder + cfg_wr_cnt.remainder /= 0 then
+              wr_late    <= '1';
+            end if;
+          end if;
 
           if wr_column_cnt /= cfg_wr_cnt.columns then
             wr_column_cnt <= wr_column_cnt + 1;
           else
             wr_column_cnt <= (others => '0');
-            wr_ram_ptr    <= wr_ram_ptr + 1;
+            -- wr_ram_ptr    <= wr_ram_ptr + 1;
+
           end if;
-
-        end if;
-
-        if s_tlast = '1' then
-          wr_ram_ptr <= wr_ram_ptr + 1;
-        end if;
-
-        if first_word = '1' then
-          cfg_wr_cnt           <= get_cnt_max_values(cfg_constellation, cfg_frame_type);
-          cfg_wr_constellation <= cfg_constellation;
-          cfg_wr_frame_type    <= cfg_frame_type;
-          cfg_wr_code_rate     <= cfg_code_rate;
-
-          -- Need to cast the result to unsigned for GHDL
-          ram_wr_addr          <= (others => unsigned'(wr_ram_ptr & (numbits(MAX_ROWS) - 1 downto 0 => '0')));
 
         end if;
 
