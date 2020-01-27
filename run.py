@@ -55,33 +55,33 @@ def main():
         p.join(ROOT, "third_party", "hdl_string_format", "src", "*.vhd")
     )
 
+    addAllConfigsTest(
+        entity=cli.library("lib").entity("axi_bch_encoder_tb"),
+        input_file_basename="bch_encoder_input.bin",
+        reference_file_basename="ldpc_encoder_input.bin",
+    )
+
+    addAllConfigsTest(
+        entity=cli.library("lib").entity("axi_bit_interleaver_tb"),
+        input_file_basename="bit_interleaver_input.bin",
+        reference_file_basename="bit_interleaver_output.bin",
+    )
+
+    parametrizeTests(
+        entity=cli.library("lib").entity("axi_bch_encoder_tb"),
+        input_file_basename="bch_encoder_input.bin",
+        reference_file_basename="ldpc_encoder_input.bin",
+    )
+
+    parametrizeTests(
+        entity=cli.library("lib").entity("axi_bit_interleaver_tb"),
+        input_file_basename="bit_interleaver_input.bin",
+        reference_file_basename="bit_interleaver_output.bin",
+    )
+
     addAxiStreamDelayTests(cli.library("lib").entity("axi_stream_delay_tb"))
     addAxiFileReaderTests(cli.library("lib").entity("axi_file_reader_tb"))
     addAxiFileCompareTests(cli.library("lib").entity("axi_file_compare_tb"))
-
-    parametrizeTests(
-        entity=cli.library("lib").entity("axi_bch_encoder_tb"),
-        input_file_basename="bch_encoder_input.bin",
-        reference_file_basename="ldpc_encoder_input.bin",
-    )
-
-    parametrizeTests(
-        entity=cli.library("lib").entity("axi_bit_interleaver_tb"),
-        input_file_basename="bit_interleaver_input.bin",
-        reference_file_basename="bit_interleaver_output.bin",
-    )
-
-    addAllConfigsTest(
-        entity=cli.library("lib").entity("axi_bch_encoder_tb"),
-        input_file_basename="bch_encoder_input.bin",
-        reference_file_basename="ldpc_encoder_input.bin",
-    )
-
-    addAllConfigsTest(
-        entity=cli.library("lib").entity("axi_bit_interleaver_tb"),
-        input_file_basename="bit_interleaver_input.bin",
-        reference_file_basename="bit_interleaver_output.bin",
-    )
 
     cli.set_compile_option("modelsim.vcom_flags", ["-explicit"])
     cli.set_compile_option("ghdl.flags", ["-frelaxed-rules"])
