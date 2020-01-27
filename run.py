@@ -63,14 +63,12 @@ def main():
         entity=cli.library("lib").entity("axi_bch_encoder_tb"),
         input_file_basename="bch_encoder_input.bin",
         reference_file_basename="ldpc_encoder_input.bin",
-        detailed=True,
     )
 
     parametrizeTests(
         entity=cli.library("lib").entity("axi_bit_interleaver_tb"),
         input_file_basename="bit_interleaver_input.bin",
         reference_file_basename="bit_interleaver_output.bin",
-        detailed=True,
     )
 
     addAllConfigsTest(
@@ -139,9 +137,7 @@ class CodeRate(Enum):
     C9_10 = "9/10"
 
 
-def parametrizeTests(
-    entity, input_file_basename, reference_file_basename, detailed=False
-):
+def parametrizeTests(entity, input_file_basename, reference_file_basename):
     """
     Parametrize tests for a given entity by passing strings to it via the
     'test_cfg' generic.
@@ -197,7 +193,10 @@ def parametrizeTests(
 
 
 def addAllConfigsTest(entity, input_file_basename, reference_file_basename):
-
+    """
+    Adds a test config with all combinations of configurations (assuming both
+    input and reference files ca be found)
+    """
     configs = []
 
     for code_rate in CodeRate:
@@ -233,6 +232,8 @@ def addAllConfigsTest(entity, input_file_basename, reference_file_basename):
                 ]
 
     random.shuffle(configs)
+
+    assert configs, "Could not find any config files!"
 
     entity.add_config(
         name="test_all_configs",
