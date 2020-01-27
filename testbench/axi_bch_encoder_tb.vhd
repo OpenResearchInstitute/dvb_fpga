@@ -42,8 +42,9 @@ use work.file_utils_pkg.all;
 
 entity axi_bch_encoder_tb is
   generic (
-    runner_cfg : string;
-    test_cfg   : string);
+    RUNNER_CFG            : string;
+    TEST_CFG              : string;
+    NUMBER_OF_TEST_FRAMES : integer := 8);
 end axi_bch_encoder_tb;
 
 architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
@@ -51,7 +52,7 @@ architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
   ---------------
   -- Constants --
   ---------------
-  constant configs           : config_array_t := get_test_cfg(test_cfg);
+  constant configs           : config_array_t := get_test_cfg(TEST_CFG);
 
   constant FILE_READER_NAME  : string := "file_reader";
   constant FILE_CHECKER_NAME : string := "file_checker";
@@ -192,11 +193,9 @@ begin
     ------------------------------------------------------------------------------------
     procedure run_test (
       constant config           : config_t;
-      constant number_of_frames : in positive) is
+      constant number_of_frames : in positive := NUMBER_OF_TEST_FRAMES) is
       variable file_reader_msg  : msg_t;
     begin
-
-      set_timeout(runner, 3 ms);
 
       info("Running test with:");
       info(" - constellation  : " & constellation_t'image(config.constellation));
@@ -235,7 +234,7 @@ begin
 
   begin
 
-    test_runner_setup(runner, runner_cfg);
+    test_runner_setup(runner, RUNNER_CFG);
     show(display_handler, debug);
 
     while test_suite loop
@@ -247,12 +246,14 @@ begin
       tvalid_probability <= 1.0;
       tready_probability <= 1.0;
 
+      set_timeout(runner, configs'length * NUMBER_OF_TEST_FRAMES * 500 us);
+
       if run("back_to_back") then
         tvalid_probability <= 1.0;
         tready_probability <= 1.0;
 
         for i in configs'range loop
-          run_test(configs(i), number_of_frames => 1);
+          run_test(configs(i));
         end loop;
         wait_for_transfers(configs'length);
 
@@ -261,7 +262,7 @@ begin
         tready_probability <= 1.0;
 
         for i in configs'range loop
-          run_test(configs(i), number_of_frames => 1);
+          run_test(configs(i));
         end loop;
         wait_for_transfers(configs'length);
 
@@ -270,7 +271,7 @@ begin
         tready_probability <= 1.0;
 
         for i in configs'range loop
-          run_test(configs(i), number_of_frames => 1);
+          run_test(configs(i));
         end loop;
         wait_for_transfers(configs'length);
 
@@ -279,7 +280,7 @@ begin
         tready_probability <= 0.75;
 
         for i in configs'range loop
-          run_test(configs(i), number_of_frames => 1);
+          run_test(configs(i));
         end loop;
         wait_for_transfers(configs'length);
 

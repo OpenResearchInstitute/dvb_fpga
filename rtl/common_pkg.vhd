@@ -31,10 +31,11 @@ package common_pkg is
   function mirror_bytes (constant v : std_logic_vector) return std_logic_vector;
   function mirror_bits (constant v : std_logic_vector) return std_logic_vector;
 
-  -- 
+  --
   type integer_array_t is array (natural range <>) of integer;
   function minimum(constant a, b : integer) return integer;
   function minimum(constant values : integer_array_t) return integer;
+  function to_boolean( v : std_ulogic) return boolean;
 
 end common_pkg;
 
@@ -54,7 +55,7 @@ package body common_pkg is
 
     ------------------------------------------------------------------------------------
     function mirror_bytes (
-        constant v           : std_logic_vector) 
+        constant v           : std_logic_vector)
     return std_logic_vector is
         constant byte_number : natural := v'length / 8;
         variable result      : std_logic_vector(v'range);
@@ -103,5 +104,13 @@ package body common_pkg is
 
     end;
 
+  --------------------------------------------------------------------------------------
+  function to_boolean( v : std_ulogic) return boolean is begin
+    case v is
+      when '0' | 'L'   => return (false);
+      when '1' | 'H'   => return (true);
+      when others      => return (false);
+    end case;
+  end to_boolean;
 end package body;
 

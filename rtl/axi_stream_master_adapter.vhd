@@ -95,7 +95,7 @@ begin
     -- Assert the full flag whenever we run out of space to store more data. At this
     -- point, if the write interface doesn't respect MAX_SKEW_CYCLES *and* m_tready is
     -- deasserted, there will loss of data
-    wr_full_i <= '1' when ptr_diff >= BUFFER_DEPTH - MAX_SKEW_CYCLES - 1 else '0';
+    wr_full_i <= '0' when ptr_diff < MAX_SKEW_CYCLES else '1';
 
     -- Assign internals
     m_tvalid <= axi_tvalid;

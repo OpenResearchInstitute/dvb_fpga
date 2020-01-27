@@ -40,12 +40,4 @@ su -l "$USERNAME" -c "    \
   pushd gnuradio_data  && \
   make all -j4 -k;        \
   popd                 && \
-  PATH=/builders/ghdl/bin/:$PATH ./run.py ${VUNIT_ARGS[*]}"
-
-# # Run test with ModelSim
-# su -l "$USERNAME" -c "    \
-#   cd /project          && \
-#   pushd gnuradio_data  && \
-#   make all -j4 -k;        \
-#   popd                 && \
-#   PATH=/builders/msim/modelsim_ase/linuxaloem/:$PATH ./run.py ${VUNIT_ARGS[*]}"
+  ./run.py ${VUNIT_ARGS[*]}"

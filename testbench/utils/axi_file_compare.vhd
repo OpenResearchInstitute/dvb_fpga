@@ -38,6 +38,9 @@ use str_format.str_format_pkg.all;
 library vunit_lib;
 context vunit_lib.vunit_context;
 
+
+use work.common_pkg.all;
+
 ------------------------
 -- Entity declaration --
 ------------------------
@@ -173,7 +176,7 @@ begin
 
           warning(
             sformat(
-              "tdata error in frame %d, word %d: Expected %r but got %r",
+              "TDATA error in frame %d, word %d: Expected %r but got %r",
               fo(frame_cnt), fo(word_cnt), fo(expected_tdata_i), fo(s_tdata)));
 
             -- severity REPORT_SEVERITY;
@@ -186,9 +189,8 @@ begin
 
           warning(
             sformat(
-              "tlast error in frame %d, word %d: Expected %r but got %r",
-              fo(frame_cnt), fo(word_cnt), fo(expected_tlast_i), fo(s_tlast)));
-
+              "TLAST error in frame %d, word %d: Expected %r but got %r",
+              fo(frame_cnt), fo(word_cnt), fo(to_boolean(expected_tlast_i)), fo(to_boolean(s_tlast))));
         end if;
 
       end if;
