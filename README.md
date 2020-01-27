@@ -3,6 +3,10 @@
 This project aims to implement RTL components for DVB-S2, initially focusing on
 the transmission side.
 
+| ![System architecture](misc/system_architecture.png)                        |
+| :---:                                                                       |
+| Functional block diagram of the DVB-S2 System from ETSI EN 302 307-1 V1.4.1 |
+
 ## Functional guidelines
 
 * Behaviour should match exactly what GNU Radio produces for every combination of
@@ -18,19 +22,45 @@ the transmission side.
 
 ## Components' status
 
+<!-- Definitions of each development stage: -->
+
+<!-- * Simulation -->
+<!--   * Data must match GNU Radio's output -->
+<!--   * **Back to back data:** check no bubbles are inserted -->
+<!--   * **Slow reader:** check that AXI backpressure works as expected -->
+<!--   * **Slow writer:** check that output data is throttled correctly -->
+<!--   * **Slow write and reader:** check AXI handshaking works as expected -->
+<!-- * Hardware testing -->
+<!--   * Check components is synthesized/implemented as expected by EDA tools -->
+<!--   * Check for possible timing issues (too many logic levels, unintended latches, -->
+<!--     etc) -->
+<!--   [> * Still TBD. Basic idea is to stream data in/out via PCIe or DDR where the host <] -->
+<!--   [>   compares the actual and the expected results <] -->
+<!--   [> * Might be interesting to have a generic GNU Radio to PCIe bridge so that one <] -->
+<!--   [>   could offload create a block diagram on GRC and run parts of it on a real <] -->
+<!--   [>   card <] -->
+<!-- * Hardware integration -->
+<!--   * Same as hardware testing but chaining components together to check it handles -->
+<!--     multiple configs as expected -->
+<!--   * Check that timing constraints are met when components are used together -->
+
 ### Core DVB-S2 components
 
-| Component name      | Status              | Notes                                            |
-| :---                | :---:               | :---                                             |
-| AXI BCH encoder     | Simulation complete | Different data widths can be generated           |
-| AXI bit interleaver | Simulation complete | No generic data width (fixed to 8 at the moment) |
+| Component name           | Simulation | HW testing | HW integration | Notes                                  |
+| :---                     | :---:      | :--:       | :--:           | :---                                   |
+| Baseband scrambler       | TODO       | TODO       | TODO           |                                        |
+| BCH encoder              | Done       | TODO       | TODO           | Different data widths can be generated |
+| Bit interleaver          | Done       | TODO       | TODO           | Data width fixed at 8 at the moment    |
+| Constellation mapper     | TODO       | TODO       | TODO           |                                        |
+| LDPC Encoder             | TODO       | TODO       | TODO           |                                        |
+| Physical layer framing   | TODO       | TODO       | TODO           |                                        |
 
 ### Simulation helpers
 
-| Component name   | Status              | Notes               |
-| :---             | :---:               | :---                |
-| AXI file reader  | Simulation complete | [Issue #1][issue_1] |
-| AXI file compare | Simulation complete |                     |
+| Component name   | Simulation | HW testing | HW integration | Notes               |
+| :---             | :---:      | :--:       | :--:           | :---                |
+| AXI file reader  | Done       | -          | -              | [Issue #1][issue_1] |
+| AXI file compare | Done       | -          | -              | [Issue #1][issue_1] |
 
 ## Running tests
 
