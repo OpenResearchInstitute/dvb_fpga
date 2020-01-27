@@ -25,19 +25,19 @@ PATH_TO_REPO=$(git rev-parse --show-toplevel)
 
 VUNIT_ARGS="$*"
 
-CONTAINER="suoto/dvb_fpga_ci:fix_bit_interleaver"
+CONTAINER="suoto/dvb_fpga_ci"
 
 # Need to add some variables so that uploading coverage from witihin the
 # container to codecov works
-docker run                                                        \
-  --rm                                                            \
+docker run                                                 \
+  --rm                                                     \
   --mount type=bind,source="$PATH_TO_REPO",target=/project \
-  --net=host                                                      \
-  --env="DISPLAY"                                                 \
-  --volume="$HOME/.Xauthority:/root/.Xauthority:rw"               \
-  --env USER_ID="$(id -u)"                                        \
-  --env GROUP_ID="$(id -g)"                                       \
-  --env VUNIT_ARGS="$VUNIT_ARGS"                                  \
-  --env USERNAME="$USER"                                          \
+  --net=host                                               \
+  --env="DISPLAY"                                          \
+  --volume="$HOME/.Xauthority:/root/.Xauthority:rw"        \
+  --env USER_ID="$(id -u)"                                 \
+  --env GROUP_ID="$(id -g)"                                \
+  --env VUNIT_ARGS="$VUNIT_ARGS"                           \
+  --env USERNAME="$USER"                                   \
   $CONTAINER /project/docker/docker_entry_point.sh
 
