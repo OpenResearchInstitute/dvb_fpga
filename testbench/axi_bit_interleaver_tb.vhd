@@ -221,14 +221,14 @@ begin
       info(" - constellation  : " & constellation_t'image(config.constellation));
       info(" - frame_type     : " & frame_type_t'image(config.frame_type));
       info(" - code_rate      : " & code_rate_t'image(config.code_rate));
-      info(" - input_file     : " & config.input_file);
-      info(" - reference_file : " & config.reference_file);
+      info(" - input_file     : " & config.files.input);
+      info(" - reference_file : " & config.files.reference);
 
       for i in 0 to number_of_frames - 1 loop
         file_reader_msg := new_msg;
         file_reader_msg.sender := self;
 
-        push(file_reader_msg, config.input_file);
+        push(file_reader_msg, config.files.input);
         push(file_reader_msg, config.constellation);
         push(file_reader_msg, config.frame_type);
         push(file_reader_msg, config.code_rate);
@@ -237,7 +237,7 @@ begin
         enqueue_file(
           net,
           file_checker,
-          config.reference_file,
+          config.files.reference,
           get_checker_data_ratio(config.constellation)
         );
 

@@ -28,24 +28,31 @@ use work.dvb_utils_pkg.all;
 
 package testbench_utils_pkg is
 
+  type file_pair_t is record
+    input : string(1 to 1024);
+    reference : string(1 to 1024);
+  end record;
+
+  type file_pair_array_t is array (natural range <>) of file_pair_t;
+
   type config_t is record
     constellation : constellation_t;
     frame_type : frame_type_t;
     code_rate : code_rate_t;
-    input_file : string(1 to 1024);
-    reference_file : string(1 to 1024);
+    files : file_pair_t;
   end record;
 
   type config_array_t is array (natural range <>) of config_t;
 
   function to_string( constant config : config_t ) return string;
+  function to_string( constant config : file_pair_t ) return string;
 
   -- Add double quotes around a string
   function quote ( constant s : string ) return string;
   function quote ( constant s : character ) return string;
 
-  impure function get_test_cfg ( constant str : string)
-  return config_array_t;
+  impure function get_test_cfg ( constant str : string) return config_array_t;
+  impure function get_test_cfg ( constant str : string) return file_pair_array_t;
 
   procedure push(msg : msg_t; value : constellation_t);
   procedure push(msg : msg_t; value : frame_type_t);
@@ -118,13 +125,46 @@ package body testbench_utils_pkg is
       current.constellation := constellation_t'value(cfg_items(0).all);
       current.frame_type := frame_type_t'value(cfg_items(1).all);
       current.code_rate := code_rate_t'value(cfg_items(2).all);
-      current.input_file := (others => nul);
-      current.reference_file := (others => nul);
+      current.files.input := (others => nul);
+      current.files.reference := (others => nul);
 
-      current.input_file(cfg_items(3).all'range) := cfg_items(3).all;
-      current.reference_file(cfg_items(4).all'range) := cfg_items(4).all;
+      current.files.input(cfg_items(3).all'range) := cfg_items(3).all;
+      current.files.reference(cfg_items(4).all'range) := cfg_items(4).all;
 
       result(i) := current;
+
+    end loop;
+
+    info("Parsed " & integer'image(result'length) & " configuration(s):");
+    for i in result'range loop
+      info("- " & integer'image(i) & ": " & to_string(result(i)));
+    end loop;
+
+    return result;
+
+  end function get_test_cfg;
+
+  impure function get_test_cfg ( constant str : string) return file_pair_array_t is
+    variable cfg_strings : lines_t := split(str, "|");
+    variable cfg_items   : lines_t;
+    variable result      : file_pair_array_t(0 to cfg_strings'length - 1);
+    variable current     : config_t;
+  begin
+
+    if cfg_strings'length = 0 then
+      warning("Could not parse any config from " & quote(str));
+      return result;
+    end if;
+
+    for i in 0 to cfg_strings'length - 1 loop
+      cfg_items := split(cfg_strings(i).all, ",");
+      
+      if cfg_items'length /= 2 then
+        failure("Malformed config string " & quote(cfg_strings(i).all));
+      end if;
+
+      result(i) := (input => cfg_items(0).all,
+                    reference => cfg_items(1).all);
 
     end loop;
 
@@ -155,8 +195,16 @@ package body testbench_utils_pkg is
       & "constellation=" & quote(constellation_t'image(config.constellation)) & ", "
       & "frame_type=" & quote(frame_type_t'image(config.frame_type)) & ", "
       & "code_rate=" & quote(code_rate_t'image(config.code_rate)) & ", "
-      & "input_file=" & quote(config.input_file) & ", "
-      & "reference_file=" & quote(config.reference_file) & ")";
+      & "input=" & quote(config.files.input) & ", "
+      & "reference=" & quote(config.files.reference) & ")";
+  end function to_string;
+
+  -- Returns a string representation of config_t
+  function to_string( constant config : file_pair_t ) return string is
+  begin
+    return "file_pair("
+      & "input=" & quote(config.input) & ", "
+      & "reference=" & quote(config.reference) & ")";
   end function to_string;
 
 end package body;
