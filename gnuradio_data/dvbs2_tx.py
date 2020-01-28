@@ -23,7 +23,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Dvbs2 Tx
-# Generated: Sat Jan  4 13:55:02 2020
+# Generated: Tue Jan 28 10:36:23 2020
 ##################################################
 
 
@@ -183,6 +183,8 @@ class dvbs2_tx(gr.top_block):
         self.bit_interleaver_input.set_unbuffered(False)
         self.bch_encoder_input = blocks.file_sink(gr.sizeof_char*1, 'bch_encoder_input.bin', False)
         self.bch_encoder_input.set_unbuffered(False)
+        self.bb_scrambler_input_0 = blocks.file_sink(gr.sizeof_char*1, 'bb_scrambler_input.bin', False)
+        self.bb_scrambler_input_0.set_unbuffered(False)
         self.analog_random_source_x_0 = blocks.vector_source_b(map(int, numpy.random.randint(0, 255, frame_length)), False)
         self.analog_noise_source_x_1 = analog.noise_source_c(analog.GR_GAUSSIAN, noise, 0)
         self.analog_agc_xx_0 = analog.agc_cc(1e-4, 1.0, 1.0)
@@ -210,6 +212,7 @@ class dvbs2_tx(gr.top_block):
         self.connect((self.digital_costas_loop_cc_0, 0), (self.blocks_conjugate_cc_0, 0))
         self.connect((self.digital_costas_loop_cc_0, 0), (self.blocks_delay_0, 0))
         self.connect((self.digital_pfb_clock_sync_xxx_0, 0), (self.digital_costas_loop_cc_0, 0))
+        self.connect((self.dtv_dvb_bbheader_bb_0, 0), (self.bb_scrambler_input_0, 0))
         self.connect((self.dtv_dvb_bbheader_bb_0, 0), (self.dtv_dvb_bbscrambler_bb_0, 0))
         self.connect((self.dtv_dvb_bbscrambler_bb_0, 0), (self.bch_encoder_input, 0))
         self.connect((self.dtv_dvb_bbscrambler_bb_0, 0), (self.dtv_dvb_bch_bb_0, 0))

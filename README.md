@@ -46,14 +46,14 @@ the transmission side.
 
 ### Core DVB-S2 components
 
-| Component name           | Simulation | HW testing | HW integration | Notes                                  |
-| :---                     | :---:      | :--:       | :--:           | :---                                   |
-| Baseband scrambler       | TODO       | TODO       | TODO           |                                        |
-| BCH encoder              | Done       | TODO       | TODO           | Different data widths can be generated |
-| Bit interleaver          | Done       | TODO       | TODO           | Data width fixed at 8 at the moment    |
-| Constellation mapper     | TODO       | TODO       | TODO           |                                        |
-| LDPC Encoder             | TODO       | TODO       | TODO           |                                        |
-| Physical layer framing   | TODO       | TODO       | TODO           |                                        |
+| Component name         | Simulation | HW testing | HW integration | Notes                                  |
+| :---                   | :---:      | :--:       | :--:           | :---                                   |
+| Baseband scrambler     | Done       | TODO       | TODO           |                                        |
+| BCH encoder            | Done       | TODO       | TODO           | Different data widths can be generated |
+| Bit interleaver        | Done       | TODO       | TODO           | Data width fixed at 8 at the moment    |
+| Constellation mapper   | TODO       | TODO       | TODO           |                                        |
+| LDPC Encoder           | TODO       | TODO       | TODO           |                                        |
+| Physical layer framing | TODO       | TODO       | TODO           |                                        |
 
 ### Simulation helpers
 

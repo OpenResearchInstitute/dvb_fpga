@@ -67,6 +67,12 @@ def main():
         reference_file_basename="bit_interleaver_output.bin",
     )
 
+    addAllConfigsTest(
+        entity=cli.library("lib").entity("axi_baseband_scrambler_tb"),
+        input_file_basename="bb_scrambler_input.bin",
+        reference_file_basename="bch_encoder_input.bin",
+    )
+
     parametrizeTests(
         entity=cli.library("lib").entity("axi_bch_encoder_tb"),
         input_file_basename="bch_encoder_input.bin",
