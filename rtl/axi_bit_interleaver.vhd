@@ -197,7 +197,7 @@ begin
   -- a couple of cycles to stop the pipeline
   axi_master_adapter_u : entity work.axi_stream_master_adapter
     generic map (
-      MAX_SKEW_CYCLES => 2,
+      MAX_SKEW_CYCLES => 3,
       TDATA_WIDTH     => DATA_WIDTH)
     port map (
       -- Usual ports
@@ -267,21 +267,24 @@ begin
         falling => rd_en,
         toggle  => open);
 
-    -- Not really a FIFO but uses less logic
-    cfg_fifo_u : entity work.axi_stream_master_adapter
+    -- Very small FIFO for the config just to detach the write and read sides
+    cfg_fifo_u: entity work.axi_stream_fifo
       generic map (
-        MAX_SKEW_CYCLES => 2,
-        TDATA_WIDTH     => FRAME_TYPE_WIDTH + CONSTELLATION_WIDTH + CODE_RATE_WIDTH)
+        FIFO_DEPTH          => 2,
+        DATA_WIDTH          => FRAME_TYPE_WIDTH + CONSTELLATION_WIDTH + CODE_RATE_WIDTH,
+        RAM_INFERENCE_STYLE => "distributed")
       port map (
         -- Usual ports
-        clk      => clk,
-        reset    => rst,
-        -- wanna-be AXI interface
-        wr_en    => wr_cfg_wr_en,
-        wr_full  => wr_full,
-        wr_data  => wr_data,
-        wr_last  => '0',
-        -- AXI master
+        clk     => clk,
+        rst     => rst,
+
+        -- Write side
+        s_tvalid => wr_cfg_wr_en,
+        s_tready => open,
+        s_tdata  => wr_data,
+        s_tlast  => '0',
+
+        -- Read side
         m_tvalid => open,
         m_tready => rd_en,
         m_tdata  => rd_data,
