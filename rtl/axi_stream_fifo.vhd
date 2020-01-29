@@ -80,6 +80,8 @@ architecture axi_stream_fifo of axi_stream_fifo is
 
   -- Internals
   signal s_tready_i      : std_logic;
+  signal ram_wr_addr     : std_logic_vector(numbits(FIFO_DEPTH) - 1 downto 0);
+  signal ram_rd_addr     : std_logic_vector(numbits(FIFO_DEPTH) - 1 downto 0);
 
 
 begin
@@ -98,14 +100,14 @@ begin
       clk_a     => clk,
       clken_a   => '1',
       wren_a    => s_axi_dv,
-      addr_a    => std_logic_vector(ram_wr_ptr(ram_wr_ptr'length - 2 downto 0)),
+      addr_a    => ram_wr_addr,
       wrdata_a  => ram_wr_data_agg,
       rddata_a  => open,
 
       -- Port B
       clk_b     => clk,
       clken_b   => '1',
-      addr_b    => std_logic_vector(ram_rd_ptr(ram_rd_ptr'length - 2 downto 0)),
+      addr_b    => ram_rd_addr,
       rddata_b  => ram_rd_data_agg);
 
   output_adapter_u : entity work.axi_stream_master_adapter
@@ -138,7 +140,10 @@ begin
   ram_rd_en       <= '1' when ram_rd_full = '0' and ptr_diff /= 0 else '0';
 
   -- Assign internals
-  s_tready        <= s_tready_i;
+  s_tready    <= s_tready_i;
+  -- GHDL fails with bound check error if this is wired directly
+  ram_wr_addr <= std_logic_vector(ram_wr_ptr(ram_wr_ptr'length - 2 downto 0));
+  ram_rd_addr <= std_logic_vector(ram_rd_ptr(ram_rd_ptr'length - 2 downto 0));
 
   ---------------
   -- Processes --
