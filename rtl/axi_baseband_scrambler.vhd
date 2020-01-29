@@ -36,20 +36,20 @@ entity axi_baseband_scrambler is
   generic (DATA_WIDTH : positive := 8);
   port (
     -- Usual ports
-    clk               : in  std_logic;
-    rst               : in  std_logic;
+    clk      : in  std_logic;
+    rst      : in  std_logic;
 
     -- AXI input
-    s_tvalid          : in  std_logic;
-    s_tdata           : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
-    s_tlast           : in  std_logic;
-    s_tready          : out std_logic;
+    s_tvalid : in  std_logic;
+    s_tdata  : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
+    s_tlast  : in  std_logic;
+    s_tready : out std_logic;
 
     -- AXI output
-    m_tready          : in  std_logic;
-    m_tvalid          : out std_logic;
-    m_tlast           : out std_logic;
-    m_tdata           : out std_logic_vector(DATA_WIDTH - 1 downto 0));
+    m_tready : in  std_logic;
+    m_tvalid : out std_logic;
+    m_tlast  : out std_logic;
+    m_tdata  : out std_logic_vector(DATA_WIDTH - 1 downto 0));
 end axi_baseband_scrambler;
 
 architecture axi_baseband_scrambler of axi_baseband_scrambler is
