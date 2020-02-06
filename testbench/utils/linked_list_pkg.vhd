@@ -51,6 +51,7 @@ package linked_list_pkg is
     impure function pop return type_t;
     impure function get(index : natural) return type_t;
     impure function items return array_t;
+    impure function size return integer;
     impure function empty return boolean;
   end protected;
 
@@ -61,7 +62,7 @@ package body linked_list_pkg is
   type linked_list_t is protected body
     variable m_head   : ptr_t := null;
     variable m_tail   : ptr_t := null;
-    variable m_items  : natural := 0;
+    variable m_size   : natural := 0;
     constant m_logger : logger_t := get_logger("linked_list_logger");
 
     procedure append (variable item : inout type_t) is
@@ -80,29 +81,33 @@ package body linked_list_pkg is
         m_head := m_tail;
       end if;
 
-      m_items := m_items + 1;
-      debug(m_logger, sformat("List now has %d items", fo(m_items)));
-
+      --trace(m_logger, sformat("List size: %d -> %d", fo(m_size), fo(m_size + 1)));
+      m_size := m_size + 1;
+      
     end;
 
     impure function pop return type_t is
       variable item : type_t;
       variable next_head : ptr_t;
     begin
-      assert m_head /= null
+      -- --trace(m_logger, sformat("List size: %d, head: %s", fo(m_size), fo(m_head = null)));
+      assert m_head /= null and m_size /= 0
         report "List is empty"
         severity Failure;
 
-      debug(m_logger, "Assigning item");
+      -- --trace(m_logger, "Assigning item");
       item := m_head.content;
-      debug(m_logger, "saving next head");
+      -- --trace(m_logger, "saving next head");
       next_head := m_head.next_ptr;
-      debug(m_logger, "Deallocating head");
-      deallocate(m_head);
-      debug(m_logger, "Assigning next head");
+      -- --trace(m_logger, "Deallocating head");
+      -- deallocate(m_head);
+      -- --trace(m_logger, "Assigning next head");
       m_head := next_head;
-      m_items := m_items - 1;
-      debug(m_logger, sformat("List now has %d items", fo(m_items)));
+
+      --trace(m_logger, sformat("List size: %d -> %d", fo(m_size), fo(m_size - 1)));
+      m_size := m_size - 1;
+      -- --trace(m_logger, sformat("List now has %d items", fo(m_size)));
+
 
       return item;
 
@@ -121,16 +126,16 @@ package body linked_list_pkg is
     end;
 
     impure function items return array_t is
-      variable list    : array_t(0 to m_items - 1);
+      variable list    : array_t(0 to m_size - 1);
       variable current : ptr_t;
     begin
-      if m_items = 0 then
+      if m_size = 0 then
         return list;
       end if;
 
       current := m_head;
 
-      for i in 0 to m_items - 1 loop
+      for i in 0 to m_size - 1 loop
         list(i) := current.content;
         current := current.next_ptr;
       end loop;
@@ -140,7 +145,12 @@ package body linked_list_pkg is
 
     impure function empty return boolean is
     begin
-      return m_items = 0;
+      return m_size = 0;
+    end;
+
+    impure function size return integer is
+    begin
+      return m_size;
     end;
 
   end protected body;

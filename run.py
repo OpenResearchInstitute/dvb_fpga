@@ -28,6 +28,7 @@ import random
 import struct
 import sys
 from enum import Enum
+from typing import NamedTuple
 
 from vunit import VUnit  # type: ignore
 
@@ -35,70 +36,6 @@ _logger = logging.getLogger(__name__)
 
 
 ROOT = p.abspath(p.dirname(__file__))
-
-
-def main():
-    "Main entry point for DVB FPGA test runner"
-    cli = VUnit.from_argv()
-    cli.add_osvvm()
-    cli.add_com()
-    cli.enable_location_preprocessing()
-
-    library = cli.add_library("lib")
-    library.add_source_files(p.join(ROOT, "rtl", "*.vhd"))
-    library.add_source_files(p.join(ROOT, "rtl", "bch_generated", "*.vhd"))
-
-    library.add_source_files(p.join(ROOT, "testbench", "*.vhd"))
-    library.add_source_files(p.join(ROOT, "testbench", "*", "*.vhd"))
-
-    cli.add_library("str_format").add_source_files(
-        p.join(ROOT, "third_party", "hdl_string_format", "src", "*.vhd")
-    )
-
-    addAllConfigsTest(
-        entity=cli.library("lib").entity("axi_bch_encoder_tb"),
-        input_file_basename="bch_encoder_input.bin",
-        reference_file_basename="ldpc_encoder_input.bin",
-    )
-
-    addAllConfigsTest(
-        entity=cli.library("lib").entity("axi_bit_interleaver_tb"),
-        input_file_basename="bit_interleaver_input.bin",
-        reference_file_basename="bit_interleaver_output.bin",
-    )
-
-    addAllConfigsTest(
-        entity=cli.library("lib").entity("axi_baseband_scrambler_tb"),
-        input_file_basename="bb_scrambler_input.bin",
-        reference_file_basename="bch_encoder_input.bin",
-    )
-
-    parametrizeTests(
-        entity=cli.library("lib").entity("axi_bch_encoder_tb"),
-        input_file_basename="bch_encoder_input.bin",
-        reference_file_basename="ldpc_encoder_input.bin",
-    )
-
-    parametrizeTests(
-        entity=cli.library("lib").entity("axi_bit_interleaver_tb"),
-        input_file_basename="bit_interleaver_input.bin",
-        reference_file_basename="bit_interleaver_output.bin",
-    )
-
-    addAxiStreamDelayTests(cli.library("lib").entity("axi_stream_delay_tb"))
-    addAxiFileReaderTests(cli.library("lib").entity("axi_file_reader_tb"))
-    addAxiFileCompareTests(cli.library("lib").entity("axi_file_compare_tb"))
-
-    cli.set_compile_option("modelsim.vcom_flags", ["-explicit"])
-    cli.set_compile_option("ghdl.flags", ["-frelaxed-rules"])
-
-    # Needed for older ModelSim versions
-    # cli.set_compile_option("modelsim.vcom_flags", ["-novopt"])
-    # cli.set_sim_option("modelsim.vsim_flags", ["-novopt"])
-
-    cli.set_sim_option("disable_ieee_warnings", True)
-    cli.set_sim_option("modelsim.init_file.gui", p.join(ROOT, "wave.do"))
-    cli.main()
 
 
 class ConstellationType(Enum):
@@ -143,59 +80,134 @@ class CodeRate(Enum):
     C9_10 = "9/10"
 
 
-def parametrizeTests(entity, input_file_basename, reference_file_basename):
-    """
-    Parametrize tests for a given entity by passing strings to it via the
-    'test_cfg' generic.
+class TestDefinition(
+    NamedTuple(
+        "TestDefinition",
+        [
+            ("name", str),
+            ("test_files_path", str),
+            ("code_rate", CodeRate),
+            ("frame_length", FrameLength),
+            ("constellation", ConstellationType),
+        ],
+    )
+):
+    def getTestConfig(self, input_file_path, reference_file_path):
+        return ",".join(
+            [
+                self.constellation.name,
+                self.frame_length.name,
+                self.code_rate.name,
+                p.join(self.test_files_path, input_file_path),
+                p.join(self.test_files_path, reference_file_path),
+            ]
+        )
 
-    Each entry is composed by constellation, frame_type, code_rate, input_file,
-    reference_file (in this order), with commas as separator. There can be
-    multiple config sets, all of them following the same structure; each config
-    set is separated by the pipe ("|") character.
-    """
 
-    for code_rate in CodeRate:
+def _getAllConfigs(
+    code_rates=CodeRate, frame_lengths=FrameLength, constellations=ConstellationType
+):
 
-        for frame_length in FrameLength:
-            for constellation in ConstellationType:
-
-                data_files = p.join(
+    for code_rate in code_rates:
+        for frame_length in frame_lengths:
+            for constellation in constellations:
+                test_files_path = p.join(
                     ROOT,
                     "gnuradio_data",
                     f"{frame_length.name}_{constellation.name}_{code_rate.name}".upper(),
                 )
 
-                input_file_path = p.join(data_files, input_file_basename)
-                reference_file_path = p.join(data_files, reference_file_basename)
-
-                if not p.exists(input_file_path) or not p.exists(reference_file_path):
-                    if not p.exists(input_file_path):
-                        _logger.warning("No such file '%s'", input_file_path)
-                    if not p.exists(reference_file_path):
-                        _logger.warning("No such file '%s'", reference_file_path)
-                    continue
-
-                test_cfg = ",".join(
-                    [
-                        constellation.name,
-                        frame_length.name,
-                        code_rate.name,
-                        input_file_path,
-                        reference_file_path,
-                    ]
-                )
-
-                test_name = ",".join(
+                name = ",".join(
                     [
                         f"FrameLength={frame_length.value}",
                         f"ConstellationType={constellation.value}",
                         f"CodeRate={code_rate.value}",
                     ]
                 )
-                entity.add_config(
-                    name=test_name,
-                    generics=dict(test_cfg=test_cfg, NUMBER_OF_TEST_FRAMES=8),
+
+                yield TestDefinition(
+                    name, test_files_path, code_rate, frame_length, constellation
                 )
+
+
+TEST_CONFIGS = set(_getAllConfigs())
+
+
+def main():
+    "Main entry point for DVB FPGA test runner"
+    cli = VUnit.from_argv()
+    cli.add_osvvm()
+    cli.add_com()
+    cli.enable_location_preprocessing()
+
+    library = cli.add_library("lib")
+    library.add_source_files(p.join(ROOT, "rtl", "*.vhd"))
+    library.add_source_files(p.join(ROOT, "rtl", "bch_generated", "*.vhd"))
+
+    library.add_source_files(p.join(ROOT, "testbench", "*.vhd"))
+    library.add_source_files(p.join(ROOT, "testbench", "*", "*.vhd"))
+
+    cli.add_library("str_format").add_source_files(
+        p.join(ROOT, "third_party", "hdl_string_format", "src", "*.vhd")
+    )
+
+    addAllConfigsTest(
+        entity=cli.library("lib").entity("axi_bch_encoder_tb"),
+        input_file_basename="bch_encoder_input.bin",
+        reference_file_basename="ldpc_encoder_input.bin",
+    )
+
+    addAllConfigsTest(
+        entity=cli.library("lib").entity("axi_bit_interleaver_tb"),
+        input_file_basename="bit_interleaver_input.bin",
+        reference_file_basename="bit_interleaver_output.bin",
+    )
+
+    addAllConfigsTest(
+        entity=cli.library("lib").entity("axi_baseband_scrambler_tb"),
+        input_file_basename="bb_scrambler_input.bin",
+        reference_file_basename="bch_encoder_input.bin",
+    )
+
+    # BCH encoding doesn't depend on the constellation type, choose any
+    for config in _getAllConfigs(constellations=(ConstellationType.MOD_8PSK,)):
+        cli.library("lib").entity("axi_bch_encoder_tb").add_config(
+            name=config.name,
+            generics=dict(
+                test_cfg=config.getTestConfig(
+                    input_file_path="bch_encoder_input.bin",
+                    reference_file_path="ldpc_encoder_input.bin",
+                ),
+                NUMBER_OF_TEST_FRAMES=8,
+            ),
+        )
+
+    for data_width in (1, 8):
+        for config in _getAllConfigs():
+            cli.library("lib").entity("axi_bit_interleaver_tb").add_config(
+                name=f'data_width={data_width},{config.name}',
+                generics=dict(
+                    DATA_WIDTH=data_width,
+                    test_cfg=config.getTestConfig(
+                        input_file_path="bit_interleaver_input.bin",
+                        reference_file_path="bit_interleaver_output.bin",
+                    ),
+                    NUMBER_OF_TEST_FRAMES=8,
+                ),
+            )
+
+    addAxiStreamDelayTests(cli.library("lib").entity("axi_stream_delay_tb"))
+    addAxiFileReaderTests(cli.library("lib").entity("axi_file_reader_tb"))
+    addAxiFileCompareTests(cli.library("lib").entity("axi_file_compare_tb"))
+
+    cli.set_compile_option("modelsim.vcom_flags", ["-explicit"])
+    cli.set_compile_option("ghdl.flags", ["-frelaxed-rules"])
+
+    cli.set_sim_option("modelsim.vsim_flags", ["-error", "3473", '-voptargs="+acc=n"'])
+
+    cli.set_sim_option("disable_ieee_warnings", True)
+    cli.set_sim_option("modelsim.init_file.gui", p.join(ROOT, "wave.do"))
+    cli.main()
 
 
 def addAllConfigsTest(entity, input_file_basename, reference_file_basename):
@@ -309,7 +321,7 @@ def addAxiFileCompareTests(entity):
 
 def addAxiFileReaderTests(entity):
     "Parametrizes the AXI file reader testbench"
-    for data_width in (8, 32):
+    for data_width in (1, 8, 32):
         all_configs = []
 
         for ratio in (
@@ -327,10 +339,10 @@ def addAxiFileReaderTests(entity):
             (8, 32),
         ):
 
-            # Test makes no sense but eaiser doing this than separating a loop
-            # just for data width 4
-            if max(ratio) > data_width:
-                continue
+            #  # Test makes no sense but eaiser doing this than separating a loop
+            #  # just for data width 4
+            #  if max(ratio) > data_width:
+            #      continue
 
             basename = (
                 f"file_reader_data_width_{data_width}_ratio_{ratio[0]}_{ratio[1]}"
@@ -376,7 +388,7 @@ def swapBits(value, width=8):
 
 def generateAxiFileReaderTestFile(test_file, reference_file, data_width, length, ratio):
     "Create a pair of test files for the AXI file reader testbench"
-    rand_max = 2 ** data_width - 1
+    rand_max = 2 ** data_width
     ratio_first, ratio_second = ratio
     packed_data = []
     unpacked_bytes = []
