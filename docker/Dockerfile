@@ -22,8 +22,8 @@ FROM ghdl/vunit:llvm
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update -qq                                  && \
-    apt-get install -y --no-install-recommends gnuradio && \
-    apt-get clean                                       && \
-    apt-get autoclean                                   && \
+RUN apt-get update -qq                                                && \
+    apt-get install -y --no-install-recommends gnuradio=3.7.13.4-4+b1 && \
+    apt-get clean                                                     && \
+    apt-get autoclean                                                 && \
     rm -rf /var/lib/apt/lists/*
