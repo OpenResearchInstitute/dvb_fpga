@@ -21,7 +21,7 @@
 library	ieee;
 use ieee.std_logic_1164.all;  
 
--- Shit register based delay --
+-- Shift register based delay --
 entity sr_delay is
   generic (
     DELAY_CYCLES  : natural  := 1;
