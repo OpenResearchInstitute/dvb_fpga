@@ -185,7 +185,7 @@ def main():
     for data_width in (1, 8):
         for config in _getAllConfigs():
             cli.library("lib").entity("axi_bit_interleaver_tb").add_config(
-                name=f'data_width={data_width},{config.name}',
+                name=f"data_width={data_width},{config.name}",
                 generics=dict(
                     DATA_WIDTH=data_width,
                     test_cfg=config.getTestConfig(
@@ -201,8 +201,13 @@ def main():
     addAxiFileCompareTests(cli.library("lib").entity("axi_file_compare_tb"))
 
     cli.set_compile_option("modelsim.vcom_flags", ["-explicit"])
-    cli.set_compile_option("ghdl.flags", ["-frelaxed-rules"])
 
+    # Not all options are supported by all GHDL backends
+    #  cli.set_compile_option("ghdl.flags", ["-frelaxed-rules"])
+    #  cli.set_compile_option("ghdl.flags", ["-frelaxed-rules", "-O0", "-g"])
+    cli.set_compile_option("ghdl.flags", ["-frelaxed-rules", "-O2", "-g"])
+
+    # Make components not bound (error 3473) an error
     cli.set_sim_option("modelsim.vsim_flags", ["-error", "3473", '-voptargs="+acc=n"'])
 
     cli.set_sim_option("disable_ieee_warnings", True)
@@ -328,9 +333,7 @@ def addAxiFileReaderTests(entity):
             (1, 8),
             (2, 8),
             (3, 8),
-            (4, 8),
             (5, 8),
-            (6, 8),
             (7, 8),
             (8, 8),
             (1, 4),
@@ -338,11 +341,6 @@ def addAxiFileReaderTests(entity):
             (1, 1),
             (8, 32),
         ):
-
-            #  # Test makes no sense but eaiser doing this than separating a loop
-            #  # just for data width 4
-            #  if max(ratio) > data_width:
-            #      continue
 
             basename = (
                 f"file_reader_data_width_{data_width}_ratio_{ratio[0]}_{ratio[1]}"
@@ -360,15 +358,16 @@ def addAxiFileReaderTests(entity):
                     ratio=ratio,
                 )
 
-            name = f"single,data_width={data_width},ratio={ratio[0]}:{ratio[1]}"
 
             test_cfg = ",".join([f"{ratio[0]}:{ratio[1]}", test_file, reference_file])
 
             all_configs += [test_cfg]
 
-            entity.add_config(
-                name=name, generics={"DATA_WIDTH": data_width, "test_cfg": test_cfg}
-            )
+            # Uncomment this to test configs individually
+            #  name = f"single,data_width={data_width},ratio={ratio[0]}:{ratio[1]}"
+            #  entity.add_config(
+            #      name=name, generics={"DATA_WIDTH": data_width, "test_cfg": test_cfg}
+            #  )
 
         entity.add_config(
             name=f"multiple,data_width={data_width}",
