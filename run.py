@@ -93,6 +93,12 @@ class TestDefinition(
     )
 ):
     def getTestConfig(self, input_file_path, reference_file_path):
+        for path in (
+            p.join(self.test_files_path, input_file_path),
+            p.join(self.test_files_path, reference_file_path),
+        ):
+            assert p.exists(path), f"No such file '{path}'"
+
         return ",".join(
             [
                 self.constellation.name,
@@ -111,6 +117,12 @@ def _getAllConfigs(
     for code_rate in code_rates:
         for frame_length in frame_lengths:
             for constellation in constellations:
+                if (
+                    frame_length is FrameLength.FECFRAME_SHORT
+                    and code_rate is CodeRate.C9_10
+                ):
+                    continue
+
                 test_files_path = p.join(
                     ROOT,
                     "gnuradio_data",
@@ -153,48 +165,63 @@ def main():
 
     addAllConfigsTest(
         entity=cli.library("lib").entity("axi_bch_encoder_tb"),
+        configs=TEST_CONFIGS,
         input_file_basename="bch_encoder_input.bin",
         reference_file_basename="ldpc_encoder_input.bin",
     )
 
     addAllConfigsTest(
-        entity=cli.library("lib").entity("axi_bit_interleaver_tb"),
-        input_file_basename="bit_interleaver_input.bin",
-        reference_file_basename="bit_interleaver_output.bin",
-    )
-
-    addAllConfigsTest(
         entity=cli.library("lib").entity("axi_baseband_scrambler_tb"),
+        configs=TEST_CONFIGS,
         input_file_basename="bb_scrambler_input.bin",
         reference_file_basename="bch_encoder_input.bin",
     )
 
-    # BCH encoding doesn't depend on the constellation type, choose any
-    for config in _getAllConfigs(constellations=(ConstellationType.MOD_8PSK,)):
-        cli.library("lib").entity("axi_bch_encoder_tb").add_config(
-            name=config.name,
-            generics=dict(
-                test_cfg=config.getTestConfig(
-                    input_file_path="bch_encoder_input.bin",
-                    reference_file_path="ldpc_encoder_input.bin",
-                ),
-                NUMBER_OF_TEST_FRAMES=8,
-            ),
-        )
+    # Uncomment this to test configs individually
+    #  # BCH encoding doesn't depend on the constellation type, choose any
+    #  for config in _getAllConfigs(constellations=(ConstellationType.MOD_8PSK,)):
+    #      cli.library("lib").entity("axi_bch_encoder_tb").add_config(
+    #          name=config.name,
+    #          generics=dict(
+    #              test_cfg=config.getTestConfig(
+    #                  input_file_path="bch_encoder_input.bin",
+    #                  reference_file_path="ldpc_encoder_input.bin",
+    #              ),
+    #              NUMBER_OF_TEST_FRAMES=8,
+    #          ),
+    #      )
 
     for data_width in (1, 8):
+        all_configs = []
         for config in _getAllConfigs():
-            cli.library("lib").entity("axi_bit_interleaver_tb").add_config(
-                name=f"data_width={data_width},{config.name}",
-                generics=dict(
-                    DATA_WIDTH=data_width,
-                    test_cfg=config.getTestConfig(
-                        input_file_path="bit_interleaver_input.bin",
-                        reference_file_path="bit_interleaver_output.bin",
-                    ),
-                    NUMBER_OF_TEST_FRAMES=8,
-                ),
-            )
+            all_configs += [
+                config.getTestConfig(
+                    input_file_path="bit_interleaver_input.bin",
+                    reference_file_path="bit_interleaver_output.bin",
+                )
+            ]
+
+            # Uncomment this to test configs individually
+            #  cli.library("lib").entity("axi_bit_interleaver_tb").add_config(
+            #      name=f"data_width={data_width},{config.name}",
+            #      generics=dict(
+            #          DATA_WIDTH=data_width,
+            #          test_cfg=config.getTestConfig(
+            #              input_file_path="bit_interleaver_input.bin",
+            #              reference_file_path="bit_interleaver_output.bin",
+            #          ),
+            #          NUMBER_OF_TEST_FRAMES=8,
+            #      ),
+            #  )
+
+        cli.library("lib").entity("axi_bit_interleaver_tb").add_config(
+            name=f"data_width={data_width},all_parameters",
+            generics=dict(
+                DATA_WIDTH=data_width,
+                test_cfg="|".join(all_configs),
+                NUMBER_OF_TEST_FRAMES=2,
+            ),
+        )
 
     addAxiStreamDelayTests(cli.library("lib").entity("axi_stream_delay_tb"))
     addAxiFileReaderTests(cli.library("lib").entity("axi_file_reader_tb"))
@@ -215,52 +242,23 @@ def main():
     cli.main()
 
 
-def addAllConfigsTest(entity, input_file_basename, reference_file_basename):
+def addAllConfigsTest(entity, configs, input_file_basename, reference_file_basename):
     """
     Adds a test config with all combinations of configurations (assuming both
     input and reference files ca be found)
     """
-    configs = []
+    params = []
 
-    for code_rate in CodeRate:
-        for frame_length in FrameLength:
-            for constellation in ConstellationType:
+    for config in configs:
+        params += [config.getTestConfig(input_file_basename, reference_file_basename)]
 
-                data_files = p.join(
-                    ROOT,
-                    "gnuradio_data",
-                    f"{frame_length.name}_{constellation.name}_{code_rate.name}".upper(),
-                )
+    random.shuffle(params)
 
-                input_file_path = p.join(data_files, input_file_basename)
-                reference_file_path = p.join(data_files, reference_file_basename)
-
-                if not p.exists(input_file_path) or not p.exists(reference_file_path):
-                    if not p.exists(input_file_path):
-                        _logger.warning("No such file '%s'", input_file_path)
-                    if not p.exists(reference_file_path):
-                        _logger.warning("No such file '%s'", reference_file_path)
-                    continue
-
-                configs += [
-                    ",".join(
-                        [
-                            constellation.name,
-                            frame_length.name,
-                            code_rate.name,
-                            input_file_path,
-                            reference_file_path,
-                        ]
-                    )
-                ]
-
-    random.shuffle(configs)
-
-    assert configs, "Could not find any config files!"
+    assert params, "Could not find any config files!"
 
     entity.add_config(
         name="test_all_configs",
-        generics=dict(test_cfg="|".join(configs), NUMBER_OF_TEST_FRAMES=1),
+        generics=dict(test_cfg="|".join(params), NUMBER_OF_TEST_FRAMES=1),
     )
 
 
@@ -357,7 +355,6 @@ def addAxiFileReaderTests(entity):
                     length=256 * data_width,
                     ratio=ratio,
                 )
-
 
             test_cfg = ",".join([f"{ratio[0]}:{ratio[1]}", test_file, reference_file])
 

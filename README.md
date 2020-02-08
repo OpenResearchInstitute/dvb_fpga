@@ -50,7 +50,7 @@ the transmission side.
 | :---                   | :---:      | :--:       | :--:           | :---                                   |
 | Baseband scrambler     | Done       | TODO       | TODO           |                                        |
 | BCH encoder            | Done       | TODO       | TODO           | Different data widths can be generated |
-| Bit interleaver        | Done       | TODO       | TODO           | Data width fixed at 8 at the moment    |
+| Bit interleaver        | Done       | TODO       | TODO           | Tested data widths: 1 and 8            |
 | Constellation mapper   | TODO       | TODO       | TODO           |                                        |
 | LDPC Encoder           | TODO       | TODO       | TODO           |                                        |
 | Physical layer framing | TODO       | TODO       | TODO           |                                        |
