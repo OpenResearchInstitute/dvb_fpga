@@ -286,7 +286,6 @@ begin
   begin
 
     test_runner_setup(runner, runner_cfg);
-    show_all(display_handler);
 
     while test_suite loop
       tready_probability <= 1.0;

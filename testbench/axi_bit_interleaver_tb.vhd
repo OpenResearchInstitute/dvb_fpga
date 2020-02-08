@@ -272,7 +272,7 @@ begin
       tvalid_probability <= 1.0;
       tready_probability <= 1.0;
 
-      set_timeout(runner, configs'length * NUMBER_OF_TEST_FRAMES * 500 us);
+      set_timeout(runner, configs'length * NUMBER_OF_TEST_FRAMES * 4 ms / DATA_WIDTH);
 
       if run("back_to_back") then
         tvalid_probability <= 1.0;
