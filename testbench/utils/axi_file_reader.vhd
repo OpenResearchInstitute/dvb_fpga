@@ -83,9 +83,6 @@ architecture axi_file_reader of axi_file_reader is
   signal axi_data_valid : boolean;
   signal dbg_word_cnt   : integer := 0;
 
-  subtype byte_t is std_logic_vector(7 downto 0);
-
-
 begin
 
   -------------------
@@ -119,91 +116,76 @@ begin
 
     --
     type file_status_t is (opened, closed, unknown);
-    variable file_status : file_status_t := unknown;
+    variable file_status         : file_status_t := unknown;
     --
     type file_type is file of character;
-    file file_handler      : file_type;
+    file file_handler : file_type;
 
-    package byte_list_pkg is new work.linked_list_pkg generic map (std_logic);
-    variable bit_list : byte_list_pkg.linked_list_t;
+    type std_logic_vector_ptr_t is access std_logic_vector;
+    variable bytes_read     : integer := 0;
 
-    variable ratio_bit_cnt : natural := 0;
-    variable ratio_buffer  : std_logic_vector(max(128*DATA_WIDTH, 8) - 1 downto 0);
+    variable ratio_buff_cnt : integer := 0;
+    variable ratio_buff     : std_logic_vector_ptr_t;
+
+    variable buffer_bit_cnt : natural := 0;
+    variable data_buffer    : std_logic_vector(max(2*DATA_WIDTH, 8) - 1 downto 0);
 
     ------------------------------------------------------------------------------------
     impure function read_word_from_file return std_logic_vector is
-      variable char   : character;
-      variable result : std_logic_vector(ratio.first - 1 downto 0);
-      variable byte   : std_logic_vector(7 downto 0);
-      variable unused : unsigned(ratio.second - ratio.first - 1 downto 0);
-      variable temp : std_logic_vector(ratio.second - 1 downto 0);
+      variable char       : character;
+      variable byte       : std_logic_vector(7 downto 0);
+      variable buff_local : std_logic_vector(ratio_buff'range);
+      variable result     : std_logic_vector(ratio.first - 1 downto 0);
+      variable unused     : std_logic_vector(ratio.second - ratio.first - 1 downto 0);
     begin
+
+      buff_local := ratio_buff.all;
+      deallocate(ratio_buff);
+
       -- Need to read bytes to decode them properly, make sure we have enough first
-      -- while bit_list.size < ratio.second loop
-      while bit_list.size < ratio.second loop
+      while ratio_buff_cnt < ratio.second loop
         read(file_handler, char);
-        byte := mirror_bits(std_logic_vector(to_unsigned(character'pos(char), 8)));
+        byte           := std_logic_vector(to_unsigned(character'pos(char), 8));
+        bytes_read     := bytes_read + 1;
 
-        for i in 0 to 7 loop
-          bit_list.append(byte(i));
-        end loop;
+        buff_local     := buff_local(buff_local'length - byte'length - 1 downto 0) & byte;
+        ratio_buff_cnt := ratio_buff_cnt + 8;
 
-
-        -- if ratio.second / ratio.first < 8 then
-        --   for i in 4 to 7 loop
-        --     bit_list.append(byte(i));
-        --   end loop;
-
-        --   for i in 0 to 3 loop
-        --     bit_list.append(byte(i));
-        --   end loop;
-
-        -- -- else
-        -- --   for i in 0 to 7 loop
-        -- --     bit_list.append(byte(i));
-        -- --   end loop;
-
-        -- -- end if;
-
-        debug(
-          logger,
-          sformat(
-            "bit_list.size=%2d  | byte=%r",
-            fo(bit_list.size),
-            fo(byte)));
+        -- trace(
+        --   logger,
+        --   sformat(
+        --     "ratio = %s || bytes read=%d || ratio_buff_cnt=%d || byte=%r | buffer=%r || %b",
+        --     fo(ratio),
+        --     fo(bytes_read),
+        --     fo(ratio_buff_cnt),
+        --     fo(byte),
+        --     fo(buff_local),
+        --     fo(buff_local)));
 
       end loop;
 
-      -- info(sformat("threshold: %d", fo(ratio.second - ratio.first)));
+      -- Bits we're interested in are on the MSB at this point
+      result := buff_local(buff_local'length - ratio.second + ratio.first - 1 downto buff_local'length - ratio.second);
+      unused := buff_local(buff_local'length - 1 downto buff_local'length - ratio.second + ratio.first);
 
-      for i in ratio.second - 1 downto 0 loop
-        temp(i) := bit_list.pop;
-        -- if i < ratio.first then
-        --   result(result'length - 1 - i) := bit_list.pop;
-        -- else
-        --   -- Discard bits outside the valid range
-        --   if bit_list.pop /= '0' then
-        --     warning("Unused bits should be 0!");
-        --   end if;
-        -- end if;
-      end loop;
+      -- Remove the bits we're going to return from the buffer
+      buff_local     := buff_local(buff_local'length - ratio.second - 1 downto 0) & (ratio.second - 1 downto 0 => 'U');
+      ratio_buff     := new std_logic_vector'(buff_local);
+      ratio_buff_cnt := ratio_buff_cnt - ratio.second;
 
-      -- temp := mirror_bits(temp);
-      result := temp(ratio.first - 1 downto 0);
-      unused := unsigned(temp(ratio.second - 1 downto ratio.first));
-
-      if unused /= 0 then
-        warning(sformat("Unused bits should be 0 bit got %b", fo(unused)));
+      -- Sanity check
+      if unused /= (unused'range => '0') then
+        warning(sformat("Unused bits should be 0, got %b", fo(unused)));
       end if;
 
-      -- -- if (result'length mod 8) = 0 then
-      -- -- if result'length >= 8 then
-      -- if ratio.second < 8 then
-      --   result := mirror_bits(result);
-      --   warning(sformat("result: %r (%d)", fo(result), fo(result'length)));
-      -- else
-      -- end if;
-        debug(sformat("result: %r (%d)", fo(result), fo(result'length)));
+      -- debug(
+      --   logger,
+      --   sformat("%2d => %2d || buff_local = %r || %b || result = %r",
+      --     fo(ratio_buff_cnt + ratio.second),
+      --     fo(ratio_buff_cnt),
+      --     fo(ratio_buff.all),
+      --     fo(ratio_buff.all),
+      --     fo(result)));
 
       return result;
 
@@ -215,33 +197,34 @@ begin
       variable result : std_logic_vector(word_width - 1 downto 0);
       variable word   : std_logic_vector(ratio.first - 1 downto 0);
     begin
-      while ratio_bit_cnt < word_width loop
-        word          := read_word_from_file;
-        ratio_bit_cnt := ratio_bit_cnt + ratio.first;
+      while buffer_bit_cnt < word_width loop
+        word           := read_word_from_file;
+        buffer_bit_cnt := buffer_bit_cnt + ratio.first;
 
-        ratio_buffer  := ratio_buffer(ratio_buffer'length - ratio.first - 1 downto 0)
+        data_buffer  := data_buffer(data_buffer'length - ratio.first - 1 downto 0)
           & word(ratio.first - 1 downto 0);
 
-        trace(
-          logger,
-          sformat(
-           "ratio_bit_cnt=%2d | word=%r | ratio_buffer=%r || %b",
-            fo(ratio_bit_cnt),
-            fo(word),
-            fo(ratio_buffer),
-            fo(ratio_buffer)));
+        -- trace(
+        --   logger,
+        --   sformat(
+        --    "buffer_bit_cnt=%2d | word=%r | data_buffer=%r || %b",
+        --     fo(buffer_bit_cnt),
+        --     fo(word),
+        --     fo(data_buffer),
+        --     fo(data_buffer)));
 
       end loop;
 
       -- Result is going to be the MSB of the valid section
-      result := ratio_buffer(ratio_bit_cnt - 1 downto ratio_bit_cnt - data_width);
+      result := data_buffer(buffer_bit_cnt - 1 downto buffer_bit_cnt - data_width);
 
       -- Remove the result from the bit counter and buffer. Assign U's to the
       -- bit buffer so that we don't get accidently valid outputs when
       -- something goes wrong
-      ratio_buffer(ratio_bit_cnt - 1 downto ratio_bit_cnt - data_width) := (others => 'U');
-      ratio_bit_cnt := ratio_bit_cnt - word_width;
+      data_buffer(buffer_bit_cnt - 1 downto buffer_bit_cnt - data_width) := (others => 'U');
+      buffer_bit_cnt := buffer_bit_cnt - word_width;
 
+      -- info(sformat("result = %r", fo(result)));
       return result;
 
     end function get_next_data;
@@ -261,6 +244,7 @@ begin
       m_tlast_i   <= '0';
       m_tdata     <= (others => 'U');
       completed   <= '0';
+      -- bit_list.reset;
       if file_status /= closed then
           file_status := closed;
           file_close(file_handler);
@@ -284,10 +268,10 @@ begin
             logger,
             sformat("Read %d words from %s", fo(word_cnt), quote(cfg.filename.all)));
 
-          completed     <= '1';
-          word_cnt      := 0;
-          dbg_word_cnt  <= 0;
-          ratio_bit_cnt := 0;
+          completed      <= '1';
+          dbg_word_cnt   <= 0;
+          word_cnt       := 0;
+          buffer_bit_cnt := 0;
         end if;
       end if;
 
@@ -298,9 +282,16 @@ begin
           cfg   := pop(msg);
           ratio := cfg.ratio;
 
+          deallocate(ratio_buff);
+          bytes_read     := 0;
+          ratio_buff_cnt := 0;
+
           -- Avoid bit banging too much if everything is valid
           if ratio.first = ratio.second then
-            ratio := (DATA_WIDTH, DATA_WIDTH);
+            ratio      := (DATA_WIDTH, DATA_WIDTH);
+            ratio_buff := new std_logic_vector(max(DATA_WIDTH, 8) - 1 downto 0);
+          else
+            ratio_buff := new std_logic_vector(max(ratio.second, 8) - 1 downto 0);
           end if;
 
           info(
@@ -329,7 +320,7 @@ begin
         if axi_data_valid then
           -- Only assert tlast when the file has been completely read and all data
           -- buffered has been read
-          if endfile(file_handler) and ratio_bit_cnt = 0 and bit_list.size = 0 then
+          if endfile(file_handler) and buffer_bit_cnt = 0 and ratio_buff_cnt = 0 then
             m_tlast_i    <= '1';
             reply_with_size;
           end if;

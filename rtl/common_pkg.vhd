@@ -37,6 +37,8 @@ package common_pkg is
   function minimum(constant values : integer_array_t) return integer;
   function to_boolean( v : std_ulogic) return boolean;
 
+  function max (constant a, b : integer) return integer;
+
 end common_pkg;
 
 package body common_pkg is
@@ -112,5 +114,15 @@ package body common_pkg is
       when others      => return (false);
     end case;
   end to_boolean;
-end package body;
 
+  --------------------------------------------------------------------------------------
+  function max (constant a, b : integer) return integer is
+  begin
+    if a > b then
+      return a;
+    else
+      return b;
+    end if;
+  end;
+
+end package body;

@@ -269,7 +269,8 @@ begin
     variable msg            : msg_t;
     variable word_cnt       : integer := 0;
     variable frame_cnt      : integer := 0;
-    variable expected       : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
+    variable error_cnt      : integer := 0;
+    variable expected_tdata : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
     variable expected_tlast : std_logic;
 
     type file_status_t is (opened, closed, unknown);
@@ -301,8 +302,6 @@ begin
           s_tready <= '1';
         end if;
         if s_tready = '1' and s_tvalid = '1' then
-          word_cnt := word_cnt + 1;
-
           readline(file_handler, L);
 
           expected_tlast := '0';
@@ -314,11 +313,11 @@ begin
             expected_tlast := '1';
           end if;
 
-          hread(L, expected);
+          hread(L, expected_tdata);
 
-          check_equal(s_tdata, expected,
+          check_equal(s_tdata, expected_tdata,
                       sformat("Frame %d, word %d: Expected %r, got %r",
-                      fo(frame_cnt), fo(word_cnt), fo(expected), fo(s_tdata)));
+                      fo(frame_cnt), fo(word_cnt), fo(expected_tdata), fo(s_tdata)));
 
           check_equal(s_tlast, expected_tlast,
                       sformat("Frame %d, word %d: Expected tlast to be %r but got %r",
@@ -328,6 +327,8 @@ begin
             info(sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
             frame_cnt := frame_cnt + 1;
             word_cnt  := 0;
+          else
+            word_cnt := word_cnt + 1;
           end if;
         end if;
       end if;

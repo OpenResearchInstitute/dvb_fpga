@@ -45,6 +45,8 @@ package file_utils_pkg is
     second : positive;
   end record ratio_t;
 
+  function fo( constant ratio : ratio_t ) return string;
+
   type file_reader_cfg_t is record
     filename : line;
     ratio    : ratio_t;
@@ -107,6 +109,11 @@ package file_utils_pkg is
 end file_utils_pkg;
 
 package body file_utils_pkg is
+
+  function fo( constant ratio : ratio_t ) return string is
+  begin
+    return positive'image(ratio.first) & ":" & positive'image(ratio.second);
+  end;
 
   function parse_data_ratio (
     constant s               : string;
