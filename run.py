@@ -23,17 +23,20 @@
 # pylint: disable=bad-continuation
 
 import logging
+import os
 import os.path as p
 import random
 import struct
+import subprocess as subp
 import sys
+import time
 from enum import Enum
+from multiprocessing import Pool
 from typing import NamedTuple
 
 from vunit import VUnit  # type: ignore
 
 _logger = logging.getLogger(__name__)
-
 
 ROOT = p.abspath(p.dirname(__file__))
 
@@ -92,6 +95,14 @@ class TestDefinition(
         ],
     )
 ):
+    """
+    Placeholder for a test config
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(TestDefinition, self).__init__()
+        self.timestamp = p.join(self.test_files_path, "timestamp")
+
     def getTestConfig(self, input_file_path, reference_file_path):
         for path in (
             p.join(self.test_files_path, input_file_path),
@@ -145,8 +156,57 @@ def _getAllConfigs(
 TEST_CONFIGS = set(_getAllConfigs())
 
 
+def _runGnuRadio(config):
+    """
+    Runs gnuradio_data/dvbs2_tx.py script via shell. Reason for not importing
+    and running locally is to allow GNI Radio's Python environment to be
+    independent of VUnit's Python env.
+    """
+    print("Generating data for %s" % config.name)
+
+    command = [
+        p.join(ROOT, "gnuradio_data", "dvbs2_tx.py"),
+        "--frame-type",
+        config.frame_length.name,
+        "--constellation",
+        config.constellation.name,
+        "--code-rate",
+        config.code_rate.name,
+    ]
+
+    if not p.exists(config.test_files_path):
+        os.makedirs(config.test_files_path)
+
+    try:
+        subp.check_call(command, cwd=config.test_files_path)
+        open(config.timestamp, "w").write(time.asctime())
+    except subp.CalledProcessError:
+        _logger.exception("Failed to run %s", command)
+        raise
+
+
+def _generateGnuRadioData():
+    """
+    Generates GNU Radio data for configs whose test files can't found
+    """
+    configs = []
+
+    for config in TEST_CONFIGS:
+        if not p.exists(config.timestamp):
+            configs += [config]
+
+    # Generate needed data on a process pool to speed up things
+    pool = Pool()
+    pool.map(_runGnuRadio, configs)
+    pool.close()
+    pool.join()
+
+
 def main():
     "Main entry point for DVB FPGA test runner"
+
+    _generateGnuRadioData()
+
     cli = VUnit.from_argv()
     cli.add_osvvm()
     cli.add_com()

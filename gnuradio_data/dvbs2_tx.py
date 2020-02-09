@@ -83,14 +83,14 @@ BBFRAME_LENGTH = {
 }
 
 
-def get_ratio(modulation):
+def get_ratio(constellation):
     ratio = None
 
-    if modulation == dtv.MOD_8PSK:
+    if constellation == dtv.MOD_8PSK:
         ratio = 3, 8
-    if modulation == dtv.MOD_16APSK:
+    if constellation == dtv.MOD_16APSK:
         ratio = 4, 8
-    if modulation == dtv.MOD_32APSK:
+    if constellation == dtv.MOD_32APSK:
         ratio = 5, 8
 
     #  print("Ratio is %s" % (ratio,))
@@ -108,7 +108,7 @@ class UnknownFrameLength(Exception):
 
 class dvbs2_tx(gr.top_block):
 
-    def __init__(self, modulation, frame_type, code_rate):
+    def __init__(self, constellation, frame_type, code_rate):
         gr.top_block.__init__(self, "Dvbs2 Tx")
 
         ##################################################
@@ -127,7 +127,7 @@ class dvbs2_tx(gr.top_block):
         frame_length = int(frame_length)
         self.frame_length = frame_length
 
-        bits_per_input, bits_per_output = get_ratio(modulation)
+        bits_per_input, bits_per_output = get_ratio(constellation)
 
         ##################################################
         # Variables
@@ -154,7 +154,7 @@ class dvbs2_tx(gr.top_block):
         self.dtv_dvbs2_physical_cc_0 = dtv.dvbs2_physical_cc(frame_type, code_rate, dtv.MOD_BPSK, dtv.PILOTS_ON, 0)
         self.dtv_dvbs2_modulator_bc_0 = dtv.dvbs2_modulator_bc(frame_type,
         code_rate, dtv.MOD_BPSK, dtv.INTERPOLATION_OFF)
-        self.dtv_dvbs2_interleaver_bb_0 = dtv.dvbs2_interleaver_bb(frame_type, code_rate, modulation)
+        self.dtv_dvbs2_interleaver_bb_0 = dtv.dvbs2_interleaver_bb(frame_type, code_rate, constellation)
         self.dtv_dvb_ldpc_bb_0 = dtv.dvb_ldpc_bb(dtv.STANDARD_DVBS2, frame_type, code_rate, dtv.MOD_OTHER)
         self.dtv_dvb_bch_bb_0 = dtv.dvb_bch_bb(dtv.STANDARD_DVBS2, frame_type, code_rate)
         self.dtv_dvb_bbscrambler_bb_0 = dtv.dvb_bbscrambler_bb(dtv.STANDARD_DVBS2, frame_type, code_rate)
@@ -295,7 +295,7 @@ def argument_parser():
         choices=("FECFRAME_NORMAL", "FECFRAME_SHORT"),
     )
     parser.add_option(
-        "--modulation",
+        "--constellation",
         default="MOD_8PSK",
         choices=("MOD_8PSK", "MOD_16APSK", "MOD_32APSK"),
     )
@@ -320,7 +320,7 @@ def argument_parser():
     args, _ = parser.parse_args()
 
     args.frame_type = getattr(dtv, args.frame_type)
-    args.modulation = getattr(dtv, args.modulation)
+    args.constellation = getattr(dtv, args.constellation)
     args.code_rate = getattr(dtv, args.code_rate)
 
 
@@ -330,8 +330,8 @@ def argument_parser():
 def main(top_block_cls=dvbs2_tx, options=None):
     args = argument_parser()
 
-    #  def __init__(self, modulation, frame_type, code_rate):
-    tb = top_block_cls(modulation=args.modulation, frame_type=args.frame_type, code_rate=args.code_rate)
+    #  def __init__(self, constellation, frame_type, code_rate):
+    tb = top_block_cls(constellation=args.constellation, frame_type=args.frame_type, code_rate=args.code_rate)
     tb.start()
     tb.wait()
 

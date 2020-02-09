@@ -24,6 +24,7 @@ set -e
 PATH_TO_REPO=$(git rev-parse --show-toplevel)
 CONTAINER="suoto/dvb_fpga_ci"
 
+# This will be run inside the container
 RUN_COMMAND="
 set -e
 
@@ -33,18 +34,13 @@ pushd \$PATH_TO_THIS_SCRIPT/..
 
 addgroup $USER --gid $(id -g) > /dev/null 2>&1
 
-adduser --disabled-password            \
-  --gid $(id -g)                    \
-  --uid $UID                     \
+adduser --disabled-password \
+  --gid $(id -g)            \
+  --uid $UID                \
   --home /home/$USER $USER > /dev/null 2>&1
 
 # Run test with GHDL
-su -l $USER -c \"    \
-  cd /project          && \
-  pushd gnuradio_data  && \
-  make all -j4 -k;        \
-  popd                 && \
-  ./run.py $* \"
+su -l $USER -c \"cd /project && ./run.py $* \"
 "
 
 # Need to add some variables so that uploading coverage from witihin the
