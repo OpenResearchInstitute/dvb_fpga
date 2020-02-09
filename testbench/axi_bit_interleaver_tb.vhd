@@ -18,8 +18,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with DVB FPGA.  If not, see <http://www.gnu.org/licenses/>.
 
--- vunit: run_all_in_same_sim
-
 use std.textio.all;
 
 library ieee;
