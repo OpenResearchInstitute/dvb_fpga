@@ -22,11 +22,8 @@
 -- Libraries --
 ---------------
 library	ieee;
-    use ieee.std_logic_1164.all;
-    use ieee.numeric_std.all;
-
-library str_format;
-    use str_format.str_format_pkg.all;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 use work.common_pkg.all;
 use work.dvb_utils_pkg.all;
