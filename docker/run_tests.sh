@@ -22,10 +22,30 @@
 set -e
 
 PATH_TO_REPO=$(git rev-parse --show-toplevel)
-
-VUNIT_ARGS="$*"
-
 CONTAINER="suoto/dvb_fpga_ci"
+
+RUN_COMMAND="
+set -e
+
+PATH_TO_THIS_SCRIPT=\$(readlink -f \"\$(dirname \$0)\")
+
+pushd \$PATH_TO_THIS_SCRIPT/..
+
+addgroup $USER --gid $(id -g) > /dev/null 2>&1
+
+adduser --disabled-password            \
+  --gid $(id -g)                    \
+  --uid $UID                     \
+  --home /home/$USER $USER > /dev/null 2>&1
+
+# Run test with GHDL
+su -l $USER -c \"    \
+  cd /project          && \
+  pushd gnuradio_data  && \
+  make all -j4 -k;        \
+  popd                 && \
+  ./run.py $* \"
+"
 
 # Need to add some variables so that uploading coverage from witihin the
 # container to codecov works
@@ -35,9 +55,5 @@ docker run                                                 \
   --net=host                                               \
   --env="DISPLAY"                                          \
   --volume="$HOME/.Xauthority:/root/.Xauthority:rw"        \
-  --env USER_ID="$(id -u)"                                 \
-  --env GROUP_ID="$(id -g)"                                \
-  --env VUNIT_ARGS="$VUNIT_ARGS"                           \
-  --env USERNAME="$USER"                                   \
-  $CONTAINER /project/docker/docker_entry_point.sh
+  $CONTAINER /bin/bash -c "$RUN_COMMAND"
 
