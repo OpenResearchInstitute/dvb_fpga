@@ -52,7 +52,6 @@ entity axi_stream_fifo is
     m_tready : in  std_logic;
     m_tdata  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
     m_tlast  : out std_logic);
-
 end axi_stream_fifo;
 
 architecture axi_stream_fifo of axi_stream_fifo is

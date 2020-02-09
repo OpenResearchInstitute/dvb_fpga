@@ -34,6 +34,10 @@ package dvb_utils_pkg is
     C1_4, C1_3, C2_5, C1_2, C3_5, C2_3, C3_4, C4_5,
     C5_6, C8_9, C9_10);
 
+  type frame_type_array_t is array (natural range <>) of frame_type_t;
+  type constellation_array_t is array (natural range <>) of constellation_t;
+  type code_rate_array_t is array (natural range <>) of code_rate_t;
+
   constant FRAME_TYPE_WIDTH    : integer := frame_type_t'pos(frame_type_t'right);
   constant CONSTELLATION_WIDTH : integer := constellation_t'pos(constellation_t'right);
   constant CODE_RATE_WIDTH     : integer := code_rate_t'pos(code_rate_t'right);

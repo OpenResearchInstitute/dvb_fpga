@@ -45,8 +45,7 @@ package body common_pkg is
 
     ------------------------------------------------------------------------------------
     -- Calculates the number of bits required to represent a given value
-    function numbits (
-        constant v : natural) return natural is
+    function numbits ( constant v : natural ) return natural is
     begin
       if v <= 1 then
         return 1;

@@ -57,7 +57,7 @@ architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
   constant FILE_READER_NAME  : string := "file_reader";
   constant FILE_CHECKER_NAME : string := "file_checker";
   constant CLK_PERIOD        : time := 5 ns;
-  constant TDATA_WIDTH       : integer := 8;
+  constant DATA_WIDTH        : integer := 8;
   constant ERROR_CNT_WIDTH   : integer := 8;
 
   -------------
@@ -73,12 +73,12 @@ architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
   -- AXI input
   signal m_tready           : std_logic;
   signal m_tvalid           : std_logic;
-  signal m_tdata            : std_logic_vector(TDATA_WIDTH - 1 downto 0);
+  signal m_tdata            : std_logic_vector(DATA_WIDTH - 1 downto 0);
   signal m_tlast            : std_logic;
 
   -- AXI output
   signal s_tvalid           : std_logic;
-  signal s_tdata            : std_logic_vector(TDATA_WIDTH - 1 downto 0);
+  signal s_tdata            : std_logic_vector(DATA_WIDTH - 1 downto 0);
   signal s_tlast            : std_logic;
   signal s_tready           : std_logic;
 
@@ -88,7 +88,7 @@ architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
   signal m_data_valid       : boolean;
   signal s_data_valid       : boolean;
 
-  signal expected_tdata     : std_logic_vector(TDATA_WIDTH - 1 downto 0);
+  signal expected_tdata     : std_logic_vector(DATA_WIDTH - 1 downto 0);
   signal expected_tlast     : std_logic;
   signal tdata_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
   signal tlast_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
@@ -100,7 +100,7 @@ begin
   -- Port mappings --
   -------------------
   dut : entity work.axi_bch_encoder
-    generic map ( TDATA_WIDTH => TDATA_WIDTH)
+    generic map ( DATA_WIDTH => DATA_WIDTH)
     port map (
       -- Usual ports
       clk            => clk,
@@ -126,7 +126,7 @@ begin
   axi_file_reader_u : entity work.axi_file_reader
     generic map (
       READER_NAME      => FILE_READER_NAME,
-      DATA_WIDTH       => TDATA_WIDTH)
+      DATA_WIDTH       => DATA_WIDTH)
     port map (
       -- Usual ports
       clk                => clk,
@@ -146,7 +146,7 @@ begin
       READER_NAME     => FILE_CHECKER_NAME,
       ERROR_CNT_WIDTH => ERROR_CNT_WIDTH,
       REPORT_SEVERITY => Warning,
-      DATA_WIDTH      => TDATA_WIDTH)
+      DATA_WIDTH      => DATA_WIDTH)
     port map (
       -- Usual ports
       clk                => clk,

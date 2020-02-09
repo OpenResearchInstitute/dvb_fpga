@@ -33,7 +33,7 @@ use work.dvb_utils_pkg.all;
 ------------------------
 entity axi_bch_encoder is
   generic (
-    TDATA_WIDTH : integer  := 8
+    DATA_WIDTH : integer  := 8
   );
   port (
     -- Usual ports
@@ -45,7 +45,7 @@ entity axi_bch_encoder is
 
     -- AXI input
     s_tvalid       : in  std_logic;
-    s_tdata        : in  std_logic_vector(TDATA_WIDTH - 1 downto 0);
+    s_tdata        : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
     s_tlast        : in  std_logic;
     s_tready       : out std_logic;
 
@@ -53,7 +53,7 @@ entity axi_bch_encoder is
     m_tready       : in  std_logic;
     m_tvalid       : out std_logic;
     m_tlast        : out std_logic;
-    m_tdata        : out std_logic_vector(TDATA_WIDTH - 1 downto 0));
+    m_tdata        : out std_logic_vector(DATA_WIDTH - 1 downto 0));
 end axi_bch_encoder;
 
 architecture axi_bch_encoder of axi_bch_encoder is
@@ -62,7 +62,7 @@ architecture axi_bch_encoder of axi_bch_encoder is
   -- Constants --
   ---------------
   -- To count to the max number of words appended to the frame
-  constant MAX_WORD_CNT : integer := 192 / TDATA_WIDTH;
+  constant MAX_WORD_CNT : integer := 192 / DATA_WIDTH;
 
   -------------
   -- Signals --
@@ -76,7 +76,7 @@ architecture axi_bch_encoder of axi_bch_encoder is
   signal s_axi_first_word     : std_logic;
 
   signal axi_delay_tvalid     : std_logic;
-  signal axi_delay_tdata      : std_logic_vector(TDATA_WIDTH - 1 downto 0);
+  signal axi_delay_tdata      : std_logic_vector(DATA_WIDTH - 1 downto 0);
   signal axi_delay_tlast      : std_logic;
   signal axi_delay_tready     : std_logic;
 
@@ -104,18 +104,18 @@ begin
   -- Delay the incoming data to match the BCH calculation delay so we can switch to
   -- appending without any bubbles
   data_delay_block : block
-    signal tdata_agg_in  : std_logic_vector(TDATA_WIDTH downto 0);
-    signal tdata_agg_out : std_logic_vector(TDATA_WIDTH downto 0);
+    signal tdata_agg_in  : std_logic_vector(DATA_WIDTH downto 0);
+    signal tdata_agg_out : std_logic_vector(DATA_WIDTH downto 0);
   begin
     tdata_agg_in    <= s_tlast & s_tdata;
 
-    axi_delay_tdata <= tdata_agg_out(TDATA_WIDTH - 1 downto 0);
-    axi_delay_tlast <= tdata_agg_out(TDATA_WIDTH);
+    axi_delay_tdata <= tdata_agg_out(DATA_WIDTH - 1 downto 0);
+    axi_delay_tlast <= tdata_agg_out(DATA_WIDTH);
 
     data_delay_u : entity work.axi_stream_delay
     generic map (
       DELAY_CYCLES => 2,
-      TDATA_WIDTH  => TDATA_WIDTH + 1)
+      TDATA_WIDTH  => DATA_WIDTH + 1)
     port map (
       -- Usual ports
       clk     => clk,
@@ -135,7 +135,7 @@ begin
   -- BCH encoders are wrapped with a mux to hide away unrelated stuff. The idea is to keep
   -- the generated CRC codes as similar as possible to how they were generated
   bch_u : entity work.bch_encoder_mux
-    generic map (DATA_WIDTH => TDATA_WIDTH)
+    generic map (DATA_WIDTH => DATA_WIDTH)
     port map (
       clk                => clk,
       rst                => rst,
@@ -178,7 +178,7 @@ begin
                       '1';
 
   m_tdata          <= axi_delay_tdata when crc_word_cnt = 0 else
-                      crc_srl(crc_srl'length - 1 downto crc_srl'length - TDATA_WIDTH);
+                      crc_srl(crc_srl'length - 1 downto crc_srl'length - DATA_WIDTH);
 
   m_tlast_i        <= '1' when crc_word_cnt = 1 else '0';
 
@@ -197,8 +197,8 @@ begin
 
       if m_axi_data_valid = '1' and crc_word_cnt /= 0 then
         -- Shift the CRC, tdata will be assigned to the MSB
-        crc_srl      <= crc_srl(crc_srl'length - TDATA_WIDTH - 1 downto 0)
-                        & (TDATA_WIDTH - 1 downto 0 => 'U');
+        crc_srl      <= crc_srl(crc_srl'length - DATA_WIDTH - 1 downto 0)
+                        & (DATA_WIDTH - 1 downto 0 => 'U');
         crc_word_cnt <= crc_word_cnt - 1;
       end if;
 
@@ -236,10 +236,10 @@ begin
         -- TODO: Check if this uses the carry bit to reset
 
         -- This is mostly static, so division should not be a problem. In any case,
-        -- TDATA_WIDTH will always be a power of 2, so this division will map to a shift
+        -- DATA_WIDTH will always be a power of 2, so this division will map to a shift
         -- operation
         crc_word_cnt <= to_unsigned(
-                          get_crc_length(cfg_frame_type_out, cfg_code_rate_out) / TDATA_WIDTH,
+                          get_crc_length(cfg_frame_type_out, cfg_code_rate_out) / DATA_WIDTH,
                           crc_word_cnt'length);
       end if;
 
