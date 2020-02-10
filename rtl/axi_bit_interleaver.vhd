@@ -103,7 +103,8 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
   signal wr_partial           : std_logic;
   signal wr_partial_start     : integer range 0 to DATA_WIDTH - 1;
 
-  signal wr_data_shifted      : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal wr_data_mux               : data_array_t(DATA_WIDTH - 1 downto 0);
+  signal last_word_mux             : data_array_t(DATA_WIDTH - 1 downto 0);
 
   signal wr_addr_init         : std_logic := '0';
 
@@ -330,12 +331,17 @@ begin
 
   s_tready_i      <= '1' when ram_ptr_diff < 2 else '0';
 
-  wr_data_shifted <= s_tdata_reg when wr_remainder = 0 else
-                     s_tdata_reg(DATA_WIDTH - to_integer(wr_remainder) - 1 downto 0) &
-                     s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - to_integer(wr_remainder));
-
   -- Assign internals
   s_tready        <= s_tready_i;
+
+  -- Unwrap muxes explicitly, Vivado doesn't seem to understand if we do this on the fly
+  g_mux_inputs : for i in 0 to DATA_WIDTH - 1 generate
+    wr_data_mux(i) <= s_tdata_reg(DATA_WIDTH - i - 1 downto 0) &
+                      s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH - i);
+
+    last_word_mux(i) <= s_tdata_reg(i - 1 downto 0) &
+                        (DATA_WIDTH - i - 1 downto 0 => '0');
+  end generate;
 
   --------------------------------
   -- Handle write side pointers --
@@ -411,7 +417,7 @@ begin
       wr_partial_start   <= to_integer(wr_remainder);
 
       ram_wr_en                    <= (others => '0');
-      ram_wr_data(wr_column_cnt_i) <= wr_data_shifted;
+      ram_wr_data(wr_column_cnt_i) <= wr_data_mux(to_integer(wr_remainder));
 
       -- Increment RAM addr every time it gets written
       for column in 0 to MAX_COLUMNS - 1 loop
@@ -470,9 +476,7 @@ begin
             wr_partial    <= '1';
           else
             if cfg_wr_cnt.remainder /= 0 then
-              ram_wr_data(to_integer(wr_column_cnt_reg0)) <=
-                s_tdata_reg(to_integer(cfg_wr_cnt.remainder) - 1 downto 0)
-                & (DATA_WIDTH - to_integer(cfg_wr_cnt.remainder) - 1 downto 0 => '0');
+              ram_wr_data(to_integer(wr_column_cnt_reg0)) <= last_word_mux(to_integer(cfg_wr_cnt.remainder));
             end if;
 
             wr_column_cnt <= (others => '0');
@@ -486,14 +490,7 @@ begin
       -- Handle writing partial word
       if wr_partial = '1' then
         ram_wr_en(to_integer(wr_column_cnt_reg0))   <= '1';
-
-        ram_wr_data(to_integer(wr_column_cnt_reg0)) <=
-          s_tdata_reg(
-            DATA_WIDTH - wr_partial_start - 1
-            downto
-            DATA_WIDTH - wr_partial_start - to_integer(cfg_wr_cnt.remainder))
-          & (DATA_WIDTH - to_integer(cfg_wr_cnt.remainder) - 1 downto 0 => '0');
-
+        ram_wr_data(to_integer(wr_column_cnt_reg0)) <= wr_data_mux(wr_partial_start);
       end if;
 
     end if;
