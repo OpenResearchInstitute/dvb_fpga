@@ -1,0 +1,21 @@
+---
+
+name: Unit tests
+
+on: [ push, pull_request ]
+
+env:
+  PY_COLORS: 1
+
+jobs:
+  unit_tests:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: ModelSim run
+        run: |
+          git submodule update --init --recursive
+          docker pull suoto/dvb_fpga_ci
+          docker/run_tests.sh --num-threads 4

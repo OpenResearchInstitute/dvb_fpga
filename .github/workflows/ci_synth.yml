@@ -1,6 +1,6 @@
 ---
 
-name: CI
+name: Yosys Synth
 
 on: [ push, pull_request ]
 
@@ -8,14 +8,14 @@ env:
   PY_COLORS: 1
 
 jobs:
-  build:
+  yosys_synth:
 
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v1
-      - name: ModelSim run
+      - name: Yosys Run
         run: |
           git submodule update --init --recursive
-          docker pull suoto/dvb_fpga_ci
-          docker/run_tests.sh --num-threads 4
+          docker pull ghdl/synth:beta
+          docker/run_synth.sh
