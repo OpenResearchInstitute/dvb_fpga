@@ -10,7 +10,7 @@ define ruletemp
 $1_$2_$3/output.bin: dvbs2_tx.py
 	mkdir -p $$$$(dirname $$@)          && \
 	cd $$$$(dirname $$@)                && \
-	../dvbs2_tx.py --frame-length=$1 --constellation=$2 --code-rate=$3
+	../dvbs2_tx.py --frame-type=$1 --constellation=$2 --code-rate=$3
 
 all:: $1_$2_$3/output.bin
 endef
