@@ -26,6 +26,7 @@ import logging
 import os
 import os.path as p
 import random
+import re
 import struct
 import subprocess as subp
 import sys
@@ -34,7 +35,7 @@ from enum import Enum
 from multiprocessing import Pool
 from typing import NamedTuple
 
-from vunit import VUnit  # type: ignore
+from vunit import VUnit, VUnitCLI  # type: ignore
 
 _logger = logging.getLogger(__name__)
 
@@ -99,29 +100,25 @@ class TestDefinition(
     Placeholder for a test config
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # pylint: disable=unused-argument
         super(TestDefinition, self).__init__()
         self.timestamp = p.join(self.test_files_path, "timestamp")
 
-    def getTestConfig(self, input_file_path, reference_file_path):
-        for path in (
-            p.join(self.test_files_path, input_file_path),
-            p.join(self.test_files_path, reference_file_path),
-        ):
-            assert p.exists(path), f"No such file '{path}'"
-
+    def getTestConfigString(self):
+        """
+        Returns the value for the 'test_cfg' string of the testbench
+        """
         return ",".join(
             [
                 self.constellation.name,
                 self.frame_length.name,
                 self.code_rate.name,
-                p.join(self.test_files_path, input_file_path),
-                p.join(self.test_files_path, reference_file_path),
+                self.test_files_path,
             ]
         )
 
 
-def _getAllConfigs(
+def _getConfigs(
     code_rates=CodeRate, frame_lengths=FrameLength, constellations=ConstellationType
 ):
 
@@ -153,7 +150,7 @@ def _getAllConfigs(
                 )
 
 
-TEST_CONFIGS = set(_getAllConfigs())
+TEST_CONFIGS = set(_getConfigs())
 
 
 def _runGnuRadio(config):
@@ -202,107 +199,274 @@ def _generateGnuRadioData():
     pool.join()
 
 
+LDPC_Q = {
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C1_4): 135,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C1_3): 120,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C2_5): 108,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C1_2): 90,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C3_5): 72,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C2_3): 60,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C3_4): 45,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C4_5): 36,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C5_6): 30,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C8_9): 20,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C9_10): 18,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C1_4): 36,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C1_3): 30,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C2_5): 27,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C1_2): 25,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C3_5): 18,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C2_3): 15,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C3_4): 12,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C4_5): 10,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C5_6): 8,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C8_9): 5,
+}
+
+LDPC_LENGTH = {
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C1_4): 64_800 - 16_200,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C1_3): 64_800 - 21_600,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C2_5): 64_800 - 25_920,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C1_2): 64_800 - 32_400,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C3_5): 64_800 - 38_880,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C2_3): 64_800 - 43_200,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C3_4): 64_800 - 48_600,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C4_5): 64_800 - 51_840,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C5_6): 64_800 - 54_000,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C8_9): 64_800 - 57_600,
+    (FrameLength.FECFRAME_NORMAL, CodeRate.C9_10): 64_800 - 58_320,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C1_4): 16_200 - 3_240,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C1_3): 16_200 - 5_400,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C2_5): 16_200 - 6_480,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C1_2): 16_200 - 7_200,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C3_5): 16_200 - 9_720,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C2_3): 16_200 - 10_800,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C3_4): 16_200 - 11_880,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C4_5): 16_200 - 12_600,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C5_6): 16_200 - 13_320,
+    (FrameLength.FECFRAME_SHORT, CodeRate.C8_9): 16_200 - 14_400,
+}
+
+
+def _populateLdpcTable(frame_length, code_rate, src, dest):
+    """
+    Creates the unrolled binary LDPC table file for the LDPC encoder testbench
+    a CSV file with coefficients (from DVB-S2 spec's appendices B and C).
+    """
+    print(
+        f"Generating LDPC table for FECFRAME={frame_length.value}, "
+        f'code rate={code_rate.value} using "{src}" as reference. '
+        f'Binary data will be written to "{dest}"',
+    )
+
+    table = [x.split(",") for x in open(src, "r").read().split("\n") if x]
+
+    table_q = LDPC_Q[(frame_length, code_rate)]
+    table_length = LDPC_LENGTH[(frame_length, code_rate)]
+
+    with open(dest, "wb") as fd:
+        # Each offset is 16 bits (to represent 64,800 bits of FECFRAME_NORMAL),
+        # but we'll also embed the s_ldpc_next values into the file as well on a
+        # byte, so data width will 24: data[16] is s_ldpc_next while data[15:0] is
+        # the actual offset
+        bit_index = 0
+        for line in table:
+            for _ in range(360):
+                #  dbg = []
+                for i, coefficient in enumerate(tuple(int(x) for x in line)):
+                    offset = (coefficient + (bit_index % 360) * table_q) % table_length
+                    # Just to recap:
+                    # - "H" -> Unsigned short
+                    # - "?" -> boolean
+                    fd.write(struct.pack(">?HH", i == len(line) - 1, bit_index, offset))
+
+                bit_index += 1
+
+
+def _createLdpcTables():
+    """
+    Creates the binary LDPC table files if they don't already exist
+    """
+    path_to_csv = p.join(ROOT, "misc", "ldpc")
+
+    for config in TEST_CONFIGS:
+        csv_table = (
+            f"{path_to_csv}/"
+            f"ldpc_table_{config.frame_length.name}_{config.code_rate.name}.csv"
+        )
+
+        bin_table = p.join(config.test_files_path, "ldpc_table.bin")
+
+        if not p.exists(bin_table):
+            assert p.exists(csv_table), f"No such file: {repr(csv_table)}"
+            _populateLdpcTable(
+                config.frame_length, config.code_rate, csv_table, bin_table,
+            )
+
+
+class GhdlPragmaHandler:
+    """
+    Removes code between arbitraty pragmas
+    -- ghdl translate_off
+    this is ignored
+    -- ghdl translate_on
+    """
+
+    _PRAGMA = re.compile(
+        r"\s*--\s*ghdl\s+translate_off[\r\n].*?[\n\r]\s*--\s*ghdl\s+translate_on",
+        flags=re.DOTALL | re.I | re.MULTILINE,
+    )
+
+    def run(self, code, file_name):  # pylint: disable=unused-argument,no-self-use
+        """
+        Removes text between "-- ghdl translate_off" and "-- ghdl translate_on"
+        """
+        # Lazy check to avoid running the regex unnecessarily
+        for word in ("ghdl", "translate_on", "translate_off"):
+            if word not in code:
+                return code
+
+        # Would be better to comment out instead of removing to keep line
+        # numbers
+        result = self._PRAGMA.sub(r"", code)
+
+        return result
+
+
 def main():
     "Main entry point for DVB FPGA test runner"
 
     _generateGnuRadioData()
+    _createLdpcTables()
 
-    cli = VUnit.from_argv()
-    cli.add_osvvm()
-    cli.add_com()
-    cli.enable_location_preprocessing()
+    cli = VUnitCLI()
+    cli.parser.add_argument(
+        "--individual-config-runs",
+        "-i",
+        action="store_true",
+        help="Create individual test runs for each configuration. By default, "
+        "all combinations of frame lengths, code rates and modulations are "
+        "tested in the same simulation",
+    )
+    args = cli.parse_args()
 
-    library = cli.add_library("lib")
+    vunit = VUnit.from_args(args=args)
+    vunit.add_osvvm()
+    vunit.add_com()
+    vunit.enable_location_preprocessing()
+    if vunit.get_simulator_name() == "ghdl":
+        vunit.add_preprocessor(GhdlPragmaHandler())
+
+    library = vunit.add_library("lib")
     library.add_source_files(p.join(ROOT, "rtl", "*.vhd"))
+    library.add_source_files(p.join(ROOT, "rtl", "ldpc", "*.vhd"))
     library.add_source_files(p.join(ROOT, "rtl", "bch_generated", "*.vhd"))
-
     library.add_source_files(p.join(ROOT, "testbench", "*.vhd"))
-    library.add_source_files(p.join(ROOT, "testbench", "*", "*.vhd"))
 
-    cli.add_library("str_format").add_source_files(
+    vunit.add_library("str_format").add_source_files(
         p.join(ROOT, "third_party", "hdl_string_format", "src", "*.vhd")
     )
 
-    addAllConfigsTest(
-        entity=cli.library("lib").entity("axi_bch_encoder_tb"),
-        configs=TEST_CONFIGS,
-        input_file_basename="bch_encoder_input.bin",
-        reference_file_basename="ldpc_encoder_input.bin",
+    vunit.add_library("fpga_cores").add_source_files(
+        p.join(ROOT, "third_party", "fpga_cores", "src", "*.vhd")
+    )
+    vunit.add_library("fpga_cores_sim").add_source_files(
+        p.join(ROOT, "third_party", "fpga_cores", "sim", "*.vhd")
     )
 
-    addAllConfigsTest(
-        entity=cli.library("lib").entity("axi_baseband_scrambler_tb"),
-        configs=TEST_CONFIGS,
-        input_file_basename="bb_scrambler_input.bin",
-        reference_file_basename="bch_encoder_input.bin",
-    )
+    if args.individual_config_runs:
+        # BCH encoding doesn't depend on the constellation type, choose any
+        for config in _getConfigs(constellations=(ConstellationType.MOD_8PSK,)):
+            vunit.library("lib").entity("axi_bch_encoder_tb").add_config(
+                name=config.name,
+                generics=dict(
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=8,
+                ),
+            )
 
-    # Uncomment this to test configs individually
-    #  # BCH encoding doesn't depend on the constellation type, choose any
-    #  for config in _getAllConfigs(constellations=(ConstellationType.MOD_8PSK,)):
-    #      cli.library("lib").entity("axi_bch_encoder_tb").add_config(
-    #          name=config.name,
-    #          generics=dict(
-    #              test_cfg=config.getTestConfig(
-    #                  input_file_path="bch_encoder_input.bin",
-    #                  reference_file_path="ldpc_encoder_input.bin",
-    #              ),
-    #              NUMBER_OF_TEST_FRAMES=8,
-    #          ),
-    #      )
+            vunit.library("lib").entity("dvbs2_tx_tb").add_config(
+                name=config.name,
+                generics=dict(
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=2,
+                ),
+            )
 
-    for data_width in (1, 8):
-        all_configs = []
-        for config in _getAllConfigs():
-            all_configs += [
-                config.getTestConfig(
-                    input_file_path="bit_interleaver_input.bin",
-                    reference_file_path="bit_interleaver_output.bin",
-                )
-            ]
+        # Only generate configs for 8 PSK since LDPC does not depend on this
+        # parameter
+        for config in _getConfigs(constellations=(ConstellationType.MOD_8PSK,),):
+            vunit.library("lib").entity("axi_ldpc_encoder_tb").add_config(
+                name=config.name,
+                generics=dict(
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                ),
+            )
 
-            # Uncomment this to test configs individually
-            #  cli.library("lib").entity("axi_bit_interleaver_tb").add_config(
-            #      name=f"data_width={data_width},{config.name}",
-            #      generics=dict(
-            #          DATA_WIDTH=data_width,
-            #          test_cfg=config.getTestConfig(
-            #              input_file_path="bit_interleaver_input.bin",
-            #              reference_file_path="bit_interleaver_output.bin",
-            #          ),
-            #          NUMBER_OF_TEST_FRAMES=8,
-            #      ),
-            #  )
-
-        cli.library("lib").entity("axi_bit_interleaver_tb").add_config(
-            name=f"data_width={data_width},all_parameters",
-            generics=dict(
-                DATA_WIDTH=data_width,
-                test_cfg="|".join(all_configs),
-                NUMBER_OF_TEST_FRAMES=2,
-            ),
+    else:
+        addAllConfigsTest(
+            entity=vunit.library("lib").entity("axi_bch_encoder_tb"),
+            configs=TEST_CONFIGS,
         )
 
-    addAxiStreamDelayTests(cli.library("lib").entity("axi_stream_delay_tb"))
-    addAxiFileReaderTests(cli.library("lib").entity("axi_file_reader_tb"))
-    addAxiFileCompareTests(cli.library("lib").entity("axi_file_compare_tb"))
+        addAllConfigsTest(
+            entity=vunit.library("lib").entity("axi_ldpc_encoder_tb"),
+            configs=_getConfigs(constellations=(ConstellationType.MOD_8PSK,),),
+        )
 
-    cli.set_compile_option("modelsim.vcom_flags", ["-explicit"])
+        addAllConfigsTest(
+            entity=vunit.library("lib").entity("dvbs2_tx_tb"),
+            configs=tuple(TEST_CONFIGS),
+        )
+
+    addAllConfigsTest(
+        entity=vunit.library("lib").entity("axi_baseband_scrambler_tb"),
+        configs=TEST_CONFIGS,
+    )
+
+    # Generate bit interleaver tests
+    for data_width in (1, 8):
+        all_configs = []
+        for config in _getConfigs():
+            all_configs += [config.getTestConfigString()]
+
+            if args.individual_config_runs:
+                vunit.library("lib").entity("axi_bit_interleaver_tb").add_config(
+                    name=f"data_width={data_width},{config.name}",
+                    generics=dict(
+                        DATA_WIDTH=data_width,
+                        test_cfg=config.getTestConfigString(),
+                        NUMBER_OF_TEST_FRAMES=8,
+                    ),
+                )
+
+        if not args.individual_config_runs:
+            vunit.library("lib").entity("axi_bit_interleaver_tb").add_config(
+                name=f"data_width={data_width},all_parameters",
+                generics=dict(
+                    DATA_WIDTH=data_width,
+                    test_cfg="|".join(all_configs),
+                    NUMBER_OF_TEST_FRAMES=2,
+                ),
+            )
+
+    vunit.set_compile_option("modelsim.vcom_flags", ["-explicit"])
 
     # Not all options are supported by all GHDL backends
-    #  cli.set_compile_option("ghdl.flags", ["-frelaxed-rules"])
-    #  cli.set_compile_option("ghdl.flags", ["-frelaxed-rules", "-O0", "-g"])
-    cli.set_compile_option("ghdl.flags", ["-frelaxed-rules", "-O2", "-g"])
+    vunit.set_sim_option("ghdl.elab_flags", ["-frelaxed-rules"])
+    vunit.set_compile_option("ghdl.a_flags", ["-frelaxed-rules", "-O2", "-g"])
 
     # Make components not bound (error 3473) an error
-    cli.set_sim_option("modelsim.vsim_flags", ["-error", "3473", '-voptargs="+acc=n"'])
+    vsim_flags = ["-error", "3473"]
+    if args.gui:
+        vsim_flags += ['-voptargs="+acc=n"']
 
-    cli.set_sim_option("disable_ieee_warnings", True)
-    cli.set_sim_option("modelsim.init_file.gui", p.join(ROOT, "wave.do"))
-    cli.main()
+    vunit.set_sim_option("modelsim.vsim_flags", vsim_flags)
+
+    vunit.set_sim_option("disable_ieee_warnings", True)
+    vunit.set_sim_option("modelsim.init_file.gui", p.join(ROOT, "wave.do"))
+    vunit.main()
 
 
-def addAllConfigsTest(entity, configs, input_file_basename, reference_file_basename):
+def addAllConfigsTest(entity, configs):
     """
     Adds a test config with all combinations of configurations (assuming both
     input and reference files ca be found)
@@ -310,7 +474,7 @@ def addAllConfigsTest(entity, configs, input_file_basename, reference_file_basen
     params = []
 
     for config in configs:
-        params += [config.getTestConfig(input_file_basename, reference_file_basename)]
+        params += [config.getTestConfigString()]
 
     random.shuffle(params)
 
@@ -320,181 +484,6 @@ def addAllConfigsTest(entity, configs, input_file_basename, reference_file_basen
         name="test_all_configs",
         generics=dict(test_cfg="|".join(params), NUMBER_OF_TEST_FRAMES=1),
     )
-
-
-def addAxiStreamDelayTests(entity):
-    "Parametrizes the delays for the AXI stream delay test"
-    for delay in (1, 2, 8):
-        entity.add_config(name=f"delay={delay}", generics={"DELAY_CYCLES": delay})
-
-
-def addAxiFileCompareTests(entity):
-    "Parametrizes the AXI file compare testbench"
-    test_file = p.join(ROOT, "vunit_out", "file_compare_input.bin")
-    reference_file = p.join(ROOT, "vunit_out", "file_compare_reference_ok.bin")
-
-    if not (p.exists(test_file) and p.exists(reference_file)):
-        generateAxiFileReaderTestFile(
-            test_file=test_file,
-            reference_file=reference_file,
-            data_width=32,
-            length=256 * 32,
-            ratio=(32, 32),
-        )
-
-    tdata_single_error_file = p.join(
-        ROOT, "vunit_out", "file_compare_reference_tdata_1_error.bin"
-    )
-    tdata_two_errors_file = p.join(
-        ROOT, "vunit_out", "file_compare_reference_tdata_2_errors.bin"
-    )
-
-    if not p.exists(tdata_single_error_file):
-        ref_data = open(reference_file, "rb").read().split(b"\n")
-
-        with open(tdata_single_error_file, "wb") as fd:
-            # Skip one, duplicate another so the size is the same
-            data = ref_data[:7] + [ref_data[8],] + ref_data[8:]
-            fd.write(b"\n".join(data))
-
-    if not p.exists(tdata_two_errors_file):
-        ref_data = open(reference_file, "rb").read().split(b"\n")
-
-        with open(tdata_two_errors_file, "wb") as fd:
-            # Skip one, duplicate another so the size is the same
-            data = (
-                ref_data[:7]
-                + [ref_data[8], ref_data[8]]
-                + ref_data[9:16]
-                + [ref_data[17],]
-                + ref_data[17:]
-            )
-            fd.write(b"\n".join(data))
-
-    entity.add_config(
-        name="all",
-        generics=dict(
-            input_file=test_file,
-            reference_file=reference_file,
-            tdata_single_error_file=tdata_single_error_file,
-            tdata_two_errors_file=tdata_two_errors_file,
-        ),
-    )
-
-
-def addAxiFileReaderTests(entity):
-    "Parametrizes the AXI file reader testbench"
-    for data_width in (1, 8, 32):
-        all_configs = []
-
-        for ratio in (
-            (1, 8),
-            (2, 8),
-            (3, 8),
-            (5, 8),
-            (7, 8),
-            (8, 8),
-            (1, 4),
-            (2, 4),
-            (1, 1),
-            (8, 32),
-        ):
-
-            basename = (
-                f"file_reader_data_width_{data_width}_ratio_{ratio[0]}_{ratio[1]}"
-            )
-
-            test_file = p.join(ROOT, "vunit_out", basename + "_input.bin")
-            reference_file = p.join(ROOT, "vunit_out", basename + "_reference.bin")
-
-            if not (p.exists(test_file) and p.exists(reference_file)):
-                generateAxiFileReaderTestFile(
-                    test_file=test_file,
-                    reference_file=reference_file,
-                    data_width=data_width,
-                    length=256 * data_width,
-                    ratio=ratio,
-                )
-
-            test_cfg = ",".join([f"{ratio[0]}:{ratio[1]}", test_file, reference_file])
-
-            all_configs += [test_cfg]
-
-            # Uncomment this to test configs individually
-            #  name = f"single,data_width={data_width},ratio={ratio[0]}:{ratio[1]}"
-            #  entity.add_config(
-            #      name=name, generics={"DATA_WIDTH": data_width, "test_cfg": test_cfg}
-            #  )
-
-        entity.add_config(
-            name=f"multiple,data_width={data_width}",
-            generics={"DATA_WIDTH": data_width, "test_cfg": "|".join(all_configs)},
-        )
-
-
-def swapBits(value, width=8):
-    "Swaps LSB and MSB bits of <value>, considering its width is <width>"
-    v_in_binary = bin(value)[2:]
-
-    assert len(v_in_binary) <= width, "input is too big"
-
-    v_in_binary = "0" * (width - len(v_in_binary)) + v_in_binary
-    return int(v_in_binary[::-1], 2)
-
-
-def generateAxiFileReaderTestFile(test_file, reference_file, data_width, length, ratio):
-    "Create a pair of test files for the AXI file reader testbench"
-    rand_max = 2 ** data_width
-    ratio_first, ratio_second = ratio
-    packed_data = []
-    unpacked_bytes = []
-
-    buffer_length = 0
-    buffer_data = 0
-    byte = ""
-
-    for _ in range(length):
-        for ratio_i in reversed(range(ratio_second)):
-            if ratio_i < ratio_first:
-                # Generate a new data word every time the previous is read out
-                # completely
-                if buffer_length == 0:
-                    buffer_data = random.randrange(0, rand_max)
-                    packed_data += [buffer_data]
-
-                    buffer_data = swapBits(buffer_data, width=data_width)
-                    buffer_length += data_width
-
-                byte += str(buffer_data & 1)
-
-                buffer_data >>= 1
-                buffer_length -= 1
-            else:
-                # Pad only
-                byte += "0"
-
-            # Every time we get enough data, save it and reset it
-            if len(byte) == 8:
-                unpacked_bytes += [int(byte, 2)]
-                byte = ""
-
-    assert not byte, (
-        f"Data width {data_width}, length {length} is invalid, "
-        "need to make sure data_width*length is divisible by 8"
-    )
-
-    with open(test_file, "wb") as fd:
-        for byte in unpacked_bytes:
-            fd.write(struct.pack(">B", byte))
-
-    # Format will depend on the data width, need to be wide enough for to fit
-    # one character per nibble
-    fmt = "%.{}x\n".format((data_width + 3) // 4)
-    with open(reference_file, "w") as fd:
-        for word in packed_data:
-            fd.write(fmt % word)
-
-    return packed_data
 
 
 if __name__ == "__main__":

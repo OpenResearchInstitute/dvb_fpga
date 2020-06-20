@@ -25,8 +25,12 @@ library	ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-use work.common_pkg.all;
+library fpga_cores;
+use fpga_cores.common_pkg.all;
+
 use work.dvb_utils_pkg.all;
+
+library fpga_cores;
 
 ------------------------
 -- Entity declaration --
@@ -112,7 +116,7 @@ begin
     axi_delay_tdata <= tdata_agg_out(DATA_WIDTH - 1 downto 0);
     axi_delay_tlast <= tdata_agg_out(DATA_WIDTH);
 
-    data_delay_u : entity work.axi_stream_delay
+    data_delay_u : entity fpga_cores.axi_stream_delay
     generic map (
       DELAY_CYCLES => 2,
       TDATA_WIDTH  => DATA_WIDTH + 1)

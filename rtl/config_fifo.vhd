@@ -31,6 +31,8 @@ use ieee.numeric_std.all;
 
 use work.dvb_utils_pkg.all;
 
+library fpga_cores;
+
 ------------------------
 -- Entity declaration --
 ------------------------
@@ -81,7 +83,7 @@ begin
   -- Port mappings --
   -------------------
   -- TODO: Put an ordinary FIFO here
-  fifo_u : entity work.axi_stream_master_adapter
+  fifo_u : entity fpga_cores.axi_stream_master_adapter
     generic map (
       MAX_SKEW_CYCLES => FIFO_DEPTH,
       TDATA_WIDTH     => DATA_WIDTH)

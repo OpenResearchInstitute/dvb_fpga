@@ -55,7 +55,7 @@ the transmission side.
 | BCH encoder            | Done       | TODO       | TODO           | Different data widths can be generated |
 | Bit interleaver        | Done       | TODO       | TODO           | Tested data widths: 1 and 8            |
 | Constellation mapper   | TODO       | TODO       | TODO           |                                        |
-| LDPC Encoder           | TODO       | TODO       | TODO           |                                        |
+| LDPC Encoder           | Done       | TODO       | TODO           |                                        |
 | Physical layer framing | TODO       | TODO       | TODO           |                                        |
 
 ### Simulation helpers

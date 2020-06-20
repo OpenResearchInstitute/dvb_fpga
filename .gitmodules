@@ -1,3 +1,6 @@
 [submodule "third_party/hdl_string_format"]
 	path = third_party/hdl_string_format
 	url = https://github.com/suoto/hdl_string_format
+[submodule "third_party/fpga_cores"]
+	path = third_party/fpga_cores
+    url = https://github.com/suoto/fpga_cores.git

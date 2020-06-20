@@ -33,8 +33,11 @@ library str_format;
 use str_format.str_format_pkg.all;
 
 use work.dvb_utils_pkg.all;
-use work.testbench_utils_pkg.all;
-use work.file_utils_pkg.all;
+use work.dvb_sim_utils_pkg.all;
+
+library fpga_cores_sim;
+use fpga_cores_sim.testbench_utils_pkg.all;
+use fpga_cores_sim.file_utils_pkg.all;
 
 entity axi_bit_interleaver_tb is
   generic (
@@ -137,7 +140,7 @@ begin
 
 
   -- AXI file read
-  axi_file_reader_u : entity work.axi_file_reader
+  axi_file_reader_u : entity fpga_cores_sim.axi_file_reader
     generic map (
       READER_NAME => FILE_READER_NAME,
       DATA_WIDTH  => DATA_WIDTH)
@@ -155,7 +158,7 @@ begin
       m_tvalid           => m_tvalid,
       m_tlast            => m_tlast);
 
-  axi_file_compare_u : entity work.axi_file_compare
+  axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
     generic map (
       READER_NAME     => FILE_CHECKER_NAME,
       ERROR_CNT_WIDTH => ERROR_CNT_WIDTH,
@@ -211,29 +214,29 @@ begin
       constant config           : config_t;
       constant number_of_frames : in positive) is
       variable file_reader_msg  : msg_t;
+      constant data_path        : string := strip(config.base_path, chars => (1 to 1 => nul));
     begin
 
       info("Running test with:");
       info(" - constellation  : " & constellation_t'image(config.constellation));
       info(" - frame_type     : " & frame_type_t'image(config.frame_type));
       info(" - code_rate      : " & code_rate_t'image(config.code_rate));
-      info(" - input_file     : " & config.files.input);
-      info(" - reference_file : " & config.files.reference);
+      info(" - data path      : " & data_path);
 
       for i in 0 to number_of_frames - 1 loop
         file_reader_msg := new_msg;
         file_reader_msg.sender := self;
 
-        push(file_reader_msg, config.files.input);
+        push(file_reader_msg, data_path & "/bit_interleaver_input.bin");
         push(file_reader_msg, config.constellation);
         push(file_reader_msg, config.frame_type);
         push(file_reader_msg, config.code_rate);
 
         send(net, input_cfg_p, file_reader_msg);
-        enqueue_file(
+        read_file(
           net,
           file_checker,
-          config.files.reference,
+          data_path & "/bit_interleaver_output.bin",
           get_checker_data_ratio(config.constellation)
         );
 
@@ -241,18 +244,16 @@ begin
 
     end procedure run_test;
 
-    ------------------------------------------------------------------------------------
-    procedure wait_for_transfers ( constant count : in natural) is
+    procedure wait_for_completion is -- {{ ---------------------------------------------
       variable msg : msg_t;
     begin
-      -- Will get one response for each frame from the file checker and one for the input
-      -- config. The order shouldn't matter
       receive(net, self, msg);
-      -- Failure(sformat("Got reply from '%s'", name(msg.sender)));
-
       wait_all_read(net, file_checker);
-    end procedure wait_for_transfers;
-    ------------------------------------------------------------------------------------
+
+      wait until rising_edge(clk) and s_tvalid = '0' for 1 ms;
+
+      walk(1);
+    end procedure wait_for_completion; -- }} -------------------------------------------
 
   begin
 
@@ -278,8 +279,6 @@ begin
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
 
-        wait_for_transfers(configs'length);
-
       elsif run("slow_master") then
         tvalid_probability <= 0.5;
         tready_probability <= 1.0;
@@ -287,7 +286,6 @@ begin
         for i in configs'range loop
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
-        wait_for_transfers(configs'length);
 
       elsif run("slow_slave") then
         tvalid_probability <= 1.0;
@@ -296,7 +294,6 @@ begin
         for i in configs'range loop
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
-        wait_for_transfers(configs'length);
 
       elsif run("both_slow") then
         tvalid_probability <= 0.75;
@@ -305,9 +302,10 @@ begin
         for i in configs'range loop
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
-        wait_for_transfers(configs'length);
 
       end if;
+
+      wait_for_completion;
 
       walk(1);
 
@@ -333,7 +331,7 @@ begin
     receive(net, self, cfg_msg);
 
     -- Configure the file reader
-    enqueue_file(net, file_reader, pop(cfg_msg), "1:8");
+    read_file(net, file_reader, pop(cfg_msg), "1:8");
 
     wait until rising_edge(clk);
 

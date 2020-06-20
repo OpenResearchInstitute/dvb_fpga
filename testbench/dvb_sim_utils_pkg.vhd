@@ -20,26 +20,35 @@
 
 use std.textio.all;
 
+library ieee;
+use ieee.std_logic_1164.all;
+
 library vunit_lib;
 context vunit_lib.vunit_context;
 context vunit_lib.com_context;
 
+library str_format;
+use str_format.str_format_pkg.all;
+
+library fpga_cores;
+use fpga_cores.common_pkg.all;
+
 use work.dvb_utils_pkg.all;
 
-package testbench_utils_pkg is
+package dvb_sim_utils_pkg is
 
   type file_pair_t is record
-    input : string(1 to 512);
-    reference : string(1 to 512);
+    input : string(1 to 256);
+    reference : string(1 to 256);
   end record;
 
   type file_pair_array_t is array (natural range <>) of file_pair_t;
 
   type config_t is record
     constellation : constellation_t;
-    frame_type : frame_type_t;
-    code_rate : code_rate_t;
-    files : file_pair_t;
+    frame_type    : frame_type_t;
+    code_rate     : code_rate_t;
+    base_path     : string(1 to 256);
   end record;
 
   type config_array_t is array (natural range <>) of config_t;
@@ -58,18 +67,27 @@ package testbench_utils_pkg is
   procedure push(msg : msg_t; value : frame_type_t);
   procedure push(msg : msg_t; value : code_rate_t);
 
+  procedure push(msg : msg_t; value : config_t);
+
   impure function pop(msg : msg_t) return constellation_t;
   impure function pop(msg : msg_t) return frame_type_t;
   impure function pop(msg : msg_t) return code_rate_t;
 
-end testbench_utils_pkg;
+  impure function pop(msg : msg_t) return config_t;
 
-package body testbench_utils_pkg is
+end dvb_sim_utils_pkg;
+
+package body dvb_sim_utils_pkg is
 
   procedure push(msg : msg_t; value : constellation_t) is
   begin
     -- Push value as a string
     push(msg.data, constellation_t'image(value));
+  end;
+
+  impure function pop(msg : msg_t) return constellation_t is
+  begin
+    return constellation_t'value(pop(msg.data));
   end;
 
   procedure push(msg : msg_t; value : frame_type_t) is
@@ -78,21 +96,15 @@ package body testbench_utils_pkg is
     push(msg.data, frame_type_t'image(value));
   end;
 
+  impure function pop(msg : msg_t) return frame_type_t is
+  begin
+    return frame_type_t 'value(pop(msg.data));
+  end;
+
   procedure push(msg : msg_t; value : code_rate_t) is
   begin
     -- Push value as a string
     push(msg.data, code_rate_t'image(value));
-  end;
-
-
-  impure function pop(msg : msg_t) return constellation_t is
-  begin
-    return constellation_t'value(pop(msg.data));
-  end;
-
-  impure function pop(msg : msg_t) return frame_type_t is
-  begin
-    return frame_type_t 'value(pop(msg.data));
   end;
 
   impure function pop(msg : msg_t) return code_rate_t is
@@ -100,6 +112,39 @@ package body testbench_utils_pkg is
     return code_rate_t'value(pop(msg.data));
   end;
 
+  procedure push(msg : msg_t; value : file_pair_t) is
+  begin
+    push(msg, value.input);
+    push(msg, value.reference);
+  end;
+
+  impure function pop(msg : msg_t) return file_pair_t is
+    constant input     : string := pop(msg);
+    constant reference : string := pop(msg);
+  begin
+    return (input => input, reference => reference);
+  end;
+
+  procedure push(msg : msg_t; value : config_t) is
+  begin
+    push(msg, value.constellation);
+    push(msg, value.frame_type);
+    push(msg, value.code_rate);
+    push(msg, value.base_path);
+  end;
+
+  impure function pop(msg : msg_t) return config_t is
+    constant constellation : constellation_t := pop(msg);
+    constant frame_type    : frame_type_t    := pop(msg);
+    constant code_rate     : code_rate_t     := pop(msg);
+    constant base_path     : string          := pop(msg);
+  begin
+    return (
+      constellation => constellation,
+      frame_type    => frame_type,
+      code_rate     => code_rate,
+      base_path     => base_path);
+  end;
 
   --
   impure function get_test_cfg ( constant str : string)
@@ -117,19 +162,17 @@ package body testbench_utils_pkg is
 
     for i in 0 to cfg_strings'length - 1 loop
       cfg_items := split(cfg_strings(i).all, ",");
-      
-      if cfg_items'length /= 5 then
+
+      if cfg_items'length /= 4 then
         failure("Malformed config string " & quote(cfg_strings(i).all));
       end if;
 
       current.constellation := constellation_t'value(cfg_items(0).all);
       current.frame_type := frame_type_t'value(cfg_items(1).all);
       current.code_rate := code_rate_t'value(cfg_items(2).all);
-      current.files.input := (others => nul);
-      current.files.reference := (others => nul);
 
-      current.files.input(cfg_items(3).all'range) := cfg_items(3).all;
-      current.files.reference(cfg_items(4).all'range) := cfg_items(4).all;
+      current.base_path := (others => nul);
+      current.base_path(cfg_items(3).all'range) := cfg_items(3).all;
 
       result(i) := current;
 
@@ -158,7 +201,7 @@ package body testbench_utils_pkg is
 
     for i in 0 to cfg_strings'length - 1 loop
       cfg_items := split(cfg_strings(i).all, ",");
-      
+
       if cfg_items'length /= 2 then
         failure("Malformed config string " & quote(cfg_strings(i).all));
       end if;
@@ -195,8 +238,7 @@ package body testbench_utils_pkg is
       & "constellation=" & quote(constellation_t'image(config.constellation)) & ", "
       & "frame_type=" & quote(frame_type_t'image(config.frame_type)) & ", "
       & "code_rate=" & quote(code_rate_t'image(config.code_rate)) & ", "
-      & "input=" & quote(config.files.input) & ", "
-      & "reference=" & quote(config.files.reference) & ")";
+      & "base_path=" & quote(config.base_path) & ")";
   end function to_string;
 
   -- Returns a string representation of config_t

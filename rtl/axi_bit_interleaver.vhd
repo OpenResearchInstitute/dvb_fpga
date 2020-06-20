@@ -25,7 +25,9 @@ library	ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-use work.common_pkg.all;
+library fpga_cores;
+use fpga_cores.common_pkg.all;
+
 use work.dvb_utils_pkg.all;
 
 ------------------------
@@ -168,12 +170,12 @@ begin
     addr_a <= std_logic_vector(ram_wr_addr(column)(numbits(MAX_ROWS) downto 0));
     addr_b <= std_logic_vector(ram_rd_addr(numbits(MAX_ROWS) downto 0));
 
-    ram : entity work.ram_inference
+    ram : entity fpga_cores.ram_inference
       generic map (
-        ADDR_WIDTH          => numbits(MAX_ROWS) + 1,
-        DATA_WIDTH          => DATA_WIDTH,
-        RAM_INFERENCE_STYLE => "auto",
-        EXTRA_OUTPUT_DELAY  => 0)
+        ADDR_WIDTH   => numbits(MAX_ROWS) + 1,
+        DATA_WIDTH   => DATA_WIDTH,
+        RAM_TYPE     => "auto",
+        OUTPUT_DELAY => 1)
       port map (
         -- Port A
         clk_a     => clk,
@@ -192,7 +194,7 @@ begin
 
   -- Interleaved data takes 1 cycle after the address has changed, add support for
   -- a couple of cycles to stop the pipeline
-  axi_master_adapter_u : entity work.axi_stream_master_adapter
+  axi_master_adapter_u : entity fpga_cores.axi_stream_master_adapter
     generic map (
       MAX_SKEW_CYCLES => 3,
       TDATA_WIDTH     => DATA_WIDTH)
@@ -212,7 +214,7 @@ begin
       m_tlast  => m_tlast);
 
   -- First word samples config, whenever it's deasserted we can write the config
-  wr_en_gen: entity work.edge_detector
+  wr_en_gen: entity fpga_cores.edge_detector
     generic map (
       SYNCHRONIZE_INPUT => False,
       OUTPUT_DELAY      => 0)
@@ -227,7 +229,7 @@ begin
       falling => cfg_wr_en,
       toggle  => open);
 
-  rd_en_gen: entity work.edge_detector
+  rd_en_gen: entity fpga_cores.edge_detector
     generic map (
       SYNCHRONIZE_INPUT => False,
       OUTPUT_DELAY      => 0)

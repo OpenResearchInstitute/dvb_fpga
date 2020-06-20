@@ -1,3 +1,4 @@
 .hdl_checker/
 vunit_out
 gnuradio_data/*/
+*.bin

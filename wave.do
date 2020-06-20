@@ -32,6 +32,6 @@ add  wave  -noupdate -expand -group "DUT"    "sim:/dut/*"
 #   sim:/axi_bit_interleaver_tb/dut/ram_wr(5).data \
 #   sim:/axi_bit_interleaver_tb/dut/ram_wr(5).en
 
-configure wave -namecolwidth 200
+configure wave -namecolwidth 300
 configure wave -valuecolwidth 120
 # update
