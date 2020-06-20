@@ -119,7 +119,7 @@ class LdpcTable:
 
     def _getWidthArray(self):
         return (
-            f"constant {self.name.upper()}_COLUMN_WIDTHS : integer_vector := ("
+            f"constant {self.name.upper()}_COLUMN_WIDTHS : integer_vector_t := ("
             + ", ".join(
                 ["%d => %d" % (key, value) for key, value in self._widths.items()]
             )
@@ -155,13 +155,17 @@ class LdpcTable:
             f"  -- From {p.relpath(self._path, ROOT)}, table is {depth}x{width} ({depth*width/8.} bytes)",
             f"  -- Resource estimation: {brams_18k} x 18 kB BRAMs or {brams_36k} x 36 kB BRAMs",
             f"  {self._getWidthArray()}",
-            "",
-            f"  constant {self.name.upper()} : integer_2d_array_t(0 to {depth - 1})(0 to {columns - 1}) := (",
+            f"",
+            f"  constant {self.name.upper()} : integer_2d_array_t",
+            f"  -- xilinx translate_off",
+            f"  (0 to {depth - 1})(0 to {columns - 1})",
+            f"  -- xilinx translate_on",
+            f"  := (",
         ]
 
         for i, line in enumerate(self._table):
 
-            this_line = f"    {i} => integer_vector'({self._renderRamLine(line)})"
+            this_line = f"    {i} => integer_vector_t'({self._renderRamLine(line)})"
             if i < depth - 1:
                 lines.append(f"{this_line},")
             else:
