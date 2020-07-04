@@ -27,8 +27,15 @@ add_files [ glob rtl/bch_generated/*.vhd ]
 add_files [ glob rtl/ldpc/*.vhd ]
 add_files [ glob rtl/*.vhd ]
 
-# WARNING: [Synth 8-6849] Infeasible attribute ram_style = "block" set for RAM "ldpc_encoder_u/frame_ram_u/ram_u/ram_reg",trying to implement using LUTRAM
-set_msg_config -id "Synth 8-6849" -new_severity {CRITICAL WARNING}
+# WARNING: [Synth 8-6849] Infeasible attribute ram_style = "block" set for RAM
+# "ldpc_encoder_u/frame_ram_u/ram_u/ram_reg", trying to implement using LUTRAM
+set_msg_config -id "Synth 8-6849" -new_severity ERROR
+
+# INFO: [Synth 8-7053] The timing for the instance
+# ldpc_encoder_u/frame_ram_u/ram_u/ram_reg_bram_0 (implemented as a Block RAM) might be
+# sub-optimal as no optional output register could be merged into the ram block. Providing
+# additional output register may help in improving timing.
+# set_msg_config -id "Synth 8-7053" -new_severity ERROR
 
 set_property TOP dvbs2_tx [ current_fileset ]
 set_property STEPS.SYNTH_DESIGN.ARGS.ASSERT true [ get_runs synth_1 ]

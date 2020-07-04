@@ -515,7 +515,7 @@ begin
             frame_bits_remaining <= to_unsigned(FECFRAME_SHORT_BIT_LENGTH - 1,
                                                 frame_bits_remaining'length);
           elsif axi_bit_frame_type = FECFRAME_NORMAL then
-            frame_bits_remaining <= to_unsigned(FECFRAME_NORMAL_BIT_LENGHT - 1,
+            frame_bits_remaining <= to_unsigned(FECFRAME_NORMAL_BIT_LENGTH - 1,
                                                 frame_bits_remaining'length);
           else
             report "Don't know how to handle frame type=" & quote(frame_type_t'image(axi_bit_frame_type))

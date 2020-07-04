@@ -140,7 +140,7 @@ package body ldpc_pkg is
     if frame_type = fecframe_short  and code_rate = C8_9   then result := 14_400;  end if;
 
     if frame_type = fecframe_normal then
-      return FECFRAME_NORMAL_BIT_LENGHT - result;
+      return FECFRAME_NORMAL_BIT_LENGTH - result;
     end if;
 
     return FECFRAME_SHORT_BIT_LENGTH - result;

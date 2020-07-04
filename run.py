@@ -326,11 +326,17 @@ class GhdlPragmaHandler:
             if word not in code:
                 return code
 
-        # Would be better to comment out instead of removing to keep line
-        # numbers
-        result = self._PRAGMA.sub(r"", code)
+        lines = code.split("\n")
 
-        return result
+        # Prepend the comment characters to lines within matches so line
+        # numbers are kept
+        for match in self._PRAGMA.finditer(code):
+            for lnum in range(
+                code[: match.start()].count("\n") + 1, code[: match.end()].count("\n")
+            ):
+                lines[lnum] = "-- " + lines[lnum]
+
+        return "\n".join(lines)
 
 
 def main():

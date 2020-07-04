@@ -79,7 +79,7 @@ Uses the same container used for CI
 git clone --recurse-submodules  https://github.com/phase4ground/dvb_fpga
 cd dvb_fpga
 # Run the tests
-./docker/run_tests.sh
+./misc/run_tests.sh
 ```
 
 Arguments passed to `docker/run_tests.sh` will be passed to `run.py` and, by
@@ -104,6 +104,23 @@ make all
 cd ..
 # Run the tests
 ./run.py
+```
+
+## Running synthesis
+
+Scripts are provided as an example to get things going, currently this has not
+been tested in real hardware.
+
+### Yosys
+
+```sh
+./misc/run_synth.sh
+```
+
+### Vivado
+
+```sh
+vivado -source ./build/vivado/build.tcl
 ```
 
 [vunit]: https://vunit.github.io/

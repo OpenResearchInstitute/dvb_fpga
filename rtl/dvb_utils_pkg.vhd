@@ -28,10 +28,10 @@ use fpga_cores.common_pkg.all;
 package dvb_utils_pkg is
 
   constant FECFRAME_SHORT_BIT_LENGTH  : integer := 16_200;
-  constant FECFRAME_NORMAL_BIT_LENGHT : integer := 64_800;
+  constant FECFRAME_NORMAL_BIT_LENGTH : integer := 64_800;
 
   -- Sizes
-  constant DVB_N_LDPC : integer_vector_t := (FECFRAME_SHORT_BIT_LENGTH, FECFRAME_NORMAL_BIT_LENGHT);
+  constant DVB_N_LDPC : integer_vector_t := (FECFRAME_SHORT_BIT_LENGTH, FECFRAME_NORMAL_BIT_LENGTH);
 
   type frame_type_t is (not_set, fecframe_normal, fecframe_short);
 
@@ -47,13 +47,13 @@ package dvb_utils_pkg is
   type constellation_array_t is array (natural range <>) of constellation_t;
   type code_rate_array_t is array (natural range <>) of code_rate_t;
 
-  constant FRAME_TYPE_LENGHT    : integer := frame_type_t'pos(frame_type_t'high) - frame_type_t'pos(frame_type_t'low) + 1;
-  constant CODE_RATE_LENGHT     : integer := code_rate_t'pos(code_rate_t'high) - code_rate_t'pos(code_rate_t'low) + 1;
-  constant CONSTELLATION_LENGHT : integer := constellation_t'pos(constellation_t'high) - constellation_t'pos(constellation_t'low) + 1;
+  constant FRAME_TYPE_LENGTH    : integer := frame_type_t'pos(frame_type_t'high) - frame_type_t'pos(frame_type_t'low) + 1;
+  constant CODE_RATE_LENGTH     : integer := code_rate_t'pos(code_rate_t'high) - code_rate_t'pos(code_rate_t'low) + 1;
+  constant CONSTELLATION_LENGTH : integer := constellation_t'pos(constellation_t'high) - constellation_t'pos(constellation_t'low) + 1;
 
-  constant FRAME_TYPE_WIDTH     : integer := numbits(FRAME_TYPE_LENGHT);
-  constant CONSTELLATION_WIDTH  : integer := numbits(CONSTELLATION_LENGHT);
-  constant CODE_RATE_WIDTH      : integer := numbits(CODE_RATE_LENGHT);
+  constant FRAME_TYPE_WIDTH     : integer := numbits(FRAME_TYPE_LENGTH);
+  constant CONSTELLATION_WIDTH  : integer := numbits(CONSTELLATION_LENGTH);
+  constant CODE_RATE_WIDTH      : integer := numbits(CODE_RATE_LENGTH);
 
   -- Encode/decode config types to std_logic_vectors
   function encode( constant v : frame_type_t ) return std_logic_vector;

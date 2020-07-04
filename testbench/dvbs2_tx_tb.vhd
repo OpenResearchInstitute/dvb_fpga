@@ -119,18 +119,18 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
 
   -- AXI input
   signal axi_master         : axi_stream_data_bus_t(tdata(DATA_WIDTH - 1 downto 0));
-  signal m_data_valid       : boolean;
+  signal m_data_valid       : std_logic;
 
   -- AXI LDPC table input
   signal axi_ldpc           : axi_stream_data_bus_t(tdata(2*numbits(max(DVB_N_LDPC)) + 8 - 1 downto 0));
 
   -- AXI output
-  signal s_data_valid       : boolean;
+  signal s_data_valid       : std_logic;
 
-  signal axi_bb_scrambler    : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)));
-  signal axi_bch_encoder     : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)));
-  signal axi_ldpc_encoder    : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)));
-  signal axi_slave           : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)));
+  signal axi_bb_scrambler   : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)));
+  signal axi_bch_encoder    : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)));
+  signal axi_ldpc_encoder   : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)));
+  signal axi_slave          : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)));
 
 begin
 
@@ -306,10 +306,10 @@ begin
   ------------------------------
   clk <= not clk after CLK_PERIOD/2;
 
-  test_runner_watchdog(runner, 3 ms);
+  test_runner_watchdog(runner, 300 ms);
 
-  m_data_valid <= axi_master.tvalid = '1' and axi_master.tready = '1';
-  s_data_valid <= axi_slave.axi.tvalid = '1' and axi_slave.axi.tready = '1';
+  m_data_valid <= axi_master.tvalid and axi_master.tready;
+  s_data_valid <= axi_slave.axi.tvalid and axi_slave.axi.tready;
 
   ---------------
   -- Processes --
@@ -450,12 +450,12 @@ begin
     cfg_constellation <= pop(cfg_msg);
     cfg_frame_type    <= pop(cfg_msg);
     cfg_code_rate     <= pop(cfg_msg);
-    wait until m_data_valid and axi_master.tlast = '0' and rising_edge(clk);
+    wait until m_data_valid = '1' and axi_master.tlast = '0' and rising_edge(clk);
     cfg_constellation <= not_set;
     cfg_frame_type    <= not_set;
     cfg_code_rate     <= not_set;
 
-    wait until m_data_valid and axi_master.tlast = '1';
+    wait until m_data_valid = '1' and axi_master.tlast = '1';
 
     -- When this is received, the file reader has finished reading the file
     wait_file_read(net, file_reader);
@@ -538,5 +538,19 @@ begin
     end process;
   end block signal_spy_block;
 -- ghdl translate_on
+
+  report_rx : process
+    constant logger    : logger_t   := get_logger("axi_slave report");
+    variable word_cnt  : natural := 0;
+    variable frame_cnt : natural := 0;
+  begin
+    wait until s_data_valid = '1' and rising_edge(clk);
+    word_cnt := word_cnt + 1;
+    if axi_slave.axi.tlast = '1' then
+      info(logger, sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
+      frame_cnt := frame_cnt + 1;
+      word_cnt  := 0;
+    end if;
+  end process;
 
 end dvbs2_tx_tb;
