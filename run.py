@@ -121,7 +121,6 @@ class TestDefinition(
 def _getConfigs(
     code_rates=CodeRate, frame_lengths=FrameLength, constellations=ConstellationType
 ):
-
     for code_rate in code_rates:
         for frame_length in frame_lengths:
             for constellation in constellations:
@@ -418,9 +417,12 @@ def main():
             configs=_getConfigs(constellations=(ConstellationType.MOD_8PSK,),),
         )
 
+        # Run the DVB S2 Tx testbench with a smaller sample of configs to check
+        # integration, otherwise sim takes way too long. Note that when
+        # --individual-config-runs is passed, all configs are added
         addAllConfigsTest(
             entity=vunit.library("lib").entity("dvbs2_tx_tb"),
-            configs=tuple(TEST_CONFIGS),
+            configs=_getConfigs(code_rates=(CodeRate.C1_4, CodeRate.C9_10)),
         )
 
     addAllConfigsTest(

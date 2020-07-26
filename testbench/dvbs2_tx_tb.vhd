@@ -226,7 +226,7 @@ begin
       -- Data input
       s_tready           => open,
       s_tdata            => axi_bb_scrambler.axi.tdata,
-      s_tvalid           => axi_bb_scrambler.axi.tvalid and axi_bb_scrambler.axi.tready,-- -- {{-- }}
+      s_tvalid           => axi_bb_scrambler.axi.tvalid and axi_bb_scrambler.axi.tready,
       s_tlast            => axi_bb_scrambler.axi.tlast);
 
   bch_encoder_checker_u : entity fpga_cores_sim.axi_file_compare
@@ -250,7 +250,7 @@ begin
       -- Data input
       s_tready           => open,
       s_tdata            => axi_bch_encoder.axi.tdata,
-      s_tvalid           => axi_bch_encoder.axi.tvalid and axi_bch_encoder.axi.tready,-- -- {{-- }}
+      s_tvalid           => axi_bch_encoder.axi.tvalid and axi_bch_encoder.axi.tready,
       s_tlast            => axi_bch_encoder.axi.tlast);
 
   ldpc_encoder_checker_u : entity fpga_cores_sim.axi_file_compare
@@ -336,6 +336,7 @@ begin
     procedure wait_for_completion is -- {{ ---------------------------------------------
       variable msg : msg_t;
     begin
+      info("Waiting for test completion");
       receive(net, self, msg);
       wait_all_read(net, file_checker);
 
@@ -381,10 +382,6 @@ begin
         read_file(net, bch_encoder_checker, data_path & "/ldpc_encoder_input.bin", "1:8");
         read_file(net, ldpc_encoder_checker, data_path & "/bit_interleaver_input.bin", "1:8");
 
-        wait_for_completion;
-
-        walk(256);
-
       end loop;
 
     end procedure run_test; -- }} ------------------------------------------------------
@@ -414,9 +411,9 @@ begin
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
 
-        wait_for_completion;
-
       end if;
+
+      wait_for_completion;
 
       check_false(has_message(input_cfg_p));
 

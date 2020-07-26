@@ -98,7 +98,7 @@ begin
   -------------------
   -- Port mappings --
   -------------------
-  bb_scramber_u : entity work.axi_baseband_scrambler
+  bb_scrambler_u : entity work.axi_baseband_scrambler
     generic map (DATA_WIDTH => DATA_WIDTH)
     port map (
       -- Usual ports
