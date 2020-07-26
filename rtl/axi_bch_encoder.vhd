@@ -95,6 +95,7 @@ architecture axi_bch_encoder of axi_bch_encoder is
 
   -- Largest is 192 bits, use a slice when handling polynomials with smaller contexts
   signal crc_word_cnt         : unsigned(numbits(MAX_WORD_CNT) - 1 downto 0);
+  signal crc_word_cnt_next    : unsigned(numbits(MAX_WORD_CNT) - 1 downto 0);
   signal crc                  : std_logic_vector(191 downto 0);
   signal crc_srl              : std_logic_vector(191 downto 0);
   signal crc_sample           : std_logic := '0';
@@ -117,23 +118,23 @@ begin
     axi_delay_tlast <= tdata_agg_out(DATA_WIDTH);
 
     data_delay_u : entity fpga_cores.axi_stream_delay
-    generic map (
-      DELAY_CYCLES => 2,
-      TDATA_WIDTH  => DATA_WIDTH + 1)
-    port map (
-      -- Usual ports
-      clk     => clk,
-      rst     => rst,
+      generic map (
+        DELAY_CYCLES => 2,
+        TDATA_WIDTH  => DATA_WIDTH + 1)
+      port map (
+        -- Usual ports
+        clk     => clk,
+        rst     => rst,
 
-      -- AXI slave input
-      s_tvalid => s_tvalid,
-      s_tready => s_tready_i,
-      s_tdata  => tdata_agg_in,
+        -- AXI slave input
+        s_tvalid => s_tvalid,
+        s_tready => s_tready_i,
+        s_tdata  => tdata_agg_in,
 
-      -- AXI master output
-      m_tvalid => axi_delay_tvalid,
-      m_tready => axi_delay_tready,
-      m_tdata  => tdata_agg_out);
+        -- AXI master output
+        m_tvalid => axi_delay_tvalid,
+        m_tready => axi_delay_tready,
+        m_tdata  => tdata_agg_out);
   end block data_delay_block;
 
   -- BCH encoders are wrapped with a mux to hide away unrelated stuff. The idea is to keep
@@ -192,8 +193,14 @@ begin
   process(clk, rst)
   begin
     if rst = '1' then
-      crc_word_cnt     <= (others => '0');
-      s_axi_first_word <= '1';
+      crc_word_cnt      <= (others => '0');
+      s_axi_first_word  <= '1';
+
+      -- Avoiding unnecessary muxes with rst
+      crc_word_cnt_next <= (others => 'U');
+      crc_sample        <= 'U';
+      crc_sample_delay  <= 'U';
+      crc_srl           <= (others => 'U');
     elsif clk'event and clk = '1' then
 
       crc_sample       <= '0';
@@ -214,6 +221,15 @@ begin
         -- necessarily stop writing data to the CRC calculation block
         if s_tlast = '1' then
           crc_sample      <= '1';
+        end if;
+
+        if s_tlast = '1' then
+          -- This is mostly static, so division should not be a problem. In any case,
+          -- DATA_WIDTH will always be a power of 2, so this division will map to a shift
+          -- operation
+          crc_word_cnt_next <= to_unsigned(
+                            get_crc_length(frame_type, code_rate) / DATA_WIDTH,
+                            crc_word_cnt'length);
         end if;
 
       end if;
@@ -237,14 +253,7 @@ begin
       -- happens, load the CRC word counter, which will trigger switching to append CRC
       -- mode
       if axi_delay_data_valid = '1' and axi_delay_tlast = '1' then
-        -- TODO: Check if this uses the carry bit to reset
-
-        -- This is mostly static, so division should not be a problem. In any case,
-        -- DATA_WIDTH will always be a power of 2, so this division will map to a shift
-        -- operation
-        crc_word_cnt <= to_unsigned(
-                          get_crc_length(cfg_frame_type_out, cfg_code_rate_out) / DATA_WIDTH,
-                          crc_word_cnt'length);
+        crc_word_cnt <= crc_word_cnt_next;
       end if;
 
     end if;
@@ -259,14 +268,12 @@ begin
     signal first_word    : std_logic;
   begin
 
-    frame_type <= cfg_frame_type when first_word = '1' else frame_type_ff;
-    code_rate  <= cfg_code_rate when first_word = '1' else code_rate_ff;
+    frame_type <= cfg_frame_type when first_word = '1' and s_axi_data_valid = '1' else frame_type_ff;
+    code_rate  <= cfg_code_rate when first_word = '1' and s_axi_data_valid = '1' else code_rate_ff;
 
-    process(clk, rst)
+    process(clk)
     begin
-      if rst = '1' then
-        first_word  <= '1';
-      elsif rising_edge(clk) then
+      if rising_edge(clk) then
         if s_axi_data_valid = '1' then
           first_word <= s_tlast;
 
@@ -276,6 +283,10 @@ begin
             code_rate_ff  <= cfg_code_rate;
           end if;
 
+        end if;
+
+        if rst = '1' then
+          first_word    <= '1';
         end if;
 
       end if;
