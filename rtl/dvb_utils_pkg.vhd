@@ -110,16 +110,25 @@ package body dvb_utils_pkg is
 
   function encode( constant v : frame_type_t ) return std_logic_vector is
   begin
+    if v = not_set then
+      return (FRAME_TYPE_WIDTH - 1 downto 0 => 'U');
+    end if;
     return std_logic_vector(to_unsigned(frame_type_t'pos(v), FRAME_TYPE_WIDTH));
   end;
 
   function encode( constant v : constellation_t ) return std_logic_vector is
   begin
+    if v = not_set then
+      return (CONSTELLATION_WIDTH - 1 downto 0 => 'U');
+    end if;
     return std_logic_vector(to_unsigned(constellation_t'pos(v), CONSTELLATION_WIDTH));
   end;
 
   function encode( constant v : code_rate_t ) return std_logic_vector is
   begin
+    if v = not_set then
+      return (CODE_RATE_WIDTH - 1 downto 0 => 'U');
+    end if;
     return std_logic_vector(to_unsigned(code_rate_t'pos(v), CODE_RATE_WIDTH));
   end;
 
