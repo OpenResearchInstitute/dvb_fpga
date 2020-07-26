@@ -122,7 +122,13 @@ architecture axi_bit_interleaver of axi_bit_interleaver is
 
   signal wr_addr_init              : std_logic := '0';
 
-  signal ram_wr                    : ram_wr_array_t;
+  signal ram_wr_en                 : std_logic_vector(MAX_COLUMNS - 1 downto 0);
+  signal ram_wr_addr               : unsigned(numbits(MAX_ROWS) + RAM_PTR_WIDTH - 1 downto 0);
+  signal ram_wr_data               : std_logic_vector(DATA_WIDTH - 1 downto 0);
+
+  -- When addressing the RAMs we don't need the pointer part of the address
+  signal ram_wr_addr_no_pointer    : std_logic_vector(numbits(MAX_ROWS) downto 0);
+  signal ram_rd_addr_no_pointer    : std_logic_vector(numbits(MAX_ROWS) downto 0);
 
   signal tdata_sr_reg              : std_logic_vector(3*DATA_WIDTH - 1 downto 0);
 
@@ -210,14 +216,7 @@ begin
 
   -- Generate 1 RAM for each column, each one gets written sequentially
   generate_rams : for column in 0 to MAX_COLUMNS - 1 generate
-    -- Needed for GHDL simulation to work
-    signal addr_a : std_logic_vector(numbits(MAX_ROWS) downto 0);
-    signal addr_b : std_logic_vector(numbits(MAX_ROWS) downto 0);
   begin
-
-    -- The upper bits select the column, slice off the LSB for the RAM's address
-    addr_a <= std_logic_vector(ram_wr(column).addr(numbits(MAX_ROWS) downto 0));
-    addr_b <= std_logic_vector(ram_rd_addr(numbits(MAX_ROWS) downto 0));
 
     ram : entity fpga_cores.ram_inference
       generic map (
@@ -231,14 +230,14 @@ begin
         -- Port A
         clk_a     => clk,
         clken_a   => '1',
-        wren_a    => ram_wr(column).en,
-        addr_a    => addr_a,
-        wrdata_a  => ram_wr(column).data,
+        wren_a    => ram_wr_en(column),
+        addr_a    => ram_wr_addr_no_pointer,
+        wrdata_a  => ram_wr_data,
         rddata_a  => open,
         -- Port B
         clk_b     => clk,
         clken_b   => '1',
-        addr_b    => addr_b,
+        addr_b    => ram_rd_addr_no_pointer,
         rddata_b  => ram_rd_data(column));
   end generate generate_rams;
 
@@ -361,6 +360,10 @@ begin
     end generate iter_5_columns;
   end generate iter_rows;
 
+  -- The upper bits select the column, slice off the LSB for the RAM's address
+  ram_wr_addr_no_pointer <= std_logic_vector(ram_wr_addr(numbits(MAX_ROWS) downto 0));
+  ram_rd_addr_no_pointer <= std_logic_vector(ram_rd_addr(numbits(MAX_ROWS) downto 0));
+
   ram_ptr_diff    <= wr_ram_ptr - rd_ram_ptr when wr_ram_ptr > rd_ram_ptr else
                      2**RAM_PTR_WIDTH + wr_ram_ptr - rd_ram_ptr;
 
@@ -385,16 +388,14 @@ begin
       wr_row_cnt       <= (others => '0');
       wr_remainder     <= (others => '0');
       wr_ram_ptr       <= (others => '0');
+      ram_wr_en        <= (others => '0');
 
       wr_handler_ready <= '1';
       wr_addr_init     <= '1';
 
-      -- Assign registers to avoid AND'ing their values reset
-      for i in ram_wr'range loop
-        ram_wr(i) <= (addr => (others => 'U'),
-                      data => (others => 'U'),
-                      en => '0');
-      end loop;
+      -- Assign registers to avoid accidentally having logic with reset
+      ram_wr_addr  <= (others => 'U');
+      ram_wr_data  <= (others => 'U');
 
       bit_cnt      <= (others => 'U');
       tdata_sr_reg <= (others => 'U');
@@ -418,64 +419,64 @@ begin
         end if;
       end if;
 
-      -- Increment RAM addr every time it gets written
-      for column in 0 to MAX_COLUMNS - 1 loop
-        ram_wr(column).en <= '0';
-        if ram_wr(column).en = '1' then
-          ram_wr(column).addr <= ram_wr(column).addr + 1;
-        end if;
-      end loop;
+      ram_wr_en <= (others => '0');
+
+      -- Increment RAM addr every time any gets written
+      if ram_wr_en /= (MAX_COLUMNS - 1 downto 0 => '0') then
+        ram_wr_addr <= ram_wr_addr + 1;
+      end if;
 
       if s_tlast_reg = '1' then
 
-        s_tlast_reg                  <= '0';
-        ram_wr(wr_column_cnt_i).en   <= '1';
+        s_tlast_reg                <= '0';
+        ram_wr_en(wr_column_cnt_i) <= '1';
 
         -- FIXME: Attempts to make this independent of DATA_WIDTH all failed with
         -- non-synthesizable constructs, but would be a nice to have
         case to_integer(bit_cnt_v) is
-          when      0 => ram_wr(wr_column_cnt_i).data <= (DATA_WIDTH - 0 - 1 downto  0 => '0');
-          when      1 => ram_wr(wr_column_cnt_i).data <= tdata_sr(1 - 1 downto 0) & (DATA_WIDTH - 1 - 1 downto  0 => '0');
-          when      2 => ram_wr(wr_column_cnt_i).data <= tdata_sr(2 - 1 downto 0) & (DATA_WIDTH - 2 - 1 downto  0 => '0');
-          when      3 => ram_wr(wr_column_cnt_i).data <= tdata_sr(3 - 1 downto 0) & (DATA_WIDTH - 3 - 1 downto  0 => '0');
-          when      4 => ram_wr(wr_column_cnt_i).data <= tdata_sr(4 - 1 downto 0) & (DATA_WIDTH - 4 - 1 downto  0 => '0');
-          when      5 => ram_wr(wr_column_cnt_i).data <= tdata_sr(5 - 1 downto 0) & (DATA_WIDTH - 5 - 1 downto  0 => '0');
-          when      6 => ram_wr(wr_column_cnt_i).data <= tdata_sr(6 - 1 downto 0) & (DATA_WIDTH - 6 - 1 downto  0 => '0');
-          when      7 => ram_wr(wr_column_cnt_i).data <= tdata_sr(7 - 1 downto 0) & (DATA_WIDTH - 7 - 1 downto  0 => '0');
-          when others => ram_wr(wr_column_cnt_i).data <= tdata_sr(DATA_WIDTH - 1 downto 0);
+          when      0 => ram_wr_data <= (DATA_WIDTH - 0 - 1 downto  0 => '0');
+          when      1 => ram_wr_data <= tdata_sr(1 - 1 downto 0) & (DATA_WIDTH - 1 - 1 downto  0 => '0');
+          when      2 => ram_wr_data <= tdata_sr(2 - 1 downto 0) & (DATA_WIDTH - 2 - 1 downto  0 => '0');
+          when      3 => ram_wr_data <= tdata_sr(3 - 1 downto 0) & (DATA_WIDTH - 3 - 1 downto  0 => '0');
+          when      4 => ram_wr_data <= tdata_sr(4 - 1 downto 0) & (DATA_WIDTH - 4 - 1 downto  0 => '0');
+          when      5 => ram_wr_data <= tdata_sr(5 - 1 downto 0) & (DATA_WIDTH - 5 - 1 downto  0 => '0');
+          when      6 => ram_wr_data <= tdata_sr(6 - 1 downto 0) & (DATA_WIDTH - 6 - 1 downto  0 => '0');
+          when      7 => ram_wr_data <= tdata_sr(7 - 1 downto 0) & (DATA_WIDTH - 7 - 1 downto  0 => '0');
+          when others => ram_wr_data <= tdata_sr(DATA_WIDTH - 1 downto 0);
         end case;
 
         -- This is the most concise way to express the above
-        -- ram_wr(wr_column_cnt_i).data
+        -- ram_wr_data
         --   <= tdata_sr(minimum(to_integer(bit_cnt_v), DATA_WIDTH) - 1 downto 0)
         --      & (DATA_WIDTH - minimum(to_integer(bit_cnt_v), DATA_WIDTH) - 1 downto 0 => '0');
 
-        tdata_sr                     := (others => 'U');
-        bit_cnt_v                    := (others => '0');
-        wr_column_cnt                <= (others => '0');
-        wr_row_cnt                   <= (others => '0');
-        wr_ram_ptr                   <= wr_ram_ptr + 1;
-        wr_addr_init                 <= '1';
+        tdata_sr      := (others => 'U');
+        bit_cnt_v     := (others => '0');
+        wr_column_cnt <= (others => '0');
+        wr_row_cnt    <= (others => '0');
+        wr_ram_ptr    <= wr_ram_ptr + 1;
+        wr_addr_init  <= '1';
       elsif bit_cnt_v >= DATA_WIDTH then
 
-        ram_wr(wr_column_cnt_i).en   <= '1';
-        ram_wr(wr_column_cnt_i).data <= tdata_sr(to_integer(bit_cnt_v) - 1 downto to_integer(bit_cnt_v) - DATA_WIDTH);
-        wr_addr_init                 <= '0';
+        ram_wr_en(wr_column_cnt_i) <= '1';
+        ram_wr_data                <= tdata_sr(to_integer(bit_cnt_v) - 1 downto to_integer(bit_cnt_v) - DATA_WIDTH);
+
+        wr_addr_init               <= '0';
 
         -- Initialize each RAM's initial write address at every first row
         if wr_addr_init = '1' then
-          ram_wr(wr_column_cnt_i).addr <= wr_ram_ptr & (numbits(MAX_ROWS) - 1 downto 0 => '0');
+          ram_wr_addr  <= wr_ram_ptr & (numbits(MAX_ROWS) - 1 downto 0 => '0');
         end if;
 
         wr_row : if wr_row_cnt /= cfg_wr_last_row then
-          wr_row_cnt <= wr_row_cnt + 1;
-          bit_cnt_v  := bit_cnt_v - DATA_WIDTH;
+          wr_row_cnt   <= wr_row_cnt + 1;
+          bit_cnt_v    := bit_cnt_v - DATA_WIDTH;
         else
           wr_addr_init <= '1';
           wr_row_cnt   <= (others => '0');
           wr_remainder <= wr_remainder + cfg_wr_remainder;
 
-          bit_cnt_v := bit_cnt_v - to_integer(cfg_wr_remainder);
+          bit_cnt_v    := bit_cnt_v - to_integer(cfg_wr_remainder);
 
           -- Chain counters
           if wr_column_cnt = cfg_wr_last_column then
