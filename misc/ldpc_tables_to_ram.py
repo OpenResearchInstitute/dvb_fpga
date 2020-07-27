@@ -227,6 +227,21 @@ def main():
     )
     lines += "\n".join(["", "", "package ldpc_tables_pkg is", "", "",])
 
+    lines += "\n".join(
+        [
+            "",
+            "  -- LDPC_TABLE_FECFRAME_<frame_length>_<code_rate>_COLUMN_WIDTHS constants have the bit",
+            "  -- width of each row",
+            "",
+            "  -- LDPC_TABLE_FECFRAME_<frame_length>_<code_rate> is the actual LDPC where the number of",
+            "  -- columns is normalized to the row with most columns and the first column of each row",
+            "  -- contains the number of valid elements within the row. Elements outisde the valid range",
+            "  -- are represented as -1",
+            "",
+            "",
+            "",
+        ]
+    )
     lines += rendered_tables
 
     lines += "\n".join(["", "end package ldpc_tables_pkg;",])

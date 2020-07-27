@@ -53,6 +53,16 @@ use fpga_cores.common_pkg.all;
 
 package ldpc_tables_pkg is
 
+
+  -- LDPC_TABLE_FECFRAME_<frame_length>_<code_rate>_COLUMN_WIDTHS constants have the bit
+  -- width of each row
+
+  -- LDPC_TABLE_FECFRAME_<frame_length>_<code_rate> is the actual LDPC where the number of
+  -- columns is normalized to the row with most columns and the first column of each row
+  -- contains the number of valid elements within the row. Elements outisde the valid range
+  -- are represented as -1
+
+
   -- From ldpc/ldpc_table_FECFRAME_NORMAL_C1_2.csv, table is 90x115 (1293.75 bytes)
   -- Resource estimation: 7 x 18 kB BRAMs or 4 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_NORMAL_C1_2_COLUMN_WIDTHS : integer_vector_t := (0 => 3, 1 => 7, 2 => 15, 3 => 15, 4 => 15, 5 => 15, 6 => 15, 7 => 15, 8 => 15);
