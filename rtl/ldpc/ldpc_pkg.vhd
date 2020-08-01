@@ -47,6 +47,18 @@ package ldpc_pkg is
     constant code_rate  : in code_rate_t)
   return ldpc_table_t;
 
+  function get_q (
+    constant frame_type : in frame_type_t;
+    constant code_rate  : in code_rate_t) return integer;
+
+  function get_q (
+    constant frame_type : in frame_type_t;
+    constant code_rate  : in code_rate_t) return unsigned;
+
+  function get_ldpc_code_length (
+    constant frame_type : in frame_type_t;
+    constant code_rate  : in code_rate_t) return natural;
+
 end ldpc_pkg;
 
 package body ldpc_pkg is
@@ -110,6 +122,13 @@ package body ldpc_pkg is
 
     return result;
   end function;
+
+  function get_q (
+    constant frame_type : in frame_type_t;
+    constant code_rate  : in code_rate_t) return unsigned is
+  begin
+    return to_unsigned(get_q(frame_type => frame_type, code_rate => code_rate), LDPC_Q_WIDTH);
+  end function get_q;
 
   function get_ldpc_code_length (
     constant frame_type : in frame_type_t;

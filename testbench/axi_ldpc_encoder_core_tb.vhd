@@ -53,14 +53,14 @@ library modelsim_lib;
 use modelsim_lib.util.all;
 -- ghdl translate_on
 
-entity axi_ldpc_encoder_tb is
+entity axi_ldpc_encoder_core_tb is
   generic (
     RUNNER_CFG            : string;
     TEST_CFG              : string;
     NUMBER_OF_TEST_FRAMES : integer := 8);
-end axi_ldpc_encoder_tb;
+end axi_ldpc_encoder_core_tb;
 
-architecture axi_ldpc_encoder_tb of axi_ldpc_encoder_tb is
+architecture axi_ldpc_encoder_core_tb of axi_ldpc_encoder_core_tb is
 
   ---------------
   -- Constants --
@@ -121,7 +121,7 @@ begin
   -------------------
   -- Port mappings --
   -------------------
-  dut : entity work.axi_ldpc_encoder
+  dut : entity work.axi_ldpc_encoder_core
     port map (
       -- Usual ports
       clk               => clk,
@@ -291,6 +291,7 @@ begin
     begin
       receive(net, self, msg);
       wait_all_read(net, file_checker);
+      wait_all_read(net, ldpc_table);
 
       wait until rising_edge(clk) and axi_slave.tvalid = '0' for 1 ms;
 
@@ -714,8 +715,8 @@ begin
 
       wait until rst = '0';
 
-      init_signal_spy("/axi_ldpc_encoder_tb/dut/frame_ram_u/ram_u/ram", "/axi_ldpc_encoder_tb/whitebox_monitor/dut_ram", 0);
-      init_signal_spy("/axi_ldpc_encoder_tb/dut/frame_addr_rst_p0", "/axi_ldpc_encoder_tb/whitebox_monitor/dut_extracting_codes_from_ram", 0);
+      init_signal_spy("/axi_ldpc_encoder_core_tb/dut/frame_ram_u/ram_u/ram", "/axi_ldpc_encoder_core_tb/whitebox_monitor/dut_ram", 0);
+      init_signal_spy("/axi_ldpc_encoder_core_tb/dut/frame_addr_rst_p0", "/axi_ldpc_encoder_core_tb/whitebox_monitor/dut_extracting_codes_from_ram", 0);
 
       while True loop
         receive(net, self, msg);
@@ -737,10 +738,10 @@ begin
       signal_spy_p : process
       begin
         wait until rst = '0';
-        init_signal_spy("/axi_ldpc_encoder_tb/dut/frame_ram_u/ram_u/wren_a", "dut_ram_wren", 0);
-        init_signal_spy("/axi_ldpc_encoder_tb/dut/frame_ram_u/ram_u/addr_a", "dut_ram_wraddr", 0);
-        init_signal_spy("/axi_ldpc_encoder_tb/dut/frame_ram_u/ram_u/wrdata_a", "dut_ram_wrdata", 0);
-        init_signal_spy("/axi_ldpc_encoder_tb/dut/encoded_wr_last", "dut_encoded_wr_last", 0);
+        init_signal_spy("/axi_ldpc_encoder_core_tb/dut/frame_ram_u/ram_u/wren_a", "dut_ram_wren", 0);
+        init_signal_spy("/axi_ldpc_encoder_core_tb/dut/frame_ram_u/ram_u/addr_a", "dut_ram_wraddr", 0);
+        init_signal_spy("/axi_ldpc_encoder_core_tb/dut/frame_ram_u/ram_u/wrdata_a", "dut_ram_wrdata", 0);
+        init_signal_spy("/axi_ldpc_encoder_core_tb/dut/encoded_wr_last", "dut_encoded_wr_last", 0);
         wait;
       end process;
 
@@ -816,4 +817,4 @@ begin
   end block; -- }}
   -- ghdl translate_on
 
-end axi_ldpc_encoder_tb;
+end axi_ldpc_encoder_core_tb;

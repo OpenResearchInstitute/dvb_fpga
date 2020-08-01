@@ -49,14 +49,6 @@ entity dvbs2_tx is
     s_tlast           : in  std_logic;
     s_tready          : out std_logic;
 
-    -- AXI LDPC table input
-    s_ldpc_tready     : out std_logic;
-    s_ldpc_tvalid     : in  std_logic;
-    s_ldpc_offset     : in  std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
-    s_ldpc_next       : in  std_logic;
-    s_ldpc_tuser      : in  std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
-    s_ldpc_tlast      : in  std_logic;
-
     -- AXI output
     m_tready          : in  std_logic;
     m_tvalid          : out std_logic;
@@ -190,13 +182,6 @@ begin
       cfg_frame_type    => frame_type(2),
       cfg_code_rate     => code_rate(2),
       cfg_constellation => constellation(2),
-
-      s_ldpc_tready     => s_ldpc_tready,
-      s_ldpc_tvalid     => s_ldpc_tvalid,
-      s_ldpc_offset     => s_ldpc_offset,
-      s_ldpc_next       => s_ldpc_next,
-      s_ldpc_tuser      => s_ldpc_tuser,
-      s_ldpc_tlast      => s_ldpc_tlast,
 
       -- AXI input
       s_tvalid          => tvalid(2),

@@ -129,7 +129,7 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
 
   signal axi_bb_scrambler   : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)));
   signal axi_bch_encoder    : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)));
-  signal axi_ldpc_encoder   : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)));
+  signal axi_ldpc_encoder_core   : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)));
   signal axi_slave          : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)));
 
 begin
@@ -154,12 +154,12 @@ begin
       s_tlast           => axi_master.tlast,
       s_tready          => axi_master.tready,
 
-      s_ldpc_offset     => axi_ldpc.tdata(numbits(max(DVB_N_LDPC)) - 1 downto 0),
-      s_ldpc_tuser      => axi_ldpc.tdata(2*numbits(max(DVB_N_LDPC)) - 1 downto numbits(max(DVB_N_LDPC)) ),
-      s_ldpc_next       => axi_ldpc.tdata(2*numbits(max(DVB_N_LDPC))),
-      s_ldpc_tvalid     => axi_ldpc.tvalid,
-      s_ldpc_tlast      => axi_ldpc.tlast,
-      s_ldpc_tready     => axi_ldpc.tready,
+      -- s_ldpc_offset     => axi_ldpc.tdata(numbits(max(DVB_N_LDPC)) - 1 downto 0),
+      -- s_ldpc_tuser      => axi_ldpc.tdata(2*numbits(max(DVB_N_LDPC)) - 1 downto numbits(max(DVB_N_LDPC)) ),
+      -- s_ldpc_next       => axi_ldpc.tdata(2*numbits(max(DVB_N_LDPC))),
+      -- s_ldpc_tvalid     => axi_ldpc.tvalid,
+      -- s_ldpc_tlast      => axi_ldpc.tlast,
+      -- s_ldpc_tready     => axi_ldpc.tready,
 
       -- AXI output
       m_tready          => axi_slave.axi.tready,
@@ -264,18 +264,18 @@ begin
       clk                => clk,
       rst                => rst,
       -- Config and status
-      tdata_error_cnt    => axi_ldpc_encoder.tdata_error_cnt,
-      tlast_error_cnt    => axi_ldpc_encoder.tlast_error_cnt,
-      error_cnt          => axi_ldpc_encoder.error_cnt,
+      tdata_error_cnt    => axi_ldpc_encoder_core.tdata_error_cnt,
+      tlast_error_cnt    => axi_ldpc_encoder_core.tlast_error_cnt,
+      error_cnt          => axi_ldpc_encoder_core.error_cnt,
       tready_probability => 1.0,
       -- Debug stuff
-      expected_tdata     => axi_ldpc_encoder.expected_tdata,
-      expected_tlast     => axi_ldpc_encoder.expected_tlast,
+      expected_tdata     => axi_ldpc_encoder_core.expected_tdata,
+      expected_tlast     => axi_ldpc_encoder_core.expected_tlast,
       -- Data input
       s_tready           => open,
-      s_tdata            => axi_ldpc_encoder.axi.tdata,
-      s_tvalid           => axi_ldpc_encoder.axi.tvalid and axi_ldpc_encoder.axi.tready,
-      s_tlast            => axi_ldpc_encoder.axi.tlast);
+      s_tdata            => axi_ldpc_encoder_core.axi.tdata,
+      s_tvalid           => axi_ldpc_encoder_core.axi.tvalid and axi_ldpc_encoder_core.axi.tready,
+      s_tlast            => axi_ldpc_encoder_core.axi.tlast);
 
   axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
     generic map (
@@ -494,10 +494,10 @@ begin
     axi_bch_encoder.axi.tready     <= tready(2);
     axi_bch_encoder.axi.tlast      <= tlast(2);
 
-    axi_ldpc_encoder.axi.tdata     <= tdata(3);
-    axi_ldpc_encoder.axi.tvalid    <= tvalid(3);
-    axi_ldpc_encoder.axi.tready    <= tready(3);
-    axi_ldpc_encoder.axi.tlast     <= tlast(3);
+    axi_ldpc_encoder_core.axi.tdata     <= tdata(3);
+    axi_ldpc_encoder_core.axi.tvalid    <= tvalid(3);
+    axi_ldpc_encoder_core.axi.tready    <= tready(3);
+    axi_ldpc_encoder_core.axi.tlast     <= tlast(3);
 
     process
     begin

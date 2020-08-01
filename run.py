@@ -399,7 +399,13 @@ def main():
         # Only generate configs for 8 PSK since LDPC does not depend on this
         # parameter
         for config in _getConfigs(constellations=(ConstellationType.MOD_8PSK,),):
-            vunit.library("lib").entity("axi_ldpc_encoder_tb").add_config(
+            vunit.library("lib").entity("axi_ldpc_encoder_core_tb").add_config(
+                name=config.name,
+                generics=dict(
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                ),
+            )
+            vunit.library("lib").entity("axi_ldpc_table_tb").add_config(
                 name=config.name,
                 generics=dict(
                     test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
@@ -413,8 +419,16 @@ def main():
         )
 
         addAllConfigsTest(
-            entity=vunit.library("lib").entity("axi_ldpc_encoder_tb"),
+            entity=vunit.library("lib").entity("axi_ldpc_encoder_core_tb"),
             configs=_getConfigs(constellations=(ConstellationType.MOD_8PSK,),),
+        )
+
+        addAllConfigsTest(
+            entity=vunit.library("lib").entity("axi_ldpc_table_tb"),
+            configs=_getConfigs(
+                constellations=(ConstellationType.MOD_8PSK,),
+                #  frame_lengths=(FrameLength.FECFRAME_SHORT,),
+            ),
         )
 
         # Run the DVB S2 Tx testbench with a smaller sample of configs to check

@@ -20,6 +20,8 @@ ghdl --std=08                                                                 \
                     rtl/axi_bit_interleaver.vhd                               \
                     rtl/dvb_utils_pkg.vhd                                     \
                     rtl/bch_encoder_mux.vhd                                   \
+                    rtl/axi_ldpc_table.vhd                                    \
+                    rtl/axi_ldpc_encoder_core.vhd                             \
                     rtl/axi_ldpc_encoder.vhd                                  \
                     rtl/ldpc/ldpc_pkg.vhd                                     \
                     rtl/ldpc/ldpc_tables_pkg.vhd                              \
