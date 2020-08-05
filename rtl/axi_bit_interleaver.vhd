@@ -222,7 +222,7 @@ begin
       generic map (
         ADDR_WIDTH   => numbits(MAX_ROWS) + 1,
         DATA_WIDTH   => DATA_WIDTH,
-        RAM_TYPE     => "auto",
+        RAM_TYPE     => auto,
         -- TODO: Adjust the pipeline to handle OUTPUT_DELAY = 2 to get better timing on
         -- Xilinx devices (see message Synth 8-7053)
         OUTPUT_DELAY => 1)
@@ -299,7 +299,7 @@ begin
     cfg_fifo_u : entity fpga_cores.sync_fifo
       generic map (
         -- FIFO configuration
-        RAM_TYPE       => "auto",
+        RAM_TYPE       => auto,
         DEPTH          => 2,
         DATA_WIDTH     => CFG_FIFO_DATA_WIDTH,
         UPPER_TRESHOLD => 1,

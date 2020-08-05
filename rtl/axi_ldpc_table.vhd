@@ -69,7 +69,6 @@ architecture axi_ldpc_table of axi_ldpc_table is
     1 => CONSTELLATION_WIDTH,
     2 => CODE_RATE_WIDTH);
 
-  constant ROM_DELAY         : integer := 2;
   constant TABLE_ENTRY_WIDTH : integer := LDPC_DATA_TABLE(0)'length;
 
   -- Record with LDPC metadata as unsigned vectors
@@ -116,8 +115,6 @@ architecture axi_ldpc_table of axi_ldpc_table is
 
   signal table_length      : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
 
-  signal rom_data_async    : std_logic_vector(TABLE_ENTRY_WIDTH - 1 downto 0);
-
   signal metadata          : ldpc_metadata_unsigned_t;
   signal table_addr        : unsigned(numbits(LDPC_DATA_TABLE'length) - 1 downto 0);
   signal rom_data          : std_logic_vector(TABLE_ENTRY_WIDTH - 1 downto 0);
@@ -126,12 +123,11 @@ architecture axi_ldpc_table of axi_ldpc_table is
   signal sample_rom_data   : std_logic;
   signal busy              : std_logic;
 
-  signal offset_cnt        : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
   signal stage             : unsigned(0 downto 0);
-  signal loop_cnt          : unsigned(7 downto 0);
-  signal loop_cnt_max      : unsigned(7 downto 0);
-  signal row_cnt           : unsigned(7 downto 0);
-  signal row_cnt_max       : unsigned(7 downto 0);
+  signal loop_cnt          : unsigned(7 downto 0); -- TODO: resize correctly
+  signal loop_cnt_max      : unsigned(7 downto 0); -- TODO: resize correctly
+  signal row_cnt           : unsigned(7 downto 0); -- TODO: resize correctly
+  signal row_cnt_max       : unsigned(7 downto 0); -- TODO: resize correctly
 
   signal ldpc_next         : std_logic;
   signal ldpc_next_reg     : std_logic;
@@ -139,13 +135,13 @@ architecture axi_ldpc_table of axi_ldpc_table is
   signal last_coeff        : std_logic;
   signal ldpc_offset       : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
 
-  signal bit_cnt           : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0) := (others => '0');
+  signal bit_cnt           : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
   signal group_cnt         : unsigned(numbits(DVB_LDPC_GROUP_LENGTH) - 1 downto 0);
 
   -- Interface with AXI stream adapter
   signal axi_out_wren   : std_logic;
   signal axi_out_wrfull : std_logic;
-  signal axi_out_last   : std_logic := '0';
+  signal axi_out_last   : std_logic;
 
 begin
 
@@ -162,7 +158,7 @@ begin
     generic map (
       FIFO_DEPTH => 2,
       DATA_WIDTH => sum(PARAM_FIFO_DATA_WIDTHS),
-      RAM_TYPE   => "distributed")
+      RAM_TYPE   => lut)
     port map (
       -- Usual ports
       clk     => clk,
@@ -180,25 +176,21 @@ begin
       m_tdata  => param_fifo_tdata_out,
       m_tlast  => open);
 
-  -- The LDPC table is reasonably big, adding some FFs allow the tool to implement in FFs,
-  -- BRAM or URAM
-  rom_data_async <= LDPC_DATA_TABLE(to_integer(table_addr));
-
-  table_data_delay_u : entity fpga_cores.sr_delay
+  -- The ROM itself
+  rom_u : entity fpga_cores.rom_inference
     generic map (
-      DELAY_CYCLES  => ROM_DELAY,
-      DATA_WIDTH    => TABLE_ENTRY_WIDTH,
-      EXTRACT_SHREG => False)
+      ROM_DATA     => LDPC_DATA_TABLE,
+      ROM_TYPE     => auto,
+      OUTPUT_DELAY => 2)
     port map (
-      clk     => clk,
-      clken   => '1',
-
-      din     => rom_data_async,
-      dout    => rom_data);
+      clk    => clk,
+      clken  => '1',
+      addr   => std_logic_vector(table_addr),
+      rddata => rom_data);
 
   ldpc_start_gen_u : entity fpga_cores.sr_delay
     generic map (
-      DELAY_CYCLES  => ROM_DELAY + 1,
+      DELAY_CYCLES  => 2,
       DATA_WIDTH    => 1,
       EXTRACT_SHREG => False)
     port map (
@@ -296,8 +288,6 @@ begin
       ldpc_next_reg   <= 'U';
       reset_delta     <= 'U';
 
-      offset_cnt <= (others => 'U');
-
       if IS_SIMULATION then
         table_addr <= (others => '0');
       else
@@ -312,17 +302,19 @@ begin
 
       if axi_dv = '1' then
         axi_tready        <= '0';
+        busy              <= '1';
+
+        -- Use temporary variables as aliases
         tmp_frame_type    := decode(extract(param_fifo_tdata_out, 0, PARAM_FIFO_DATA_WIDTHS));
         tmp_constellation := decode(extract(param_fifo_tdata_out, 1, PARAM_FIFO_DATA_WIDTHS));
         tmp_code_rate     := decode(extract(param_fifo_tdata_out, 2, PARAM_FIFO_DATA_WIDTHS));
+        tmp_ldpc_metadata := get_ldpc_metadata(frame_length => tmp_frame_type, code_rate => tmp_code_rate);
 
         cfg_frame_type    <= tmp_frame_type;
         cfg_constellation <= tmp_constellation;
         cfg_code_rate     <= tmp_code_rate;
 
-        tmp_ldpc_metadata := get_ldpc_metadata(frame_length => tmp_frame_type, code_rate => tmp_code_rate);
         metadata          <= tmp_ldpc_metadata;
-
         table_addr        <= tmp_ldpc_metadata.addr;
 
         stage             <= (others => '0');
@@ -331,14 +323,9 @@ begin
         group_cnt         <= (others => '0');
         bit_cnt           <= (others => '0');
         offset_delta      <= (others => '0');
-        offset_cnt        <= (0 => '1', others => '0');
-
-        busy              <= '1';
       end if;
 
       if axi_out_wren = '1' then
-        offset_cnt <= offset_cnt + 1;
-
         if ldpc_next_reg = '1' then
           bit_cnt     <= bit_cnt + 1;
           reset_delta <= '0';
@@ -350,15 +337,9 @@ begin
         end if;
       end if;
 
-      -- Hierarchy of counters is
-      -- 1) row_cnt
-      -- 2) group_cnt
-      -- 3) loop_cnt
-
       if busy = '1' then
         table_addr <= table_addr + 1;
-
-        row_cnt <= row_cnt + 1;
+        row_cnt    <= row_cnt + 1;
 
         last_row : if row_cnt = row_cnt_max then
           row_cnt    <= (others => '0');
@@ -368,18 +349,19 @@ begin
 
           group_cnt   <= group_cnt + 1;
 
+          -- Handle end of the 360 entries group
           end_of_group : if group_cnt = DVB_LDPC_GROUP_LENGTH - 1 then
             group_cnt       <= (others => '0');
             loop_cnt        <= loop_cnt + 1;
-            metadata.addr   <= table_addr + 1;
             table_addr      <= table_addr + 1;
             reset_delta     <= '1';
-            -- offset_delta <= (others => '0');
+
+            -- Once we iterated enough times over this range, let the address increment
+            -- but store the point where that happened so we can do the same thing with
+            -- a different base address
+            metadata.addr   <= table_addr + 1;
 
             if loop_cnt = loop_cnt_max then
-              -- Once we iterated enough times over this range, let the address increment
-              -- but store the point where that happened so we can do the same thing with
-              -- a different base address
               loop_cnt      <= (others => '0');
 
               if stage = 0 then
@@ -390,14 +372,10 @@ begin
                 axi_tready <= '1';
               end if;
             end if;
-
           end if end_of_group;
         end if last_row;
-
       end if;
     end if;
   end process;
 
-
 end axi_ldpc_table;
-

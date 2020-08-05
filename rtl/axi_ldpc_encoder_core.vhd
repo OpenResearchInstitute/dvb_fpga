@@ -268,7 +268,7 @@ begin
     generic map (
       ADDR_WIDTH => FRAME_RAM_ADDR_WIDTH,
       DATA_WIDTH => FRAME_RAM_DATA_WIDTH,
-      RAM_TYPE   => "block")
+      RAM_TYPE   => bram)
     port map (
       clk         => clk,
       -- Checkout request interface

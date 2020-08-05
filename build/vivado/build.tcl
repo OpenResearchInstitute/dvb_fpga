@@ -27,6 +27,8 @@ add_files [ glob rtl/bch_generated/*.vhd ]
 add_files [ glob rtl/ldpc/*.vhd ]
 add_files [ glob rtl/*.vhd ]
 
+set_property FILE_TYPE {VHDL 2008} [get_files *.vhd]
+
 # WARNING: [Synth 8-6849] Infeasible attribute ram_style = "block" set for RAM
 # "ldpc_encoder_u/frame_ram_u/ram_u/ram_reg", trying to implement using LUTRAM
 set_msg_config -id "Synth 8-6849" -new_severity ERROR

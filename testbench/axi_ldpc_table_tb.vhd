@@ -246,15 +246,19 @@ begin
       end if;
     end procedure walk; -- }} ----------------------------------------------------------
 
-    procedure run_test ( -- {{ ---------------------------------------------------------
+    procedure run_test ( -- {{ -----------------------------------------------------------
       constant config           : config_t;
       constant number_of_frames : in positive) is
       constant data_path        : string := strip(config.base_path, chars => (1 to 1 => nul));
       variable file_reader_msg  : msg_t;
       variable calc_ldpc_msg    : msg_t;
-      constant data             : std_logic_vector_2d_t := (0 => encode(config.code_rate) & encode(config.constellation) & encode(config.frame_type));
-    -- In the config file, the 'next' bit is actually an entire byte, so we'll read
-    -- a slightly smaller ratio of the data in multiple of bytes
+
+      -- GHDL doens't play well with anonymous vectors, so let's be explicit
+      subtype bfm_data_t is std_logic_vector_2d_t(0 to 0)(FRAME_TYPE_WIDTH + CONSTELLATION_WIDTH + CODE_RATE_WIDTH - 1 downto 0);
+      constant bfm_data : std_logic_vector := encode(config.code_rate) & encode(config.constellation) & encode(config.frame_type);
+
+      -- In the config file, the 'next' bit is actually an entire byte, so we'll read
+      -- a slightly smaller ratio of the data in multiple of bytes
       constant ratio            : ratio_t := (
         axi_slave.tdata'length,
         8*((axi_slave.tdata'length + 7) / 8)
@@ -272,7 +276,7 @@ begin
 
         axi_bfm_write(net,
           bfm         => config_bfm,
-          data        => data,
+          data        => bfm_data_t'(0 => bfm_data),
           probability => tvalid_probability,
           blocking    => False);
 
@@ -280,7 +284,7 @@ begin
 
       end loop;
 
-    end procedure run_test; -- }} ------------------------------------------------------
+    end procedure run_test; -- }} --------------------------------------------------------
 
     procedure wait_for_completion is -- {{ ----------------------------------------------
       variable msg : msg_t;

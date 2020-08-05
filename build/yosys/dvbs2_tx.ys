@@ -6,6 +6,7 @@ ghdl --std=08                                                                 \
                     third_party/fpga_cores/src/skidbuffer.vhd                 \
                     third_party/fpga_cores/src/ram_inference_dport.vhd        \
                     third_party/fpga_cores/src/ram_inference.vhd              \
+                    third_party/fpga_cores/src/rom_inference.vhd              \
                     third_party/fpga_cores/src/pipeline_context_ram.vhd       \
                     third_party/fpga_cores/src/edge_detector.vhd              \
                     third_party/fpga_cores/src/pulse_sync.vhd                 \
