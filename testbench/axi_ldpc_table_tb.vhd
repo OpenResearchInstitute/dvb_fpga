@@ -161,9 +161,9 @@ begin
       m_tvalid => m_tvalid,
       m_tlast  => open);
 
-  m_frame_type    <= decode(extract(bfm_tdata, 0, CONFIG_INPUT_WIDTHS));
-  m_constellation <= decode(extract(bfm_tdata, 1, CONFIG_INPUT_WIDTHS));
-  m_code_rate     <= decode(extract(bfm_tdata, 2, CONFIG_INPUT_WIDTHS));
+  m_frame_type    <= decode(get_field(bfm_tdata, 0, CONFIG_INPUT_WIDTHS));
+  m_constellation <= decode(get_field(bfm_tdata, 1, CONFIG_INPUT_WIDTHS));
+  m_code_rate     <= decode(get_field(bfm_tdata, 2, CONFIG_INPUT_WIDTHS));
 
   dut : entity work.axi_ldpc_table
     port map (
@@ -220,7 +220,7 @@ begin
   ------------------------------
   clk <= not clk after CLK_PERIOD/2;
 
-  test_runner_watchdog(runner, 150 us);
+  test_runner_watchdog(runner, 1 ms);
 
   m_data_valid <= axi_master.tvalid = '1' and axi_master.tready = '1';
   s_data_valid <= axi_slave.tvalid = '1' and axi_slave.tready = '1';
@@ -245,6 +245,18 @@ begin
         end loop;
       end if;
     end procedure walk; -- }} ----------------------------------------------------------
+
+    procedure wait_for_completion is -- {{ ----------------------------------------------
+      variable msg : msg_t;
+    begin
+      join(net, config_bfm);
+      wait_all_read(net, file_checker);
+      wait_all_read(net, ldpc_table);
+
+      wait until rising_edge(clk) and axi_slave.tvalid = '0' for 1 ms;
+
+      walk(1);
+    end procedure wait_for_completion; -- }} --------------------------------------------
 
     procedure run_test ( -- {{ -----------------------------------------------------------
       constant config           : config_t;
@@ -281,23 +293,9 @@ begin
           blocking    => False);
 
         read_file(net, ldpc_table, data_path & "/ldpc_table.bin", ratio);
-
       end loop;
 
     end procedure run_test; -- }} --------------------------------------------------------
-
-    procedure wait_for_completion is -- {{ ----------------------------------------------
-      variable msg : msg_t;
-    begin
-      join(net, config_bfm);
-      wait_all_read(net, file_checker);
-      wait_all_read(net, ldpc_table);
-
-      wait until rising_edge(clk) and axi_slave.tvalid = '0' for 1 ms;
-
-      walk(1);
-
-    end procedure wait_for_completion; -- }} --------------------------------------------
 
   begin
 
@@ -319,64 +317,43 @@ begin
 
       walk(32);
 
-      -- set_timeout(runner, 10 us);
+      set_timeout(runner, 1000 us);
 
       if run("back_to_back") then
-        tvalid_probability   <= 1.0;
+        tvalid_probability <= 1.0;
         tready_probability <= 1.0;
 
         for i in configs'range loop
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
-
-      elsif run("data=0.5,table=1.0,slave=1.0") then
-        tvalid_probability   <= 0.5;
+      elsif run("data=0.5,slave=1.0") then
+        tvalid_probability <= 0.5;
         tready_probability <= 1.0;
 
         for i in configs'range loop
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
-
-      elsif run("data=1.0,table=1.0,slave=0.5") then
-        tvalid_probability   <= 1.0;
+      elsif run("data=1.0,slave=0.5") then
+        tvalid_probability <= 1.0;
         tready_probability <= 0.5;
 
         for i in configs'range loop
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
-
-      elsif run("data=0.75,table=1.0,slave=0.75") then
-        tvalid_probability   <= 0.75;
+      elsif run("data=0.75,slave=0.75") then
+        tvalid_probability <= 0.75;
         tready_probability <= 0.75;
 
         for i in configs'range loop
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
-
-      elsif run("data=1.0,table=0.5,slave=1.0") then
-        tvalid_probability   <= 1.0;
-        tready_probability <= 1.0;
-
-        for i in configs'range loop
-          run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
-        end loop;
-
-      elsif run("data=1.0,table=0.75,slave=0.75") then
-        tvalid_probability   <= 1.0;
+      elsif run("data=1.0,slave=0.75") then
+        tvalid_probability <= 1.0;
         tready_probability <= 0.75;
 
         for i in configs'range loop
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
-
-      elsif run("data=0.8,table=0.8,slave=0.8") then
-        tvalid_probability   <= 0.8;
-        tready_probability <= 0.8;
-
-        for i in configs'range loop
-          run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
-        end loop;
-
       end if;
 
       wait_for_completion;

@@ -174,7 +174,7 @@ class LdpcTable:
             f"  {self._getWidthArray()}",
             f"",
             f"  constant {self.name.upper()} : integer_2d_array_t"
-            f"(0 to {self.length - 1})(0 to {columns - 1}) := ("
+            f"(0 to {self.length - 1})(0 to {columns - 1}) := (",
         ]
 
         for i, line in enumerate(self._table):
@@ -352,14 +352,16 @@ def _generateTablesRom(tables):
                 # Append the is_last flag and the actual data
                 is_last = i == len(row) - 1
 
+                #  vhdl_bin_value = bin(column)[2:]
+                #  vhdl_bin_value = '0'*(data_width - len(vhdl_bin_value)) + vhdl_bin_value
+
                 entry = (
-                    f"    "
-                    f"{addr} => "
-                    f"std_logic_vector(to_unsigned({column}, {data_width}))"
+                    f"    {addr:4d} => "
+                    f"std_logic_vector(to_unsigned({column:5d}, {data_width}))"
                 )
 
                 if addr < table_length - 1:
-                    entry += ","
+                    entry += ", -- %5d / 0x%.4x" % (column, column)
                     if is_last:
                         entry += " -- last item of row"
 

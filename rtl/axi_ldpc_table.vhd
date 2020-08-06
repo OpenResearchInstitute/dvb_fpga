@@ -118,7 +118,6 @@ architecture axi_ldpc_table of axi_ldpc_table is
   signal metadata          : ldpc_metadata_unsigned_t;
   signal table_addr        : unsigned(numbits(LDPC_DATA_TABLE'length) - 1 downto 0);
   signal rom_data          : std_logic_vector(TABLE_ENTRY_WIDTH - 1 downto 0);
-  signal reset_delta       : std_logic;
   signal offset_delta      : unsigned(TABLE_ENTRY_WIDTH - 1 downto 0); --
   signal sample_rom_data   : std_logic;
   signal busy              : std_logic;
@@ -128,20 +127,20 @@ architecture axi_ldpc_table of axi_ldpc_table is
   signal loop_cnt_max      : unsigned(7 downto 0); -- TODO: resize correctly
   signal row_cnt           : unsigned(7 downto 0); -- TODO: resize correctly
   signal row_cnt_max       : unsigned(7 downto 0); -- TODO: resize correctly
-
-  signal ldpc_next         : std_logic;
-  signal ldpc_next_reg     : std_logic;
-  signal ldpc_coeff        : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
-  signal last_coeff        : std_logic;
-  signal ldpc_offset       : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
-
-  signal bit_cnt           : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
   signal group_cnt         : unsigned(numbits(DVB_LDPC_GROUP_LENGTH) - 1 downto 0);
 
+  signal ldpc_wr_en        : std_logic;
+  signal ldpc_next         : std_logic;
+  signal ldpc_coeff        : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+  signal last_coeff        : std_logic;
+
   -- Interface with AXI stream adapter
-  signal axi_out_wren   : std_logic;
-  signal axi_out_wrfull : std_logic;
-  signal axi_out_last   : std_logic;
+  signal axi_out_wren      : std_logic;
+  signal axi_out_wr_full   : std_logic;
+  signal axi_out_next      : std_logic;
+  signal axi_out_offset    : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+  signal axi_out_bit_cnt   : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+  signal axi_out_last      : std_logic;
 
 begin
 
@@ -204,41 +203,41 @@ begin
   ldpc_next_gen_u : entity fpga_cores.sr_delay
     generic map (
       DELAY_CYCLES  => 2,
-      DATA_WIDTH    => 3,
+      DATA_WIDTH    => 2,
       EXTRACT_SHREG => False)
     port map (
-      clk     => clk,
-      clken   => '1',
+      clk      => clk,
+      clken    => '1',
 
-      din(0)   => ldpc_next,
-      din(1)   => busy,
-      din(2)   => last_coeff,
-      dout(0)  => m_next,
-      dout(1)  => axi_out_wren,
-      dout(2)  => axi_out_last);
+      din(0)   => ldpc_wr_en,
+      din(1)   => last_coeff,
+
+      dout(0)  => axi_out_wren,
+      dout(1)  => axi_out_last);
 
   output_adapter_block : block
-    signal wr_data : std_logic_vector(m_offset'length + m_tuser'length - 1 downto 0);
-    signal rd_data : std_logic_vector(m_offset'length + m_tuser'length - 1 downto 0);
+    signal wr_data : std_logic_vector(m_offset'length + m_tuser'length downto 0);
+    signal rd_data : std_logic_vector(m_offset'length + m_tuser'length downto 0);
 
   begin
 
-    wr_data  <= std_logic_vector(bit_cnt & ldpc_offset);
+    wr_data  <= axi_out_next & std_logic_vector(axi_out_bit_cnt & axi_out_offset);
 
     m_offset <= rd_data(m_offset'length - 1 downto 0);
     m_tuser  <= rd_data(m_tuser'length + m_offset'length - 1 downto m_offset'length);
+    m_next   <= rd_data(m_tuser'length + m_offset'length);
 
     axi_out_adapter_u : entity fpga_cores.axi_stream_master_adapter
       generic map (
         MAX_SKEW_CYCLES => 3,
-        TDATA_WIDTH     => m_offset'length + m_tuser'length)
+        TDATA_WIDTH     => wr_data'length)
       port map (
         -- Usual ports
         clk      => clk,
         reset    => rst,
         -- wanna-be AXI interface
         wr_en    => axi_out_wren,
-        wr_full  => axi_out_wrfull,
+        wr_full  => axi_out_wr_full,
         wr_data  => wr_data,
         wr_last  => axi_out_last,
         -- AXI master
@@ -264,13 +263,17 @@ begin
                               table_length'length);
 
   -- Offset + delta won't ever go past 2*table length, so we can simplify the modulo operator
-  ldpc_offset <= ldpc_coeff + offset_delta when ldpc_coeff + offset_delta < table_length else
-                 ldpc_coeff + offset_delta - table_length;
+  axi_out_offset <= ldpc_coeff + offset_delta when ldpc_coeff + offset_delta < table_length else
+                    ldpc_coeff + offset_delta - table_length;
 
 
   ldpc_coeff <= unsigned(rom_data);
 
   last_coeff  <= '1' when loop_cnt = loop_cnt_max and stage = 1 and row_cnt = row_cnt_max and group_cnt = DVB_LDPC_GROUP_LENGTH - 1 else '0';
+
+  ldpc_wr_en <= busy and not axi_out_wr_full;
+
+
 
   ---------------
   -- Processes --
@@ -285,8 +288,6 @@ begin
       axi_tready      <= '1';
       busy            <= '0';
       ldpc_next       <= '0';
-      ldpc_next_reg   <= 'U';
-      reset_delta     <= 'U';
 
       if IS_SIMULATION then
         table_addr <= (others => '0');
@@ -294,11 +295,17 @@ begin
         table_addr <= (others => 'U');
       end if;
 
+      stage           <= (others => '0');
+      loop_cnt        <= (others => '0');
+      row_cnt         <= (others => '0');
+      group_cnt       <= (others => '0');
+      axi_out_bit_cnt <= (others => '0');
+      offset_delta    <= (others => '0');
+
     elsif clk'event and clk = '1' then
 
-      ldpc_next       <= '0';
-      ldpc_next_reg   <= ldpc_next;
-      -- reset_delta  <= '0';
+      ldpc_next    <= '0';
+      axi_out_next <= ldpc_next;
 
       if axi_dv = '1' then
         axi_tready        <= '0';
@@ -316,45 +323,42 @@ begin
 
         metadata          <= tmp_ldpc_metadata;
         table_addr        <= tmp_ldpc_metadata.addr;
-
-        stage             <= (others => '0');
-        loop_cnt          <= (others => '0');
-        row_cnt           <= (others => '0');
-        group_cnt         <= (others => '0');
-        bit_cnt           <= (others => '0');
-        offset_delta      <= (others => '0');
       end if;
 
       if axi_out_wren = '1' then
-        if ldpc_next_reg = '1' then
-          bit_cnt     <= bit_cnt + 1;
-          reset_delta <= '0';
-          if reset_delta = '1' or offset_delta + metadata.q = table_length then
-            offset_delta <= (others => '0');
+        if axi_out_next = '1' then
+          axi_out_bit_cnt <= axi_out_bit_cnt + 1;
+
+          if offset_delta + metadata.q = table_length then
+            offset_delta  <= (others => '0');
           else
-            offset_delta <= offset_delta + metadata.q;
+            offset_delta  <= offset_delta + metadata.q;
+          end if;
+
+          if axi_out_last = '1' then
+            axi_out_bit_cnt <= (others => '0');
           end if;
         end if;
       end if;
 
-      if busy = '1' then
-        table_addr <= table_addr + 1;
-        row_cnt    <= row_cnt + 1;
+      if busy = '1' and axi_out_wr_full = '0' then
+
+        table_addr    <= table_addr + 1;
+        row_cnt       <= row_cnt + 1;
 
         last_row : if row_cnt = row_cnt_max then
           row_cnt    <= (others => '0');
           ldpc_next  <= '1';
-          -- Re-read this address range
-          table_addr <= metadata.addr;
+          group_cnt  <= group_cnt + 1;
 
-          group_cnt   <= group_cnt + 1;
+          -- Re read this address range
+          table_addr <= metadata.addr;
 
           -- Handle end of the 360 entries group
           end_of_group : if group_cnt = DVB_LDPC_GROUP_LENGTH - 1 then
             group_cnt       <= (others => '0');
             loop_cnt        <= loop_cnt + 1;
             table_addr      <= table_addr + 1;
-            reset_delta     <= '1';
 
             -- Once we iterated enough times over this range, let the address increment
             -- but store the point where that happened so we can do the same thing with
@@ -365,11 +369,11 @@ begin
               loop_cnt      <= (others => '0');
 
               if stage = 0 then
-                stage      <= stage + 1;
+                stage       <= stage + 1;
               else
-                stage      <= (others => '0');
-                busy       <= '0';
-                axi_tready <= '1';
+                stage       <= (others => '0');
+                busy        <= '0';
+                axi_tready  <= '1';
               end if;
             end if;
           end if end_of_group;

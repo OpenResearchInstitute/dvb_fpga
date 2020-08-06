@@ -288,13 +288,13 @@ begin
                encode(cfg_wr_constellation) &
                encode(cfg_wr_frame_type);
 
-    cfg_fifo_rd_last_row      <= unsigned(get_field(5, rd_data, FIELD_WIDTHS));
-    cfg_fifo_rd_last_column   <= unsigned(get_field(4, rd_data, FIELD_WIDTHS));
-    cfg_fifo_rd_remainder     <= unsigned(get_field(3, rd_data, FIELD_WIDTHS));
+    cfg_fifo_rd_last_row      <= unsigned(std_logic_vector'(get_field(rd_data, 5, FIELD_WIDTHS)));
+    cfg_fifo_rd_last_column   <= unsigned(std_logic_vector'(get_field(rd_data, 4, FIELD_WIDTHS)));
+    cfg_fifo_rd_remainder     <= unsigned(std_logic_vector'(get_field(rd_data, 3, FIELD_WIDTHS)));
 
-    cfg_fifo_rd_code_rate     <= decode(get_field(2, rd_data, FIELD_WIDTHS));
-    cfg_fifo_rd_constellation <= decode(get_field(1, rd_data, FIELD_WIDTHS));
-    cfg_fifo_rd_frame_type    <= decode(get_field(0, rd_data, FIELD_WIDTHS));
+    cfg_fifo_rd_code_rate     <= decode(get_field(rd_data, 2, FIELD_WIDTHS));
+    cfg_fifo_rd_constellation <= decode(get_field(rd_data, 1, FIELD_WIDTHS));
+    cfg_fifo_rd_frame_type    <= decode(get_field(rd_data, 0, FIELD_WIDTHS));
 
     cfg_fifo_u : entity fpga_cores.sync_fifo
       generic map (

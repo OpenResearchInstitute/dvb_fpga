@@ -197,14 +197,14 @@ begin
                    s_tlast &
                    s_tdata;
 
-    axi_passthrough.tdata  <= extract(axi_dup0_tdata, 0, WIDTHS);
-    axi_passthrough.tlast  <= extract(axi_dup0_tdata, 1, WIDTHS);
+    axi_passthrough.tdata  <= get_field(axi_dup0_tdata, 0, WIDTHS);
+    axi_passthrough.tlast  <= get_field(axi_dup0_tdata, 1, WIDTHS);
 
-    axi_ldpc.tdata         <= extract(axi_dup1_tdata, 0, WIDTHS);
-    axi_ldpc.tlast         <= extract(axi_dup1_tdata, 1, WIDTHS);
-    axi_ldpc_frame_type    <= decode(extract(axi_dup1_tdata, 2, WIDTHS));
-    axi_ldpc_constellation <= decode(extract(axi_dup1_tdata, 3, WIDTHS));
-    axi_ldpc_code_rate     <= decode(extract(axi_dup1_tdata, 4, WIDTHS));
+    axi_ldpc.tdata         <= get_field(axi_dup1_tdata, 0, WIDTHS);
+    axi_ldpc.tlast         <= get_field(axi_dup1_tdata, 1, WIDTHS);
+    axi_ldpc_frame_type    <= decode(get_field(axi_dup1_tdata, 2, WIDTHS));
+    axi_ldpc_constellation <= decode(get_field(axi_dup1_tdata, 3, WIDTHS));
+    axi_ldpc_code_rate     <= decode(get_field(axi_dup1_tdata, 4, WIDTHS));
 
     input_duplicate_u : entity fpga_cores.axi_stream_duplicate
       generic map ( TDATA_WIDTH => AXI_DUP_DATA_WIDTH )
