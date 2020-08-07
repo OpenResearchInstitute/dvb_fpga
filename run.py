@@ -466,7 +466,7 @@ def main():
     )
 
     # Generate bit interleaver tests
-    for data_width in (1, 8):
+    for data_width in (8, ):
         all_configs = []
         for config in _getConfigs():
             all_configs += [config.getTestConfigString()]
