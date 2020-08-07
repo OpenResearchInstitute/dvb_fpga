@@ -63,36 +63,41 @@ architecture axi_ldpc_encoder of axi_ldpc_encoder is
   -------------
   -- Signals --
   -------------
-  signal table_tready     : std_logic;
-  signal table_tvalid     : std_logic;
-  signal table_offset     : std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
-  signal table_next       : std_logic;
-  signal table_tuser      : std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
-  signal table_tlast      : std_logic;
+  signal s_tready_i   : std_logic;
+  signal first_word   : std_logic;
+  signal cfg_tready   : std_logic;
+  signal cfg_tvalid   : std_logic;
+
+  signal table_tready : std_logic;
+  signal table_tvalid : std_logic;
+  signal table_offset : std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+  signal table_next   : std_logic;
+  signal table_tuser  : std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+  signal table_tlast  : std_logic;
 
 
 
 begin
 
   table_u : entity work.axi_ldpc_table
-  port map (
-    -- Usual ports
-    clk     => clk,
-    rst     => rst,
+    port map (
+      -- Usual ports
+      clk          => clk,
+      rst          => rst,
 
-    -- Parameter input
-    s_frame_type    => cfg_frame_type,
-    s_code_rate     => cfg_code_rate,
-    s_tready        => open,
-    s_tvalid        => s_tvalid,
+      -- Parameter input
+      s_frame_type => cfg_frame_type,
+      s_code_rate  => cfg_code_rate,
+      s_tready     => cfg_tready,
+      s_tvalid     => cfg_tvalid,
 
-    -- Config out
-    m_tready     => table_tready,
-    m_tvalid     => table_tvalid,
-    m_offset     => table_offset,
-    m_next       => table_next,
-    m_tuser      => table_tuser,
-    m_tlast      => table_tlast);
+      -- Config out
+      m_tready     => table_tready,
+      m_tvalid     => table_tvalid,
+      m_offset     => table_offset,
+      m_next       => table_next,
+      m_tuser      => table_tuser,
+      m_tlast      => table_tlast);
 
   encoder_u : entity work.axi_ldpc_encoder_core
     port map (
@@ -113,7 +118,7 @@ begin
       s_ldpc_tlast       => table_tlast,
 
       -- AXI data input
-      s_tready           => s_tready,
+      s_tready           => s_tready_i,
       s_tvalid           => s_tvalid,
       s_tdata            => s_tdata,
       s_tlast            => s_tlast,
@@ -123,6 +128,31 @@ begin
       m_tvalid           => m_tvalid,
       m_tlast            => m_tlast,
       m_tdata            => m_tdata);
+
+  ------------------------------
+  -- Asynchronous assignments --
+  ------------------------------
+  s_tready   <= s_tready_i;
+  cfg_tvalid <= s_tvalid and cfg_tready when first_word = '1' else '0';
+
+  ---------------
+  -- Processes --
+  ---------------
+  process(clk, rst)
+  begin
+    if rst = '1' then
+      first_word <= '1';
+    elsif rising_edge(clk) then
+      -- Clear flag when config has been written
+      if cfg_tvalid = '1' and cfg_tready = '1' then
+        first_word <= '0';
+      end if;
+
+      if s_tvalid = '1' and s_tready_i = '1' then
+        first_word <= s_tlast;
+      end if;
+    end if;
+  end process;
 
 end axi_ldpc_encoder;
 
