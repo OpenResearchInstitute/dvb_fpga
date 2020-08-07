@@ -81,7 +81,6 @@ begin
     rst     => rst,
 
     -- Parameter input
-    s_constellation => cfg_constellation,
     s_frame_type    => cfg_frame_type,
     s_code_rate     => cfg_code_rate,
     s_tready        => open,

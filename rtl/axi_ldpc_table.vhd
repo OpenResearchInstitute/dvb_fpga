@@ -44,7 +44,6 @@ entity axi_ldpc_table is
     rst     : in  std_logic;
 
     -- Parameter input
-    s_constellation : in  constellation_t;
     s_frame_type    : in  frame_type_t;
     s_code_rate     : in  code_rate_t;
     s_tready        : out std_logic;
@@ -66,8 +65,7 @@ architecture axi_ldpc_table of axi_ldpc_table is
   ---------------
   constant PARAM_FIFO_DATA_WIDTHS : integer_vector_t := (
     0 => FRAME_TYPE_WIDTH,
-    1 => CONSTELLATION_WIDTH,
-    2 => CODE_RATE_WIDTH);
+    1 => CODE_RATE_WIDTH);
 
   constant TABLE_ENTRY_WIDTH : integer := LDPC_DATA_TABLE(0)'length;
 
@@ -103,13 +101,11 @@ architecture axi_ldpc_table of axi_ldpc_table is
   signal param_fifo_tdata_in  : std_logic_vector(sum(PARAM_FIFO_DATA_WIDTHS) - 1 downto 0);
   signal param_fifo_tdata_out : std_logic_vector(sum(PARAM_FIFO_DATA_WIDTHS) - 1 downto 0);
 
-
   signal axi_tready           : std_logic;
   signal axi_tvalid           : std_logic;
   signal axi_dv               : std_logic;
 
   -- Actual config we have to process
-  signal cfg_constellation : constellation_t;
   signal cfg_frame_type    : frame_type_t;
   signal cfg_code_rate     : code_rate_t;
 
@@ -131,14 +127,17 @@ architecture axi_ldpc_table of axi_ldpc_table is
 
   signal ldpc_wr_en        : std_logic;
   signal ldpc_next         : std_logic;
-  signal ldpc_coeff        : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+  signal ldpc_coeff        : unsigned(numbits(max(DVB_N_LDPC)) downto 0);
   signal last_coeff        : std_logic;
 
   -- Interface with AXI stream adapter
   signal axi_out_wren      : std_logic;
   signal axi_out_wr_full   : std_logic;
   signal axi_out_next      : std_logic;
-  signal axi_out_offset    : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+  -- This offset needs to be 1 bit bigger than needed because while the offset itself will
+  -- not be higher than DVB_N_LDPC, adding it with the offset delta *BEFORE* the modulus
+  -- operator will
+  signal axi_out_offset    : unsigned(numbits(max(DVB_N_LDPC)) downto 0);
   signal axi_out_bit_cnt   : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
   signal axi_out_last      : std_logic;
 
@@ -149,9 +148,7 @@ begin
   -------------------
   -- Add a small FIFO for the config to mitigate latency between the config input and the
   -- actual coefficients going out
-  param_fifo_tdata_in <= encode(s_code_rate) &
-                         encode(s_constellation) &
-                         encode(s_frame_type);
+  param_fifo_tdata_in <= encode(s_code_rate) & encode(s_frame_type);
 
   param_fifo_u : entity fpga_cores.axi_stream_fifo
     generic map (
@@ -221,7 +218,9 @@ begin
 
   begin
 
-    wr_data  <= axi_out_next & std_logic_vector(axi_out_bit_cnt & axi_out_offset);
+    wr_data  <= axi_out_next
+                & std_logic_vector(axi_out_bit_cnt)
+                & std_logic_vector(axi_out_offset(numbits(max(DVB_N_LDPC)) - 1 downto 0));
 
     m_offset <= rd_data(m_offset'length - 1 downto 0);
     m_tuser  <= rd_data(m_tuser'length + m_offset'length - 1 downto m_offset'length);
@@ -252,34 +251,29 @@ begin
   ------------------------------
   axi_dv <= axi_tvalid and axi_tready;
 
-  row_cnt_max <= metadata.stage_0_rows when stage = 0 else
+  row_cnt_max <= (others => 'U') when stage = (stage'range => 'U') else
+                 metadata.stage_0_rows when stage = 0              else
                  metadata.stage_1_rows;
 
-  loop_cnt_max <= metadata.stage_0_loops when stage = 0 else
+  loop_cnt_max <= (others => 'U') when stage = (stage'range => 'U') else
+                  metadata.stage_0_loops when stage = 0 else
                   metadata.stage_1_loops;
 
-  table_length <= to_unsigned(get_ldpc_code_length(frame_type => cfg_frame_type,
-                                                   code_rate => cfg_code_rate),
-                              table_length'length);
-
   -- Offset + delta won't ever go past 2*table length, so we can simplify the modulo operator
-  axi_out_offset <= ldpc_coeff + offset_delta when ldpc_coeff + offset_delta < table_length else
-                    ldpc_coeff + offset_delta - table_length;
+  axi_out_offset <= ldpc_coeff + offset_delta - table_length when ldpc_coeff + offset_delta >= table_length else
+                    ldpc_coeff + offset_delta;
 
 
-  ldpc_coeff <= unsigned(rom_data);
+  ldpc_coeff <= '0' & unsigned(rom_data);
 
   last_coeff  <= '1' when loop_cnt = loop_cnt_max and stage = 1 and row_cnt = row_cnt_max and group_cnt = DVB_LDPC_GROUP_LENGTH - 1 else '0';
 
   ldpc_wr_en <= busy and not axi_out_wr_full;
 
-
-
   ---------------
   -- Processes --
   ---------------
   process(clk, rst)
-    variable tmp_constellation : constellation_t;
     variable tmp_frame_type    : frame_type_t;
     variable tmp_code_rate     : code_rate_t;
     variable tmp_ldpc_metadata : ldpc_metadata_unsigned_t;
@@ -302,6 +296,11 @@ begin
       axi_out_bit_cnt <= (others => '0');
       offset_delta    <= (others => '0');
 
+      table_length    <= (others => '1');
+
+      cfg_frame_type  <= not_set;
+      cfg_code_rate   <= not_set;
+
     elsif clk'event and clk = '1' then
 
       ldpc_next    <= '0';
@@ -312,36 +311,39 @@ begin
         busy              <= '1';
 
         -- Use temporary variables as aliases
-        tmp_frame_type    := decode(extract(param_fifo_tdata_out, 0, PARAM_FIFO_DATA_WIDTHS));
-        tmp_constellation := decode(extract(param_fifo_tdata_out, 1, PARAM_FIFO_DATA_WIDTHS));
-        tmp_code_rate     := decode(extract(param_fifo_tdata_out, 2, PARAM_FIFO_DATA_WIDTHS));
+        tmp_frame_type    := decode(get_field(param_fifo_tdata_out, 0, PARAM_FIFO_DATA_WIDTHS));
+        tmp_code_rate     := decode(get_field(param_fifo_tdata_out, 1, PARAM_FIFO_DATA_WIDTHS));
         tmp_ldpc_metadata := get_ldpc_metadata(frame_length => tmp_frame_type, code_rate => tmp_code_rate);
 
         cfg_frame_type    <= tmp_frame_type;
-        cfg_constellation <= tmp_constellation;
         cfg_code_rate     <= tmp_code_rate;
 
         metadata          <= tmp_ldpc_metadata;
         table_addr        <= tmp_ldpc_metadata.addr;
       end if;
 
-      if axi_out_wren = '1' then
-        if axi_out_next = '1' then
-          axi_out_bit_cnt <= axi_out_bit_cnt + 1;
+      if axi_out_wren = '1' and axi_out_next = '1' then
+        axi_out_bit_cnt <= axi_out_bit_cnt + 1;
 
-          if offset_delta + metadata.q = table_length then
-            offset_delta  <= (others => '0');
-          else
-            offset_delta  <= offset_delta + metadata.q;
-          end if;
+        if axi_out_last = '1' or offset_delta + metadata.q = table_length then
+          offset_delta  <= (others => '0');
+        else
+          offset_delta  <= offset_delta + metadata.q;
+        end if;
 
-          if axi_out_last = '1' then
-            axi_out_bit_cnt <= (others => '0');
-          end if;
+        if axi_out_last = '1' then
+          axi_out_bit_cnt <= (others => '0');
+          table_length    <= (others => '1');
         end if;
       end if;
 
       if busy = '1' and axi_out_wr_full = '0' then
+
+        -- Can't update table length when reading from the parameter FIFO because its
+        -- value is used in conjunction with the ROM output, which is delayed
+        table_length  <= to_unsigned(get_ldpc_code_length(frame_type => cfg_frame_type,
+                                                          code_rate => cfg_code_rate),
+                                     table_length'length);
 
         table_addr    <= table_addr + 1;
         row_cnt       <= row_cnt + 1;
@@ -365,7 +367,7 @@ begin
             -- a different base address
             metadata.addr   <= table_addr + 1;
 
-            if loop_cnt = loop_cnt_max then
+            end_of_loop : if loop_cnt = loop_cnt_max then
               loop_cnt      <= (others => '0');
 
               if stage = 0 then
@@ -375,7 +377,7 @@ begin
                 busy        <= '0';
                 axi_tready  <= '1';
               end if;
-            end if;
+            end if end_of_loop;
           end if end_of_group;
         end if last_row;
       end if;

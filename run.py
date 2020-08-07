@@ -252,6 +252,12 @@ def _populateLdpcTable(frame_length, code_rate, src, dest):
     Creates the unrolled binary LDPC table file for the LDPC encoder testbench
     a CSV file with coefficients (from DVB-S2 spec's appendices B and C).
     """
+    bin_table = p.join(dest, "ldpc_table.bin")
+    text_table = p.join(dest, "ldpc_table.txt")
+
+    if p.exists(bin_table) and p.exists(text_table):
+        return
+
     print(
         f"Generating LDPC table for FECFRAME={frame_length.value}, "
         f'code rate={code_rate.value} using "{src}" as reference. '
@@ -262,24 +268,38 @@ def _populateLdpcTable(frame_length, code_rate, src, dest):
 
     table_q = LDPC_Q[(frame_length, code_rate)]
     table_length = LDPC_LENGTH[(frame_length, code_rate)]
+    word_cnt = 0
 
-    with open(dest, "wb") as fd:
+    bin_fd = open(bin_table, "wb")
+    text_fd = open(text_table, "w")
+
+    try:
         # Each offset is 16 bits (to represent 64,800 bits of FECFRAME_NORMAL),
         # but we'll also embed the s_ldpc_next values into the file as well on a
         # byte, so data width will 24: data[16] is s_ldpc_next while data[15:0] is
         # the actual offset
         bit_index = 0
+
         for line in table:
             for _ in range(360):
-                #  dbg = []
+                text_fd.write(f"{bit_index:5d} || ")
                 for i, coefficient in enumerate(tuple(int(x) for x in line)):
                     offset = (coefficient + (bit_index % 360) * table_q) % table_length
                     # Just to recap:
                     # - "H" -> Unsigned short
                     # - "?" -> boolean
-                    fd.write(struct.pack(">?HH", i == len(line) - 1, bit_index, offset))
+                    bin_fd.write(
+                        struct.pack(">?HH", i == len(line) - 1, bit_index, offset)
+                    )
 
+                    text_fd.write(f" {word_cnt:5d}, {offset:5d}  |")
+                    word_cnt += 1
+
+                text_fd.write("\n")
                 bit_index += 1
+    finally:
+        bin_fd.close()
+        text_fd.close()
 
 
 def _createLdpcTables():
@@ -287,6 +307,7 @@ def _createLdpcTables():
     Creates the binary LDPC table files if they don't already exist
     """
     path_to_csv = p.join(ROOT, "misc", "ldpc")
+    pool = Pool()
 
     for config in TEST_CONFIGS:
         csv_table = (
@@ -294,13 +315,13 @@ def _createLdpcTables():
             f"ldpc_table_{config.frame_length.name}_{config.code_rate.name}.csv"
         )
 
-        bin_table = p.join(config.test_files_path, "ldpc_table.bin")
+        pool.apply_async(
+            _populateLdpcTable,
+            (config.frame_length, config.code_rate, csv_table, config.test_files_path),
+        )
 
-        if not p.exists(bin_table):
-            assert p.exists(csv_table), f"No such file: {repr(csv_table)}"
-            _populateLdpcTable(
-                config.frame_length, config.code_rate, csv_table, bin_table,
-            )
+    pool.close()
+    pool.join()
 
 
 class GhdlPragmaHandler:

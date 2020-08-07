@@ -19,6 +19,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with DVB FPGA.  If not, see <http://www.gnu.org/licenses/>.
 
+-- vunit: run_all_in_same_sim
+
 use std.textio.all;
 
 library ieee;
@@ -73,13 +75,10 @@ architecture axi_ldpc_table_tb of axi_ldpc_table_tb is
   constant CLK_PERIOD        : time    := 5 ns;
   constant ERROR_CNT_WIDTH   : integer := 8;
 
-  constant DBG_CHECK_FRAME_RAM_WRITES : boolean := False;
-
   constant CONFIG_INPUT_WIDTHS: fpga_cores.common_pkg.integer_vector_t := (
     0 => FRAME_TYPE_WIDTH,
     1 => CONSTELLATION_WIDTH,
     2 => CODE_RATE_WIDTH);
-
 
   -------------
   -- Signals --
@@ -87,14 +86,6 @@ architecture axi_ldpc_table_tb of axi_ldpc_table_tb is
   -- Usual ports
   signal clk                : std_logic := '1';
   signal rst                : std_logic;
-
-  signal m_frame_cnt        : natural := 0;
-  signal m_word_cnt         : natural := 0;
-  signal m_bit_cnt          : natural := 0;
-
-  signal s_frame_cnt        : natural := 0;
-  signal s_word_cnt         : natural := 0;
-  signal s_bit_cnt          : natural := 0;
 
   signal tdata_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
   signal tlast_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
@@ -108,7 +99,6 @@ architecture axi_ldpc_table_tb of axi_ldpc_table_tb is
 
   signal bfm_tdata          : std_logic_vector(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0);
 
-  signal tvalid_probability : real range 0.0 to 1.0 := 1.0;
   signal tready_probability : real range 0.0 to 1.0 := 1.0;
 
   signal axi_slave          : axi_stream_data_bus_t(tdata(2*numbits(max(DVB_N_LDPC)) - 0 downto 0));
@@ -121,18 +111,11 @@ architecture axi_ldpc_table_tb of axi_ldpc_table_tb is
 
   signal expected_tdata     : std_logic_vector(axi_slave.tdata'length - 1 downto 0);
 
-  signal axi_slave_offset : std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
-  signal axi_slave_next   : std_logic;
-  signal axi_slave_tuser  : std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+  signal axi_slave_offset   : std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+  signal axi_slave_next     : std_logic;
+  signal axi_slave_tuser    : std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
 
-      -- m_tready        => axi_slave.tready,
-      -- m_tvalid        => axi_slave.tvalid,
-      -- m_offset        => axi_slave.tdata(numbits(max(DVB_N_LDPC)) - 1 downto 0),
-      -- m_tuser         => axi_slave.tdata(2*numbits(max(DVB_N_LDPC)) - 1 downto numbits(max(DVB_N_LDPC))),
-      -- m_next          => axi_slave.tdata(2*numbits(max(DVB_N_LDPC))),
-      -- m_tlast         => axi_slave.tlast);
-
-  signal expected_offset    : std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+  signal expected_offset    : std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);-- -- {{-- }}
   signal expected_next      : std_logic;
   signal expected_tuser     : std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
 
@@ -171,7 +154,6 @@ begin
       clk               => clk,
       rst               => rst,
 
-      s_constellation => m_constellation,
       s_frame_type    => m_frame_type,
       s_code_rate     => m_code_rate,
       s_tvalid        => m_tvalid,
@@ -220,7 +202,7 @@ begin
   ------------------------------
   clk <= not clk after CLK_PERIOD/2;
 
-  test_runner_watchdog(runner, 1 ms);
+  test_runner_watchdog(runner, 2 ms);
 
   m_data_valid <= axi_master.tvalid = '1' and axi_master.tready = '1';
   s_data_valid <= axi_slave.tvalid = '1' and axi_slave.tready = '1';
@@ -252,9 +234,9 @@ begin
       join(net, config_bfm);
       wait_all_read(net, file_checker);
       wait_all_read(net, ldpc_table);
-
+      walk(4);
       wait until rising_edge(clk) and axi_slave.tvalid = '0' for 1 ms;
-
+      check_equal(axi_slave.tvalid, '0', "axi_slave.tvalid should be '0'");
       walk(1);
     end procedure wait_for_completion; -- }} --------------------------------------------
 
@@ -289,7 +271,7 @@ begin
         axi_bfm_write(net,
           bfm         => config_bfm,
           data        => bfm_data_t'(0 => bfm_data),
-          probability => tvalid_probability,
+          probability => 1.0,
           blocking    => False);
 
         read_file(net, ldpc_table, data_path & "/ldpc_table.bin", ratio);
@@ -308,60 +290,52 @@ begin
 
     while test_suite loop
       rst                <= '1';
-      tvalid_probability <= 1.0;
       tready_probability <= 1.0;
 
       walk(32);
-
       rst <= '0';
-
       walk(32);
 
-      set_timeout(runner, 1000 us);
+      set_timeout(runner, configs'length * 2 ms);
 
       if run("back_to_back") then
-        tvalid_probability <= 1.0;
         tready_probability <= 1.0;
 
         for i in configs'range loop
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
-      elsif run("data=0.5,slave=1.0") then
-        tvalid_probability <= 0.5;
+
+      elsif run("slow_master") then
         tready_probability <= 1.0;
 
         for i in configs'range loop
-          run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
+          for frame in 0 to NUMBER_OF_TEST_FRAMES - 1 loop
+            run_test(configs(i), number_of_frames => 1);
+            wait_for_completion;
+          end loop;
         end loop;
-      elsif run("data=1.0,slave=0.5") then
-        tvalid_probability <= 1.0;
+
+      elsif run("slow_slave") then
         tready_probability <= 0.5;
 
         for i in configs'range loop
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
-      elsif run("data=0.75,slave=0.75") then
-        tvalid_probability <= 0.75;
+
+      elsif run("slow_master,slow_slave") then
         tready_probability <= 0.75;
 
         for i in configs'range loop
-          run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
-        end loop;
-      elsif run("data=1.0,slave=0.75") then
-        tvalid_probability <= 1.0;
-        tready_probability <= 0.75;
-
-        for i in configs'range loop
-          run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
+          for frame in 0 to NUMBER_OF_TEST_FRAMES - 1 loop
+            run_test(configs(i), number_of_frames => 1);
+            wait_for_completion;
+          end loop;
         end loop;
       end if;
 
       wait_for_completion;
-
       check_false(has_message(input_cfg_p));
-
-      check_equal(axi_slave.tvalid, '0', "axi_slave.tvalid should be '0'");
-      -- check_equal(error_cnt, 0);
+      check_equal(error_cnt, 0);
 
       walk(32);
 
@@ -377,7 +351,6 @@ begin
     variable frame_cnt : natural := 0;
   begin
     wait until axi_slave.tvalid = '1' and axi_slave.tready = '1' and rising_edge(clk);
-    word_cnt := word_cnt + 1;
 
     failed := False;
     if axi_slave_offset /= expected_offset then
@@ -418,11 +391,12 @@ begin
       error("Some checks failed");
     end if;
 
+    word_cnt := word_cnt + 1;
     if axi_slave.tlast = '1' then
-      word_cnt := 0;
+      word_cnt  := 0;
       frame_cnt := frame_cnt + 1;
     end if;
-    
+
   end process;
 
 end axi_ldpc_table_tb;
