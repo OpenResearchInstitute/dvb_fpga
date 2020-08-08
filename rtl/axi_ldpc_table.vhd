@@ -110,12 +110,13 @@ architecture axi_ldpc_table of axi_ldpc_table is
   signal cfg_code_rate     : code_rate_t;
 
   signal table_length      : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+  signal table_length_reg  : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
 
   signal metadata          : ldpc_metadata_unsigned_t;
   signal table_addr        : unsigned(numbits(LDPC_DATA_TABLE'length) - 1 downto 0);
   signal rom_data          : std_logic_vector(TABLE_ENTRY_WIDTH - 1 downto 0);
-  signal offset_delta      : unsigned(TABLE_ENTRY_WIDTH - 1 downto 0); --
-  signal sample_rom_data   : std_logic;
+  signal offset_delta      : unsigned(TABLE_ENTRY_WIDTH - 1 downto 0);
+  signal offset_delta_reg  : std_logic_vector(TABLE_ENTRY_WIDTH - 1 downto 0);
   signal busy              : std_logic;
 
   signal stage             : unsigned(0 downto 0);
@@ -129,6 +130,7 @@ architecture axi_ldpc_table of axi_ldpc_table is
   signal ldpc_next         : std_logic;
   signal ldpc_coeff        : unsigned(numbits(max(DVB_N_LDPC)) downto 0);
   signal last_coeff        : std_logic;
+  signal raw_offset        : unsigned(numbits(max(DVB_N_LDPC)) downto 0);
 
   -- Interface with AXI stream adapter
   signal axi_out_wren      : std_logic;
@@ -143,9 +145,6 @@ architecture axi_ldpc_table of axi_ldpc_table is
 
 begin
 
-  -------------------
-  -- Port mappings --
-  -------------------
   -- Add a small FIFO for the config to mitigate latency between the config input and the
   -- actual coefficients going out
   param_fifo_tdata_in <= encode(s_code_rate) & encode(s_frame_type);
@@ -172,7 +171,7 @@ begin
       m_tdata  => param_fifo_tdata_out,
       m_tlast  => open);
 
-  -- The ROM itself
+  -- The ROM with the coefficients from the spec
   rom_u : entity fpga_cores.rom_inference
     generic map (
       ROM_DATA     => LDPC_DATA_TABLE,
@@ -184,22 +183,21 @@ begin
       addr   => std_logic_vector(table_addr),
       rddata => rom_data);
 
-  ldpc_start_gen_u : entity fpga_cores.sr_delay
+  offset_delta_delay_u : entity fpga_cores.sr_delay
     generic map (
       DELAY_CYCLES  => 2,
-      DATA_WIDTH    => 1,
+      DATA_WIDTH    => offset_delta'length,
       EXTRACT_SHREG => False)
     port map (
-      clk     => clk,
-      clken   => '1',
+      clk      => clk,
+      clken    => '1',
 
-      din(0)   => axi_dv,
-      dout(0)  => sample_rom_data);
+      din   => std_logic_vector(offset_delta),
+      dout  => offset_delta_reg);
 
-  -- Synchronize ldpc_next with the actual calculated coefficient
-  ldpc_next_gen_u : entity fpga_cores.sr_delay
+  axi_out_ctrl_gen_u : entity fpga_cores.sr_delay
     generic map (
-      DELAY_CYCLES  => 2,
+      DELAY_CYCLES  => 4,
       DATA_WIDTH    => 2,
       EXTRACT_SHREG => False)
     port map (
@@ -211,6 +209,18 @@ begin
 
       dout(0)  => axi_out_wren,
       dout(1)  => axi_out_last);
+
+  axi_out_next_gen_u : entity fpga_cores.sr_delay
+    generic map (
+      DELAY_CYCLES  => 3,
+      DATA_WIDTH    => 1,
+      EXTRACT_SHREG => False)
+    port map (
+      clk      => clk,
+      clken    => '1',
+
+      din(0)   => ldpc_next,
+      dout(0)  => axi_out_next);
 
   output_adapter_block : block
     signal wr_data : std_logic_vector(m_offset'length + m_tuser'length downto 0);
@@ -228,7 +238,7 @@ begin
 
     axi_out_adapter_u : entity fpga_cores.axi_stream_master_adapter
       generic map (
-        MAX_SKEW_CYCLES => 3,
+        MAX_SKEW_CYCLES => 5,
         TDATA_WIDTH     => wr_data'length)
       port map (
         -- Usual ports
@@ -244,6 +254,7 @@ begin
         m_tready => m_tready,
         m_tdata  => rd_data,
         m_tlast  => m_tlast);
+
     end block output_adapter_block;
 
   ------------------------------
@@ -258,11 +269,6 @@ begin
   loop_cnt_max <= (others => 'U') when stage = (stage'range => 'U') else
                   metadata.stage_0_loops when stage = 0 else
                   metadata.stage_1_loops;
-
-  -- Offset + delta won't ever go past 2*table length, so we can simplify the modulo operator
-  axi_out_offset <= ldpc_coeff + offset_delta - table_length when ldpc_coeff + offset_delta >= table_length else
-                    ldpc_coeff + offset_delta;
-
 
   ldpc_coeff <= '0' & unsigned(rom_data);
 
@@ -304,7 +310,6 @@ begin
     elsif clk'event and clk = '1' then
 
       ldpc_next    <= '0';
-      axi_out_next <= ldpc_next;
 
       if axi_dv = '1' then
         axi_tready        <= '0';
@@ -324,12 +329,6 @@ begin
 
       if axi_out_wren = '1' and axi_out_next = '1' then
         axi_out_bit_cnt <= axi_out_bit_cnt + 1;
-
-        if axi_out_last = '1' or offset_delta + metadata.q = table_length then
-          offset_delta  <= (others => '0');
-        else
-          offset_delta  <= offset_delta + metadata.q;
-        end if;
 
         if axi_out_last = '1' then
           axi_out_bit_cnt <= (others => '0');
@@ -352,6 +351,13 @@ begin
           row_cnt    <= (others => '0');
           ldpc_next  <= '1';
           group_cnt  <= group_cnt + 1;
+
+          -- Modulus operator is spread across the terms of the final offset calculation
+          if offset_delta + metadata.q < table_length then
+            offset_delta  <= offset_delta + metadata.q;
+          else
+            offset_delta  <= offset_delta + metadata.q - table_length;
+          end if;
 
           -- Re read this address range
           table_addr <= metadata.addr;
@@ -384,4 +390,20 @@ begin
     end if;
   end process;
 
+  -- Pipeline axi_out_offset to improve timing. Doing both arithmetic and decision in the
+  -- same cycle was resulting in non ideal logic re timing
+  process(clk)
+  begin
+    if rising_edge(clk) then
+      raw_offset       <= ldpc_coeff + unsigned(offset_delta_reg);
+      table_length_reg <= table_length;
+
+      if raw_offset < table_length_reg then
+        axi_out_offset <= raw_offset;
+      else
+        -- Second modulus pass
+        axi_out_offset <= raw_offset - table_length_reg;
+      end if;
+    end if;
+  end process;
 end axi_ldpc_table;

@@ -115,7 +115,7 @@ architecture axi_ldpc_table_tb of axi_ldpc_table_tb is
   signal axi_slave_next     : std_logic;
   signal axi_slave_tuser    : std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
 
-  signal expected_offset    : std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);-- -- {{-- }}
+  signal expected_offset    : std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
   signal expected_next      : std_logic;
   signal expected_tuser     : std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
 
@@ -296,7 +296,7 @@ begin
       rst <= '0';
       walk(32);
 
-      set_timeout(runner, configs'length * 2 ms);
+      set_timeout(runner, configs'length * 10 ms);
 
       if run("back_to_back") then
         tready_probability <= 1.0;
