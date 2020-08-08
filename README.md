@@ -49,21 +49,14 @@ the transmission side.
 
 ### Core DVB-S2 components
 
-| Component name         | Simulation | HW testing | HW integration | Notes                                  |
-| :---                   | :---:      | :--:       | :--:           | :---                                   |
-| Baseband scrambler     | Done       | TODO       | TODO           |                                        |
-| BCH encoder            | Done       | TODO       | TODO           | Different data widths can be generated |
-| Bit interleaver        | Done       | TODO       | TODO           | Tested data widths: 1 and 8            |
-| Constellation mapper   | TODO       | TODO       | TODO           |                                        |
-| LDPC Encoder           | Done       | TODO       | TODO           |                                        |
-| Physical layer framing | TODO       | TODO       | TODO           |                                        |
-
-### Simulation helpers
-
-| Component name   | Simulation | HW testing | HW integration | Notes               |
-| :---             | :---:      | :--:       | :--:           | :---                |
-| AXI file reader  | Done       | -          | -              | [Issue #1][issue_1] |
-| AXI file compare | Done       | -          | -              | [Issue #1][issue_1] |
+| Component name         | Simulation | HW testing | HW integration |
+| :---                   | :---:      | :--:       | :--:           |
+| Baseband scrambler     | Done       | TODO       | TODO           |
+| BCH encoder            | Done       | TODO       | TODO           |
+| Bit interleaver        | Done       | TODO       | TODO           |
+| Constellation mapper   | TODO       | TODO       | TODO           |
+| LDPC Encoder           | Done       | TODO       | TODO           |
+| Physical layer framing | TODO       | TODO       | TODO           |
 
 ## Running tests
 
