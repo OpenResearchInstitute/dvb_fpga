@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - name: ModelSim run
+      - name: Simulation run
         run: |
           git submodule update --init --recursive
           docker pull suoto/dvb_fpga_ci
