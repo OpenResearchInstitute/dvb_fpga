@@ -183,83 +183,9 @@ begin
       addr   => std_logic_vector(table_addr),
       rddata => rom_data);
 
-  offset_delta_delay_u : entity fpga_cores.sr_delay
-    generic map (
-      DELAY_CYCLES  => 2,
-      DATA_WIDTH    => offset_delta'length,
-      EXTRACT_SHREG => False)
-    port map (
-      clk      => clk,
-      clken    => '1',
-
-      din   => std_logic_vector(offset_delta),
-      dout  => offset_delta_reg);
-
-  axi_out_ctrl_gen_u : entity fpga_cores.sr_delay
-    generic map (
-      DELAY_CYCLES  => 4,
-      DATA_WIDTH    => 2,
-      EXTRACT_SHREG => False)
-    port map (
-      clk      => clk,
-      clken    => '1',
-
-      din(0)   => ldpc_wr_en,
-      din(1)   => last_coeff,
-
-      dout(0)  => axi_out_wren,
-      dout(1)  => axi_out_last);
-
-  axi_out_next_gen_u : entity fpga_cores.sr_delay
-    generic map (
-      DELAY_CYCLES  => 3,
-      DATA_WIDTH    => 1,
-      EXTRACT_SHREG => False)
-    port map (
-      clk      => clk,
-      clken    => '1',
-
-      din(0)   => ldpc_next,
-      dout(0)  => axi_out_next);
-
-  output_adapter_block : block
-    signal wr_data : std_logic_vector(m_offset'length + m_tuser'length downto 0);
-    signal rd_data : std_logic_vector(m_offset'length + m_tuser'length downto 0);
-
-  begin
-
-    wr_data  <= axi_out_next
-                & std_logic_vector(axi_out_bit_cnt)
-                & std_logic_vector(axi_out_offset(numbits(max(DVB_N_LDPC)) - 1 downto 0));
-
-    m_offset <= rd_data(m_offset'length - 1 downto 0);
-    m_tuser  <= rd_data(m_tuser'length + m_offset'length - 1 downto m_offset'length);
-    m_next   <= rd_data(m_tuser'length + m_offset'length);
-
-    axi_out_adapter_u : entity fpga_cores.axi_stream_master_adapter
-      generic map (
-        MAX_SKEW_CYCLES => 5,
-        TDATA_WIDTH     => wr_data'length)
-      port map (
-        -- Usual ports
-        clk      => clk,
-        reset    => rst,
-        -- wanna-be AXI interface
-        wr_en    => axi_out_wren,
-        wr_full  => axi_out_wr_full,
-        wr_data  => wr_data,
-        wr_last  => axi_out_last,
-        -- AXI master
-        m_tvalid => m_tvalid,
-        m_tready => m_tready,
-        m_tdata  => rd_data,
-        m_tlast  => m_tlast);
-
-    end block output_adapter_block;
-
-  ------------------------------
-  -- Asynchronous assignments --
-  ------------------------------
+  ----------------------------------
+  -- Controls for reading the ROM --
+  ----------------------------------
   axi_dv <= axi_tvalid and axi_tready;
 
   row_cnt_max <= (others => 'U') when stage = (stage'range => 'U') else
@@ -276,9 +202,9 @@ begin
 
   ldpc_wr_en <= busy and not axi_out_wr_full;
 
-  ---------------
-  -- Processes --
-  ---------------
+  ----------------------------------------------------------------------------
+  -- Read the ROM and generate the values for calculating the actual offset --
+  ----------------------------------------------------------------------------
   process(clk, rst)
     variable tmp_frame_type    : frame_type_t;
     variable tmp_code_rate     : code_rate_t;
@@ -289,12 +215,6 @@ begin
       busy            <= '0';
       ldpc_next       <= '0';
 
-      if IS_SIMULATION then
-        table_addr <= (others => '0');
-      else
-        table_addr <= (others => 'U');
-      end if;
-
       stage           <= (others => '0');
       loop_cnt        <= (others => '0');
       row_cnt         <= (others => '0');
@@ -304,8 +224,15 @@ begin
 
       table_length    <= (others => '1');
 
+      table_addr      <= (others => 'U');
       cfg_frame_type  <= not_set;
       cfg_code_rate   <= not_set;
+      metadata        <= (addr          => (others => 'U'),
+                          q             => (others => 'U'),
+                          stage_0_loops => (others => 'U'),
+                          stage_0_rows  => (others => 'U'),
+                          stage_1_loops => (others => 'U'),
+                          stage_1_rows  => (others => 'U'));
 
     elsif clk'event and clk = '1' then
 
@@ -318,7 +245,8 @@ begin
         -- Use temporary variables as aliases
         tmp_frame_type    := decode(get_field(param_fifo_tdata_out, 0, PARAM_FIFO_DATA_WIDTHS));
         tmp_code_rate     := decode(get_field(param_fifo_tdata_out, 1, PARAM_FIFO_DATA_WIDTHS));
-        tmp_ldpc_metadata := get_ldpc_metadata(frame_length => tmp_frame_type, code_rate => tmp_code_rate);
+        tmp_ldpc_metadata := get_ldpc_metadata(frame_length => tmp_frame_type,
+                                               code_rate    => tmp_code_rate);
 
         cfg_frame_type    <= tmp_frame_type;
         cfg_code_rate     <= tmp_code_rate;
@@ -390,6 +318,49 @@ begin
     end if;
   end process;
 
+  -------------------------------------------------------------
+  -- Synchronize control and data for the AXI output adapter --
+  -------------------------------------------------------------
+  axi_out_ctrl_gen_u : entity fpga_cores.sr_delay
+    generic map (
+      DELAY_CYCLES  => 4,
+      DATA_WIDTH    => 2,
+      EXTRACT_SHREG => False)
+    port map (
+      clk      => clk,
+      clken    => '1',
+
+      din(0)   => ldpc_wr_en,
+      din(1)   => last_coeff,
+
+      dout(0)  => axi_out_wren,
+      dout(1)  => axi_out_last);
+
+  axi_out_next_gen_u : entity fpga_cores.sr_delay
+    generic map (
+      DELAY_CYCLES  => 3,
+      DATA_WIDTH    => 1,
+      EXTRACT_SHREG => False)
+    port map (
+      clk      => clk,
+      clken    => '1',
+
+      din(0)   => ldpc_next,
+      dout(0)  => axi_out_next);
+
+  -- Synchronize the offset with the pipelined ldpc_coeff
+  offset_delta_delay_u : entity fpga_cores.sr_delay
+    generic map (
+      DELAY_CYCLES  => 2,
+      DATA_WIDTH    => offset_delta'length,
+      EXTRACT_SHREG => False)
+    port map (
+      clk      => clk,
+      clken    => '1',
+
+      din   => std_logic_vector(offset_delta),
+      dout  => offset_delta_reg);
+
   -- Pipeline axi_out_offset to improve timing. Doing both arithmetic and decision in the
   -- same cycle was resulting in non ideal logic re timing
   process(clk)
@@ -406,4 +377,38 @@ begin
       end if;
     end if;
   end process;
+
+  output_adapter_block : block
+    signal wr_data : std_logic_vector(m_offset'length + m_tuser'length downto 0);
+    signal rd_data : std_logic_vector(m_offset'length + m_tuser'length downto 0);
+  begin
+
+    wr_data  <= axi_out_next
+                & std_logic_vector(axi_out_bit_cnt)
+                & std_logic_vector(axi_out_offset(numbits(max(DVB_N_LDPC)) - 1 downto 0));
+
+    m_offset <= rd_data(m_offset'length - 1 downto 0);
+    m_tuser  <= rd_data(m_tuser'length + m_offset'length - 1 downto m_offset'length);
+    m_next   <= rd_data(m_tuser'length + m_offset'length);
+
+    axi_out_adapter_u : entity fpga_cores.axi_stream_master_adapter
+      generic map (
+        MAX_SKEW_CYCLES => 5,
+        TDATA_WIDTH     => wr_data'length)
+      port map (
+        -- Usual ports
+        clk      => clk,
+        reset    => rst,
+        -- wanna-be AXI interface
+        wr_en    => axi_out_wren,
+        wr_full  => axi_out_wr_full,
+        wr_data  => wr_data,
+        wr_last  => axi_out_last,
+        -- AXI master
+        m_tvalid => m_tvalid,
+        m_tready => m_tready,
+        m_tdata  => rd_data,
+        m_tlast  => m_tlast);
+  end block output_adapter_block;
+
 end axi_ldpc_table;
