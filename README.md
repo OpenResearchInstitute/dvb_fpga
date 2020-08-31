@@ -51,11 +51,11 @@ the transmission side.
 
 | Component name         | Simulation | HW testing | HW integration |
 | :---                   | :---:      | :--:       | :--:           |
-| Baseband scrambler     | Done       | TODO       | TODO           |
-| BCH encoder            | Done       | TODO       | TODO           |
-| Bit interleaver        | Done       | TODO       | TODO           |
+| Baseband scrambler     | ✔️          | TODO       | TODO           |
+| BCH encoder            | ✔️          | TODO       | TODO           |
+| Bit interleaver        | ✔️          | TODO       | TODO           |
 | Constellation mapper   | TODO       | TODO       | TODO           |
-| LDPC Encoder           | Done       | TODO       | TODO           |
+| LDPC Encoder           | ✔️          | TODO       | TODO           |
 | Physical layer framing | TODO       | TODO       | TODO           |
 
 ## Running tests
@@ -66,7 +66,6 @@ GNU Radio, VUnit and a VHDL simulator.
 ### Using Docker
 
 Uses the same container used for CI
-
 ```sh
 # Clone this repo and submodules
 git clone --recurse-submodules  https://github.com/phase4ground/dvb_fpga
