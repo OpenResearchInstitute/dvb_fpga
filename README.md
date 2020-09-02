@@ -58,6 +58,20 @@ the transmission side.
 | LDPC Encoder           | ✔️          | TODO       | TODO           |
 | Physical layer framing | TODO       | TODO       | TODO           |
 
+### Performance and resource usage (WIP)
+
+The [dvb_fpga/rtl/dvbs2_tx.vhd](https://github.com/phase4ground/dvb_fpga/blob/master/rtl/dvbs2_tx.vhd)
+top level has been run through Vivado targeting a `xczu4cg-sfvc784-1LV-i` and
+with a clock frequency of 333 MHz (both arbitrary). No timing issues were
+reported and the resource usage post implementation is as follows:
+
+| Resource | Usage |
+|:---      | :--:  |
+| LUT      | 2864  |
+| LUTRAM   | 106   |
+| FF       | 2197  |
+| BRAM     | 16    |
+
 ## Running tests
 
 Tests can be run locally or on a Docker container. Running locally will require
@@ -66,6 +80,7 @@ GNU Radio, VUnit and a VHDL simulator.
 ### Using Docker
 
 Uses the same container used for CI
+
 ```sh
 # Clone this repo and submodules
 git clone --recurse-submodules  https://github.com/phase4ground/dvb_fpga
