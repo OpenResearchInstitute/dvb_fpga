@@ -143,6 +143,8 @@ class dvbs2_tx(gr.top_block):
         ##################################################
         # Blocks
         ##################################################
+        self.physical_layer_framer_out = blocks.file_sink(gr.sizeof_gr_complex*1, 'physical_layer_framer_out.bin', False)
+        self.physical_layer_framer_out.set_unbuffered(False)
         self.ldpc_encoder_input = blocks.file_sink(gr.sizeof_char*1, 'ldpc_encoder_input.bin', False)
         self.ldpc_encoder_input.set_unbuffered(False)
         self.fir_filter_xxx_0_0 = filter.fir_filter_ccc(1, (numpy.conj([0.00000 + 1.00000j,   0.00000 - 1.00000j,   0.00000 - 1.00000j,   0.00000 + 1.00000j,   0.00000 - 1.00000j,   0.00000 + 1.00000j,   0.00000 - 1.00000j,   0.00000 - 1.00000j,   0.00000 + 1.00000j,   0.00000 + 1.00000j,   0.00000 + 1.00000j,   0.00000 - 1.00000j,   0.00000 + 1.00000j,   0.00000 + 1.00000j,   0.00000 - 1.00000j,   0.00000 - 1.00000j,   0.00000 + 1.00000j,   0.00000 + 1.00000j,   0.00000 - 1.00000j,   0.00000 + 1.00000j,   0.00000 + 1.00000j,   0.00000 - 1.00000j,   0.00000 + 1.00000j,   0.00000 + 1.00000j,   0.00000 + 1.00000j,   0.00000 + 1.00000j,   0.00000 + 1.00000j,   0.00000 - 1.00000j,   0.00000 + 1.00000j,   0.00000 - 1.00000j,   0.00000 + 1.00000j,   0.00000 - 1.00000j]  + [0,]*(89-32))))
@@ -151,7 +153,7 @@ class dvbs2_tx(gr.top_block):
         self.fir_filter_xxx_0.declare_sample_delay(0)
         self.fft_filter_xxx_0 = filter.fft_filter_ccc(1, (firdes.root_raised_cosine(1.0, samp_rate, samp_rate/2, rolloff, taps)), 1)
         self.fft_filter_xxx_0.declare_sample_delay(0)
-        self.dtv_dvbs2_physical_cc_0 = dtv.dvbs2_physical_cc(frame_type, code_rate, dtv.MOD_BPSK, dtv.PILOTS_ON, 0)
+        self.dtv_dvbs2_physical_cc_0 = dtv.dvbs2_physical_cc(frame_type, code_rate, constellation, dtv.PILOTS_ON, 0)
         self.dtv_dvbs2_modulator_bc_0 = dtv.dvbs2_modulator_bc(frame_type,
         code_rate, constellation, dtv.INTERPOLATION_OFF)
         self.dtv_dvbs2_interleaver_bb_0 = dtv.dvbs2_interleaver_bb(frame_type, code_rate, constellation)
@@ -228,6 +230,7 @@ class dvbs2_tx(gr.top_block):
         self.connect((self.dtv_dvbs2_modulator_bc_0, 0), (self.bit_mapper_output, 0))
         self.connect((self.dtv_dvbs2_modulator_bc_0, 0), (self.dtv_dvbs2_physical_cc_0, 0))
         self.connect((self.dtv_dvbs2_physical_cc_0, 0), (self.blocks_multiply_const_vxx_0, 0))
+        self.connect((self.dtv_dvbs2_physical_cc_0, 0), (self.physical_layer_framer_out, 0))
         self.connect((self.fft_filter_xxx_0, 0), (self.blocks_add_xx_2, 0))
         self.connect((self.fir_filter_xxx_0, 0), (self.blocks_add_xx_0, 0))
         self.connect((self.fir_filter_xxx_0, 0), (self.blocks_sub_xx_0, 0))
