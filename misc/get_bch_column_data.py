@@ -9,7 +9,7 @@ import sys
 from tabulate import tabulate
 
 _CONFIG = re.compile(
-    r"(?P<frame_length>FECFRAME_SHORT|FECFRAME_NORMAL)_"
+    r"(?P<frame_type>FECFRAME_SHORT|FECFRAME_NORMAL)_"
     r"MOD_(?P<modulation>8PSK|(:?(16|32)APSK))_"
     r"(?P<code_rate>C\d_\d+)"
 )

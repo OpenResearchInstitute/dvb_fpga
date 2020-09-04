@@ -78,12 +78,12 @@ class LdpcTable:
         # Extract the frame type and code rate of this table from the path
         match = _PARAM_RE.search(self._path)
 
-        self.frame_length = match.group(1).lower()
+        self.frame_type = match.group(1).lower()
         self.code_rate = match.group(2)
         _logger.debug(
             "Config of path '%s is %s, %s",
             repr(self._path),
-            repr(self.frame_length),
+            repr(self.frame_type),
             repr(self.code_rate),
         )
 
@@ -225,7 +225,7 @@ def _generateRowCountRom(tables):
             cnt, row_length = count_cfg[0]
             count_cfg = [(cnt // 2, row_length), (cnt - cnt // 2, row_length)]
 
-        yield (table.frame_length, table.code_rate), count_cfg
+        yield (table.frame_type, table.code_rate), count_cfg
 
 
 LDPC_Q = {
@@ -272,7 +272,7 @@ def _generateTablesRom(tables):
         f"",
         f"  -- Use this function to get the starting address of a given config within the LDPC_DATA_TABLE",
         f"  function get_ldpc_metadata (",
-        f"    constant frame_length : frame_type_t;",
+        f"    constant frame_type : frame_type_t;",
         f"    constant code_rate : code_rate_t) return ldpc_metadata_t;",
         "",
     ]
@@ -287,7 +287,7 @@ def _generateTablesRom(tables):
         #  and return the address of the table
         f"  -- Use this function to get the starting address of a given config within the LDPC_DATA_TABLE",
         f"  function get_ldpc_metadata (",
-        f"    constant frame_length : frame_type_t;",
+        f"    constant frame_type : frame_type_t;",
         f"    constant code_rate : code_rate_t) return ldpc_metadata_t is",
         "  begin",
     ]
@@ -296,7 +296,7 @@ def _generateTablesRom(tables):
     addr = 0
     for table in tables:
         _logger.debug("0x%.4x | %4d | %s", addr, addr, table.name)
-        key = (table.frame_length, table.code_rate)
+        key = (table.frame_type, table.code_rate)
         result_tuple = [
             addr,
             count_cfg[key][0][0],
@@ -306,7 +306,7 @@ def _generateTablesRom(tables):
         ]
         print(result_tuple)
         package_body += [
-            f"    if frame_length = {table.frame_length} and code_rate = {table.code_rate} then",
+            f"    if frame_type = {table.frame_type} and code_rate = {table.code_rate} then",
             f"      return (",
             f"        addr => {addr},",
             f"        q => {LDPC_Q[key]},",
@@ -344,7 +344,7 @@ def _generateTablesRom(tables):
     rom_content = []
     for table in tables:
         rom_content += [
-            f"    -- Table for {table.frame_length}, {table.code_rate}",
+            f"    -- Table for {table.frame_type}, {table.code_rate}",
         ]
 
         for row in table.table:
@@ -423,10 +423,10 @@ def main():
     lines += "\n".join(
         [
             "",
-            "  -- LDPC_TABLE_FECFRAME_<frame_length>_<code_rate>_COLUMN_WIDTHS constants have the bit",
+            "  -- LDPC_TABLE_FECFRAME_<frame_type>_<code_rate>_COLUMN_WIDTHS constants have the bit",
             "  -- width of each row",
             "",
-            "  -- LDPC_TABLE_FECFRAME_<frame_length>_<code_rate> is the actual LDPC where the number of",
+            "  -- LDPC_TABLE_FECFRAME_<frame_type>_<code_rate> is the actual LDPC where the number of",
             "  -- columns is normalized to the row with most columns and the first column of each row",
             "  -- contains the number of valid elements within the row. Elements outisde the valid range",
             "  -- are represented as -1",

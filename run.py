@@ -54,7 +54,7 @@ class ConstellationType(Enum):
     MOD_32APSK = "32APSK"
 
 
-class FrameLength(Enum):
+class FrameType(Enum):
     """
     Frame types as defined in the DVB-S2 spec. Enum names should match
     the C/C++ defines, values are a nice string representation for the test
@@ -91,7 +91,7 @@ class TestDefinition(
             ("name", str),
             ("test_files_path", str),
             ("code_rate", CodeRate),
-            ("frame_length", FrameLength),
+            ("frame_type", FrameType),
             ("constellation", ConstellationType),
         ],
     )
@@ -111,7 +111,7 @@ class TestDefinition(
         return ",".join(
             [
                 self.constellation.name,
-                self.frame_length.name,
+                self.frame_type.name,
                 self.code_rate.name,
                 self.test_files_path,
             ]
@@ -119,13 +119,13 @@ class TestDefinition(
 
 
 def _getConfigs(
-    code_rates=CodeRate, frame_lengths=FrameLength, constellations=ConstellationType
+    code_rates=CodeRate, frame_types=FrameType, constellations=ConstellationType
 ):
     for code_rate in code_rates:
-        for frame_length in frame_lengths:
+        for frame_type in frame_types:
             for constellation in constellations:
                 if (
-                    frame_length is FrameLength.FECFRAME_SHORT
+                    frame_type is FrameType.FECFRAME_SHORT
                     and code_rate is CodeRate.C9_10
                 ):
                     continue
@@ -133,19 +133,19 @@ def _getConfigs(
                 test_files_path = p.join(
                     ROOT,
                     "gnuradio_data",
-                    f"{frame_length.name}_{constellation.name}_{code_rate.name}".upper(),
+                    f"{frame_type.name}_{constellation.name}_{code_rate.name}".upper(),
                 )
 
                 name = ",".join(
                     [
-                        f"FrameLength={frame_length.value}",
+                        f"FrameType={frame_type.value}",
                         f"ConstellationType={constellation.value}",
                         f"CodeRate={code_rate.value}",
                     ]
                 )
 
                 yield TestDefinition(
-                    name, test_files_path, code_rate, frame_length, constellation
+                    name, test_files_path, code_rate, frame_type, constellation
                 )
 
 
@@ -163,7 +163,7 @@ def _runGnuRadio(config):
     command = [
         p.join(ROOT, "gnuradio_data", "dvbs2_tx.py"),
         "--frame-type",
-        config.frame_length.name,
+        config.frame_type.name,
         "--constellation",
         config.constellation.name,
         "--code-rate",
@@ -199,55 +199,55 @@ def _generateGnuRadioData():
 
 
 LDPC_Q = {
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C1_4): 135,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C1_3): 120,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C2_5): 108,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C1_2): 90,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C3_5): 72,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C2_3): 60,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C3_4): 45,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C4_5): 36,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C5_6): 30,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C8_9): 20,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C9_10): 18,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C1_4): 36,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C1_3): 30,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C2_5): 27,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C1_2): 25,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C3_5): 18,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C2_3): 15,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C3_4): 12,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C4_5): 10,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C5_6): 8,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C8_9): 5,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C1_4): 135,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C1_3): 120,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C2_5): 108,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C1_2): 90,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C3_5): 72,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C2_3): 60,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C3_4): 45,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C4_5): 36,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C5_6): 30,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C8_9): 20,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C9_10): 18,
+    (FrameType.FECFRAME_SHORT, CodeRate.C1_4): 36,
+    (FrameType.FECFRAME_SHORT, CodeRate.C1_3): 30,
+    (FrameType.FECFRAME_SHORT, CodeRate.C2_5): 27,
+    (FrameType.FECFRAME_SHORT, CodeRate.C1_2): 25,
+    (FrameType.FECFRAME_SHORT, CodeRate.C3_5): 18,
+    (FrameType.FECFRAME_SHORT, CodeRate.C2_3): 15,
+    (FrameType.FECFRAME_SHORT, CodeRate.C3_4): 12,
+    (FrameType.FECFRAME_SHORT, CodeRate.C4_5): 10,
+    (FrameType.FECFRAME_SHORT, CodeRate.C5_6): 8,
+    (FrameType.FECFRAME_SHORT, CodeRate.C8_9): 5,
 }
 
 LDPC_LENGTH = {
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C1_4): 64_800 - 16_200,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C1_3): 64_800 - 21_600,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C2_5): 64_800 - 25_920,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C1_2): 64_800 - 32_400,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C3_5): 64_800 - 38_880,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C2_3): 64_800 - 43_200,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C3_4): 64_800 - 48_600,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C4_5): 64_800 - 51_840,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C5_6): 64_800 - 54_000,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C8_9): 64_800 - 57_600,
-    (FrameLength.FECFRAME_NORMAL, CodeRate.C9_10): 64_800 - 58_320,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C1_4): 16_200 - 3_240,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C1_3): 16_200 - 5_400,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C2_5): 16_200 - 6_480,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C1_2): 16_200 - 7_200,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C3_5): 16_200 - 9_720,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C2_3): 16_200 - 10_800,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C3_4): 16_200 - 11_880,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C4_5): 16_200 - 12_600,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C5_6): 16_200 - 13_320,
-    (FrameLength.FECFRAME_SHORT, CodeRate.C8_9): 16_200 - 14_400,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C1_4): 64_800 - 16_200,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C1_3): 64_800 - 21_600,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C2_5): 64_800 - 25_920,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C1_2): 64_800 - 32_400,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C3_5): 64_800 - 38_880,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C2_3): 64_800 - 43_200,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C3_4): 64_800 - 48_600,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C4_5): 64_800 - 51_840,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C5_6): 64_800 - 54_000,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C8_9): 64_800 - 57_600,
+    (FrameType.FECFRAME_NORMAL, CodeRate.C9_10): 64_800 - 58_320,
+    (FrameType.FECFRAME_SHORT, CodeRate.C1_4): 16_200 - 3_240,
+    (FrameType.FECFRAME_SHORT, CodeRate.C1_3): 16_200 - 5_400,
+    (FrameType.FECFRAME_SHORT, CodeRate.C2_5): 16_200 - 6_480,
+    (FrameType.FECFRAME_SHORT, CodeRate.C1_2): 16_200 - 7_200,
+    (FrameType.FECFRAME_SHORT, CodeRate.C3_5): 16_200 - 9_720,
+    (FrameType.FECFRAME_SHORT, CodeRate.C2_3): 16_200 - 10_800,
+    (FrameType.FECFRAME_SHORT, CodeRate.C3_4): 16_200 - 11_880,
+    (FrameType.FECFRAME_SHORT, CodeRate.C4_5): 16_200 - 12_600,
+    (FrameType.FECFRAME_SHORT, CodeRate.C5_6): 16_200 - 13_320,
+    (FrameType.FECFRAME_SHORT, CodeRate.C8_9): 16_200 - 14_400,
 }
 
 
-def _populateLdpcTable(frame_length, code_rate, src, dest):
+def _populateLdpcTable(frame_type, code_rate, src, dest):
     """
     Creates the unrolled binary LDPC table file for the LDPC encoder testbench
     a CSV file with coefficients (from DVB-S2 spec's appendices B and C).
@@ -259,15 +259,15 @@ def _populateLdpcTable(frame_length, code_rate, src, dest):
         return
 
     print(
-        f"Generating LDPC table for FECFRAME={frame_length.value}, "
+        f"Generating LDPC table for FECFRAME={frame_type.value}, "
         f'code rate={code_rate.value} using "{src}" as reference. '
         f'Binary data will be written to "{dest}"',
     )
 
     table = [x.split(",") for x in open(src, "r").read().split("\n") if x]
 
-    table_q = LDPC_Q[(frame_length, code_rate)]
-    table_length = LDPC_LENGTH[(frame_length, code_rate)]
+    table_q = LDPC_Q[(frame_type, code_rate)]
+    table_length = LDPC_LENGTH[(frame_type, code_rate)]
     word_cnt = 0
 
     bin_fd = open(bin_table, "wb")
@@ -312,12 +312,12 @@ def _createLdpcTables():
     for config in TEST_CONFIGS:
         csv_table = (
             f"{path_to_csv}/"
-            f"ldpc_table_{config.frame_length.name}_{config.code_rate.name}.csv"
+            f"ldpc_table_{config.frame_type.name}_{config.code_rate.name}.csv"
         )
 
         pool.apply_async(
             _populateLdpcTable,
-            (config.frame_length, config.code_rate, csv_table, config.test_files_path),
+            (config.frame_type, config.code_rate, csv_table, config.test_files_path),
         )
 
     pool.close()
@@ -448,7 +448,7 @@ def main():
             entity=vunit.library("lib").entity("axi_ldpc_table_tb"),
             configs=_getConfigs(
                 constellations=(ConstellationType.MOD_8PSK,),
-                #  frame_lengths=(FrameLength.FECFRAME_SHORT,),
+                #  frame_types=(FrameType.FECFRAME_SHORT,),
             ),
         )
 

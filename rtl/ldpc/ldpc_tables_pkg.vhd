@@ -56,10 +56,10 @@ use work.dvb_utils_pkg.all;
 package ldpc_tables_pkg is
 
 
-  -- LDPC_TABLE_FECFRAME_<frame_length>_<code_rate>_COLUMN_WIDTHS constants have the bit
+  -- LDPC_TABLE_FECFRAME_<frame_type>_<code_rate>_COLUMN_WIDTHS constants have the bit
   -- width of each row
 
-  -- LDPC_TABLE_FECFRAME_<frame_length>_<code_rate> is the actual LDPC where the number of
+  -- LDPC_TABLE_FECFRAME_<frame_type>_<code_rate> is the actual LDPC where the number of
   -- columns is normalized to the row with most columns and the first column of each row
   -- contains the number of valid elements within the row. Elements outisde the valid range
   -- are represented as -1
@@ -1738,7 +1738,7 @@ package ldpc_tables_pkg is
 
   -- Use this function to get the starting address of a given config within the LDPC_DATA_TABLE
   function get_ldpc_metadata (
-    constant frame_length : frame_type_t;
+    constant frame_type : frame_type_t;
     constant code_rate : code_rate_t) return ldpc_metadata_t;
 
 
@@ -8217,10 +8217,10 @@ end package ldpc_tables_pkg;
 package body ldpc_tables_pkg is
   -- Use this function to get the starting address of a given config within the LDPC_DATA_TABLE
   function get_ldpc_metadata (
-    constant frame_length : frame_type_t;
+    constant frame_type : frame_type_t;
     constant code_rate : code_rate_t) return ldpc_metadata_t is
   begin
-    if frame_length = fecframe_normal and code_rate = C1_2 then
+    if frame_type = fecframe_normal and code_rate = C1_2 then
       return (
         addr => 0,
         q => 90,
@@ -8229,7 +8229,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 54,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_normal and code_rate = C1_3 then
+    if frame_type = fecframe_normal and code_rate = C1_3 then
       return (
         addr => 450,
         q => 120,
@@ -8238,7 +8238,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 40,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_normal and code_rate = C1_4 then
+    if frame_type = fecframe_normal and code_rate = C1_4 then
       return (
         addr => 810,
         q => 135,
@@ -8247,7 +8247,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 30,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_normal and code_rate = C2_3 then
+    if frame_type = fecframe_normal and code_rate = C2_3 then
       return (
         addr => 1080,
         q => 60,
@@ -8256,7 +8256,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 108,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_normal and code_rate = C2_5 then
+    if frame_type = fecframe_normal and code_rate = C2_5 then
       return (
         addr => 1560,
         q => 108,
@@ -8265,7 +8265,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 48,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_normal and code_rate = C3_4 then
+    if frame_type = fecframe_normal and code_rate = C3_4 then
       return (
         addr => 1992,
         q => 45,
@@ -8274,7 +8274,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 120,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_normal and code_rate = C3_5 then
+    if frame_type = fecframe_normal and code_rate = C3_5 then
       return (
         addr => 2532,
         q => 72,
@@ -8283,7 +8283,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 72,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_normal and code_rate = C4_5 then
+    if frame_type = fecframe_normal and code_rate = C4_5 then
       return (
         addr => 3180,
         q => 36,
@@ -8292,7 +8292,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 126,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_normal and code_rate = C5_6 then
+    if frame_type = fecframe_normal and code_rate = C5_6 then
       return (
         addr => 3756,
         q => 30,
@@ -8301,7 +8301,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 135,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_normal and code_rate = C8_9 then
+    if frame_type = fecframe_normal and code_rate = C8_9 then
       return (
         addr => 4356,
         q => 20,
@@ -8310,7 +8310,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 140,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_normal and code_rate = C9_10 then
+    if frame_type = fecframe_normal and code_rate = C9_10 then
       return (
         addr => 4856,
         q => 18,
@@ -8319,7 +8319,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 144,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_short and code_rate = C1_2 then
+    if frame_type = fecframe_short and code_rate = C1_2 then
       return (
         addr => 5360,
         q => 25,
@@ -8328,7 +8328,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 15,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_short and code_rate = C1_3 then
+    if frame_type = fecframe_short and code_rate = C1_3 then
       return (
         addr => 5445,
         q => 30,
@@ -8337,7 +8337,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 10,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_short and code_rate = C1_4 then
+    if frame_type = fecframe_short and code_rate = C1_4 then
       return (
         addr => 5535,
         q => 36,
@@ -8346,7 +8346,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 5,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_short and code_rate = C2_3 then
+    if frame_type = fecframe_short and code_rate = C2_3 then
       return (
         addr => 5598,
         q => 15,
@@ -8355,7 +8355,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 27,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_short and code_rate = C2_5 then
+    if frame_type = fecframe_short and code_rate = C2_5 then
       return (
         addr => 5718,
         q => 27,
@@ -8364,7 +8364,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 12,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_short and code_rate = C3_4 then
+    if frame_type = fecframe_short and code_rate = C3_4 then
       return (
         addr => 5826,
         q => 12,
@@ -8373,7 +8373,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 32,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_short and code_rate = C3_5 then
+    if frame_type = fecframe_short and code_rate = C3_5 then
       return (
         addr => 5934,
         q => 18,
@@ -8382,7 +8382,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 18,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_short and code_rate = C4_5 then
+    if frame_type = fecframe_short and code_rate = C4_5 then
       return (
         addr => 6096,
         q => 10,
@@ -8391,7 +8391,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 18,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_short and code_rate = C5_6 then
+    if frame_type = fecframe_short and code_rate = C5_6 then
       return (
         addr => 6201,
         q => 8,
@@ -8400,7 +8400,7 @@ package body ldpc_tables_pkg is
         stage_1_loops => 36,
         stage_1_rows => 3);
      end if;
-    if frame_length = fecframe_short and code_rate = C8_9 then
+    if frame_type = fecframe_short and code_rate = C8_9 then
       return (
         addr => 6322,
         q => 5,
