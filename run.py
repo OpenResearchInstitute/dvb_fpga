@@ -371,7 +371,7 @@ def main():
         "-i",
         action="store_true",
         help="Create individual test runs for each configuration. By default, "
-        "all combinations of frame lengths, code rates and modulations are "
+        "all combinations of frame types, code rates and modulations are "
         "tested in the same simulation",
     )
     args = cli.parse_args()
@@ -466,7 +466,7 @@ def main():
     )
 
     # Generate bit interleaver tests
-    for data_width in (8, ):
+    for data_width in (8,):
         all_configs = []
         for config in _getConfigs():
             all_configs += [config.getTestConfigString()]

@@ -65,8 +65,6 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   ---------------
   constant configs                    : config_array_t := get_test_cfg(TEST_CFG);
 
-  constant FILE_READER_NAME           : string := "file_reader";
-  constant FILE_CHECKER_NAME          : string := "file_checker";
   constant CLK_PERIOD                 : time := 5 ns;
   constant ERROR_CNT_WIDTH            : integer := 8;
 
@@ -153,27 +151,43 @@ begin
 
 
   -- AXI file read
-  axi_file_reader_u : entity fpga_cores_sim.axi_file_reader
-    generic map (
-      READER_NAME => FILE_READER_NAME,
-      DATA_WIDTH  => DATA_WIDTH)
-    port map (
-      -- Usual ports
-      clk                => clk,
-      rst                => rst,
-      -- Config and status
-      completed          => open,
-      tvalid_probability => tvalid_probability,
+  axi_file_reader_block : block
+    constant CONFIG_INPUT_WIDTHS: fpga_cores.common_pkg.integer_vector_t := (
+      0 => FRAME_TYPE_WIDTH,
+      1 => CONSTELLATION_WIDTH,
+      2 => CODE_RATE_WIDTH);
 
-      -- Data output
-      m_tready           => m_tready,
-      m_tdata            => m_tdata,
-      m_tvalid           => m_tvalid,
-      m_tlast            => m_tlast);
+    signal m_tid : std_logic_vector(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0);
+  begin
+    axi_file_reader_u : entity fpga_cores_sim.axi_file_reader
+      generic map (
+        READER_NAME => "axi_file_reader_u",
+        DATA_WIDTH  => DATA_WIDTH,
+        TID_WIDTH   => sum(CONFIG_INPUT_WIDTHS))
+      port map (
+        -- Usual ports
+        clk                => clk,
+        rst                => rst,
+        -- Config and status
+        completed          => open,
+        tvalid_probability => tvalid_probability,
+
+        -- Data output
+        m_tready           => m_tready,
+        m_tdata            => m_tdata,
+        m_tid              => m_tid,
+        m_tvalid           => m_tvalid,
+        m_tlast            => m_tlast);
+
+    -- Decode the TID field with the actual config types
+    cfg_frame_type    <= decode(get_field(m_tid, 0, CONFIG_INPUT_WIDTHS));
+    cfg_constellation <= decode(get_field(m_tid, 1, CONFIG_INPUT_WIDTHS));
+    cfg_code_rate     <= decode(get_field(m_tid, 2, CONFIG_INPUT_WIDTHS));
+  end block axi_file_reader_block;
 
   axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
     generic map (
-      READER_NAME     => FILE_CHECKER_NAME,
+      READER_NAME     => "axi_file_compare_u",
       ERROR_CNT_WIDTH => ERROR_CNT_WIDTH,
       REPORT_SEVERITY => Warning,
       DATA_WIDTH      => DATA_WIDTH)
@@ -210,8 +224,8 @@ begin
   ---------------
   main : process
     constant self         : actor_t := new_actor("main");
-    constant input_cfg_p  : actor_t := find("input_cfg_p");
-    variable file_checker : file_reader_t := new_file_reader(FILE_CHECKER_NAME);
+    variable file_reader  : file_reader_t := new_file_reader("axi_file_reader_u");
+    variable file_checker : file_reader_t := new_file_reader("axi_file_compare_u");
     ------------------------------------------------------------------------------------
     procedure walk(constant steps : natural) is
     begin
@@ -237,15 +251,13 @@ begin
       info(" - data path      : " & data_path);
 
       for i in 0 to number_of_frames - 1 loop
-        msg        := new_msg;
-        msg.sender := self;
+        read_file(net,
+          file_reader => file_reader,
+          filename    => data_path & "/bit_interleaver_input.bin",
+          ratio       => "1:8",
+          tid         => encode(config.code_rate) & encode(config.constellation) & encode(config.frame_type)
+        );
 
-        push(msg, data_path & "/bit_interleaver_input.bin");
-        push(msg, config.constellation);
-        push(msg, config.frame_type);
-        push(msg, config.code_rate);
-
-        send(net, input_cfg_p, msg);
 
         if DBG_CHECK_FRAME_RAM_WRITES then
           msg        := new_msg;
@@ -270,17 +282,13 @@ begin
     end procedure run_test;
 
     procedure wait_for_completion is -- {{ ---------------------------------------------
-      variable msg : msg_t;
     begin
       info("Waiting for completion");
-      receive(net, self, msg);
       wait_all_read(net, file_checker);
 
-      wait until rising_edge(clk) and s_tvalid = '0' for 100 us;
+      wait until rising_edge(clk) and s_tvalid = '0' for 1 ms;
 
-      check_equal(s_tvalid, '0', "s_tvalid should be low after the test");
-
-      walk(1);
+      walk(2);
     end procedure wait_for_completion; -- }} -------------------------------------------
 
   begin
@@ -334,10 +342,8 @@ begin
       end if;
 
       wait_for_completion;
-
-      walk(1);
-
-      check_false(has_message(input_cfg_p));
+      check_equal(error_cnt, 0, sformat("Expected 0 errors but got %d", fo(error_cnt)));
+      check_equal(s_tvalid, '0', "s_tvalid should be low after the test");
 
       walk(32);
 
@@ -345,53 +351,6 @@ begin
 
     test_runner_cleanup(runner);
     wait;
-  end process;
-
-  input_cfg_p : process
-    constant logger      : logger_t := get_logger("input_cfg_p");
-    constant self        : actor_t := new_actor("input_cfg_p");
-    constant main        : actor_t := find("main");
-    variable cfg_msg     : msg_t;
-    variable file_reader : file_reader_t := new_file_reader(FILE_READER_NAME);
-  begin
-
-    receive(net, self, cfg_msg);
-
-    -- Configure the file reader
-    read_file(net, file_reader, pop(cfg_msg), "1:8");
-
-    wait until rising_edge(clk);
-
-    -- Keep the config stuff active for a single cycle to make sure blocks use the correct
-    -- values
-    cfg_constellation <= pop(cfg_msg);
-    cfg_frame_type    <= pop(cfg_msg);
-    cfg_code_rate     <= pop(cfg_msg);
-    wait until m_data_valid and m_tlast = '0' and rising_edge(clk);
-    cfg_constellation <= not_set;
-    cfg_frame_type    <= not_set;
-    cfg_code_rate     <= not_set;
-
-    wait until m_data_valid and m_tlast = '1';
-
-    -- When this is received, the file reader has finished reading the file
-    wait_file_read(net, file_reader);
-
-    -- If there's no more messages, notify the main process that we're done here
-    if not has_message(self) then
-      cfg_msg := new_msg;
-      push(cfg_msg, True);
-      cfg_msg.sender := self;
-      debug(logger, "Notifying main process that there is no more data");
-      send(net, main, cfg_msg);
-    end if;
-  end process;
-
-  process
-  begin
-    wait until rst = '0';
-    wait until unsigned(error_cnt) /= 0;
-    check_equal(error_cnt, 0, sformat("Expected 0 errors but got %d", fo(error_cnt)));
   end process;
 
   -- ghdl translate_off

@@ -81,9 +81,9 @@ architecture axi_ldpc_table of axi_ldpc_table is
 
   -- Overload original to get unsigned fields
   function get_ldpc_metadata (
-    constant frame_length : frame_type_t;
-    constant code_rate    : code_rate_t) return ldpc_metadata_unsigned_t is
-    variable result       : ldpc_metadata_t := get_ldpc_metadata(frame_length, code_rate);
+    constant frame_type : frame_type_t;
+    constant code_rate  : code_rate_t) return ldpc_metadata_unsigned_t is
+    variable result     : ldpc_metadata_t := get_ldpc_metadata(frame_type, code_rate);
   begin
     return (
       addr          => to_unsigned(result.addr, numbits(LDPC_DATA_TABLE'length)),
@@ -245,8 +245,8 @@ begin
         -- Use temporary variables as aliases
         tmp_frame_type    := decode(get_field(param_fifo_tdata_out, 0, PARAM_FIFO_DATA_WIDTHS));
         tmp_code_rate     := decode(get_field(param_fifo_tdata_out, 1, PARAM_FIFO_DATA_WIDTHS));
-        tmp_ldpc_metadata := get_ldpc_metadata(frame_length => tmp_frame_type,
-                                               code_rate    => tmp_code_rate);
+        tmp_ldpc_metadata := get_ldpc_metadata(frame_type => tmp_frame_type,
+                                               code_rate  => tmp_code_rate);
 
         cfg_frame_type    <= tmp_frame_type;
         cfg_code_rate     <= tmp_code_rate;

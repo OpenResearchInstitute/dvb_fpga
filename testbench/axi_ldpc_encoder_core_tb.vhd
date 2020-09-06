@@ -69,9 +69,6 @@ architecture axi_ldpc_encoder_core_tb of axi_ldpc_encoder_core_tb is
 
   constant DATA_WIDTH        : integer := 8;
 
-  constant LDPC_READER_NAME  : string  := "ldpc_table";
-  constant FILE_READER_NAME  : string  := "file_reader";
-  constant FILE_CHECKER_NAME : string  := "file_checker";
   constant CLK_PERIOD        : time    := 5 ns;
   constant ERROR_CNT_WIDTH   : integer := 8;
 
@@ -80,7 +77,6 @@ architecture axi_ldpc_encoder_core_tb of axi_ldpc_encoder_core_tb is
   -------------
   -- Signals --
   -------------
-  -- Usual ports
   signal clk                : std_logic := '1';
   signal rst                : std_logic;
 
@@ -153,7 +149,7 @@ begin
   -- Read LDPC tables
   axi_table_u : entity fpga_cores_sim.axi_file_reader
     generic map (
-      READER_NAME => LDPC_READER_NAME,
+      READER_NAME => "axi_table_u",
       DATA_WIDTH  => axi_ldpc.tdata'length)
     port map (
       -- Usual ports
@@ -169,27 +165,43 @@ begin
       m_tlast            => axi_ldpc.tlast);
 
   -- AXI file read
-  axi_file_reader_u : entity fpga_cores_sim.axi_file_reader
-    generic map (
-      READER_NAME => FILE_READER_NAME,
-      DATA_WIDTH  => DATA_WIDTH)
-    port map (
-      -- Usual ports
-      clk                => clk,
-      rst                => rst,
-      -- Config and status
-      completed          => open,
-      tvalid_probability => data_probability,
+  axi_file_reader_block : block
+    constant CONFIG_INPUT_WIDTHS: fpga_cores.common_pkg.integer_vector_t := (
+      0 => FRAME_TYPE_WIDTH,
+      1 => CONSTELLATION_WIDTH,
+      2 => CODE_RATE_WIDTH);
 
-      -- Data output
-      m_tready           => axi_master.tready,
-      m_tdata            => axi_master.tdata,
-      m_tvalid           => axi_master.tvalid,
-      m_tlast            => axi_master.tlast);
+    signal m_tid : std_logic_vector(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0);
+  begin
+    axi_file_reader_u : entity fpga_cores_sim.axi_file_reader
+      generic map (
+        READER_NAME => "axi_file_reader_u",
+        DATA_WIDTH  => DATA_WIDTH,
+        TID_WIDTH   => sum(CONFIG_INPUT_WIDTHS))
+      port map (
+        -- Usual ports
+        clk                => clk,
+        rst                => rst,
+        -- Config and status
+        completed          => open,
+        tvalid_probability => data_probability,
+
+        -- Data output
+        m_tready           => axi_master.tready,
+        m_tdata            => axi_master.tdata,
+        m_tid              => m_tid,
+        m_tvalid           => axi_master.tvalid,
+        m_tlast            => axi_master.tlast);
+
+    -- Decode the TID field with the actual config types
+    cfg_frame_type    <= decode(get_field(m_tid, 0, CONFIG_INPUT_WIDTHS));
+    cfg_constellation <= decode(get_field(m_tid, 1, CONFIG_INPUT_WIDTHS));
+    cfg_code_rate     <= decode(get_field(m_tid, 2, CONFIG_INPUT_WIDTHS));
+  end block axi_file_reader_block;
 
   axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
     generic map (
-      READER_NAME     => FILE_CHECKER_NAME,
+      READER_NAME     => "axi_file_compare_u",
       ERROR_CNT_WIDTH => ERROR_CNT_WIDTH,
       REPORT_SEVERITY => Error,
       DATA_WIDTH      => DATA_WIDTH)
@@ -225,11 +237,11 @@ begin
   -- Processes --
   ---------------
   main : process -- {{
-    constant self         : actor_t := new_actor("main");
-    constant logger       : logger_t := get_logger("main");
-    constant input_cfg_p  : actor_t := find("input_cfg_p");
-    variable ldpc_table   : file_reader_t := new_file_reader(LDPC_READER_NAME);
-    variable file_checker : file_reader_t := new_file_reader(FILE_CHECKER_NAME);
+    constant self         : actor_t       := new_actor("main");
+    constant logger       : logger_t      := get_logger("main");
+    variable file_reader  : file_reader_t := new_file_reader("axi_file_reader_u");
+    variable ldpc_table   : file_reader_t := new_file_reader("axi_table_u");
+    variable file_checker : file_reader_t := new_file_reader("axi_file_compare_u");
 
     procedure walk(constant steps : natural) is -- {{ ----------------------------------
     begin
@@ -244,34 +256,31 @@ begin
       constant config           : config_t;
       constant number_of_frames : in positive) is
       constant data_path        : string := strip(config.base_path, chars => (1 to 1 => nul));
-      variable file_reader_msg  : msg_t;
       variable calc_ldpc_msg    : msg_t;
     begin
 
-      info("Running test with:");
-      info(" - constellation  : " & constellation_t'image(config.constellation));
-      info(" - frame_type     : " & frame_type_t'image(config.frame_type));
-      info(" - code_rate      : " & code_rate_t'image(config.code_rate));
-      info(" - data path      : " & data_path);
+      info(logger, "Running test with:");
+      info(logger, " - constellation  : " & constellation_t'image(config.constellation));
+      info(logger, " - frame_type     : " & frame_type_t'image(config.frame_type));
+      info(logger, " - code_rate      : " & code_rate_t'image(config.code_rate));
+      info(logger, " - data path      : " & data_path);
 
       for i in 0 to number_of_frames - 1 loop
         debug(logger, "Setting up frame #" & to_string(i));
 
-        -- File reader message
-        file_reader_msg := new_msg(sender => self);
-
-        push(file_reader_msg, data_path & "/ldpc_encoder_input.bin");
-        push(file_reader_msg, config.constellation);
-        push(file_reader_msg, config.frame_type);
-        push(file_reader_msg, config.code_rate);
+        read_file(
+          net,
+          file_reader,
+          data_path & "/ldpc_encoder_input.bin",
+          "1:8",
+          encode(config.code_rate) & encode(config.constellation) & encode(config.frame_type)
+        );
 
         -- ghdl translate_off
         calc_ldpc_msg := new_msg(sender => self);
         push(calc_ldpc_msg, config);
         send(net, find("calc_ldpc_p"), calc_ldpc_msg);
         -- ghdl translate_on
-
-        send(net, input_cfg_p, file_reader_msg);
 
         read_file(
           net,
@@ -289,9 +298,10 @@ begin
     procedure wait_for_completion is -- {{ ----------------------------------------------
       variable msg : msg_t;
     begin
-      receive(net, self, msg);
+      info(logger, "Waiting for all frames to be read");
       wait_all_read(net, file_checker);
       wait_all_read(net, ldpc_table);
+      info(logger, "All data has now been read");
 
       wait until rising_edge(clk) and axi_slave.tvalid = '0' for 1 ms;
 
@@ -306,7 +316,6 @@ begin
     hide(get_logger("file_reader_t(file_reader)"), display_handler, debug, True);
     hide(get_logger("file_reader_t(file_checker)"), display_handler, debug, True);
     hide(get_logger("file_reader_t(ldpc_table)"), display_handler, debug, True);
-
 
     while test_suite loop
       rst                <= '1';
@@ -389,8 +398,6 @@ begin
 
       wait_for_completion;
 
-      check_false(has_message(input_cfg_p));
-
       check_equal(axi_slave.tvalid, '0', "axi_slave.tvalid should be '0'");
       check_equal(error_cnt, 0);
 
@@ -400,46 +407,6 @@ begin
 
     test_runner_cleanup(runner);
     wait;
-  end process; -- }}
-
-  -- FIXME: This can me moved to the main process and use axi_stream_bfm's tuser to
-  -- transport the config
-  input_cfg_p : process -- {{
-    constant self        : actor_t := new_actor("input_cfg_p");
-    constant main        : actor_t := find("main");
-    variable cfg_msg     : msg_t;
-    variable file_reader : file_reader_t := new_file_reader(FILE_READER_NAME);
-  begin
-
-    receive(net, self, cfg_msg);
-
-    -- Configure the file reader
-    read_file(net, file_reader, pop(cfg_msg), "1:8");
-
-    wait until rising_edge(clk);
-
-    -- Keep the config stuff active for a single cycle to make sure blocks use the correct
-    -- values
-    cfg_constellation <= pop(cfg_msg);
-    cfg_frame_type    <= pop(cfg_msg);
-    cfg_code_rate     <= pop(cfg_msg);
-    wait until m_data_valid and axi_master.tlast = '0' and rising_edge(clk);
-    cfg_constellation <= not_set;
-    cfg_frame_type    <= not_set;
-    cfg_code_rate     <= not_set;
-
-    wait until m_data_valid and axi_master.tlast = '1';
-
-    -- When this is received, the file reader has finished reading the file
-    wait_file_read(net, file_reader);
-
-    -- If there's no more messages, notify the main process that we're done here
-    if not has_message(self) then
-      cfg_msg := new_msg;
-      push(cfg_msg, True);
-      cfg_msg.sender := self;
-      send(net, main, cfg_msg);
-    end if;
   end process; -- }}
 
   cnt_p : process -- {{ ----------------------------------------------------------------

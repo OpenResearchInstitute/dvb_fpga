@@ -66,10 +66,6 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
   constant configs           : config_array_t := get_test_cfg(TEST_CFG);
   constant DATA_WIDTH        : integer := 8;
 
-  constant LDPC_TABLE_READER_NAME     : string  := "ldpc_table";
-  constant FILE_READER_NAME           : string  := "input";
-  constant FILE_CHECKER_NAME          : string  := "output";
-
   constant BB_SCRAMBLERS_CHECKER_NAME : string  := "bb_scrambler";
   constant BCH_ENCODER_CHECKER_NAME   : string  := "bch_encoder";
   constant LDPC_ENCODER_CHECKER_NAME  : string  := "ldpc_encoder";
@@ -154,13 +150,6 @@ begin
       s_tlast           => axi_master.tlast,
       s_tready          => axi_master.tready,
 
-      -- s_ldpc_offset     => axi_ldpc.tdata(numbits(max(DVB_N_LDPC)) - 1 downto 0),
-      -- s_ldpc_tuser      => axi_ldpc.tdata(2*numbits(max(DVB_N_LDPC)) - 1 downto numbits(max(DVB_N_LDPC)) ),
-      -- s_ldpc_next       => axi_ldpc.tdata(2*numbits(max(DVB_N_LDPC))),
-      -- s_ldpc_tvalid     => axi_ldpc.tvalid,
-      -- s_ldpc_tlast      => axi_ldpc.tlast,
-      -- s_ldpc_tready     => axi_ldpc.tready,
-
       -- AXI output
       m_tready          => axi_slave.axi.tready,
       m_tvalid          => axi_slave.axi.tvalid,
@@ -171,7 +160,7 @@ begin
   -- AXI file read
   axi_table_u : entity fpga_cores_sim.axi_file_reader
     generic map (
-      READER_NAME => LDPC_TABLE_READER_NAME,
+      READER_NAME => "axi_table_u",
       DATA_WIDTH  => axi_ldpc.tdata'length)
     port map (
       -- Usual ports
@@ -187,23 +176,40 @@ begin
       m_tlast            => axi_ldpc.tlast);
 
   -- AXI file read
-  axi_file_reader_u : entity fpga_cores_sim.axi_file_reader
-    generic map (
-      READER_NAME => FILE_READER_NAME,
-      DATA_WIDTH  => DATA_WIDTH)
-    port map (
-      -- Usual ports
-      clk                => clk,
-      rst                => rst,
-      -- Config and status
-      completed          => open,
-      tvalid_probability => data_probability,
+  axi_file_reader_block : block
+    constant CONFIG_INPUT_WIDTHS: fpga_cores.common_pkg.integer_vector_t := (
+      0 => FRAME_TYPE_WIDTH,
+      1 => CONSTELLATION_WIDTH,
+      2 => CODE_RATE_WIDTH);
 
-      -- Data output
-      m_tready           => axi_master.tready,
-      m_tdata            => axi_master.tdata,
-      m_tvalid           => axi_master.tvalid,
-      m_tlast            => axi_master.tlast);
+    signal m_tid : std_logic_vector(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0);
+  begin
+    input_stream_u : entity fpga_cores_sim.axi_file_reader
+      generic map (
+        READER_NAME => "input_stream_u",
+        DATA_WIDTH  => DATA_WIDTH,
+        TID_WIDTH   => sum(CONFIG_INPUT_WIDTHS))
+      port map (
+        -- Usual ports
+        clk                => clk,
+        rst                => rst,
+        -- Config and status
+        completed          => open,
+        tvalid_probability => data_probability,
+
+        -- Data output
+        m_tready           => axi_master.tready,
+        m_tdata            => axi_master.tdata,
+        m_tid              => m_tid,
+        m_tvalid           => axi_master.tvalid,
+        m_tlast            => axi_master.tlast);
+
+    -- Decode the TID field with the actual config types
+    cfg_frame_type    <= decode(get_field(m_tid, 0, CONFIG_INPUT_WIDTHS));
+    cfg_constellation <= decode(get_field(m_tid, 1, CONFIG_INPUT_WIDTHS));
+    cfg_code_rate     <= decode(get_field(m_tid, 2, CONFIG_INPUT_WIDTHS));
+  end block axi_file_reader_block;
+
 
   bb_scrambler_checker_u : entity fpga_cores_sim.axi_file_compare
     generic map (
@@ -279,7 +285,7 @@ begin
 
   axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
     generic map (
-      READER_NAME     => FILE_CHECKER_NAME,
+      READER_NAME     => "axi_file_compare_u",
       ERROR_CNT_WIDTH => ERROR_CNT_WIDTH,
       REPORT_SEVERITY => Error,
       DATA_WIDTH      => DATA_WIDTH)
@@ -316,9 +322,9 @@ begin
   ---------------
   main : process -- {{ -----------------------------------------------------------------
     constant self                    : actor_t       := new_actor("main");
-    constant input_cfg_p             : actor_t       := find("input_cfg_p");
-    variable file_checker            : file_reader_t := new_file_reader(FILE_CHECKER_NAME);
-    variable ldpc_table              : file_reader_t := new_file_reader(LDPC_TABLE_READER_NAME);
+    variable file_reader             : file_reader_t := new_file_reader("input_stream_u");
+    variable file_checker            : file_reader_t := new_file_reader("axi_file_compare_u");
+    variable ldpc_table              : file_reader_t := new_file_reader("axi_table_u");
 
     variable bb_scrambler_checker    : file_reader_t := new_file_reader(BB_SCRAMBLERS_CHECKER_NAME);
     variable bch_encoder_checker     : file_reader_t := new_file_reader(BCH_ENCODER_CHECKER_NAME);
@@ -337,7 +343,7 @@ begin
       variable msg : msg_t;
     begin
       info("Waiting for test completion");
-      receive(net, self, msg);
+      wait_all_read(net, file_reader);
       wait_all_read(net, file_checker);
 
       wait until rising_edge(clk) and axi_slave.axi.tvalid = '0' for 1 ms;
@@ -362,12 +368,12 @@ begin
         file_reader_msg := new_msg;
         file_reader_msg.sender := self;
 
-        push(file_reader_msg, data_path & "/bb_scrambler_input.bin");
-        push(file_reader_msg, config.constellation);
-        push(file_reader_msg, config.frame_type);
-        push(file_reader_msg, config.code_rate);
-
-        send(net, input_cfg_p, file_reader_msg);
+        read_file(net,
+          file_reader => file_reader,
+          filename    => data_path & "/bb_scrambler_input.bin",
+          ratio       => "1:8",
+          tid         => encode(config.code_rate) & encode(config.constellation) & encode(config.frame_type)
+        );
 
         read_file(
           net,
@@ -390,9 +396,9 @@ begin
 
     test_runner_setup(runner, RUNNER_CFG);
     show(display_handler, debug);
-    hide(get_logger("file_reader_t(" & FILE_READER_NAME & ")"), display_handler, debug, True);
-    hide(get_logger("file_reader_t(" & FILE_CHECKER_NAME & ")"), display_handler, debug, True);
-    hide(get_logger("file_reader_t(" & LDPC_TABLE_READER_NAME & ")"), display_handler, debug, True);
+    hide(get_logger("file_reader_t(input_stream_u)"), display_handler, debug, True);
+    hide(get_logger("file_reader_t(axi_file_compare_u)"), display_handler, debug, True);
+    hide(get_logger("file_reader_t(axi_table_u)"), display_handler, debug, True);
 
     while test_suite loop
       rst <= '1';
@@ -415,7 +421,7 @@ begin
 
       wait_for_completion;
 
-      check_false(has_message(input_cfg_p));
+      check_equal(axi_slave.error_cnt, 0, sformat("Expected 0 errors but got %d", fo(axi_slave.error_cnt)));
 
       check_equal(axi_slave.axi.tvalid, '0', "axi_slave.axi.tvalid should be '0'");
       check_equal(axi_slave.error_cnt, 0);
@@ -428,55 +434,8 @@ begin
     wait;
   end process; -- }} -------------------------------------------------------------------
 
-  input_cfg_p : process -- {{ ----------------------------------------------------------
-    constant self        : actor_t := new_actor("input_cfg_p");
-    constant main        : actor_t := find("main");
-    variable cfg_msg     : msg_t;
-    variable file_reader : file_reader_t := new_file_reader(FILE_READER_NAME);
-  begin
-
-    receive(net, self, cfg_msg);
-
-    -- Configure the file reader
-    read_file(net, file_reader, pop(cfg_msg), "1:8");
-
-    wait until rising_edge(clk);
-
-    -- Keep the config stuff active for a single cycle to make sure blocks use the correct
-    -- values
-    cfg_constellation <= pop(cfg_msg);
-    cfg_frame_type    <= pop(cfg_msg);
-    cfg_code_rate     <= pop(cfg_msg);
-    wait until m_data_valid = '1' and axi_master.tlast = '0' and rising_edge(clk);
-    cfg_constellation <= not_set;
-    cfg_frame_type    <= not_set;
-    cfg_code_rate     <= not_set;
-
-    wait until m_data_valid = '1' and axi_master.tlast = '1';
-
-    -- When this is received, the file reader has finished reading the file
-    wait_file_read(net, file_reader);
-
-    -- If there's no more messages, notify the main process that we're done here
-    if not has_message(self) then
-      cfg_msg := new_msg;
-      push(cfg_msg, True);
-      cfg_msg.sender := self;
-      send(net, main, cfg_msg);
-    end if;
-    check_equal(axi_slave.error_cnt, 0);
-  end process; -- }} -------------------------------------------------------------------
-
-  process
-  begin
-    wait until rising_edge(clk);
-    if rst = '0' then
-      check_equal(axi_slave.error_cnt, 0, sformat("Expected 0 errors but got %d", fo(axi_slave.error_cnt)));
-    end if;
-  end process;
-
 -- ghdl translate_off
-  signal_spy_block : block
+  signal_spy_block : block -- {{ -------------------------------------------------------
     type tdata_array_t is array (natural range <>) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal tdata         : tdata_array_t(4 downto 0);
     signal tvalid        : std_logic_vector(4 downto 0);
@@ -533,10 +492,10 @@ begin
         end loop;
       end if;
     end process;
-  end block signal_spy_block;
+  end block signal_spy_block; -- }} ----------------------------------------------------
 -- ghdl translate_on
 
-  report_rx : process
+  report_rx : process -- {{ ------------------------------------------------------------
     constant logger    : logger_t   := get_logger("axi_slave report");
     variable word_cnt  : natural := 0;
     variable frame_cnt : natural := 0;
@@ -548,6 +507,6 @@ begin
       frame_cnt := frame_cnt + 1;
       word_cnt  := 0;
     end if;
-  end process;
+  end process; -- }} -------------------------------------------------------------------
 
 end dvbs2_tx_tb;

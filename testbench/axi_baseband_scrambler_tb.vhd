@@ -58,8 +58,6 @@ architecture axi_baseband_scrambler_tb of axi_baseband_scrambler_tb is
   ---------------
   constant configs               : config_array_t := get_test_cfg(TEST_CFG);
 
-  constant FILE_READER_NAME      : string := "file_reader";
-  constant FILE_CHECKER_NAME     : string := "file_checker";
   constant CLK_PERIOD            : time := 5 ns;
   constant ERROR_CNT_WIDTH       : integer := 8;
 
@@ -121,7 +119,7 @@ begin
   -- AXI file read
   axi_file_reader_u : entity fpga_cores_sim.axi_file_reader
     generic map (
-      READER_NAME => FILE_READER_NAME,
+      READER_NAME => "axi_file_reader_u",
       DATA_WIDTH  => DATA_WIDTH)
     port map (
       -- Usual ports
@@ -139,7 +137,7 @@ begin
 
   axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
     generic map (
-      READER_NAME     => FILE_CHECKER_NAME,
+      READER_NAME     => "axi_file_compare_u",
       ERROR_CNT_WIDTH => ERROR_CNT_WIDTH,
       REPORT_SEVERITY => Warning,
       DATA_WIDTH      => DATA_WIDTH)
@@ -176,8 +174,8 @@ begin
   ---------------
   main : process
     constant self         : actor_t := new_actor("main");
-    variable file_reader  : file_reader_t := new_file_reader(FILE_READER_NAME);
-    variable file_checker : file_reader_t := new_file_reader(FILE_CHECKER_NAME);
+    variable file_reader  : file_reader_t := new_file_reader("axi_file_reader_u");
+    variable file_checker : file_reader_t := new_file_reader("axi_file_compare_u");
     ------------------------------------------------------------------------------------
     procedure walk(constant steps : natural) is
     begin

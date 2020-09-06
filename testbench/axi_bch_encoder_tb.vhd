@@ -36,6 +36,9 @@ use osvvm.RandomPkg.all;
 library str_format;
 use str_format.str_format_pkg.all;
 
+library fpga_cores;
+use fpga_cores.common_pkg.all;
+
 library fpga_cores_sim;
 use fpga_cores_sim.testbench_utils_pkg.all;
 use fpga_cores_sim.file_utils_pkg.all;
@@ -57,8 +60,6 @@ architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
   ---------------
   constant configs           : config_array_t := get_test_cfg(TEST_CFG);
 
-  constant FILE_READER_NAME  : string := "file_reader";
-  constant FILE_CHECKER_NAME : string := "file_checker";
   constant CLK_PERIOD        : time := 5 ns;
   constant DATA_WIDTH        : integer := 8;
   constant ERROR_CNT_WIDTH   : integer := 8;
@@ -125,30 +126,44 @@ begin
       m_tdata        => s_tdata);
 
 
-  -- AXI file read
-  axi_file_reader_u : entity fpga_cores_sim.axi_file_reader
-    generic map (
-      READER_NAME      => FILE_READER_NAME,
-      DATA_WIDTH       => DATA_WIDTH)
-    port map (
-      -- Usual ports
-      clk                => clk,
-      rst                => rst,
-      -- Config and status
-      completed          => open,
-      tvalid_probability => tvalid_probability,
+  axi_file_reader_block : block
+    constant CONFIG_INPUT_WIDTHS: fpga_cores.common_pkg.integer_vector_t := (
+      0 => FRAME_TYPE_WIDTH,
+      1 => CONSTELLATION_WIDTH,
+      2 => CODE_RATE_WIDTH);
 
-      -- Data output
-      m_tready           => m_tready,
-      m_tdata            => m_tdata,
-      m_tvalid           => m_tvalid,
-      m_tlast            => m_tlast);
+    signal m_tid : std_logic_vector(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0);
+  begin
+    axi_file_reader_u : entity fpga_cores_sim.axi_file_reader
+      generic map (
+        READER_NAME => "axi_file_reader_u",
+        DATA_WIDTH  => DATA_WIDTH,
+        TID_WIDTH   => sum(CONFIG_INPUT_WIDTHS))
+      port map (
+        -- Usual ports
+        clk                => clk,
+        rst                => rst,
+        -- Config and status
+        completed          => open,
+        tvalid_probability => tvalid_probability,
+
+        -- Data output
+        m_tready           => m_tready,
+        m_tdata            => m_tdata,
+        m_tid              => m_tid,
+        m_tvalid           => m_tvalid,
+        m_tlast            => m_tlast);
+
+    -- Decode the TID field with the actual config types
+    cfg_frame_type    <= decode(get_field(m_tid, 0, CONFIG_INPUT_WIDTHS));
+    cfg_code_rate     <= decode(get_field(m_tid, 2, CONFIG_INPUT_WIDTHS));
+  end block axi_file_reader_block;
 
   axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
     generic map (
-      READER_NAME     => FILE_CHECKER_NAME,
+      READER_NAME     => "axi_file_compare_u",
       ERROR_CNT_WIDTH => ERROR_CNT_WIDTH,
-      REPORT_SEVERITY => Warning,
+      -- REPORT_SEVERITY => Warning,
       DATA_WIDTH      => DATA_WIDTH)
     port map (
       -- Usual ports
@@ -180,9 +195,9 @@ begin
   -- Processes --
   ---------------
   main : process
-    constant self         : actor_t := new_actor("main");
-    constant input_cfg_p  : actor_t := find("input_cfg_p");
-    variable file_checker : file_reader_t := new_file_reader(FILE_CHECKER_NAME);
+    constant self         : actor_t       := new_actor("main");
+    variable file_reader  : file_reader_t := new_file_reader("axi_file_reader_u");
+    variable file_checker : file_reader_t := new_file_reader("axi_file_compare_u");
     ------------------------------------------------------------------------------------
     procedure walk(constant steps : natural) is
     begin
@@ -197,7 +212,6 @@ begin
     procedure run_test (
       constant config           : config_t;
       constant number_of_frames : in positive := NUMBER_OF_TEST_FRAMES) is
-      variable file_reader_msg  : msg_t;
       constant data_path        : string := strip(config.base_path, chars => (1 to 1 => nul));
     begin
 
@@ -208,30 +222,33 @@ begin
       info(" - data path      : " & data_path);
 
       for i in 0 to number_of_frames - 1 loop
-        file_reader_msg := new_msg;
-        file_reader_msg.sender := self;
+        read_file(net,
+          file_reader => file_reader,
+          filename    => data_path & "/bch_encoder_input.bin",
+          ratio       => "1:8",
+          tid         => encode(config.code_rate) & encode(config.constellation) & encode(config.frame_type));
 
-        push(file_reader_msg, data_path & "/bch_encoder_input.bin");
-        push(file_reader_msg, config.frame_type);
-        push(file_reader_msg, config.code_rate);
-
-        send(net, input_cfg_p, file_reader_msg);
-        read_file(net, file_checker, data_path & "/ldpc_encoder_input.bin", "1:8");
+        read_file(net,
+          file_reader => file_checker,
+          filename    => data_path & "/ldpc_encoder_input.bin",
+          ratio       => "1:8");
 
       end loop;
 
     end procedure run_test;
 
     ------------------------------------------------------------------------------------
-    procedure wait_for_transfers ( constant count : in natural) is
+    procedure wait_for_transfers is
       variable msg : msg_t;
     begin
-      -- Will get one response for each frame from the file checker and one for the input
-      -- config. The order shouldn't matter
-      receive(net, self, msg);
-      debug(sformat("Got reply from '%s'", name(msg.sender)));
-
+      info("Waiting for all files to be read");
+      wait_all_read(net, file_reader);
       wait_all_read(net, file_checker);
+      info("File reader and checker completed reading");
+
+      wait until rising_edge(clk) and s_tvalid = '0' for 1 ms;
+
+      walk(1);
     end procedure wait_for_transfers;
     ------------------------------------------------------------------------------------
 
@@ -258,7 +275,6 @@ begin
         for i in configs'range loop
           run_test(configs(i));
         end loop;
-        wait_for_transfers(configs'length);
 
       elsif run("slow_master") then
         tvalid_probability <= 0.5;
@@ -267,7 +283,6 @@ begin
         for i in configs'range loop
           run_test(configs(i));
         end loop;
-        wait_for_transfers(configs'length);
 
       elsif run("slow_slave") then
         tvalid_probability <= 0.5;
@@ -276,7 +291,6 @@ begin
         for i in configs'range loop
           run_test(configs(i));
         end loop;
-        wait_for_transfers(configs'length);
 
       elsif run("both_slow") then
         tvalid_probability <= 0.75;
@@ -285,67 +299,22 @@ begin
         for i in configs'range loop
           run_test(configs(i));
         end loop;
-        wait_for_transfers(configs'length);
 
       end if;
 
-      walk(1);
-
-      check_false(has_message(input_cfg_p));
-
+      wait_for_transfers;
+      check_equal(s_tvalid, '0', "s_tvalid should be '0'");
       check_equal(error_cnt, 0);
 
       walk(32);
 
     end loop;
 
+    check_equal(error_cnt, 0, sformat("Expected 0 errors but got %d", fo(error_cnt)));
+
+
     test_runner_cleanup(runner);
     wait;
-  end process;
-
-  input_cfg_p : process
-    constant self        : actor_t := new_actor("input_cfg_p");
-    constant main        : actor_t := find("main");
-    variable cfg_msg     : msg_t;
-    variable file_reader : file_reader_t := new_file_reader(FILE_READER_NAME);
-  begin
-
-    receive(net, self, cfg_msg);
-
-    -- Configure the file reader
-    read_file(net, file_reader, pop(cfg_msg), "1:8");
-
-    wait until rising_edge(clk);
-
-    -- Keep the config stuff active for a single cycle to make sure blocks use the correct
-    -- values
-    cfg_frame_type <= pop(cfg_msg);
-    cfg_code_rate  <= pop(cfg_msg);
-    wait until m_data_valid and m_tlast = '0' and rising_edge(clk);
-    cfg_frame_type <= not_set;
-    cfg_code_rate  <= not_set;
-
-    wait until m_data_valid and m_tlast = '1';
-
-    -- When this is received, the file reader has finished reading the file
-    wait_file_read(net, file_reader);
-
-    -- If there's no more messages, notify the main process that we're done here
-    if not has_message(self) then
-      cfg_msg := new_msg;
-      push(cfg_msg, True);
-      cfg_msg.sender := self;
-      send(net, main, cfg_msg);
-    end if;
-    check_equal(error_cnt, 0);
-  end process;
-
-  process
-  begin
-    wait until rising_edge(clk);
-    if rst = '0' then
-      check_equal(error_cnt, 0, sformat("Expected 0 errors but got %d", fo(error_cnt)));
-    end if;
   end process;
 
 end axi_bch_encoder_tb;

@@ -65,19 +65,19 @@ package dvb_utils_pkg is
   function decode( constant v : std_logic_vector ) return code_rate_t;
 
   function get_crc_length (
-    constant frame_length : in  frame_type_t;
-    constant code_rate    : in  code_rate_t) return positive;
+    constant frame_type : in  frame_type_t;
+    constant code_rate  : in  code_rate_t) return positive;
 
 end dvb_utils_pkg;
 
 package body dvb_utils_pkg is
 
   function get_crc_length (
-    constant frame_length : in  frame_type_t;
-    constant code_rate    : in  code_rate_t) return positive is
-    variable result       : integer := -1;
+    constant frame_type : in  frame_type_t;
+    constant code_rate  : in  code_rate_t) return positive is
+    variable result     : integer := -1;
   begin
-    if frame_length = fecframe_short then
+    if frame_type = fecframe_short then
       result := 168;
     else
       if code_rate = C8_9 or code_rate = C9_10 then
@@ -91,7 +91,7 @@ package body dvb_utils_pkg is
 
     assert result /= -1
       report "Unable to determine CRC length for " &
-             "frame length = " & frame_type_t'image(frame_length) & ", " &
+             "frame type = " & frame_type_t'image(frame_type) & ", " &
              "code rate = " & code_rate_t'image(code_rate)
       severity Failure;
 
