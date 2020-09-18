@@ -90,7 +90,8 @@ cd dvb_fpga
 ```
 
 Arguments passed to `docker/run_tests.sh` will be passed to `run.py` and, by
-extension, to VUnit (no environment variable is passed on though).
+extension, to VUnit (no environment variable is passed on though). This will
+generate gnuradio_data (test data).
 
 ### Running locally
 
@@ -105,13 +106,20 @@ pip install vunit-hdl
 # Clone this repo and submodules
 git clone --recurse-submodules  https://github.com/phase4ground/dvb_fpga
 cd dvb_fpga
-# Generate test data
-cd gnuradio_data/
-make all
-cd ..
 # Run the tests
 ./run.py
 ```
+```sh
+cd dvb_fpga
+# list the test
+./run.py -l
+```
+```sh
+cd dvb_fpga
+# to run individual test
+./run.py -i
+```
+
 
 ## Running synthesis
 
