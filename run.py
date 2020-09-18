@@ -34,8 +34,8 @@ import time
 from enum import Enum
 from multiprocessing import Pool
 from typing import NamedTuple
-
-from vunit import VUnit, VUnitCLI  # type: ignore
+from vunit.ui import VUnit
+from vunit.vunit_cli import VUnitCLI
 
 _logger = logging.getLogger(__name__)
 
