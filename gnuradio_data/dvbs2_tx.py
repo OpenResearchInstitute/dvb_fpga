@@ -90,18 +90,6 @@ PLFRAME_SLOT_NUMBER = {
 }
 
 
-def get_physical_layer_frame_length(frame_type, constellation, has_pilots):
-    slots = PLFRAME_SLOT_NUMBER[(frame_type, constellation)]
-    length = 90 * (slots + 1)
-    assert has_pilots in (
-        dtv.PILOTS_ON,
-        dtv.PILOTS_OFF,
-    ), "Unknown pilots value: " + repr(has_pilots)
-    if has_pilots == dtv.PILOTS_ON:
-        return length + ((slots - 1) // 16)
-    return length
-
-
 def get_ratio(constellation):
     ratio = None
 
@@ -156,6 +144,8 @@ class dvbs2_tx(gr.top_block):
         ##################################################
         # Variables
         ##################################################
+        self.frame_type = frame_type
+        self.constellation = constellation
         self.symbol_rate = symbol_rate = 5000000
         self.taps = taps = 100
         self.samp_rate = samp_rate = symbol_rate * 2
@@ -166,14 +156,16 @@ class dvbs2_tx(gr.top_block):
 
         self.physical_layer_gold_code = physical_layer_gold_code = 0
         self.physical_layer_header_length = physical_layer_header_length = 90
-        self.physical_layer_frame_size = (
-            physical_layer_frame_size
-        ) = get_physical_layer_frame_length(frame_type, constellation, dtv.PILOTS_ON)
 
         ##################################################
         # Blocks
         ##################################################
-        self.undo_bit_stuffing = blocks.keep_m_in_n(gr.sizeof_gr_complex, 1, 2, 0)
+        self.undo_bit_stuffing_pilots_off = blocks.keep_m_in_n(
+            gr.sizeof_gr_complex, 1, 2, 0
+        )
+        self.undo_bit_stuffing_pilots_on = blocks.keep_m_in_n(
+            gr.sizeof_gr_complex, 1, 2, 0
+        )
         self.plframe_pilots_on_float = blocks.file_sink(
             gr.sizeof_gr_complex * 1, "plframe_pilots_on_float.bin", False
         )
@@ -182,6 +174,14 @@ class dvbs2_tx(gr.top_block):
             gr.sizeof_short * 1, "plframe_pilots_on_fixed_point.bin", False
         )
         self.plframe_pilots_on_fixed_point.set_unbuffered(False)
+        self.plframe_pilots_off_float = blocks.file_sink(
+            gr.sizeof_gr_complex * 1, "plframe_pilots_off_float.bin", False
+        )
+        self.plframe_pilots_off_float.set_unbuffered(False)
+        self.plframe_pilots_off_fixed_point = blocks.file_sink(
+            gr.sizeof_short * 1, "plframe_pilots_off_fixed_point.bin", False
+        )
+        self.plframe_pilots_off_fixed_point.set_unbuffered(False)
         self.plframe_payload_pilots_on_float = blocks.file_sink(
             gr.sizeof_gr_complex * 1, "plframe_payload_pilots_on_float.bin", False
         )
@@ -190,6 +190,14 @@ class dvbs2_tx(gr.top_block):
             gr.sizeof_short * 1, "plframe_payload_pilots_on_fixed_point.bin", False
         )
         self.plframe_payload_pilots_on_fixed_point.set_unbuffered(False)
+        self.plframe_payload_pilots_off_float = blocks.file_sink(
+            gr.sizeof_gr_complex * 1, "plframe_payload_pilots_off_float.bin", False
+        )
+        self.plframe_payload_pilots_off_float.set_unbuffered(False)
+        self.plframe_payload_pilots_off_fixed_point = blocks.file_sink(
+            gr.sizeof_short * 1, "plframe_payload_pilots_off_fixed_point.bin", False
+        )
+        self.plframe_payload_pilots_off_fixed_point.set_unbuffered(False)
         self.plframe_header_pilots_on_float = blocks.file_sink(
             gr.sizeof_gr_complex * 1, "plframe_header_pilots_on_float.bin", False
         )
@@ -198,23 +206,49 @@ class dvbs2_tx(gr.top_block):
             gr.sizeof_short * 1, "plframe_header_pilots_on_fixed_point.bin", False
         )
         self.plframe_header_pilots_on_fixed_point.set_unbuffered(False)
+        self.plframe_header_pilots_off_float = blocks.file_sink(
+            gr.sizeof_gr_complex * 1, "plframe_header_pilots_off_float.bin", False
+        )
+        self.plframe_header_pilots_off_float.set_unbuffered(False)
+        self.plframe_header_pilots_off_fixed_point = blocks.file_sink(
+            gr.sizeof_short * 1, "plframe_header_pilots_off_fixed_point.bin", False
+        )
+        self.plframe_header_pilots_off_fixed_point.set_unbuffered(False)
+        self.pl_complex_to_float_1 = blocks.complex_to_float(1)
+        self.pl_complex_to_float_0_1 = blocks.complex_to_float(1)
+        self.pl_complex_to_float_0_0_0 = blocks.complex_to_float(1)
         self.pl_complex_to_float_0_0 = blocks.complex_to_float(1)
         self.pl_complex_to_float_0 = blocks.complex_to_float(1)
         self.pl_complex_to_float = blocks.complex_to_float(1)
+        self.organize = blocks.multiply_const_vcc((1,))
         self.ldpc_encoder_input = blocks.file_sink(
             gr.sizeof_char * 1, "ldpc_encoder_input.bin", False
         )
         self.ldpc_encoder_input.set_unbuffered(False)
-        self.keep_plframe_payload = blocks.keep_m_in_n(
+        self.keep_plframe_payload_pilots_off = blocks.keep_m_in_n(
             gr.sizeof_gr_complex,
-            physical_layer_frame_size - physical_layer_header_length,
-            physical_layer_frame_size,
+            self.get_physical_layer_frame_size(dtv.PILOTS_OFF)
+            - physical_layer_header_length,
+            self.get_physical_layer_frame_size(dtv.PILOTS_OFF),
             0,
         )
-        self.keep_plframe_header = blocks.keep_m_in_n(
+        self.keep_plframe_payload_pilots_on = blocks.keep_m_in_n(
+            gr.sizeof_gr_complex,
+            self.get_physical_layer_frame_size(dtv.PILOTS_ON)
+            - physical_layer_header_length,
+            self.get_physical_layer_frame_size(dtv.PILOTS_ON),
+            0,
+        )
+        self.keep_plframe_header_pilots_off = blocks.keep_m_in_n(
             gr.sizeof_gr_complex,
             physical_layer_header_length,
-            physical_layer_frame_size,
+            self.get_physical_layer_frame_size(dtv.PILOTS_OFF),
+            0,
+        )
+        self.keep_plframe_header_pilots_on = blocks.keep_m_in_n(
+            gr.sizeof_gr_complex,
+            physical_layer_header_length,
+            self.get_physical_layer_frame_size(dtv.PILOTS_ON),
             0,
         )
         self.dtv_dvbs2_physical_cc_with_pilots = dtv.dvbs2_physical_cc(
@@ -222,6 +256,13 @@ class dvbs2_tx(gr.top_block):
             code_rate,
             constellation,
             dtv.PILOTS_ON,
+            physical_layer_gold_code,
+        )
+        self.dtv_dvbs2_physical_cc_pilots_off = dtv.dvbs2_physical_cc(
+            frame_type,
+            code_rate,
+            constellation,
+            dtv.PILOTS_OFF,
             physical_layer_gold_code,
         )
         self.dtv_dvbs2_modulator_bc_0 = dtv.dvbs2_modulator_bc(
@@ -249,14 +290,23 @@ class dvbs2_tx(gr.top_block):
             168,
             4000000,
         )
+        self.blocks_stream_mux_0_1 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
+        self.blocks_stream_mux_0_0_1 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
+        self.blocks_stream_mux_0_0_0_0 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
         self.blocks_stream_mux_0_0_0 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
         self.blocks_stream_mux_0_0 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
         self.blocks_stream_mux_0 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
         self.blocks_repack_bits_bb_0 = blocks.repack_bits_bb(
             bits_per_input, bits_per_output, "", False, gr.GR_MSB_FIRST
         )
+        self.blocks_float_to_short_0_2 = blocks.float_to_short(1, 32768)
+        self.blocks_float_to_short_0_1_1 = blocks.float_to_short(1, 32768)
+        self.blocks_float_to_short_0_1_0_0 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_1_0 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_1 = blocks.float_to_short(1, 32768)
+        self.blocks_float_to_short_0_0_1 = blocks.float_to_short(1, 32768)
+        self.blocks_float_to_short_0_0_0_1 = blocks.float_to_short(1, 32768)
+        self.blocks_float_to_short_0_0_0_0_0 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_0_0_0 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_0_0 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_0 = blocks.float_to_short(1, 32768)
@@ -304,10 +354,29 @@ class dvbs2_tx(gr.top_block):
             (self.blocks_float_to_short_0_0_0_0, 0), (self.blocks_stream_mux_0_0_0, 0)
         )
         self.connect(
+            (self.blocks_float_to_short_0_0_0_0_0, 0),
+            (self.blocks_stream_mux_0_0_0_0, 0),
+        )
+        self.connect(
+            (self.blocks_float_to_short_0_0_0_1, 0), (self.blocks_stream_mux_0_0_1, 0)
+        )
+        self.connect(
+            (self.blocks_float_to_short_0_0_1, 0), (self.blocks_stream_mux_0_1, 0)
+        )
+        self.connect(
             (self.blocks_float_to_short_0_1, 0), (self.blocks_stream_mux_0_0, 1)
         )
         self.connect(
             (self.blocks_float_to_short_0_1_0, 0), (self.blocks_stream_mux_0_0_0, 1)
+        )
+        self.connect(
+            (self.blocks_float_to_short_0_1_0_0, 0), (self.blocks_stream_mux_0_0_0_0, 1)
+        )
+        self.connect(
+            (self.blocks_float_to_short_0_1_1, 0), (self.blocks_stream_mux_0_0_1, 1)
+        )
+        self.connect(
+            (self.blocks_float_to_short_0_2, 0), (self.blocks_stream_mux_0_1, 1)
         )
         self.connect(
             (self.blocks_repack_bits_bb_0, 0), (self.bit_interleaver_output_packed, 0)
@@ -322,6 +391,17 @@ class dvbs2_tx(gr.top_block):
         self.connect(
             (self.blocks_stream_mux_0_0_0, 0),
             (self.plframe_header_pilots_on_fixed_point, 0),
+        )
+        self.connect(
+            (self.blocks_stream_mux_0_0_0_0, 0),
+            (self.plframe_header_pilots_off_fixed_point, 0),
+        )
+        self.connect(
+            (self.blocks_stream_mux_0_0_1, 0),
+            (self.plframe_payload_pilots_off_fixed_point, 0),
+        )
+        self.connect(
+            (self.blocks_stream_mux_0_1, 0), (self.plframe_pilots_off_fixed_point, 0)
         )
         self.connect((self.dtv_dvb_bbheader_bb_0, 0), (self.bb_scrambler_input_0, 0))
         self.connect(
@@ -343,28 +423,58 @@ class dvbs2_tx(gr.top_block):
             (self.dtv_dvbs2_interleaver_bb_0, 0), (self.dtv_dvbs2_modulator_bc_0, 0)
         )
         self.connect((self.dtv_dvbs2_modulator_bc_0, 0), (self.bit_mapper_output, 0))
+        self.connect((self.dtv_dvbs2_modulator_bc_0, 0), (self.organize, 0))
         self.connect(
-            (self.dtv_dvbs2_modulator_bc_0, 0),
+            (self.undo_bit_stuffing_pilots_off, 0), (self.pl_complex_to_float_1, 0)
+        )
+        self.connect(
+            (self.undo_bit_stuffing_pilots_off, 0), (self.plframe_pilots_off_float, 0),
+        )
+        self.connect(
+            (self.dtv_dvbs2_physical_cc_pilots_off, 0),
+            (self.undo_bit_stuffing_pilots_off, 0),
+        )
+        self.connect(
+            (self.undo_bit_stuffing_pilots_on, 0), (self.pl_complex_to_float, 0)
+        )
+        self.connect(
+            (self.undo_bit_stuffing_pilots_on, 0), (self.plframe_pilots_on_float, 0),
+        )
+        self.connect(
             (self.dtv_dvbs2_physical_cc_with_pilots, 0),
+            (self.undo_bit_stuffing_pilots_on, 0),
         )
         self.connect(
-            (self.dtv_dvbs2_physical_cc_with_pilots, 0), (self.pl_complex_to_float, 0)
+            (self.keep_plframe_header_pilots_on, 0), (self.pl_complex_to_float_0_0, 0)
         )
         self.connect(
-            (self.dtv_dvbs2_physical_cc_with_pilots, 0),
-            (self.plframe_pilots_on_float, 0),
+            (self.keep_plframe_header_pilots_on, 0),
+            (self.plframe_header_pilots_on_float, 0),
         )
         self.connect(
-            (self.dtv_dvbs2_physical_cc_with_pilots, 0), (self.undo_bit_stuffing, 0)
+            (self.keep_plframe_header_pilots_off, 0),
+            (self.pl_complex_to_float_0_0_0, 0),
         )
-        self.connect((self.keep_plframe_header, 0), (self.pl_complex_to_float_0_0, 0))
         self.connect(
-            (self.keep_plframe_header, 0), (self.plframe_header_pilots_on_float, 0)
+            (self.keep_plframe_header_pilots_off, 0),
+            (self.plframe_header_pilots_off_float, 0),
         )
-        self.connect((self.keep_plframe_payload, 0), (self.pl_complex_to_float_0, 0))
         self.connect(
-            (self.keep_plframe_payload, 0), (self.plframe_payload_pilots_on_float, 0)
+            (self.keep_plframe_payload_pilots_on, 0), (self.pl_complex_to_float_0, 0)
         )
+        self.connect(
+            (self.keep_plframe_payload_pilots_on, 0),
+            (self.plframe_payload_pilots_on_float, 0),
+        )
+        self.connect(
+            (self.keep_plframe_payload_pilots_off, 0), (self.pl_complex_to_float_0_1, 0)
+        )
+        self.connect(
+            (self.keep_plframe_payload_pilots_off, 0),
+            (self.plframe_payload_pilots_off_float, 0),
+        )
+        self.connect((self.organize, 0), (self.dtv_dvbs2_physical_cc_pilots_off, 0))
+        self.connect((self.organize, 0), (self.dtv_dvbs2_physical_cc_with_pilots, 0))
         self.connect((self.pl_complex_to_float, 1), (self.blocks_float_to_short_0, 0))
         self.connect((self.pl_complex_to_float, 0), (self.blocks_float_to_short_0_0, 0))
         self.connect(
@@ -379,8 +489,41 @@ class dvbs2_tx(gr.top_block):
         self.connect(
             (self.pl_complex_to_float_0_0, 1), (self.blocks_float_to_short_0_1_0, 0)
         )
-        self.connect((self.undo_bit_stuffing, 0), (self.keep_plframe_header, 0))
-        self.connect((self.undo_bit_stuffing, 0), (self.keep_plframe_payload, 0))
+        self.connect(
+            (self.pl_complex_to_float_0_0_0, 0),
+            (self.blocks_float_to_short_0_0_0_0_0, 0),
+        )
+        self.connect(
+            (self.pl_complex_to_float_0_0_0, 1), (self.blocks_float_to_short_0_1_0_0, 0)
+        )
+        self.connect(
+            (self.pl_complex_to_float_0_1, 0), (self.blocks_float_to_short_0_0_0_1, 0)
+        )
+        self.connect(
+            (self.pl_complex_to_float_0_1, 1), (self.blocks_float_to_short_0_1_1, 0)
+        )
+        self.connect(
+            (self.pl_complex_to_float_1, 0), (self.blocks_float_to_short_0_0_1, 0)
+        )
+        self.connect(
+            (self.pl_complex_to_float_1, 1), (self.blocks_float_to_short_0_2, 0)
+        )
+        self.connect(
+            (self.undo_bit_stuffing_pilots_on, 0),
+            (self.keep_plframe_header_pilots_on, 0),
+        )
+        self.connect(
+            (self.undo_bit_stuffing_pilots_on, 0),
+            (self.keep_plframe_payload_pilots_on, 0),
+        )
+        self.connect(
+            (self.undo_bit_stuffing_pilots_off, 0),
+            (self.keep_plframe_header_pilots_off, 0),
+        )
+        self.connect(
+            (self.undo_bit_stuffing_pilots_off, 0),
+            (self.keep_plframe_payload_pilots_off, 0),
+        )
 
     def get_frame_length(self):
         return self.frame_length
@@ -416,29 +559,22 @@ class dvbs2_tx(gr.top_block):
     def get_physical_layer_header_length(self):
         return self.physical_layer_header_length
 
-    def set_physical_layer_header_length(self, physical_layer_header_length):
-        self.physical_layer_header_length = physical_layer_header_length
-        self.keep_plframe_payload.set_m(
-            self.physical_layer_frame_size - self.physical_layer_header_length
-        )
-        self.keep_plframe_header.set_m(self.physical_layer_header_length)
-
     def get_physical_layer_gold_code(self):
         return self.physical_layer_gold_code
 
     def set_physical_layer_gold_code(self, physical_layer_gold_code):
         self.physical_layer_gold_code = physical_layer_gold_code
 
-    def get_physical_layer_frame_size(self):
-        return self.physical_layer_frame_size
-
-    def set_physical_layer_frame_size(self, physical_layer_frame_size):
-        self.physical_layer_frame_size = physical_layer_frame_size
-        self.keep_plframe_payload.set_m(
-            self.physical_layer_frame_size - self.physical_layer_header_length
-        )
-        self.keep_plframe_payload.set_n(self.physical_layer_frame_size)
-        self.keep_plframe_header.set_n(self.physical_layer_frame_size)
+    def get_physical_layer_frame_size(self, has_pilots):
+        slots = PLFRAME_SLOT_NUMBER[(self.frame_type, self.constellation)]
+        length = 90 * (slots + 1)
+        assert has_pilots in (
+            dtv.PILOTS_ON,
+            dtv.PILOTS_OFF,
+        ), "Unknown pilots value: " + repr(has_pilots)
+        if has_pilots == dtv.PILOTS_ON:
+            return length + ((slots - 1) // 16)
+        return length
 
     def get_noise(self):
         return self.noise
