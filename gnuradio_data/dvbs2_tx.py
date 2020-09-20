@@ -290,6 +290,7 @@ class dvbs2_tx(gr.top_block):
             168,
             4000000,
         )
+        self.blocks_stream_mux_0_2 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
         self.blocks_stream_mux_0_1 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
         self.blocks_stream_mux_0_0_1 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
         self.blocks_stream_mux_0_0_0_0 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
@@ -299,11 +300,13 @@ class dvbs2_tx(gr.top_block):
         self.blocks_repack_bits_bb_0 = blocks.repack_bits_bb(
             bits_per_input, bits_per_output, "", False, gr.GR_MSB_FIRST
         )
+        self.blocks_float_to_short_0_3 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_2 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_1_1 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_1_0_0 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_1_0 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_1 = blocks.float_to_short(1, 32768)
+        self.blocks_float_to_short_0_0_2 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_0_1 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_0_0_1 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_0_0_0_0 = blocks.float_to_short(1, 32768)
@@ -311,10 +314,15 @@ class dvbs2_tx(gr.top_block):
         self.blocks_float_to_short_0_0_0 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_0 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0 = blocks.float_to_short(1, 32768)
-        self.bit_mapper_output = blocks.file_sink(
-            gr.sizeof_gr_complex * 1, "bit_mapper_output.bin", False
+        self.bit_mapper_output_fixed = blocks.file_sink(
+            gr.sizeof_short * 1, "bit_mapper_output_fixed.bin", False
         )
-        self.bit_mapper_output.set_unbuffered(False)
+        self.bit_mapper_output_fixed.set_unbuffered(False)
+        self.bit_mapper_output_float = blocks.file_sink(
+            gr.sizeof_gr_complex * 1, "bit_mapper_output_float.bin", False
+        )
+        self.bit_mapper_output_float.set_unbuffered(False)
+        self.bit_mapper_complex_to_float = blocks.complex_to_float(1)
         self.bit_interleaver_output_packed = blocks.file_sink(
             gr.sizeof_char * 1, "bit_interleaver_output_packed.bin", False
         )
@@ -345,6 +353,12 @@ class dvbs2_tx(gr.top_block):
         self.connect(
             (self.analog_random_source_x_0, 0), (self.dtv_dvb_bbheader_bb_0, 0)
         )
+        self.connect(
+            (self.bit_mapper_complex_to_float, 0), (self.blocks_float_to_short_0_0_2, 0)
+        )
+        self.connect(
+            (self.bit_mapper_complex_to_float, 1), (self.blocks_float_to_short_0_3, 0)
+        )
         self.connect((self.blocks_float_to_short_0, 0), (self.blocks_stream_mux_0, 1))
         self.connect((self.blocks_float_to_short_0_0, 0), (self.blocks_stream_mux_0, 0))
         self.connect(
@@ -364,6 +378,9 @@ class dvbs2_tx(gr.top_block):
             (self.blocks_float_to_short_0_0_1, 0), (self.blocks_stream_mux_0_1, 0)
         )
         self.connect(
+            (self.blocks_float_to_short_0_0_2, 0), (self.blocks_stream_mux_0_2, 0)
+        )
+        self.connect(
             (self.blocks_float_to_short_0_1, 0), (self.blocks_stream_mux_0_0, 1)
         )
         self.connect(
@@ -377,6 +394,9 @@ class dvbs2_tx(gr.top_block):
         )
         self.connect(
             (self.blocks_float_to_short_0_2, 0), (self.blocks_stream_mux_0_1, 1)
+        )
+        self.connect(
+            (self.blocks_float_to_short_0_3, 0), (self.blocks_stream_mux_0_2, 1)
         )
         self.connect(
             (self.blocks_repack_bits_bb_0, 0), (self.bit_interleaver_output_packed, 0)
@@ -403,6 +423,7 @@ class dvbs2_tx(gr.top_block):
         self.connect(
             (self.blocks_stream_mux_0_1, 0), (self.plframe_pilots_off_fixed_point, 0)
         )
+        self.connect((self.blocks_stream_mux_0_2, 0), (self.bit_mapper_output_fixed, 0))
         self.connect((self.dtv_dvb_bbheader_bb_0, 0), (self.bb_scrambler_input_0, 0))
         self.connect(
             (self.dtv_dvb_bbheader_bb_0, 0), (self.dtv_dvb_bbscrambler_bb_0, 0)
@@ -422,34 +443,18 @@ class dvbs2_tx(gr.top_block):
         self.connect(
             (self.dtv_dvbs2_interleaver_bb_0, 0), (self.dtv_dvbs2_modulator_bc_0, 0)
         )
-        self.connect((self.dtv_dvbs2_modulator_bc_0, 0), (self.bit_mapper_output, 0))
+        self.connect(
+            (self.dtv_dvbs2_modulator_bc_0, 0), (self.bit_mapper_complex_to_float, 0)
+        )
+        self.connect((self.dtv_dvbs2_modulator_bc_0, 0), (self.bit_mapper_output_float, 0))
         self.connect((self.dtv_dvbs2_modulator_bc_0, 0), (self.organize, 0))
-        self.connect(
-            (self.undo_bit_stuffing_pilots_off, 0), (self.pl_complex_to_float_1, 0)
-        )
-        self.connect(
-            (self.undo_bit_stuffing_pilots_off, 0), (self.plframe_pilots_off_float, 0),
-        )
         self.connect(
             (self.dtv_dvbs2_physical_cc_pilots_off, 0),
             (self.undo_bit_stuffing_pilots_off, 0),
         )
         self.connect(
-            (self.undo_bit_stuffing_pilots_on, 0), (self.pl_complex_to_float, 0)
-        )
-        self.connect(
-            (self.undo_bit_stuffing_pilots_on, 0), (self.plframe_pilots_on_float, 0),
-        )
-        self.connect(
             (self.dtv_dvbs2_physical_cc_with_pilots, 0),
             (self.undo_bit_stuffing_pilots_on, 0),
-        )
-        self.connect(
-            (self.keep_plframe_header_pilots_on, 0), (self.pl_complex_to_float_0_0, 0)
-        )
-        self.connect(
-            (self.keep_plframe_header_pilots_on, 0),
-            (self.plframe_header_pilots_on_float, 0),
         )
         self.connect(
             (self.keep_plframe_header_pilots_off, 0),
@@ -460,11 +465,11 @@ class dvbs2_tx(gr.top_block):
             (self.plframe_header_pilots_off_float, 0),
         )
         self.connect(
-            (self.keep_plframe_payload_pilots_on, 0), (self.pl_complex_to_float_0, 0)
+            (self.keep_plframe_header_pilots_on, 0), (self.pl_complex_to_float_0_0, 0)
         )
         self.connect(
-            (self.keep_plframe_payload_pilots_on, 0),
-            (self.plframe_payload_pilots_on_float, 0),
+            (self.keep_plframe_header_pilots_on, 0),
+            (self.plframe_header_pilots_on_float, 0),
         )
         self.connect(
             (self.keep_plframe_payload_pilots_off, 0), (self.pl_complex_to_float_0_1, 0)
@@ -472,6 +477,13 @@ class dvbs2_tx(gr.top_block):
         self.connect(
             (self.keep_plframe_payload_pilots_off, 0),
             (self.plframe_payload_pilots_off_float, 0),
+        )
+        self.connect(
+            (self.keep_plframe_payload_pilots_on, 0), (self.pl_complex_to_float_0, 0)
+        )
+        self.connect(
+            (self.keep_plframe_payload_pilots_on, 0),
+            (self.plframe_payload_pilots_on_float, 0),
         )
         self.connect((self.organize, 0), (self.dtv_dvbs2_physical_cc_pilots_off, 0))
         self.connect((self.organize, 0), (self.dtv_dvbs2_physical_cc_with_pilots, 0))
@@ -509,6 +521,20 @@ class dvbs2_tx(gr.top_block):
             (self.pl_complex_to_float_1, 1), (self.blocks_float_to_short_0_2, 0)
         )
         self.connect(
+            (self.undo_bit_stuffing_pilots_off, 0),
+            (self.keep_plframe_header_pilots_off, 0),
+        )
+        self.connect(
+            (self.undo_bit_stuffing_pilots_off, 0),
+            (self.keep_plframe_payload_pilots_off, 0),
+        )
+        self.connect(
+            (self.undo_bit_stuffing_pilots_off, 0), (self.pl_complex_to_float_1, 0)
+        )
+        self.connect(
+            (self.undo_bit_stuffing_pilots_off, 0), (self.plframe_pilots_off_float, 0)
+        )
+        self.connect(
             (self.undo_bit_stuffing_pilots_on, 0),
             (self.keep_plframe_header_pilots_on, 0),
         )
@@ -517,12 +543,10 @@ class dvbs2_tx(gr.top_block):
             (self.keep_plframe_payload_pilots_on, 0),
         )
         self.connect(
-            (self.undo_bit_stuffing_pilots_off, 0),
-            (self.keep_plframe_header_pilots_off, 0),
+            (self.undo_bit_stuffing_pilots_on, 0), (self.pl_complex_to_float, 0)
         )
         self.connect(
-            (self.undo_bit_stuffing_pilots_off, 0),
-            (self.keep_plframe_payload_pilots_off, 0),
+            (self.undo_bit_stuffing_pilots_on, 0), (self.plframe_pilots_on_float, 0)
         )
 
     def get_frame_length(self):

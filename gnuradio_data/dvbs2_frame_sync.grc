@@ -371,7 +371,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(336, 988)</value>
+      <value>(88, 1508)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -434,11 +434,11 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(1968, 892)</value>
+      <value>(304, 1244)</value>
     </param>
     <param>
       <key>_rotation</key>
-      <value>180</value>
+      <value>0</value>
     </param>
     <param>
       <key>id</key>
@@ -780,6 +780,49 @@
     </param>
   </block>
   <block>
+    <key>blocks_complex_to_float</key>
+    <param>
+      <key>alias</key>
+      <value></value>
+    </param>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>affinity</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>1</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(1784, 160)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>bit_mapper_complex_to_float</value>
+    </param>
+    <param>
+      <key>maxoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>minoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>vlen</key>
+      <value>1</value>
+    </param>
+  </block>
+  <block>
     <key>blocks_file_sink</key>
     <param>
       <key>append</key>
@@ -803,19 +846,70 @@
     </param>
     <param>
       <key>file</key>
-      <value>bit_mapper_output.bin</value>
+      <value>bit_mapper_output_fixed.bin</value>
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(1544, 140)</value>
+      <value>(2240, 156)</value>
     </param>
     <param>
       <key>_rotation</key>
-      <value>180</value>
+      <value>0</value>
     </param>
     <param>
       <key>id</key>
-      <value>bit_mapper_output</value>
+      <value>bit_mapper_output_fixed</value>
+    </param>
+    <param>
+      <key>type</key>
+      <value>short</value>
+    </param>
+    <param>
+      <key>unbuffered</key>
+      <value>False</value>
+    </param>
+    <param>
+      <key>vlen</key>
+      <value>1</value>
+    </param>
+  </block>
+  <block>
+    <key>blocks_file_sink</key>
+    <param>
+      <key>append</key>
+      <value>False</value>
+    </param>
+    <param>
+      <key>alias</key>
+      <value></value>
+    </param>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>affinity</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>1</value>
+    </param>
+    <param>
+      <key>file</key>
+      <value>bit_mapper_output_float.bin</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(1808, 28)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>bit_mapper_output_float</value>
     </param>
     <param>
       <key>type</key>
@@ -850,7 +944,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(928, 1352)</value>
+      <value>(928, 1840)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -901,11 +995,11 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(1824, 840)</value>
+      <value>(576, 1344)</value>
     </param>
     <param>
       <key>_rotation</key>
-      <value>180</value>
+      <value>270</value>
     </param>
     <param>
       <key>id</key>
@@ -952,7 +1046,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(1064, 1368)</value>
+      <value>(1096, 1888)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -995,7 +1089,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(1056, 1304)</value>
+      <value>(1088, 1824)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -1038,7 +1132,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(88, 1336)</value>
+      <value>(120, 1856)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -1081,7 +1175,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(128, 1268)</value>
+      <value>(160, 1788)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -1140,7 +1234,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(1552, 1412)</value>
+      <value>(1584, 1932)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -1512,6 +1606,53 @@
     </param>
     <param>
       <key>_coordinate</key>
+      <value>(1944, 156)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>blocks_float_to_short_0_0_2</value>
+    </param>
+    <param>
+      <key>maxoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>minoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>scale</key>
+      <value>32768</value>
+    </param>
+    <param>
+      <key>vlen</key>
+      <value>1</value>
+    </param>
+  </block>
+  <block>
+    <key>blocks_float_to_short</key>
+    <param>
+      <key>alias</key>
+      <value></value>
+    </param>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>affinity</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>1</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
       <value>(1744, 588)</value>
     </param>
     <param>
@@ -1728,6 +1869,53 @@
     </param>
   </block>
   <block>
+    <key>blocks_float_to_short</key>
+    <param>
+      <key>alias</key>
+      <value></value>
+    </param>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>affinity</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>1</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(1944, 188)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>blocks_float_to_short_0_3</value>
+    </param>
+    <param>
+      <key>maxoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>minoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>scale</key>
+      <value>32768</value>
+    </param>
+    <param>
+      <key>vlen</key>
+      <value>1</value>
+    </param>
+  </block>
+  <block>
     <key>blocks_max_xx</key>
     <param>
       <key>alias</key>
@@ -1747,7 +1935,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(1272, 1320)</value>
+      <value>(1304, 1840)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -1806,7 +1994,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(2040, 44)</value>
+      <value>(280, 1140)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -1853,7 +2041,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(312, 1304)</value>
+      <value>(344, 1824)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -2274,6 +2462,61 @@
     </param>
   </block>
   <block>
+    <key>blocks_stream_mux</key>
+    <param>
+      <key>alias</key>
+      <value></value>
+    </param>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>affinity</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>1</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(2104, 160)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>blocks_stream_mux_0_2</value>
+    </param>
+    <param>
+      <key>lengths</key>
+      <value>1, 1</value>
+    </param>
+    <param>
+      <key>maxoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>minoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>num_inputs</key>
+      <value>2</value>
+    </param>
+    <param>
+      <key>type</key>
+      <value>short</value>
+    </param>
+    <param>
+      <key>vlen</key>
+      <value>1</value>
+    </param>
+  </block>
+  <block>
     <key>blocks_sub_xx</key>
     <param>
       <key>alias</key>
@@ -2293,7 +2536,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(840, 1288)</value>
+      <value>(856, 1896)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -2344,7 +2587,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(1376, 1332)</value>
+      <value>(1408, 1852)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -2454,7 +2697,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(1080, 1024)</value>
+      <value>(720, 1520)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -2509,7 +2752,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(720, 964)</value>
+      <value>(360, 1484)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -3144,7 +3387,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(2216, 28)</value>
+      <value>(456, 1132)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -3203,7 +3446,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(488, 1308)</value>
+      <value>(520, 1828)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -3258,7 +3501,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(488, 1380)</value>
+      <value>(520, 1900)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -3414,61 +3657,6 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(1296, 772)</value>
-    </param>
-    <param>
-      <key>_rotation</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>id</key>
-      <value>keep_plframe_header</value>
-    </param>
-    <param>
-      <key>m</key>
-      <value>physical_layer_header_length</value>
-    </param>
-    <param>
-      <key>maxoutbuf</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>minoutbuf</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>n</key>
-      <value>physical_layer_frame_size</value>
-    </param>
-    <param>
-      <key>type</key>
-      <value>complex</value>
-    </param>
-    <param>
-      <key>offset</key>
-      <value>0</value>
-    </param>
-  </block>
-  <block>
-    <key>blocks_keep_m_in_n</key>
-    <param>
-      <key>alias</key>
-      <value></value>
-    </param>
-    <param>
-      <key>comment</key>
-      <value></value>
-    </param>
-    <param>
-      <key>affinity</key>
-      <value></value>
-    </param>
-    <param>
-      <key>_enabled</key>
-      <value>1</value>
-    </param>
-    <param>
-      <key>_coordinate</key>
       <value>(1328, 1436)</value>
     </param>
     <param>
@@ -3477,7 +3665,7 @@
     </param>
     <param>
       <key>id</key>
-      <value>keep_plframe_header_0</value>
+      <value>keep_plframe_header_pilots_off</value>
     </param>
     <param>
       <key>m</key>
@@ -3524,7 +3712,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(1296, 556)</value>
+      <value>(1296, 772)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -3532,11 +3720,11 @@
     </param>
     <param>
       <key>id</key>
-      <value>keep_plframe_payload</value>
+      <value>keep_plframe_header_pilots_on</value>
     </param>
     <param>
       <key>m</key>
-      <value>physical_layer_frame_size - physical_layer_header_length</value>
+      <value>physical_layer_header_length</value>
     </param>
     <param>
       <key>maxoutbuf</key>
@@ -3588,6 +3776,61 @@
     <param>
       <key>id</key>
       <value>keep_plframe_payload_pilots_off</value>
+    </param>
+    <param>
+      <key>m</key>
+      <value>physical_layer_frame_size - physical_layer_header_length</value>
+    </param>
+    <param>
+      <key>maxoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>minoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>n</key>
+      <value>physical_layer_frame_size</value>
+    </param>
+    <param>
+      <key>type</key>
+      <value>complex</value>
+    </param>
+    <param>
+      <key>offset</key>
+      <value>0</value>
+    </param>
+  </block>
+  <block>
+    <key>blocks_keep_m_in_n</key>
+    <param>
+      <key>alias</key>
+      <value></value>
+    </param>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>affinity</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>1</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(1296, 556)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>keep_plframe_payload_pilots_on</value>
     </param>
     <param>
       <key>m</key>
@@ -3689,7 +3932,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(1764, 232)</value>
+      <value>(1668, 232)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -4359,7 +4602,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(1584, 652)</value>
+      <value>(1576, 652)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -4614,7 +4857,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(1080, 956)</value>
+      <value>(720, 1452)</value>
     </param>
     <param>
       <key>gui_hint</key>
@@ -5200,7 +5443,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(1552, 1316)</value>
+      <value>(1584, 1836)</value>
     </param>
     <param>
       <key>gui_hint</key>
@@ -5651,11 +5894,23 @@
     <source_block_id>analog_noise_source_x_1</source_block_id>
     <sink_block_id>blocks_add_xx_2</sink_block_id>
     <source_key>0</source_key>
-    <sink_key>0</sink_key>
+    <sink_key>1</sink_key>
   </connection>
   <connection>
     <source_block_id>analog_random_source_x_0</source_block_id>
     <sink_block_id>dtv_dvb_bbheader_bb_0</sink_block_id>
+    <source_key>0</source_key>
+    <sink_key>0</sink_key>
+  </connection>
+  <connection>
+    <source_block_id>bit_mapper_complex_to_float</source_block_id>
+    <sink_block_id>blocks_float_to_short_0_3</sink_block_id>
+    <source_key>1</source_key>
+    <sink_key>0</sink_key>
+  </connection>
+  <connection>
+    <source_block_id>bit_mapper_complex_to_float</source_block_id>
+    <sink_block_id>blocks_float_to_short_0_0_2</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
@@ -5738,6 +5993,12 @@
     <sink_key>0</sink_key>
   </connection>
   <connection>
+    <source_block_id>blocks_float_to_short_0_0_2</source_block_id>
+    <sink_block_id>blocks_stream_mux_0_2</sink_block_id>
+    <source_key>0</source_key>
+    <sink_key>0</sink_key>
+  </connection>
+  <connection>
     <source_block_id>blocks_float_to_short_0_1</source_block_id>
     <sink_block_id>blocks_stream_mux_0_0</sink_block_id>
     <source_key>0</source_key>
@@ -5764,6 +6025,12 @@
   <connection>
     <source_block_id>blocks_float_to_short_0_2</source_block_id>
     <sink_block_id>blocks_stream_mux_0_1</sink_block_id>
+    <source_key>0</source_key>
+    <sink_key>1</sink_key>
+  </connection>
+  <connection>
+    <source_block_id>blocks_float_to_short_0_3</source_block_id>
+    <sink_block_id>blocks_stream_mux_0_2</sink_block_id>
     <source_key>0</source_key>
     <sink_key>1</sink_key>
   </connection>
@@ -5830,6 +6097,12 @@
   <connection>
     <source_block_id>blocks_stream_mux_0_1</source_block_id>
     <sink_block_id>plframe_pilots_off_fixed_point</sink_block_id>
+    <source_key>0</source_key>
+    <sink_key>0</sink_key>
+  </connection>
+  <connection>
+    <source_block_id>blocks_stream_mux_0_2</source_block_id>
+    <sink_block_id>bit_mapper_output_fixed</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
@@ -5955,7 +6228,13 @@
   </connection>
   <connection>
     <source_block_id>dtv_dvbs2_modulator_bc_0</source_block_id>
-    <sink_block_id>bit_mapper_output</sink_block_id>
+    <sink_block_id>bit_mapper_complex_to_float</sink_block_id>
+    <source_key>0</source_key>
+    <sink_key>0</sink_key>
+  </connection>
+  <connection>
+    <source_block_id>dtv_dvbs2_modulator_bc_0</source_block_id>
+    <sink_block_id>bit_mapper_output_float</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
@@ -5987,7 +6266,7 @@
     <source_block_id>fft_filter_xxx_0</source_block_id>
     <sink_block_id>blocks_add_xx_2</sink_block_id>
     <source_key>0</source_key>
-    <sink_key>1</sink_key>
+    <sink_key>0</sink_key>
   </connection>
   <connection>
     <source_block_id>fir_filter_xxx_0</source_block_id>
@@ -6014,38 +6293,26 @@
     <sink_key>1</sink_key>
   </connection>
   <connection>
-    <source_block_id>keep_plframe_header</source_block_id>
-    <sink_block_id>pl_complex_to_float_0_0</sink_block_id>
-    <source_key>0</source_key>
-    <sink_key>0</sink_key>
-  </connection>
-  <connection>
-    <source_block_id>keep_plframe_header</source_block_id>
-    <sink_block_id>plframe_header_pilots_on_float</sink_block_id>
-    <source_key>0</source_key>
-    <sink_key>0</sink_key>
-  </connection>
-  <connection>
-    <source_block_id>keep_plframe_header_0</source_block_id>
+    <source_block_id>keep_plframe_header_pilots_off</source_block_id>
     <sink_block_id>pl_complex_to_float_0_0_0</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
   <connection>
-    <source_block_id>keep_plframe_header_0</source_block_id>
+    <source_block_id>keep_plframe_header_pilots_off</source_block_id>
     <sink_block_id>plframe_header_pilots_off_float</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
   <connection>
-    <source_block_id>keep_plframe_payload</source_block_id>
-    <sink_block_id>pl_complex_to_float_0</sink_block_id>
+    <source_block_id>keep_plframe_header_pilots_on</source_block_id>
+    <sink_block_id>pl_complex_to_float_0_0</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
   <connection>
-    <source_block_id>keep_plframe_payload</source_block_id>
-    <sink_block_id>plframe_payload_pilots_on_float</sink_block_id>
+    <source_block_id>keep_plframe_header_pilots_on</source_block_id>
+    <sink_block_id>plframe_header_pilots_on_float</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
@@ -6058,6 +6325,18 @@
   <connection>
     <source_block_id>keep_plframe_payload_pilots_off</source_block_id>
     <sink_block_id>plframe_payload_pilots_off_float</sink_block_id>
+    <source_key>0</source_key>
+    <sink_key>0</sink_key>
+  </connection>
+  <connection>
+    <source_block_id>keep_plframe_payload_pilots_on</source_block_id>
+    <sink_block_id>pl_complex_to_float_0</sink_block_id>
+    <source_key>0</source_key>
+    <sink_key>0</sink_key>
+  </connection>
+  <connection>
+    <source_block_id>keep_plframe_payload_pilots_on</source_block_id>
+    <sink_block_id>plframe_payload_pilots_on_float</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
@@ -6147,7 +6426,7 @@
   </connection>
   <connection>
     <source_block_id>undo_bit_stuffing_pilots_off</source_block_id>
-    <sink_block_id>keep_plframe_header_0</sink_block_id>
+    <sink_block_id>keep_plframe_header_pilots_off</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
@@ -6171,13 +6450,13 @@
   </connection>
   <connection>
     <source_block_id>undo_bit_stuffing_pilots_on</source_block_id>
-    <sink_block_id>keep_plframe_header</sink_block_id>
+    <sink_block_id>keep_plframe_header_pilots_on</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
   <connection>
     <source_block_id>undo_bit_stuffing_pilots_on</source_block_id>
-    <sink_block_id>keep_plframe_payload</sink_block_id>
+    <sink_block_id>keep_plframe_payload_pilots_on</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
