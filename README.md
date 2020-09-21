@@ -139,7 +139,7 @@ lib.axi_baseband_scrambler_tb.test_all_configs.slow_master
 lib.axi_baseband_scrambler_tb.test_all_configs.slow_slave
 lib.axi_baseband_scrambler_tb.test_all_configs.both_slow
 Listed 24 tests
-
+```
 ## Running synthesis
 
 Scripts are provided as an example to get things going, currently this has not
