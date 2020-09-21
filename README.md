@@ -109,17 +109,36 @@ cd dvb_fpga
 # Run the tests
 ./run.py
 ```
-```sh
-cd dvb_fpga
-# list the test
-./run.py -l
-```
-```sh
-cd dvb_fpga
-# to run individual test
-./run.py -i
-```
+The first invocation of `run.py` will run GNURadio and create stimulus files.
 
+To list tests use `./run.py -l`:
+```sh
+$ ./run.py -l
+lib.axi_bit_interleaver_tb.data_width=8,all_parameters.back_to_back
+lib.axi_bit_interleaver_tb.data_width=8,all_parameters.slow_master
+lib.axi_bit_interleaver_tb.data_width=8,all_parameters.slow_slave
+lib.axi_bit_interleaver_tb.data_width=8,all_parameters.both_slow
+lib.axi_ldpc_table_tb.test_all_configs.back_to_back
+lib.axi_ldpc_table_tb.test_all_configs.slow_master
+lib.axi_ldpc_table_tb.test_all_configs.slow_slave
+lib.axi_ldpc_table_tb.test_all_configs.slow_master,slow_slave
+lib.axi_bch_encoder_tb.test_all_configs.back_to_back
+lib.axi_bch_encoder_tb.test_all_configs.slow_master
+lib.axi_bch_encoder_tb.test_all_configs.slow_slave
+lib.axi_bch_encoder_tb.test_all_configs.both_slow
+lib.dvbs2_tx_tb.test_all_configs.back_to_back
+lib.axi_ldpc_encoder_core_tb.test_all_configs.back_to_back
+lib.axi_ldpc_encoder_core_tb.test_all_configs.data=0.5,table=1.0,slave=1.0
+lib.axi_ldpc_encoder_core_tb.test_all_configs.data=1.0,table=1.0,slave=0.5
+lib.axi_ldpc_encoder_core_tb.test_all_configs.data=0.75,table=1.0,slave=0.75
+lib.axi_ldpc_encoder_core_tb.test_all_configs.data=1.0,table=0.5,slave=1.0
+lib.axi_ldpc_encoder_core_tb.test_all_configs.data=1.0,table=0.75,slave=0.75
+lib.axi_ldpc_encoder_core_tb.test_all_configs.data=0.8,table=0.8,slave=0.8
+lib.axi_baseband_scrambler_tb.test_all_configs.back_to_back
+lib.axi_baseband_scrambler_tb.test_all_configs.slow_master
+lib.axi_baseband_scrambler_tb.test_all_configs.slow_slave
+lib.axi_baseband_scrambler_tb.test_all_configs.both_slow
+Listed 24 tests
 
 ## Running synthesis
 
