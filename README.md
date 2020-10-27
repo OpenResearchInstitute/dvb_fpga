@@ -90,7 +90,8 @@ cd dvb_fpga
 ```
 
 Arguments passed to `docker/run_tests.sh` will be passed to `run.py` and, by
-extension, to VUnit (no environment variable is passed on though).
+extension, to VUnit (no environment variable is passed on though). This will
+generate gnuradio_data (test data).
 
 ### Running locally
 
@@ -105,14 +106,40 @@ pip install vunit-hdl
 # Clone this repo and submodules
 git clone --recurse-submodules  https://github.com/phase4ground/dvb_fpga
 cd dvb_fpga
-# Generate test data
-cd gnuradio_data/
-make all
-cd ..
 # Run the tests
 ./run.py
 ```
+The first invocation of `run.py` will run GNURadio and create stimulus files.
 
+To list tests use `./run.py -l`:
+```sh
+$ ./run.py -l
+lib.axi_bit_interleaver_tb.data_width=8,all_parameters.back_to_back
+lib.axi_bit_interleaver_tb.data_width=8,all_parameters.slow_master
+lib.axi_bit_interleaver_tb.data_width=8,all_parameters.slow_slave
+lib.axi_bit_interleaver_tb.data_width=8,all_parameters.both_slow
+lib.axi_ldpc_table_tb.test_all_configs.back_to_back
+lib.axi_ldpc_table_tb.test_all_configs.slow_master
+lib.axi_ldpc_table_tb.test_all_configs.slow_slave
+lib.axi_ldpc_table_tb.test_all_configs.slow_master,slow_slave
+lib.axi_bch_encoder_tb.test_all_configs.back_to_back
+lib.axi_bch_encoder_tb.test_all_configs.slow_master
+lib.axi_bch_encoder_tb.test_all_configs.slow_slave
+lib.axi_bch_encoder_tb.test_all_configs.both_slow
+lib.dvbs2_tx_tb.test_all_configs.back_to_back
+lib.axi_ldpc_encoder_core_tb.test_all_configs.back_to_back
+lib.axi_ldpc_encoder_core_tb.test_all_configs.data=0.5,table=1.0,slave=1.0
+lib.axi_ldpc_encoder_core_tb.test_all_configs.data=1.0,table=1.0,slave=0.5
+lib.axi_ldpc_encoder_core_tb.test_all_configs.data=0.75,table=1.0,slave=0.75
+lib.axi_ldpc_encoder_core_tb.test_all_configs.data=1.0,table=0.5,slave=1.0
+lib.axi_ldpc_encoder_core_tb.test_all_configs.data=1.0,table=0.75,slave=0.75
+lib.axi_ldpc_encoder_core_tb.test_all_configs.data=0.8,table=0.8,slave=0.8
+lib.axi_baseband_scrambler_tb.test_all_configs.back_to_back
+lib.axi_baseband_scrambler_tb.test_all_configs.slow_master
+lib.axi_baseband_scrambler_tb.test_all_configs.slow_slave
+lib.axi_baseband_scrambler_tb.test_all_configs.both_slow
+Listed 24 tests
+```
 ## Running synthesis
 
 Scripts are provided as an example to get things going, currently this has not
