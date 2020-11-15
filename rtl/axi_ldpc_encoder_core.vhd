@@ -229,14 +229,18 @@ begin
 
   -- Convert from FRAME_RAM_DATA_WIDTH to the specified data width
   input_conversion_block : block -- {{ -------------------------------------------------
-    signal axi_bit_tid  : std_logic_vector(FRAME_TYPE_WIDTH - 1 downto 0);
-    signal axi_bit_tkeep: std_logic_vector(DATA_WIDTH / 8 - 1 downto 0);
+    signal axi_ldpc_tkeep: std_logic_vector(DATA_WIDTH / 8 - 1 downto 0);
+    signal axi_ldpc_tid  : std_logic_vector(FRAME_TYPE_WIDTH - 1 downto 0);
+    signal axi_bit_tid   : std_logic_vector(FRAME_TYPE_WIDTH - 1 downto 0);
 
   begin
 
     axi_bit_frame_type <= decode(axi_bit_tid);
 
-    axi_bit_tkeep      <= (others => '1') when axi_ldpc.tlast = '1' else
+    -- GHDL fails if this is done at the port map
+    axi_ldpc_tid       <= encode(axi_ldpc_frame_type);
+
+    axi_ldpc_tkeep     <= (others => '1') when axi_ldpc.tlast = '1' else
                           (others => '0');
 
     input_width_conversion_u : entity fpga_cores.axi_stream_width_converter
@@ -251,8 +255,8 @@ begin
         -- AXI stream input
         s_tready   => axi_ldpc.tready,
         s_tdata    => mirror_bits(axi_ldpc.tdata), -- width converter is little endian, we need big endian
-        s_tkeep    => axi_bit_tkeep,
-        s_tid      => encode(axi_ldpc_frame_type),
+        s_tkeep    => axi_ldpc_tkeep,
+        s_tid      => axi_ldpc_tid,
         s_tvalid   => axi_ldpc.tvalid,
         s_tlast    => axi_ldpc.tlast,
         -- AXI stream output
