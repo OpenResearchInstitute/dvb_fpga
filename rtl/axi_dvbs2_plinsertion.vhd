@@ -38,7 +38,7 @@ use work.ldpc_pkg.all;
 -- Entity declaration --
 ------------------------
 entity axi_dvbs2_plinsertion is
-  /*
+  
   port (
     -- Usual ports
     clk               : in  std_logic;
@@ -58,7 +58,7 @@ entity axi_dvbs2_plinsertion is
     m_tready          : in  std_logic;
     m_tvalid          : out std_logic;
     m_tlast           : out std_logic;
-    m_tdata           : out std_logic_vector(90 downto 0)); */
+    m_tdata           : out std_logic_vector(90 downto 0));
 end axi_dvbs2_plinsertion;
 
 architecture axi_dvbs2_plinseration of axi_dvbs2_plinsertion is
@@ -67,10 +67,10 @@ architecture axi_dvbs2_plinseration of axi_dvbs2_plinsertion is
   --Types-
   --------
   -- Actual config we have to process
-  --signal cfg_frame_type    : frame_type_t;
-  --signal cfg_code_rate : code_Rate_t;
-  --signal cfg_constellation : constellation_t;
-  --signal pl_header : std_logic_vector (PL_HDR_LEN - 1 downto 0);
+  signal cfg_frame_type    : frame_type_t;
+  signal cfg_code_rate : code_Rate_t;
+  signal cfg_constellation : constellation_t;
+  -- signal pl_header : std_logic_vector (PL_HDR_LEN - 1 downto 0);
   
   -----------------
     -- subprograms --
@@ -79,7 +79,7 @@ architecture axi_dvbs2_plinseration of axi_dvbs2_plinsertion is
 
 --architecture begin
 begin
-  /* 
+   
   process(clk, rst)
   begin
     if rst = '1' then
@@ -106,7 +106,7 @@ begin
   --form pl_header whenever master wants to send. 
   --shared_plheader.build_plheader(cfg_constellation, cfg_code_rate);
     -- not handling C1_4, C1_3, C2_5, C1_2,
-  */ 
+   
   end axi_dvbs2_plinseration;
   
   -- vim: set foldmethod=marker foldmarker=--\ {{,--\ }} :
