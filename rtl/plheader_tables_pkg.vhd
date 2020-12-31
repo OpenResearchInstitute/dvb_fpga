@@ -24,7 +24,7 @@
 library	ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
---use ieee.math_real.MATH_PI;
+use ieee.math_real.MATH_PI;
 
 library fpga_cores;
 use fpga_cores.common_pkg.all;
@@ -32,7 +32,7 @@ use fpga_cores.common_pkg.all;
 use work.dvb_utils_pkg.all;
 
 package plheader_tables_pkg is
-  /* 
+   
   --------
   --Types-
   --------
@@ -55,12 +55,10 @@ package plheader_tables_pkg is
   
   constant G : unsigned_32_vector_t := (0 => x"90AC2DDD",
       1 => x"55555555", 2 => x"33333333", 3 => x"0F0F0F0F", 
-      4 => x"00FF00FF", 5 => x"0000FFFF", 6=> x"FFFFFFFF");
-  */
+      4 => x"00FF00FF", 5 => x"0000FFFF", 6=> x"FFFFFFFF");  
 end package plheader_tables_pkg;
 
 package body plheader_tables_pkg is  
-  /*
   function to_fixed_point (constant x : real) return signed is
   constant width : natural := DATA_WIDTH/2 - 1;
   constant round_a : integer := integer(ieee.math_real.round(x * real(2**width)));
@@ -330,7 +328,6 @@ constant MOD_8PSK_MAP : std_logic_vector_2d_t(0 to 7)(DATA_WIDTH - 1 downto 0) :
      end if;
    end function;
   end protected body;
-  */
 end package body plheader_tables_pkg;
   
   -- vim: set foldmethod=marker foldmarker=--\ {{,--\ }} :

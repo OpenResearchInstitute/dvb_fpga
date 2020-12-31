@@ -32,7 +32,7 @@ use fpga_cores.axi_pkg.all;
 
 use work.dvb_utils_pkg.all;
 use work.ldpc_pkg.all;
---use work.plheader_tables_pkg.all;
+use work.plheader_tables_pkg.all;
 
 ------------------------
 -- Entity declaration --
@@ -70,7 +70,7 @@ architecture axi_dvbs2_plinseration of axi_dvbs2_plinsertion is
   signal cfg_frame_type    : frame_type_t;
   signal cfg_code_rate : code_Rate_t;
   signal cfg_constellation : constellation_t;
-  -- signal pl_header : std_logic_vector (PL_HDR_LEN - 1 downto 0);
+  signal pl_header : std_logic_vector (PL_HDR_LEN - 1 downto 0);
   
   -----------------
     -- subprograms --
@@ -95,7 +95,7 @@ begin
           if s_tvalid = '1' then
             cfg_constellation <= s_constellation_type;
             cfg_code_rate <= s_code_rate;
-            --m_tdata <= shared_plheader.get_plheader(cfg_constellation, cfg_code_rate);
+            m_tdata <= shared_plheader.get_plheader(cfg_constellation, cfg_code_rate);
           --m_tvalid <= 1;
           end if;
         end if;
@@ -104,7 +104,7 @@ begin
   end process;
   
   --form pl_header whenever master wants to send. 
-  --shared_plheader.build_plheader(cfg_constellation, cfg_code_rate);
+  shared_plheader.build_plheader(cfg_constellation, cfg_code_rate);
     -- not handling C1_4, C1_3, C2_5, C1_2,
    
   end axi_dvbs2_plinseration;
