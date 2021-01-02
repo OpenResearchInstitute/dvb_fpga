@@ -69,7 +69,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 7 x 18 kB BRAMs or 4 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_NORMAL_C1_2_COLUMN_WIDTHS : integer_vector_t := (0 => 3, 1 => 7, 2 => 15, 3 => 15, 4 => 15, 5 => 15, 6 => 15, 7 => 15, 8 => 15);
 
-  constant LDPC_TABLE_FECFRAME_NORMAL_C1_2 : integer_2d_array_t(0 to 89)(0 to 8) := (
+  constant LDPC_TABLE_FECFRAME_NORMAL_C1_2 : integer_array_t(0 to 89)(0 to 8) := (
     0 => integer_vector_t'(0 => 8, 1 => 54, 2 => 9318, 3 => 14392, 4 => 27561, 5 => 26909, 6 => 10219, 7 => 2534, 8 => 8597),
     1 => integer_vector_t'(0 => 8, 1 => 55, 2 => 7263, 3 => 4635, 4 => 2530, 5 => 28130, 6 => 3033, 7 => 23830, 8 => 3651),
     2 => integer_vector_t'(0 => 8, 1 => 56, 2 => 24731, 3 => 23583, 4 => 26036, 5 => 17299, 6 => 5750, 7 => 792, 8 => 9169),
@@ -166,7 +166,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 11 x 18 kB BRAMs or 6 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_NORMAL_C1_3_COLUMN_WIDTHS : integer_vector_t := (0 => 4, 1 => 16, 2 => 16, 3 => 16, 4 => 16, 5 => 16, 6 => 16, 7 => 16, 8 => 16, 9 => 16, 10 => 16, 11 => 16, 12 => 16);
 
-  constant LDPC_TABLE_FECFRAME_NORMAL_C1_3 : integer_2d_array_t(0 to 59)(0 to 12) := (
+  constant LDPC_TABLE_FECFRAME_NORMAL_C1_3 : integer_array_t(0 to 59)(0 to 12) := (
     0 => integer_vector_t'(0 => 12, 1 => 34903, 2 => 20927, 3 => 32093, 4 => 1052, 5 => 25611, 6 => 16093, 7 => 16454, 8 => 5520, 9 => 506, 10 => 37399, 11 => 18518, 12 => 21120),
     1 => integer_vector_t'(0 => 12, 1 => 11636, 2 => 14594, 3 => 22158, 4 => 14763, 5 => 15333, 6 => 6838, 7 => 22222, 8 => 37856, 9 => 14985, 10 => 31041, 11 => 18704, 12 => 32910),
     2 => integer_vector_t'(0 => 12, 1 => 17449, 2 => 1665, 3 => 35639, 4 => 16624, 5 => 12867, 6 => 12449, 7 => 10241, 8 => 11650, 9 => 25622, 10 => 34372, 11 => 19878, 12 => 26894),
@@ -233,7 +233,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 11 x 18 kB BRAMs or 6 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_NORMAL_C1_4_COLUMN_WIDTHS : integer_vector_t := (0 => 4, 1 => 16, 2 => 16, 3 => 16, 4 => 16, 5 => 16, 6 => 16, 7 => 16, 8 => 16, 9 => 16, 10 => 16, 11 => 16, 12 => 16);
 
-  constant LDPC_TABLE_FECFRAME_NORMAL_C1_4 : integer_2d_array_t(0 to 44)(0 to 12) := (
+  constant LDPC_TABLE_FECFRAME_NORMAL_C1_4 : integer_array_t(0 to 44)(0 to 12) := (
     0 => integer_vector_t'(0 => 12, 1 => 23606, 2 => 36098, 3 => 1140, 4 => 28859, 5 => 18148, 6 => 18510, 7 => 6226, 8 => 540, 9 => 42014, 10 => 20879, 11 => 23802, 12 => 47088),
     1 => integer_vector_t'(0 => 12, 1 => 16419, 2 => 24928, 3 => 16609, 4 => 17248, 5 => 7693, 6 => 24997, 7 => 42587, 8 => 16858, 9 => 34921, 10 => 21042, 11 => 37024, 12 => 20692),
     2 => integer_vector_t'(0 => 12, 1 => 1874, 2 => 40094, 3 => 18704, 4 => 14474, 5 => 14004, 6 => 11519, 7 => 13106, 8 => 28826, 9 => 38669, 10 => 22363, 11 => 30255, 12 => 31105),
@@ -285,7 +285,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 11 x 18 kB BRAMs or 6 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_NORMAL_C2_3_COLUMN_WIDTHS : integer_vector_t := (0 => 4, 1 => 6, 2 => 15, 3 => 15, 4 => 15, 5 => 15, 6 => 15, 7 => 15, 8 => 14, 9 => 15, 10 => 15, 11 => 15, 12 => 15, 13 => 15);
 
-  constant LDPC_TABLE_FECFRAME_NORMAL_C2_3 : integer_2d_array_t(0 to 119)(0 to 13) := (
+  constant LDPC_TABLE_FECFRAME_NORMAL_C2_3 : integer_array_t(0 to 119)(0 to 13) := (
     0 => integer_vector_t'(0 => 13, 1 => 0, 2 => 10491, 3 => 16043, 4 => 506, 5 => 12826, 6 => 8065, 7 => 8226, 8 => 2767, 9 => 240, 10 => 18673, 11 => 9279, 12 => 10579, 13 => 20928),
     1 => integer_vector_t'(0 => 13, 1 => 1, 2 => 17819, 3 => 8313, 4 => 6433, 5 => 6224, 6 => 5120, 7 => 5824, 8 => 12812, 9 => 17187, 10 => 9940, 11 => 13447, 12 => 13825, 13 => 18483),
     2 => integer_vector_t'(0 => 13, 1 => 2, 2 => 17957, 3 => 6024, 4 => 8681, 5 => 18628, 6 => 12794, 7 => 5915, 8 => 14576, 9 => 10970, 10 => 12064, 11 => 20437, 12 => 4455, 13 => 7151),
@@ -412,7 +412,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 11 x 18 kB BRAMs or 6 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_NORMAL_C2_5_COLUMN_WIDTHS : integer_vector_t := (0 => 4, 1 => 16, 2 => 16, 3 => 16, 4 => 16, 5 => 16, 6 => 16, 7 => 16, 8 => 16, 9 => 16, 10 => 16, 11 => 16, 12 => 16);
 
-  constant LDPC_TABLE_FECFRAME_NORMAL_C2_5 : integer_2d_array_t(0 to 71)(0 to 12) := (
+  constant LDPC_TABLE_FECFRAME_NORMAL_C2_5 : integer_array_t(0 to 71)(0 to 12) := (
     0 => integer_vector_t'(0 => 12, 1 => 31413, 2 => 18834, 3 => 28884, 4 => 947, 5 => 23050, 6 => 14484, 7 => 14809, 8 => 4968, 9 => 455, 10 => 33659, 11 => 16666, 12 => 19008),
     1 => integer_vector_t'(0 => 12, 1 => 13172, 2 => 19939, 3 => 13354, 4 => 13719, 5 => 6132, 6 => 20086, 7 => 34040, 8 => 13442, 9 => 27958, 10 => 16813, 11 => 29619, 12 => 16553),
     2 => integer_vector_t'(0 => 12, 1 => 1499, 2 => 32075, 3 => 14962, 4 => 11578, 5 => 11204, 6 => 9217, 7 => 10485, 8 => 23062, 9 => 30936, 10 => 17892, 11 => 24204, 12 => 24885),
@@ -491,7 +491,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 10 x 18 kB BRAMs or 5 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_NORMAL_C3_4_COLUMN_WIDTHS : integer_vector_t := (0 => 4, 1 => 6, 2 => 14, 3 => 14, 4 => 14, 5 => 14, 6 => 14, 7 => 14, 8 => 14, 9 => 14, 10 => 14, 11 => 14, 12 => 14);
 
-  constant LDPC_TABLE_FECFRAME_NORMAL_C3_4 : integer_2d_array_t(0 to 134)(0 to 12) := (
+  constant LDPC_TABLE_FECFRAME_NORMAL_C3_4 : integer_array_t(0 to 134)(0 to 12) := (
     0 => integer_vector_t'(0 => 12, 1 => 0, 2 => 6385, 3 => 7901, 4 => 14611, 5 => 13389, 6 => 11200, 7 => 3252, 8 => 5243, 9 => 2504, 10 => 2722, 11 => 821, 12 => 7374),
     1 => integer_vector_t'(0 => 12, 1 => 1, 2 => 11359, 3 => 2698, 4 => 357, 5 => 13824, 6 => 12772, 7 => 7244, 8 => 6752, 9 => 15310, 10 => 852, 11 => 2001, 12 => 11417),
     2 => integer_vector_t'(0 => 12, 1 => 2, 2 => 7862, 3 => 7977, 4 => 6321, 5 => 13612, 6 => 12197, 7 => 14449, 8 => 15137, 9 => 13860, 10 => 1708, 11 => 6399, 12 => 13444),
@@ -633,7 +633,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 11 x 18 kB BRAMs or 6 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_NORMAL_C3_5_COLUMN_WIDTHS : integer_vector_t := (0 => 4, 1 => 15, 2 => 15, 3 => 15, 4 => 15, 5 => 15, 6 => 15, 7 => 15, 8 => 15, 9 => 15, 10 => 15, 11 => 15, 12 => 15);
 
-  constant LDPC_TABLE_FECFRAME_NORMAL_C3_5 : integer_2d_array_t(0 to 107)(0 to 12) := (
+  constant LDPC_TABLE_FECFRAME_NORMAL_C3_5 : integer_array_t(0 to 107)(0 to 12) := (
     0 => integer_vector_t'(0 => 12, 1 => 22422, 2 => 10282, 3 => 11626, 4 => 19997, 5 => 11161, 6 => 2922, 7 => 3122, 8 => 99, 9 => 5625, 10 => 17064, 11 => 8270, 12 => 179),
     1 => integer_vector_t'(0 => 12, 1 => 25087, 2 => 16218, 3 => 17015, 4 => 828, 5 => 20041, 6 => 25656, 7 => 4186, 8 => 11629, 9 => 22599, 10 => 17305, 11 => 22515, 12 => 6463),
     2 => integer_vector_t'(0 => 12, 1 => 11049, 2 => 22853, 3 => 25706, 4 => 14388, 5 => 5500, 6 => 19245, 7 => 8732, 8 => 2177, 9 => 13555, 10 => 11346, 11 => 17265, 12 => 3069),
@@ -748,7 +748,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 9 x 18 kB BRAMs or 5 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_NORMAL_C4_5_COLUMN_WIDTHS : integer_vector_t := (0 => 4, 1 => 6, 2 => 14, 3 => 14, 4 => 14, 5 => 14, 6 => 14, 7 => 14, 8 => 14, 9 => 14, 10 => 14, 11 => 14);
 
-  constant LDPC_TABLE_FECFRAME_NORMAL_C4_5 : integer_2d_array_t(0 to 143)(0 to 11) := (
+  constant LDPC_TABLE_FECFRAME_NORMAL_C4_5 : integer_array_t(0 to 143)(0 to 11) := (
     0 => integer_vector_t'(0 => 11, 1 => 0, 2 => 149, 3 => 11212, 4 => 5575, 5 => 6360, 6 => 12559, 7 => 8108, 8 => 8505, 9 => 408, 10 => 10026, 11 => 12828),
     1 => integer_vector_t'(0 => 11, 1 => 1, 2 => 5237, 3 => 490, 4 => 10677, 5 => 4998, 6 => 3869, 7 => 3734, 8 => 3092, 9 => 3509, 10 => 7703, 11 => 10305),
     2 => integer_vector_t'(0 => 11, 1 => 2, 2 => 8742, 3 => 5553, 4 => 2820, 5 => 7085, 6 => 12116, 7 => 10485, 8 => 564, 9 => 7795, 10 => 2972, 11 => 2157),
@@ -899,7 +899,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 10 x 18 kB BRAMs or 5 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_NORMAL_C5_6_COLUMN_WIDTHS : integer_vector_t := (0 => 4, 1 => 5, 2 => 14, 3 => 14, 4 => 14, 5 => 14, 6 => 14, 7 => 14, 8 => 14, 9 => 14, 10 => 14, 11 => 14, 12 => 14, 13 => 14);
 
-  constant LDPC_TABLE_FECFRAME_NORMAL_C5_6 : integer_2d_array_t(0 to 149)(0 to 13) := (
+  constant LDPC_TABLE_FECFRAME_NORMAL_C5_6 : integer_array_t(0 to 149)(0 to 13) := (
     0 => integer_vector_t'(0 => 13, 1 => 0, 2 => 4362, 3 => 416, 4 => 8909, 5 => 4156, 6 => 3216, 7 => 3112, 8 => 2560, 9 => 2912, 10 => 6405, 11 => 8593, 12 => 4969, 13 => 6723),
     1 => integer_vector_t'(0 => 13, 1 => 1, 2 => 2479, 3 => 1786, 4 => 8978, 5 => 3011, 6 => 4339, 7 => 9313, 8 => 6397, 9 => 2957, 10 => 7288, 11 => 5484, 12 => 6031, 13 => 10217),
     2 => integer_vector_t'(0 => 13, 1 => 2, 2 => 10175, 3 => 9009, 4 => 9889, 5 => 3091, 6 => 4985, 7 => 7267, 8 => 4092, 9 => 8874, 10 => 5671, 11 => 2777, 12 => 2189, 13 => 8716),
@@ -1056,7 +1056,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 3 x 18 kB BRAMs or 2 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_NORMAL_C8_9_COLUMN_WIDTHS : integer_vector_t := (0 => 2, 1 => 5, 2 => 13, 3 => 13, 4 => 13);
 
-  constant LDPC_TABLE_FECFRAME_NORMAL_C8_9 : integer_2d_array_t(0 to 159)(0 to 4) := (
+  constant LDPC_TABLE_FECFRAME_NORMAL_C8_9 : integer_array_t(0 to 159)(0 to 4) := (
     0 => integer_vector_t'(0 => 4, 1 => 0, 2 => 6235, 3 => 2848, 4 => 3222),
     1 => integer_vector_t'(0 => 4, 1 => 1, 2 => 5800, 3 => 3492, 4 => 5348),
     2 => integer_vector_t'(0 => 4, 1 => 2, 2 => 2757, 3 => 927, 4 => 90),
@@ -1223,7 +1223,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 3 x 18 kB BRAMs or 2 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_NORMAL_C9_10_COLUMN_WIDTHS : integer_vector_t := (0 => 2, 1 => 5, 2 => 13, 3 => 13, 4 => 13);
 
-  constant LDPC_TABLE_FECFRAME_NORMAL_C9_10 : integer_2d_array_t(0 to 161)(0 to 4) := (
+  constant LDPC_TABLE_FECFRAME_NORMAL_C9_10 : integer_array_t(0 to 161)(0 to 4) := (
     0 => integer_vector_t'(0 => 4, 1 => 0, 2 => 5611, 3 => 2563, 4 => 2900),
     1 => integer_vector_t'(0 => 4, 1 => 1, 2 => 5220, 3 => 3143, 4 => 4813),
     2 => integer_vector_t'(0 => 4, 1 => 2, 2 => 2481, 3 => 834, 4 => 81),
@@ -1392,7 +1392,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 6 x 18 kB BRAMs or 3 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_SHORT_C1_2_COLUMN_WIDTHS : integer_vector_t := (0 => 3, 1 => 5, 2 => 14, 3 => 13, 4 => 13, 5 => 13, 6 => 13, 7 => 13, 8 => 13);
 
-  constant LDPC_TABLE_FECFRAME_SHORT_C1_2 : integer_2d_array_t(0 to 19)(0 to 8) := (
+  constant LDPC_TABLE_FECFRAME_SHORT_C1_2 : integer_array_t(0 to 19)(0 to 8) := (
     0 => integer_vector_t'(0 => 8, 1 => 20, 2 => 712, 3 => 2386, 4 => 6354, 5 => 4061, 6 => 1062, 7 => 5045, 8 => 5158),
     1 => integer_vector_t'(0 => 8, 1 => 21, 2 => 2543, 3 => 5748, 4 => 4822, 5 => 2348, 6 => 3089, 7 => 6328, 8 => 5876),
     2 => integer_vector_t'(0 => 8, 1 => 22, 2 => 926, 3 => 5701, 4 => 269, 5 => 3693, 6 => 2438, 7 => 3190, 8 => 3507),
@@ -1419,7 +1419,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 10 x 18 kB BRAMs or 5 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_SHORT_C1_3_COLUMN_WIDTHS : integer_vector_t := (0 => 4, 1 => 14, 2 => 14, 3 => 14, 4 => 14, 5 => 14, 6 => 14, 7 => 14, 8 => 13, 9 => 14, 10 => 14, 11 => 14, 12 => 13);
 
-  constant LDPC_TABLE_FECFRAME_SHORT_C1_3 : integer_2d_array_t(0 to 14)(0 to 12) := (
+  constant LDPC_TABLE_FECFRAME_SHORT_C1_3 : integer_array_t(0 to 14)(0 to 12) := (
     0 => integer_vector_t'(0 => 12, 1 => 416, 2 => 8909, 3 => 4156, 4 => 3216, 5 => 3112, 6 => 2560, 7 => 2912, 8 => 6405, 9 => 8593, 10 => 4969, 11 => 6723, 12 => 6912),
     1 => integer_vector_t'(0 => 12, 1 => 8978, 2 => 3011, 3 => 4339, 4 => 9312, 5 => 6396, 6 => 2957, 7 => 7288, 8 => 5485, 9 => 6031, 10 => 10218, 11 => 2226, 12 => 3575),
     2 => integer_vector_t'(0 => 12, 1 => 3383, 2 => 10059, 3 => 1114, 4 => 10008, 5 => 10147, 6 => 9384, 7 => 4290, 8 => 434, 9 => 5139, 10 => 3536, 11 => 1965, 12 => 2291),
@@ -1441,7 +1441,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 10 x 18 kB BRAMs or 5 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_SHORT_C1_4_COLUMN_WIDTHS : integer_vector_t := (0 => 4, 1 => 14, 2 => 14, 3 => 14, 4 => 14, 5 => 13, 6 => 14, 7 => 14, 8 => 14, 9 => 14, 10 => 14, 11 => 14, 12 => 14);
 
-  constant LDPC_TABLE_FECFRAME_SHORT_C1_4 : integer_2d_array_t(0 to 8)(0 to 12) := (
+  constant LDPC_TABLE_FECFRAME_SHORT_C1_4 : integer_array_t(0 to 8)(0 to 12) := (
     0 => integer_vector_t'(0 => 12, 1 => 6295, 2 => 9626, 3 => 304, 4 => 7695, 5 => 4839, 6 => 4936, 7 => 1660, 8 => 144, 9 => 11203, 10 => 5567, 11 => 6347, 12 => 12557),
     1 => integer_vector_t'(0 => 12, 1 => 10691, 2 => 4988, 3 => 3859, 4 => 3734, 5 => 3071, 6 => 3494, 7 => 7687, 8 => 10313, 9 => 5964, 10 => 8069, 11 => 8296, 12 => 11090),
     2 => integer_vector_t'(0 => 12, 1 => 10774, 2 => 3613, 3 => 5208, 4 => 11177, 5 => 7676, 6 => 3549, 7 => 8746, 8 => 6583, 9 => 7239, 10 => 12265, 11 => 2674, 12 => 4292),
@@ -1457,7 +1457,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 9 x 18 kB BRAMs or 5 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_SHORT_C2_3_COLUMN_WIDTHS : integer_vector_t := (0 => 4, 1 => 4, 2 => 13, 3 => 13, 4 => 12, 5 => 12, 6 => 11, 7 => 12, 8 => 13, 9 => 12, 10 => 13, 11 => 12, 12 => 13, 13 => 12);
 
-  constant LDPC_TABLE_FECFRAME_SHORT_C2_3 : integer_2d_array_t(0 to 29)(0 to 13) := (
+  constant LDPC_TABLE_FECFRAME_SHORT_C2_3 : integer_array_t(0 to 29)(0 to 13) := (
     0 => integer_vector_t'(0 => 13, 1 => 0, 2 => 2084, 3 => 1613, 4 => 1548, 5 => 1286, 6 => 1460, 7 => 3196, 8 => 4297, 9 => 2481, 10 => 3369, 11 => 3451, 12 => 4620, 13 => 2622),
     1 => integer_vector_t'(0 => 13, 1 => 1, 2 => 122, 3 => 1516, 4 => 3448, 5 => 2880, 6 => 1407, 7 => 1847, 8 => 3799, 9 => 3529, 10 => 373, 11 => 971, 12 => 4358, 13 => 3108),
     2 => integer_vector_t'(0 => 13, 1 => 2, 2 => 259, 3 => 3399, 4 => 929, 5 => 2650, 6 => 864, 7 => 3996, 8 => 3833, 9 => 107, 10 => 5287, 11 => 164, 12 => 3125, 13 => 2350),
@@ -1494,7 +1494,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 10 x 18 kB BRAMs or 5 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_SHORT_C2_5_COLUMN_WIDTHS : integer_vector_t := (0 => 4, 1 => 14, 2 => 14, 3 => 14, 4 => 14, 5 => 14, 6 => 14, 7 => 13, 8 => 13, 9 => 13, 10 => 14, 11 => 13, 12 => 14);
 
-  constant LDPC_TABLE_FECFRAME_SHORT_C2_5 : integer_2d_array_t(0 to 17)(0 to 12) := (
+  constant LDPC_TABLE_FECFRAME_SHORT_C2_5 : integer_array_t(0 to 17)(0 to 12) := (
     0 => integer_vector_t'(0 => 12, 1 => 5650, 2 => 4143, 3 => 8750, 4 => 583, 5 => 6720, 6 => 8071, 7 => 635, 8 => 1767, 9 => 1344, 10 => 6922, 11 => 738, 12 => 6658),
     1 => integer_vector_t'(0 => 12, 1 => 5696, 2 => 1685, 3 => 3207, 4 => 415, 5 => 7019, 6 => 5023, 7 => 5608, 8 => 2605, 9 => 857, 10 => 6915, 11 => 1770, 12 => 8016),
     2 => integer_vector_t'(0 => 12, 1 => 3992, 2 => 771, 3 => 2190, 4 => 7258, 5 => 8970, 6 => 7792, 7 => 1802, 8 => 1866, 9 => 6137, 10 => 8841, 11 => 886, 12 => 1931),
@@ -1519,7 +1519,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 8 x 18 kB BRAMs or 4 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_SHORT_C3_4_COLUMN_WIDTHS : integer_vector_t := (0 => 4, 1 => 4, 2 => 13, 3 => 12, 4 => 13, 5 => 11, 6 => 10, 7 => 12, 8 => 11, 9 => 12, 10 => 10, 11 => 10, 12 => 11);
 
-  constant LDPC_TABLE_FECFRAME_SHORT_C3_4 : integer_2d_array_t(0 to 32)(0 to 12) := (
+  constant LDPC_TABLE_FECFRAME_SHORT_C3_4 : integer_array_t(0 to 32)(0 to 12) := (
     0 => integer_vector_t'(0 => 12, 1 => 3, 2 => 3198, 3 => 478, 4 => 4207, 5 => 1481, 6 => 1009, 7 => 2616, 8 => 1924, 9 => 3437, 10 => 554, 11 => 683, 12 => 1801),
     1 => integer_vector_t'(0 => 3, 1 => 4, 2 => 2681, 3 => 2135, 4 => -1, 5 => -1, 6 => -1, 7 => -1, 8 => -1, 9 => -1, 10 => -1, 11 => -1, 12 => -1),
     2 => integer_vector_t'(0 => 3, 1 => 5, 2 => 3107, 3 => 4027, 4 => -1, 5 => -1, 6 => -1, 7 => -1, 8 => -1, 9 => -1, 10 => -1, 11 => -1, 12 => -1),
@@ -1559,7 +1559,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 9 x 18 kB BRAMs or 5 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_SHORT_C3_5_COLUMN_WIDTHS : integer_vector_t := (0 => 4, 1 => 13, 2 => 13, 3 => 13, 4 => 13, 5 => 13, 6 => 13, 7 => 13, 8 => 13, 9 => 13, 10 => 13, 11 => 13, 12 => 13);
 
-  constant LDPC_TABLE_FECFRAME_SHORT_C3_5 : integer_2d_array_t(0 to 26)(0 to 12) := (
+  constant LDPC_TABLE_FECFRAME_SHORT_C3_5 : integer_array_t(0 to 26)(0 to 12) := (
     0 => integer_vector_t'(0 => 12, 1 => 2765, 2 => 5713, 3 => 6426, 4 => 3596, 5 => 1374, 6 => 4811, 7 => 2182, 8 => 544, 9 => 3394, 10 => 2840, 11 => 4310, 12 => 771),
     1 => integer_vector_t'(0 => 12, 1 => 4951, 2 => 211, 3 => 2208, 4 => 723, 5 => 1246, 6 => 2928, 7 => 398, 8 => 5739, 9 => 265, 10 => 5601, 11 => 5993, 12 => 2615),
     2 => integer_vector_t'(0 => 12, 1 => 210, 2 => 4730, 3 => 5777, 4 => 3096, 5 => 4282, 6 => 6238, 7 => 4939, 8 => 1119, 9 => 6463, 10 => 5298, 11 => 6320, 12 => 4016),
@@ -1593,7 +1593,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 2 x 18 kB BRAMs or 1 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_SHORT_C4_5_COLUMN_WIDTHS : integer_vector_t := (0 => 2, 1 => 4, 2 => 12, 3 => 12);
 
-  constant LDPC_TABLE_FECFRAME_SHORT_C4_5 : integer_2d_array_t(0 to 34)(0 to 3) := (
+  constant LDPC_TABLE_FECFRAME_SHORT_C4_5 : integer_array_t(0 to 34)(0 to 3) := (
     0 => integer_vector_t'(0 => 3, 1 => 5, 2 => 896, 3 => 1565),
     1 => integer_vector_t'(0 => 3, 1 => 6, 2 => 2493, 3 => 184),
     2 => integer_vector_t'(0 => 3, 1 => 7, 2 => 212, 3 => 3210),
@@ -1635,7 +1635,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 8 x 18 kB BRAMs or 4 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_SHORT_C5_6_COLUMN_WIDTHS : integer_vector_t := (0 => 4, 1 => 3, 2 => 12, 3 => 12, 4 => 11, 5 => 10, 6 => 10, 7 => 10, 8 => 11, 9 => 9, 10 => 12, 11 => 12, 12 => 11, 13 => 12);
 
-  constant LDPC_TABLE_FECFRAME_SHORT_C5_6 : integer_2d_array_t(0 to 36)(0 to 13) := (
+  constant LDPC_TABLE_FECFRAME_SHORT_C5_6 : integer_array_t(0 to 36)(0 to 13) := (
     0 => integer_vector_t'(0 => 13, 1 => 3, 2 => 2409, 3 => 499, 4 => 1481, 5 => 908, 6 => 559, 7 => 716, 8 => 1270, 9 => 333, 10 => 2508, 11 => 2264, 12 => 1702, 13 => 2805),
     1 => integer_vector_t'(0 => 3, 1 => 4, 2 => 2447, 3 => 1926, 4 => -1, 5 => -1, 6 => -1, 7 => -1, 8 => -1, 9 => -1, 10 => -1, 11 => -1, 12 => -1, 13 => -1),
     2 => integer_vector_t'(0 => 3, 1 => 5, 2 => 414, 3 => 1224, 4 => -1, 5 => -1, 6 => -1, 7 => -1, 8 => -1, 9 => -1, 10 => -1, 11 => -1, 12 => -1, 13 => -1),
@@ -1679,7 +1679,7 @@ package ldpc_tables_pkg is
   -- Resource estimation: 3 x 18 kB BRAMs or 2 x 36 kB BRAMs
   constant LDPC_TABLE_FECFRAME_SHORT_C8_9_COLUMN_WIDTHS : integer_vector_t := (0 => 2, 1 => 2, 2 => 11, 3 => 11, 4 => 11);
 
-  constant LDPC_TABLE_FECFRAME_SHORT_C8_9 : integer_2d_array_t(0 to 39)(0 to 4) := (
+  constant LDPC_TABLE_FECFRAME_SHORT_C8_9 : integer_array_t(0 to 39)(0 to 4) := (
     0 => integer_vector_t'(0 => 4, 1 => 0, 2 => 1558, 3 => 712, 4 => 805),
     1 => integer_vector_t'(0 => 4, 1 => 1, 2 => 1450, 3 => 873, 4 => 1337),
     2 => integer_vector_t'(0 => 4, 1 => 2, 2 => 1741, 3 => 1129, 4 => 1184),
@@ -1742,7 +1742,7 @@ package ldpc_tables_pkg is
     constant code_rate : code_rate_t) return ldpc_metadata_t;
 
 
-  constant LDPC_DATA_TABLE : std_logic_vector_2d_t(0 to 6446)(LDPC_TABLE_DATA_WIDTH - 1 downto 0) := (
+  constant LDPC_DATA_TABLE : std_logic_array_t(0 to 6446)(LDPC_TABLE_DATA_WIDTH - 1 downto 0) := (
     -- Table for fecframe_normal, C1_2
        0 => std_logic_vector(to_unsigned(   54, LDPC_TABLE_DATA_WIDTH)), --    54 / 0x0036
        1 => std_logic_vector(to_unsigned( 9318, LDPC_TABLE_DATA_WIDTH)), --  9318 / 0x2466

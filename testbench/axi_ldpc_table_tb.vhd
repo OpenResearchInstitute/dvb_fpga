@@ -248,7 +248,7 @@ begin
       variable calc_ldpc_msg    : msg_t;
 
       -- GHDL doens't play well with anonymous vectors, so let's be explicit
-      subtype bfm_data_t is std_logic_vector_2d_t(0 to 0)(FRAME_TYPE_WIDTH + CONSTELLATION_WIDTH + CODE_RATE_WIDTH - 1 downto 0);
+      subtype bfm_data_t is std_logic_array_t(0 to 0)(FRAME_TYPE_WIDTH + CONSTELLATION_WIDTH + CODE_RATE_WIDTH - 1 downto 0);
       constant bfm_data : std_logic_vector := encode(config.code_rate) & encode(config.constellation) & encode(config.frame_type);
 
       -- In the config file, the 'next' bit is actually an entire byte, so we'll read

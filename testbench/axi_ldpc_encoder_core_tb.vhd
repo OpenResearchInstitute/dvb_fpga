@@ -481,7 +481,7 @@ begin
       procedure handle_config ( -- {{ --------------------------------------------------
         constant config : config_t ) is
         constant table  : ldpc_table_t := get_ldpc_table(config.frame_type, config.code_rate);
-        variable mem    : std_logic_vector_2d_t((table.length + 15) / 16 - 1 downto 0)(15 downto 0);
+        variable mem    : std_logic_array_t((table.length + 15) / 16 - 1 downto 0)(15 downto 0);
 
         procedure accumulate_ldpc ( -- {{ ----------------------------------------------
           constant table            : in ldpc_table_t) is
@@ -569,9 +569,9 @@ begin
         end procedure; -- }} ---------------------------------------------------------------
 
         impure function post_xor ( -- {{ ---------------------------------------------------
-          constant data   : std_logic_vector_2d_t)
-          return std_logic_vector_2d_t is
-          variable result : std_logic_vector_2d_t((table.length + 15 ) /16 - 1 downto 0)(15 downto 0);
+          constant data   : std_logic_array_t)
+          return std_logic_array_t is
+          variable result : std_logic_array_t((table.length + 15 ) /16 - 1 downto 0)(15 downto 0);
           variable addr   : natural;
           variable offset : natural;
         begin
