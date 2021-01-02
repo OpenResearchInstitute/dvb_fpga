@@ -173,7 +173,7 @@ class LdpcTable:
             f"  -- Resource estimation: {brams_18k} x 18 kB BRAMs or {brams_36k} x 36 kB BRAMs",
             f"  {self._getWidthArray()}",
             f"",
-            f"  constant {self.name.upper()} : integer_2d_array_t"
+            f"  constant {self.name.upper()} : integer_array_t"
             f"(0 to {self.length - 1})(0 to {columns - 1}) := (",
         ]
 
@@ -334,7 +334,7 @@ def _generateTablesRom(tables):
     # Now generate the actual table
     package += [
         "",
-        f"  constant LDPC_DATA_TABLE : std_logic_vector_2d_t"
+        f"  constant LDPC_DATA_TABLE : std_logic_array_t"
         f"(0 to {table_length - 1})"
         f"({data_width} - 1 downto 0) := (",
     ]

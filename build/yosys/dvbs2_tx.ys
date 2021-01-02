@@ -24,7 +24,7 @@ ghdl --std=08                                                                 \
                     rtl/axi_ldpc_table.vhd                                    \
                     rtl/axi_ldpc_encoder_core.vhd                             \
                     rtl/axi_ldpc_encoder.vhd                                  \
-                    rtl/axi_dvbs2_plinsertion.vhd                            \
+                    rtl/axi_plframe_header.vhd                                \
                     rtl/plheader_tables_pkg.vhd                               \
                     rtl/ldpc/ldpc_pkg.vhd                                     \
                     rtl/ldpc/ldpc_tables_pkg.vhd                              \

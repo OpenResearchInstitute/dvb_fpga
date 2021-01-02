@@ -37,7 +37,7 @@ package ldpc_pkg is
   constant DVB_LDPC_GROUP_LENGTH : natural := 360;
 
   type ldpc_table_t is record
-    data   : integer_2d_array_t;
+    data   : integer_array_t;
     q      : natural;
     length : natural;
   end record;
@@ -66,7 +66,7 @@ package body ldpc_pkg is
   function get_table (
     constant frame_type : in frame_type_t;
     constant code_rate  : in code_rate_t)
-  return integer_2d_array_t is
+  return integer_array_t is
   begin
 
     if frame_type = fecframe_short   and code_rate = C4_5  then return LDPC_TABLE_FECFRAME_SHORT_C4_5;    end if;

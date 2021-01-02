@@ -96,7 +96,7 @@ package body plheader_tables_pkg is
     return sin_x & cos_x;
   end;
 
-  constant MOD_8PSK_MAP : std_logic_vector_2d_t(0 to 7)(DATA_WIDTH - 1 downto 0) := (
+  constant MOD_8PSK_MAP : std_logic_array_t(0 to 7)(DATA_WIDTH - 1 downto 0) := (
       0 => get_iq_pair(      MATH_PI / 4.0),
       1 => get_iq_pair(0.0),
       2 => get_iq_pair(4.0 * MATH_PI / 4.0),
