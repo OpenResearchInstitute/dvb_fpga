@@ -66,23 +66,94 @@ end axi_plframe_header;
 
 architecture axi_dvbs2_plinseration of axi_plframe_header is
 
+  function get_plheader_addr(
+    constant constellation : constellation_t;
+    constant code_rate : code_rate_t) return integer is
+    variable addr : integer := 8;
+  begin
+    if (constellation = mod_8psk) then
+      case code_rate is
+        when C3_5 => addr := 1;
+        when C2_3 => addr := 2;
+        when C3_4 => addr := 3;
+        when C5_6 => addr := 4;
+        when C8_9 => addr := 5;
+        when C9_10 => addr := 6;
+        when others => addr := 0;
+      end case;
+    end if;
+    if (constellation = mod_16apsk) then
+      case code_rate is
+        when C3_5 => addr := 7;
+        when C2_3 => addr := 8;
+        when C3_4 => addr := 9;
+        when C5_6 => addr := 10;
+        when C8_9 => addr := 11;
+        when C9_10 => addr := 12;
+        when others => addr := 0;
+      end case;
+      end if;
+    if (constellation = mod_32apsk) then
+     case code_rate is
+       when C3_5 => addr := 12;
+       when C2_3 => addr := 14;
+       when C3_4 => addr := 15;
+       when C5_6 => addr := 16;
+       when C8_9 => addr := 17;
+       when C9_10 => addr := 18;
+       when others => addr := 0;
+     end case;
+     end if;
+     
+    return addr;     
+  end function get_plheader_addr;
+  
+  function get_plheader_table return std_logic_array_t is
+    variable result : std_logic_array_t(1 to 10)(PL_HDR_LEN -1 downto 0);
+    variable addr : integer;
+  begin
+    for constellation in constellation_t'left to constellation_t'right loop
+      for code_rate in code_rate_t'left to code_rate_t'right loop
+        addr := get_plheader_addr(constellation, code_rate);
+        result(addr) := build_plheader(constellation, code_rate);
+      end loop;
+    end loop;
+    return result;
+  end function get_plheader_table;
+
+  constant TABLE : std_logic_array_t(open)(PL_HDR_LEN -1 downto 0) := get_plheader_table;
+  
   --------
   --Types-
   --------
   -- Actual config we have to process
-  signal cfg_code_rate            : code_Rate_t;
+  signal cfg_code_rate            : code_rate_t;
   signal cfg_constellation        : constellation_t;
 
-  shared variable shared_plheader : protected_t;
+  signal addr : std_logic_vector(numbits(20) -1 downto 0);
+  signal rddata : std_logic_vector(PL_HDR_LEN -1 downto 0);
   
   -----------------
     -- subprograms --
     -----------------
 
-
 --architecture begin
 begin
-   
+
+  addr <= std_logic_vector(to_unsigned(get_plheader_addr(cfg_constellation, cfg_code_rate), numbits(20)));
+  
+ -- The ROM with the coefficients from the spec
+ rom_u : entity fpga_cores.rom_inference
+   generic map (
+     ROM_DATA     => TABLE,
+     ROM_TYPE     => lut,
+     OUTPUT_DELAY => 0)
+   port map (
+     clk    => clk,
+     clken  => '1',
+     addr   => addr,
+     rddata => rddata);
+     
   process(clk, rst)
   begin
     if rst = '1' then
@@ -98,16 +169,11 @@ begin
         -- bogus, the 2nd will use the config of the 1st one and so on
         cfg_constellation <= s_constellation_type;
         cfg_code_rate     <= s_code_rate;
-        m_tdata           <= shared_plheader.get_plheader(cfg_constellation, cfg_code_rate);
+        m_tdata           <= rddata;
         --m_tvalid <= 1;
       end if;
     end if;
   end process;
-  
-  --form pl_header whenever master wants to send. 
-  -- FIXME: This is unlikely to be synthesizeable
-  shared_plheader.build_plheader(cfg_constellation, cfg_code_rate);
-  -- not handling C1_4, C1_3, C2_5, C1_2,
    
 end axi_dvbs2_plinseration;
   

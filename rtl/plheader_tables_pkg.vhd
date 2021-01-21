@@ -45,14 +45,9 @@ package plheader_tables_pkg is
 
   -- This should be called to create a constant that will be the basis of the PL header
   -- ROM
-  type protected_t is protected
-    procedure build_plheader(
-       constant constellation : in constellation_t;
-       constant code_rate : in code_rate_t);
-    impure function get_plheader(
-       constant constellation : constellation_t;
-       constant code_rate :  code_rate_t) return std_logic_vector;
-  end protected;
+  function build_plheader(
+    constant constellation : constellation_t;
+    constant code_rate :  code_rate_t) return std_logic_vector;
 
   constant G : unsigned_array_t(0 to 6)(31 downto 0) := (
     0 => x"90AC2DDD", 1 => x"55555555", 2 => x"33333333", 3 => x"0F0F0F0F",
@@ -150,176 +145,98 @@ package body plheader_tables_pkg is
     return modcode;
   end;
 
-  type protected_t is protected body
-    variable pl_header_table : pl_hdr_table_t;
+  function build_plheader(
+    constant constellation : in constellation_t;
+    constant code_rate     : in code_rate_t) return std_logic_vector is
+    
+    variable pl_header     : std_logic_vector (PL_HDR_LEN - 1 downto 0);
+    variable modcode       : unsigned(7 downto 0) := (others => '0');
+    variable modbit        : unsigned (31 downto 0) := (31 => '1', others => '0');
 
-    procedure build_plheader(
-      constant constellation : in constellation_t;
-      constant code_rate     : in code_rate_t) is
-      variable pl_header     : std_logic_vector (PL_HDR_LEN - 1 downto 0);
-      variable modcode       : unsigned(7 downto 0) := (others => '0');
-      variable modbit        : unsigned (31 downto 0) := (31 => '1', others => '0');
+    variable plscode : std_logic_vector(63 downto 0) := (others => '0');
 
-      variable plscode : std_logic_vector(63 downto 0) := (others => '0');
+    -- no pilot insertion and  FECFRAMESIZE 64800
+    variable type_code : unsigned (1 downto 0) := (others => '0');
+    variable code : unsigned (7 downto 0) := (others => '0');
+    variable res : unsigned (7 downto 0) := (others => '0');
+    variable temp : unsigned (31 downto 0);
 
-      -- no pilot insertion and  FECFRAMESIZE 64800
-      variable type_code : unsigned (1 downto 0) := (others => '0');
-      variable code : unsigned (7 downto 0) := (others => '0');
-      variable res : unsigned (7 downto 0) := (others => '0');
-      variable temp : unsigned (31 downto 0);
+  begin
+    modcode := get_modcode(constellation, code_rate);
 
-    begin
-      modcode := get_modcode(constellation, code_rate);
+    -- Left side bit for SOF being the MSB of PL_HEADER
+    -- concatenate to form PL header
+    pl_header :=  PL_HDR_SOF & pl_header(PL_HDR_LEN - 1 downto PL_HDR_SOF_LEN);
 
-      -- Left side bit for SOF being the MSB of PL_HEADER
-      -- concatenate to form PL header
-      pl_header :=  PL_HDR_SOF & pl_header(PL_HDR_LEN - 1 downto PL_HDR_SOF_LEN);
+    -- pl header encode
+    res := modcode and x"80";
+    if res /= 0 then
+      code := modcode or ( type_code and x"01");
+    else
+      code := (modcode (7 downto 2) & '0') or type_code;
+    end if;
 
-      -- pl header encode
-      res := modcode and x"80";
-      if res /= 0 then
-        code := modcode or ( type_code and x"01");
+    --scrambling process start. Can move to different function
+    -- move below code to a different function.
+    -- b_64_8_code
+    res := code and x"80";
+    if res /= 0 then
+      temp := temp xor G(0);
+    end if;
+
+    res := code and x"40";
+    if res /= 0 then
+      temp := temp xor G(1);
+    end if;
+
+    res := code and x"20";
+    if res /= 0 then
+      temp := temp xor G(2);
+    end if;
+
+    res := code and x"10";
+    if res /= 0 then
+      temp := temp xor G(3);
+    end if;
+
+    res := code and x"08";
+    if res /= 0 then
+      temp := temp xor G(4);
+    end if;
+
+    res := code and x"04";
+    if res /= 0 then
+      temp := temp xor G(5);
+    end if;
+
+    res := code and x"02";
+    if res /= 0 then
+      temp := temp xor G(6);
+    end if;
+
+    for m in 0 to 31 loop
+      temp := temp and modbit;
+      if temp /= 0 then
+        plscode(m *2) := '1';
       else
-        code := (modcode (7 downto 2) & '0') or type_code;
+        plscode(m *2) := '0';
       end if;
+      code := code and x"01";
+      plscode((m * 2) + 1) := plscode(m * 2) xor code(0);
+      -- right shift modbit.
+      modbit := '0' & modbit(31 downto 1);
+    end loop;
 
-      --scrambling process start. Can move to different function
-      -- move below code to a different function.
-      -- b_64_8_code
-      res := code and x"80";
-      if res /= 0 then
-        temp := temp xor G(0);
-      end if;
+     --randomize it.
+    for m in 0 to 63 loop
+      plscode(m) := plscode(m) xor PL_HDR_SCRAMBLE_TAB(m);
+    end loop;
 
-      res := code and x"40";
-      if res /= 0 then
-        temp := temp xor G(1);
-      end if;
+    --concatename pl_tmp and pl_header containing SOF
+    pl_header(63 downto 0) :=  plscode(63 downto 0);
 
-      res := code and x"20";
-      if res /= 0 then
-        temp := temp xor G(2);
-      end if;
-
-      res := code and x"10";
-      if res /= 0 then
-        temp := temp xor G(3);
-      end if;
-
-      res := code and x"08";
-      if res /= 0 then
-        temp := temp xor G(4);
-      end if;
-
-      res := code and x"04";
-      if res /= 0 then
-        temp := temp xor G(5);
-      end if;
-
-      res := code and x"02";
-      if res /= 0 then
-        temp := temp xor G(6);
-      end if;
-
-      for m in 0 to 31 loop
-        temp := temp and modbit;
-        if temp /= 0 then
-          plscode(m *2) := '1';
-        else
-          plscode(m *2) := '0';
-        end if;
-        code := code and x"01";
-        plscode((m * 2) + 1) := plscode(m * 2) xor code(0);
-        -- right shift modbit.
-        modbit := '0' & modbit(31 downto 1);
-      end loop;
-
-       --randomize it.
-      for m in 0 to 63 loop
-        plscode(m) := plscode(m) xor PL_HDR_SCRAMBLE_TAB(m);
-      end loop;
-
-      --concatename pl_tmp and pl_header containing SOF
-      pl_header(63 downto 0) :=  plscode(63 downto 0);
-
-
-      -- Why do we need to fill the pl_header_table with the same value throughout?
-      if (constellation = mod_8psk) then
-        case code_rate is
-          when C3_5 => pl_header_table(0) := pl_header;
-          when C2_3 => pl_header_table(1) := pl_header;
-          when C3_4 => pl_header_table(2) := pl_header;
-          when C5_6 => pl_header_table(3) := pl_header;
-          when C8_9 => pl_header_table(4) := pl_header;
-          when C9_10 => pl_header_table(5) := pl_header;
-          when others => pl_header_table(6) := pl_header;
-        end case;
-      end if;
-
-      if constellation = mod_16apsk then
-        case code_rate is
-          when C2_3 => pl_header_table(7) := pl_header;
-          when C3_4 => pl_header_table(8) := pl_header;
-          when C4_5 => pl_header_table(9) := pl_header;
-          when C5_6 => pl_header_table(10) := pl_header;
-          when C8_9 => pl_header_table(11) := pl_header;
-          when C9_10 => pl_header_table(12) := pl_header;
-          when others => pl_header_table(13) := pl_header;
-        end case;
-      end if;
-
-      if constellation = mod_32apsk then
-        case code_rate is
-          when C3_4 => pl_header_table(14) := pl_header;
-          when C4_5 => pl_header_table(15) := pl_header;
-          when C5_6 => pl_header_table(16) := pl_header;
-          when C8_9 => pl_header_table(17) := pl_header;
-          when C9_10 => pl_header_table(18) := pl_header;
-          when others => pl_header_table(19) := pl_header;
-        end case;
-      end if;
-    end procedure;
-
-   impure function get_plheader(
-     constant constellation : constellation_t;
-       constant code_rate :  code_rate_t) return std_logic_vector is
-   begin
-     if (constellation = mod_8psk) then
-       case code_rate is
-           when C3_5 => return pl_header_table(0);
-           when C2_3 => return pl_header_table(1);
-           when C3_4 => return pl_header_table(2);
-           when C5_6 => return pl_header_table(3);
-           when C8_9 => return pl_header_table(4);
-           when C9_10 => return pl_header_table(5);
-           when others => return pl_header_table(6);
-       end case;
-     end if;
-
-     if constellation = mod_16apsk then
-       case code_rate is
-          when C2_3 => return pl_header_table(7);
-          when C3_4 => return pl_header_table(8);
-          when C4_5 => return pl_header_table(9);
-          when C5_6 => return pl_header_table(10);
-          when C8_9 => return pl_header_table(11);
-          when C9_10 => return pl_header_table(12);
-          when others => return pl_header_table(13);
-       end case;
-     end if;
-
-     if constellation = mod_32apsk then
-       case code_rate is
-          when C3_4 => return pl_header_table(14);
-          when C4_5 => return pl_header_table(15);
-          when C5_6 => return pl_header_table(16);
-          when C8_9 => return pl_header_table(17);
-          when C9_10 => return pl_header_table(18);
-          when others => return pl_header_table(19);
-      end case;
-     end if;
-   end function;
-  end protected body;
+    return pl_header;
+  end function build_plheader;
 
 end package body plheader_tables_pkg;
 
