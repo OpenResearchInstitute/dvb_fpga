@@ -42,11 +42,8 @@ use fpga_cores.axi_pkg.all;
 use fpga_cores.common_pkg.all;
 
 library fpga_cores_sim;
-use fpga_cores_sim.axi_stream_bfm_pkg.all;
-use fpga_cores_sim.file_utils_pkg.all;
 use fpga_cores_sim.testbench_utils_pkg.all;
 
-use work.dvb_sim_utils_pkg.all;
 use work.dvb_utils_pkg.all;
 use work.ldpc_pkg.all;
 
@@ -67,18 +64,9 @@ architecture plheader_tables_tb of plheader_tables_tb is
   ---------------
   -- Constants --
   ---------------
-  constant configs           : config_array_t := get_test_cfg(TEST_CFG);
-
   constant DATA_WIDTH        : integer := 8;
 
-  constant FILE_CHECKER_NAME : string  := "file_checker";
   constant CLK_PERIOD        : time    := 5 ns;
-  constant ERROR_CNT_WIDTH   : integer := 8;
-
-  constant CONFIG_INPUT_WIDTHS: fpga_cores.common_pkg.integer_vector_t := (
-    0 => FRAME_TYPE_WIDTH,
-    1 => CONSTELLATION_WIDTH,
-    2 => CODE_RATE_WIDTH);
 
   -------------
   -- Signals --
@@ -86,10 +74,6 @@ architecture plheader_tables_tb of plheader_tables_tb is
   -- Usual ports
   signal clk                : std_logic := '1';
   signal rst                : std_logic;
-
-  signal tdata_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
-  signal tlast_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
-  signal error_cnt          : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
 
   signal m_constellation    : constellation_t;
   signal m_frame_type       : frame_type_t;
@@ -158,9 +142,7 @@ begin
   ---------------
   main : process -- {{
     constant self         : actor_t := new_actor("main");
-    constant logger       : logger_t := get_logger("main");
-    constant input_cfg_p  : actor_t := find("input_cfg_p");
-
+    
     procedure walk(constant steps : natural) is -- {{ ----------------------------------
     begin
       if steps /= 0 then
@@ -171,28 +153,28 @@ begin
     end procedure walk; -- }} ----------------------------------------------------------
 
     procedure run_test (  -- {{ -----------------------------------------------------------
-      constant code_rate : code_rate_t := C3_5;
-      constant constellation : constellation_t := mod_8psk;
-
-      m_tvalid <= '1'
-      m_tready <= '1'
+      constant code_rate : code_rate_t;
+      constant constellation : constellation_t) is
+    begin
+      m_tvalid <= '1';
+      m_tready <= '1';
 
       m_constellation <= constellation;
       m_code_rate <= code_rate;
-      m_frame_type <= open;
+      m_frame_type <= fecframe_normal;
 
     end procedure run_test;
 
   begin
     test_runner_setup(runner, RUNNER_CFG);
     rst <= '1';
-    m_tvalid <= '0'
-    m_tready <= '0'
+    m_tvalid <= '0';
+    m_tready <= '0';
     walk(32);
     rst <= '0';
     walk(32);
-    run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
+    run_test(C3_5, mod_8psk);
     test_runner_cleanup(runner);
   end process; -- }}  
 
-end axi_plheader_table_tb;
+end plheader_tables_tb;
