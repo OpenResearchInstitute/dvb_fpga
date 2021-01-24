@@ -33,140 +33,94 @@ use work.dvb_utils_pkg.all;
 
 package plheader_tables_pkg is
 
-  constant PL_HDR_LEN          : integer := 90;
-  constant PL_HDR_SOF_LEN      : integer := 26;
-  constant PL_HDR_SCRAMBLE_LEN : integer := 64;
-  constant DATA_WIDTH          : natural := 32;
+  function get_plframe_header_rom return std_logic_array_t;
 
-  constant PL_HDR_SOF          : std_logic_vector (PL_HDR_SOF_LEN -1 downto 0) := ("01100011010010111010000010");
-  constant PL_HDR_SCRAMBLE_TAB : std_logic_vector (PL_HDR_SCRAMBLE_LEN -1 downto 0) := ("0111000110011101100000111100100101010011010000100010110111111010");
-
-  type pl_hdr_table_t is array (0 to 20) of std_logic_vector(PL_HDR_LEN - 1 downto 0);
-
-  -- This should be called to create a constant that will be the basis of the PL header
-  -- ROM
-  function build_plheader(
+  -- We'll expose this to use as a address to the header ROM
+  function get_modcode (
     constant constellation : in constellation_t;
-    constant code_rate     : in code_rate_t) return std_logic_vector;
+    constant code_rate : in code_rate_t) return integer;
+
+end package plheader_tables_pkg;
+
+
+package body plheader_tables_pkg is
+
+  constant PLFRAME_HEADER_LENGTH : integer := 90;
 
   constant G : unsigned_array_t(0 to 6)(31 downto 0) := (
     0 => x"90AC2DDD", 1 => x"55555555", 2 => x"33333333", 3 => x"0F0F0F0F",
     4 => x"00FF00FF", 5 => x"0000FFFF", 6 => x"FFFFFFFF");
 
-end package plheader_tables_pkg;
+  constant PLFRAME_HEADER_SOF  : std_logic_vector(25 downto 0) := "01" & x"8D2E82";
+  constant PL_HDR_SCRAMBLE_TAB : std_logic_vector(63 downto 0) := ("0111000110011101100000111100100101010011010000100010110111111010");
 
-package body plheader_tables_pkg is
-
-  function to_fixed_point (constant x : real) return signed is
-    constant width : natural := DATA_WIDTH/2 - 1;
-    constant round_a : integer := integer(ieee.math_real.round(x * real(2**width)));
-    variable a     : signed(width - 1 downto 0) := to_signed(round_a, width);
-  begin
-    if a < 0 then
-      a := to_signed(round_a, width);
-      a := abs a;
-      a := not a;
-      a := a + 1;
-      a := a + ( 2 ** width );
-    end if;
-    return a;
-  end;
-
-  function cos (constant x : real) return unsigned is
-  begin
-    return unsigned(resize(to_fixed_point(ieee.math_real.cos(x)), DATA_WIDTH/2));
-  end;
-
-  function sin (constant x : real) return unsigned is
-  begin
-    return unsigned(resize(to_fixed_point(ieee.math_real.sin(x)), DATA_WIDTH/2));
-  end;
-
-  function get_iq_pair (constant x : real) return std_logic_vector is
-    variable sin_x : std_logic_vector(DATA_WIDTH -1 downto 0);
-    variable cos_x : std_logic_vector(DATA_WIDTH -1 downto 0);
-  begin
-    sin_x := std_logic_vector(sin(x));
-    cos_x := std_logic_vector(cos(x));
-    return sin_x & cos_x;
-  end;
-
-  constant MOD_8PSK_MAP : std_logic_array_t(0 to 7)(DATA_WIDTH - 1 downto 0) := (
-      0 => get_iq_pair(      MATH_PI / 4.0),
-      1 => get_iq_pair(0.0),
-      2 => get_iq_pair(4.0 * MATH_PI / 4.0),
-      3 => get_iq_pair(5.0 * MATH_PI / 4.0),
-      4 => get_iq_pair(2.0 * MATH_PI / 4.0),
-      5 => get_iq_pair(7.0 * MATH_PI / 4.0),
-      6 => get_iq_pair(3.0 * MATH_PI / 4.0),
-      7 => get_iq_pair(6.0 * MATH_PI / 4.0)
-    );
 
   function get_modcode (
     constant constellation : in constellation_t;
-    constant code_rate : in code_rate_t) return unsigned is
-    variable modcode :  unsigned (7 downto 0) := (others => '0');
+    constant code_rate : in code_rate_t) return integer is
   begin
     if (constellation = mod_8psk) then
       case code_rate is
-        when C3_5 => modcode := to_unsigned(12, 8);
-        when C2_3 => modcode := to_unsigned(13, 8);
-        when C3_4 => modcode := to_unsigned(14, 8);
-        when C5_6 => modcode := to_unsigned(15, 8);
-        when C8_9 => modcode := to_unsigned(16, 8);
-        when C9_10 => modcode := to_unsigned(17, 8);
-        when others => modcode := to_unsigned(0, 8);
+        when C3_5 => return 12;
+        when C2_3 => return 13;
+        when C3_4 => return 14;
+        when C5_6 => return 15;
+        when C8_9 => return 16;
+        when C9_10 => return 17;
+        when others => null; --return 0;
       end case;
     end if;
 
     if constellation = mod_16apsk then
       case code_rate is
-        when C2_3 => modcode := to_unsigned(18, 8);
-        when C3_4 => modcode := to_unsigned(19, 8);
-        when C4_5 => modcode := to_unsigned(20, 8);
-        when C5_6 => modcode := to_unsigned(21, 8);
-        when C8_9 => modcode := to_unsigned(22, 8);
-        when C9_10 => modcode := to_unsigned(23, 8);
-        when others => modcode := to_unsigned(0, 8);
+        when C2_3 => return 18;
+        when C3_4 => return 19;
+        when C4_5 => return 20;
+        when C5_6 => return 21;
+        when C8_9 => return 22;
+        when C9_10 => return 23;
+        when others => null; --return 0;
       end case;
     end if;
 
     if constellation = mod_32apsk then
       case code_rate is
-        when C3_4 => modcode := to_unsigned(24, 8);
-        when C4_5 => modcode := to_unsigned(25, 8);
-        when C5_6 => modcode := to_unsigned(26, 8);
-        when C8_9 => modcode := to_unsigned(27, 8);
-        when C9_10 => modcode := to_unsigned(28, 8);
-        when others => modcode := to_unsigned(0, 8);
+        when C3_4 => return 24;
+        when C4_5 => return 25;
+        when C5_6 => return 26;
+        when C8_9 => return 27;
+        when C9_10 => return 28;
+        when others => null; --return 0;
       end case;
     end if;
 
-    return modcode;
+    -- report "No MODOCDE for constellation=" & constellation_t'image(constellation) & ", code_rate=" & code_rate_t'image(code_rate)
+    --   severity Failure;
+    return -1;
   end;
 
-  function build_plheader(
+  function get_plframe_header(
     constant constellation : in constellation_t;
     constant code_rate     : in code_rate_t) return std_logic_vector is
-    
-    variable pl_header     : std_logic_vector (PL_HDR_LEN - 1 downto 0);
+
+    variable header        : std_logic_vector (PLFRAME_HEADER_LENGTH - 1 downto 0);
     variable modcode       : unsigned(7 downto 0) := (others => '0');
     variable modbit        : unsigned (31 downto 0) := (31 => '1', others => '0');
 
-    variable plscode : std_logic_vector(63 downto 0) := (others => '0');
+    variable plscode       : std_logic_vector(63 downto 0) := (others => '0');
 
     -- no pilot insertion and  FECFRAMESIZE 64800
-    variable type_code : unsigned (1 downto 0) := (others => '0');
-    variable code : unsigned (7 downto 0) := (others => '0');
-    variable res : unsigned (7 downto 0) := (others => '0');
-    variable temp : unsigned (31 downto 0);
+    variable type_code     : unsigned (1 downto 0) := (others => '0');
+    variable code          : unsigned (7 downto 0) := (others => '0');
+    variable res           : unsigned (7 downto 0) := (others => '0');
+    variable temp          : unsigned (31 downto 0);
 
   begin
-    modcode := get_modcode(constellation, code_rate);
+    modcode := to_unsigned(get_modcode(constellation, code_rate), 8);
 
     -- Left side bit for SOF being the MSB of PL_HEADER
     -- concatenate to form PL header
-    pl_header :=  PL_HDR_SOF & pl_header(PL_HDR_LEN - 1 downto PL_HDR_SOF_LEN);
+    header :=  PLFRAME_HEADER_SOF & header(PLFRAME_HEADER_LENGTH - 1 downto PLFRAME_HEADER_SOF'length);
 
     -- pl header encode
     res := modcode and x"80";
@@ -233,10 +187,39 @@ package body plheader_tables_pkg is
     end loop;
 
     --concatename pl_tmp and pl_header containing SOF
-    pl_header(63 downto 0) :=  plscode(63 downto 0);
+    header(63 downto 0) :=  plscode(63 downto 0);
 
-    return pl_header;
-  end function build_plheader;
+    return header;
+  end function get_plframe_header;
+
+
+  function get_plframe_header_rom return std_logic_array_t is
+    function get_rom_depth return integer is
+      variable cnt : integer := 0;
+    begin
+      for cfg_constellation in constellation_t'left to constellation_t'right loop
+        for cfg_code_rate in code_rate_t'left to code_rate_t'right loop
+          if get_modcode(cfg_constellation, cfg_code_rate) /= -1 then
+            cnt := cnt + 1;
+          end if;
+        end loop;
+      end loop;
+      return cnt;
+    end;
+    constant ROM_DEPTH : integer := get_rom_depth;
+    variable result    : std_logic_array_t(0 to ROM_DEPTH - 1)(PLFRAME_HEADER_LENGTH -1 downto 0);
+    variable addr      : integer;
+  begin
+    for constellation in constellation_t'left to constellation_t'right loop
+      for code_rate in code_rate_t'left to code_rate_t'right loop
+        addr := get_modcode(constellation, code_rate);
+        if addr /= -1 then
+          result(addr) := get_plframe_header(constellation, code_rate);
+        end if;
+      end loop;
+    end loop;
+    return result;
+  end function get_plframe_header_rom;
 
 end package body plheader_tables_pkg;
 

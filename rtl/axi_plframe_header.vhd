@@ -1,3 +1,4 @@
+-- vim: set foldmethod=marker foldmarker=--\ {{,--\ }} :
 --
 -- DVB IP
 --
@@ -38,16 +39,16 @@ use work.plheader_tables_pkg.all;
 -- Entity declaration --
 ------------------------
 entity axi_plframe_header is
+  generic (
+    DATA_WIDTH : integer := 8
+  );
   port (
     -- Usual ports
     clk                  : in  std_logic;
     rst                  : in  std_logic;
     -- Parameter input
-    -- FIXME: please keep naming convention used in other blocks (cfg_<parameter>). Also,
-    -- don't keep parameters that are not used
-    s_constellation_type : in  constellation_t;
-    s_frame_type         : in  frame_type_t;
-    s_code_rate          : in  code_rate_t;
+    cfg_constellation    : in  constellation_t;
+    cfg_code_rate        : in  code_rate_t;
 
     -- AXI data input
     s_tready             : out std_logic;
@@ -57,124 +58,65 @@ entity axi_plframe_header is
     m_tready             : in  std_logic;
     m_tvalid             : out std_logic;
     m_tlast              : out std_logic;
-    -- FIXME: Data with must match the width of the actual data stream to make it easier
-    -- to merge header and data streams. The header will be on a ROM but it's width may
-    -- differ from the data width, so please use fpga_cores.axi_stream_width_converter to
-    -- force it
-    m_tdata              : out std_logic_vector(90 downto 0));
+    m_tdata              : out std_logic_vector(DATA_WIDTH - 1 downto 0));
 end axi_plframe_header;
 
-architecture axi_dvbs2_plinseration of axi_plframe_header is
+architecture axi_plframe_header of axi_plframe_header is
 
-  function get_plheader_addr(
-    constant constellation : constellation_t;
-    constant code_rate : code_rate_t) return integer is
-    variable addr : integer := 8;
-  begin
-    if (constellation = mod_8psk) then
-      case code_rate is
-        when C3_5 => addr := 1;
-        when C2_3 => addr := 2;
-        when C3_4 => addr := 3;
-        when C5_6 => addr := 4;
-        when C8_9 => addr := 5;
-        when C9_10 => addr := 6;
-        when others => addr := 0;
-      end case;
-    end if;
-    if (constellation = mod_16apsk) then
-      case code_rate is
-        when C3_5 => addr := 7;
-        when C2_3 => addr := 8;
-        when C3_4 => addr := 9;
-        when C5_6 => addr := 10;
-        when C8_9 => addr := 11;
-        when C9_10 => addr := 12;
-        when others => addr := 0;
-      end case;
-      end if;
-    if (constellation = mod_32apsk) then
-     case code_rate is
-       when C3_5 => addr := 12;
-       when C2_3 => addr := 14;
-       when C3_4 => addr := 15;
-       when C5_6 => addr := 16;
-       when C8_9 => addr := 17;
-       when C9_10 => addr := 18;
-       when others => addr := 0;
-     end case;
-     end if;
-     
-    return addr;     
-  end function get_plheader_addr;
-  
-  function get_plheader_table return std_logic_array_t is
-    variable result : std_logic_array_t(1 to 10)(PL_HDR_LEN -1 downto 0);
-    variable addr : integer;
-  begin
-    for constellation in constellation_t'left to constellation_t'right loop
-      for code_rate in code_rate_t'left to code_rate_t'right loop
-        addr := get_plheader_addr(constellation, code_rate);
-        result(addr) := build_plheader(constellation, code_rate);
-      end loop;
-    end loop;
-    return result;
-  end function get_plheader_table;
+  ---------------
+  -- Constants --
+  ---------------
+  constant HEADER_ROM : std_logic_array_t := get_plframe_header_rom;
 
-  constant TABLE : std_logic_array_t(open)(PL_HDR_LEN -1 downto 0) := get_plheader_table;
-  
-  --------
-  --Types-
-  --------
-  -- Actual config we have to process
-  signal cfg_code_rate            : code_rate_t;
-  signal cfg_constellation        : constellation_t;
+  -------------
+  -- Signals --
+  -------------
+  signal addr   : std_logic_vector(numbits(HEADER_ROM'length) - 1 downto 0);
+  signal header : std_logic_vector(PL_HDR_LEN -1 downto 0);
 
-  signal addr : std_logic_vector(numbits(20) -1 downto 0);
-  signal rddata : std_logic_vector(PL_HDR_LEN -1 downto 0);
-  
-  -----------------
-    -- subprograms --
-    -----------------
-
---architecture begin
 begin
 
-  addr <= std_logic_vector(to_unsigned(get_plheader_addr(cfg_constellation, cfg_code_rate), numbits(20)));
-  
- -- The ROM with the coefficients from the spec
- rom_u : entity fpga_cores.rom_inference
-   generic map (
-     ROM_DATA     => TABLE,
-     ROM_TYPE     => lut,
-     OUTPUT_DELAY => 0)
-   port map (
-     clk    => clk,
-     clken  => '1',
-     addr   => addr,
-     rddata => rddata);
-     
-  process(clk, rst)
-  begin
-    if rst = '1' then
-      cfg_code_rate <= not_set;
-      cfg_constellation <= not_set;
-    elsif rising_edge(clk) then
-      if m_tready = '1' then
-        m_tvalid <= '0';
-      end if;
-      s_tready <= m_tready;
-      if s_tvalid = '1' then
-        -- FIXME: This is using sampled config params, meaning the first m_tdata will be
-        -- bogus, the 2nd will use the config of the 1st one and so on
-        cfg_constellation <= s_constellation_type;
-        cfg_code_rate     <= s_code_rate;
-        m_tdata           <= rddata;
-        --m_tvalid <= 1;
-      end if;
-    end if;
-  end process;
-   
-end axi_dvbs2_plinseration;
-  
--- vim: set foldmethod=marker foldmarker=--\ {{,--\ }} :
+  ------------------------------
+  -- Asynchronous assignments --
+  ------------------------------
+  addr <= (others => 'U') when get_modcode(cfg_constellation, cfg_code_rate) = -1 else
+          std_logic_vector(to_unsigned(get_modcode(cfg_constellation, cfg_code_rate), numbits(HEADER_ROM'length)));
+
+  -------------------
+  -- Port Mappings --
+  -------------------
+  header_rom_u : entity fpga_cores.rom_inference
+  generic map (
+    ROM_DATA     => HEADER_ROM,
+    ROM_TYPE     => lut,
+    OUTPUT_DELAY => 0)
+  port map (
+    clk    => clk,
+    clken  => '1',
+    addr   => addr,
+    rddata => header);
+
+  width_conversion_u : entity fpga_cores.axi_stream_width_converter
+  generic map (
+    INPUT_DATA_WIDTH  => PL_HDR_LEN,
+    OUTPUT_DATA_WIDTH => DATA_WIDTH)
+  port map (
+    -- Usual ports
+    clk      => clk,
+    rst      => rst,
+    -- AXI stream input
+    s_tready => s_tready,
+    s_tdata  => header,
+    s_tkeep  => (others => '1'),
+    s_tid    => (others => '0'),
+    s_tvalid => s_tvalid,
+    s_tlast  => '1',
+    -- AXI stream output
+    m_tready  => m_tready,
+    m_tdata   => m_tdata,
+    m_tkeep   => open,
+    m_tid     => open,
+    m_tvalid  => m_tvalid,
+    m_tlast   => m_tlast);
+
+end axi_plframe_header;

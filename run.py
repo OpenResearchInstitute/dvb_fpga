@@ -407,36 +407,39 @@ def main():
             vunit.library("lib").entity("axi_bch_encoder_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(),
-                    NUMBER_OF_TEST_FRAMES=8,
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=8,
                 ),
             )
 
             vunit.library("lib").entity("dvbs2_tx_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(),
-                    NUMBER_OF_TEST_FRAMES=2,
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=2,
                 ),
             )
 
         # Only generate configs for 8 PSK since LDPC does not depend on this
         # parameter
-        for config in _getConfigs(
-            constellations=(ConstellationType.MOD_8PSK,),
-        ):
+        for config in _getConfigs(constellations=(ConstellationType.MOD_8PSK,),):
             vunit.library("lib").entity("axi_ldpc_encoder_core_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(),
-                    NUMBER_OF_TEST_FRAMES=3,
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
             vunit.library("lib").entity("axi_ldpc_table_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(),
-                    NUMBER_OF_TEST_FRAMES=3,
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                ),
+            )
+
+        # PL frame header does not depend on frame_type
+        for config in _getConfigs(frame_types=(FrameType.FECFRAME_SHORT,),):
+            vunit.library("lib").entity("axi_plframe_header_tb").add_config(
+                name=config.name,
+                generics=dict(
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
 
@@ -448,9 +451,7 @@ def main():
 
         addAllConfigsTest(
             entity=vunit.library("lib").entity("axi_ldpc_encoder_core_tb"),
-            configs=_getConfigs(
-                constellations=(ConstellationType.MOD_8PSK,),
-            ),
+            configs=_getConfigs(constellations=(ConstellationType.MOD_8PSK,),),
         )
 
         addAllConfigsTest(
@@ -467,6 +468,11 @@ def main():
         addAllConfigsTest(
             entity=vunit.library("lib").entity("dvbs2_tx_tb"),
             configs=_getConfigs(code_rates=(CodeRate.C1_4, CodeRate.C9_10)),
+        )
+
+        addAllConfigsTest(
+            vunit.library("lib").entity("axi_plframe_header_tb"),
+            configs=_getConfigs(frame_types=(FrameType.FECFRAME_SHORT,),),
         )
 
     addAllConfigsTest(
