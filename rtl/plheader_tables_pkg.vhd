@@ -46,8 +46,8 @@ package plheader_tables_pkg is
   -- This should be called to create a constant that will be the basis of the PL header
   -- ROM
   function build_plheader(
-    constant constellation : constellation_t;
-    constant code_rate :  code_rate_t) return std_logic_vector;
+    constant constellation : in constellation_t;
+    constant code_rate     : in code_rate_t) return std_logic_vector;
 
   constant G : unsigned_array_t(0 to 6)(31 downto 0) := (
     0 => x"90AC2DDD", 1 => x"55555555", 2 => x"33333333", 3 => x"0F0F0F0F",

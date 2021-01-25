@@ -173,7 +173,13 @@ begin
     walk(32);
     rst <= '0';
     walk(32);
-    run_test(C3_5, mod_8psk);
+    if run("back_to_back") then
+      run_test(C3_5, mod_8psk);
+    elsif run("slow_slave") then
+      run_test(C3_5, mod_8psk);
+    elsif run("slow_master,slow_slave") then
+      run_test(C3_5, mod_8psk);
+    end if;
     test_runner_cleanup(runner);
   end process; -- }}  
 
