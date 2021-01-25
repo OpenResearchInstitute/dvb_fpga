@@ -82,7 +82,7 @@ architecture plheader_tables_tb of plheader_tables_tb is
   signal m_tready           : std_logic;
   signal axi_slave_tready   : std_logic;
   signal axi_slave_tvalid   : std_logic;
-  signal axi_slave_tdata    : std_logic;
+  signal axi_slave_tdata    : std_logic_vector(90 downto 0);
   signal axi_slave_tlast    : std_logic;
 
 
