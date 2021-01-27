@@ -402,7 +402,7 @@ def main():
     )
 
     if args.individual_config_runs:
-        # BCH encoding doesn't depend on the constellation type, choose any
+        # BCH and LDPC encoding don't depend on the constellation type, choose any
         for config in _getConfigs(constellations=(ConstellationType.MOD_8PSK,)):
             vunit.library("lib").entity("axi_bch_encoder_tb").add_config(
                 name=config.name,
@@ -411,16 +411,6 @@ def main():
                 ),
             )
 
-            vunit.library("lib").entity("dvbs2_tx_tb").add_config(
-                name=config.name,
-                generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=2,
-                ),
-            )
-
-        # Only generate configs for 8 PSK since LDPC does not depend on this
-        # parameter
-        for config in _getConfigs(constellations=(ConstellationType.MOD_8PSK,),):
             vunit.library("lib").entity("axi_ldpc_encoder_core_tb").add_config(
                 name=config.name,
                 generics=dict(
@@ -434,12 +424,18 @@ def main():
                 ),
             )
 
-        # PL frame header does not depend on frame_type
-        for config in _getConfigs(frame_types=(FrameType.FECFRAME_SHORT,),):
+        for config in _getConfigs():
+            vunit.library("lib").entity("dvbs2_tx_tb").add_config(
+                name=config.name,
+                generics=dict(
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=2,
+                ),
+            )
+
             vunit.library("lib").entity("axi_plframe_header_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=1,
                 ),
             )
 
@@ -458,7 +454,6 @@ def main():
             entity=vunit.library("lib").entity("axi_ldpc_table_tb"),
             configs=_getConfigs(
                 constellations=(ConstellationType.MOD_8PSK,),
-                #  frame_types=(FrameType.FECFRAME_SHORT,),
             ),
         )
 

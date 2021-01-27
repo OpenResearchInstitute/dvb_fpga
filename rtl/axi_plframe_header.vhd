@@ -48,6 +48,7 @@ entity axi_plframe_header is
     rst                  : in  std_logic;
     -- Parameter input
     cfg_constellation    : in  constellation_t;
+    cfg_frame_type       : in  frame_type_t;
     cfg_code_rate        : in  code_rate_t;
 
     -- AXI data input
@@ -66,39 +67,43 @@ architecture axi_plframe_header of axi_plframe_header is
   ---------------
   -- Constants --
   ---------------
-  constant HEADER_ROM : std_logic_array_t := get_plframe_header_rom;
+  -- constant HEADER_ROM                       : std_logic_array_t := get_plframe_header_rom;
+  -- constant ROM_DATA_WIDTH                   : integer := HEADER_ROM(HEADER_ROM'left)'length;
 
   -------------
   -- Signals --
   -------------
-  signal addr   : std_logic_vector(numbits(HEADER_ROM'length) - 1 downto 0);
-  signal header : std_logic_vector(PL_HDR_LEN -1 downto 0);
+  -- signal addr   : std_logic_vector(numbits(HEADER_ROM'length) - 1 downto 0);
+  signal header : std_logic_vector(360*8 - 1 downto 0);
 
 begin
 
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  addr <= (others => 'U') when get_modcode(cfg_constellation, cfg_code_rate) = -1 else
-          std_logic_vector(to_unsigned(get_modcode(cfg_constellation, cfg_code_rate), numbits(HEADER_ROM'length)));
+  -- addr <= (others => 'U') when get_rom_addr(cfg_constellation, cfg_frame_type, cfg_code_rate) = -1 else
+  --         std_logic_vector(to_unsigned(get_rom_addr(cfg_constellation, cfg_frame_type, cfg_code_rate), numbits(HEADER_ROM'length)));
+
+  header <= (others => 'U') when get_rom_addr(cfg_constellation, cfg_frame_type, cfg_code_rate) = -1 else
+            get_plframe_header(cfg_constellation, cfg_frame_type, cfg_code_rate);
 
   -------------------
   -- Port Mappings --
   -------------------
-  header_rom_u : entity fpga_cores.rom_inference
-  generic map (
-    ROM_DATA     => HEADER_ROM,
-    ROM_TYPE     => lut,
-    OUTPUT_DELAY => 0)
-  port map (
-    clk    => clk,
-    clken  => '1',
-    addr   => addr,
-    rddata => header);
+  -- header_rom_u : entity fpga_cores.rom_inference
+  -- generic map (
+  --   ROM_DATA     => HEADER_ROM,
+  --   ROM_TYPE     => lut,
+  --   OUTPUT_DELAY => 0)
+  -- port map (
+  --   clk    => clk,
+  --   clken  => '1',
+  --   addr   => addr,
+  --   rddata => header);
 
   width_conversion_u : entity fpga_cores.axi_stream_width_converter
   generic map (
-    INPUT_DATA_WIDTH  => PL_HDR_LEN,
+    INPUT_DATA_WIDTH  => 360*8,
     OUTPUT_DATA_WIDTH => DATA_WIDTH)
   port map (
     -- Usual ports
@@ -110,7 +115,7 @@ begin
     s_tkeep  => (others => '1'),
     s_tid    => (others => '0'),
     s_tvalid => s_tvalid,
-    s_tlast  => '1',
+    s_tlast  => s_tvalid,
     -- AXI stream output
     m_tready  => m_tready,
     m_tdata   => m_tdata,
@@ -118,5 +123,19 @@ begin
     m_tid     => open,
     m_tvalid  => m_tvalid,
     m_tlast   => m_tlast);
+
+  process(clk)
+  begin
+    if rising_edge(clk) then
+      if s_tready = '1' and s_tvalid = '1' then
+        for i in 0 to 3 loop
+          for j in 0 to 1 loop
+            info(sformat("MOD_8PSK_MAP(%d, %d) = %r", fo(i), fo(j), fo(MOD_8PSK_MAP(i, j))));
+          end loop;
+        end loop;
+        debug(sformat("header = %r", fo(header)));
+      end if;
+    end if;
+  end process;
 
 end axi_plframe_header;

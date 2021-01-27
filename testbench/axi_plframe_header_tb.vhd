@@ -61,19 +61,19 @@ architecture axi_plframe_header_tb of axi_plframe_header_tb is
   ---------------
   constant configs             : config_array_t := get_test_cfg(TEST_CFG);
   constant CLK_PERIOD          : time    := 5 ns;
-  constant DATA_WIDTH          : integer := 8;
-  constant CONFIG_INPUT_WIDTHS : fpga_cores.common_pkg.integer_vector_t := (
-    0 => CONSTELLATION_WIDTH,
-    1 => CODE_RATE_WIDTH);
-
+  constant DATA_WIDTH          : integer := 32;
+  constant CONFIG_INPUT_WIDTHS: fpga_cores.common_pkg.integer_vector_t := (
+    0 => FRAME_TYPE_WIDTH,
+    1 => CONSTELLATION_WIDTH,
+    2 => CODE_RATE_WIDTH);
 
   -------------
   -- Signals --
   -------------
-  -- Usual ports
   signal clk             : std_logic := '1';
   signal rst             : std_logic;
 
+  signal m_frame_type    : frame_type_t;
   signal m_constellation : constellation_t;
   signal m_code_rate     : code_rate_t;
 
@@ -83,7 +83,6 @@ architecture axi_plframe_header_tb of axi_plframe_header_tb is
   signal m_data_valid    : boolean;
   signal s_data_valid    : boolean;
 
-
 begin
 
   -------------------
@@ -92,7 +91,7 @@ begin
   -- AXI stream BFM for the config input
   axi_config_input_u : entity fpga_cores_sim.axi_stream_bfm
     generic map (
-      NAME        => "axi_config_input_u",
+      NAME        => "cfg",
       TDATA_WIDTH => sum(CONFIG_INPUT_WIDTHS))
     port map (
       -- Usual ports
@@ -107,16 +106,19 @@ begin
       m_tvalid => axi_master.tvalid,
       m_tlast  => open);
 
-  m_constellation <= decode(get_field(axi_master.tdata, 0, CONFIG_INPUT_WIDTHS));
-  m_code_rate     <= decode(get_field(axi_master.tdata, 1, CONFIG_INPUT_WIDTHS));
+  m_frame_type    <= decode(get_field(axi_master.tdata, 0, CONFIG_INPUT_WIDTHS));
+  m_constellation <= decode(get_field(axi_master.tdata, 1, CONFIG_INPUT_WIDTHS));
+  m_code_rate     <= decode(get_field(axi_master.tdata, 2, CONFIG_INPUT_WIDTHS));
 
   dut : entity work.axi_plframe_header
+    generic map (DATA_WIDTH => DATA_WIDTH)
     port map (
       -- Usual ports
       clk               => clk,
       rst               => rst,
 
       cfg_constellation => m_constellation,
+      cfg_frame_type    => m_frame_type,
       cfg_code_rate     => m_code_rate,
 
       s_tready          => axi_master.tready,
@@ -138,16 +140,18 @@ begin
   m_data_valid <= axi_master.tvalid = '1' and axi_master.tready = '1';
   s_data_valid <= axi_slave.tvalid = '1' and axi_slave.tready = '1';
 
+  axi_slave.tready <= '1';
+
   ---------------
   -- Processes --
   ---------------
   main : process -- {{
     constant self   : actor_t          := new_actor("main");
     constant logger : logger_t         := get_logger("main");
-    variable dut    : axi_stream_bfm_t := create_bfm("axi_config_input_u");
+    variable dut    : axi_stream_bfm_t := create_bfm("cfg");
     -- variable file_checker : file_reader_t := new_file_reader(FILE_CHECKER_NAME);
     -- variable ldpc_table   : file_reader_t := new_file_reader("ldpc_table_u");
-    
+
     procedure walk(constant steps : natural) is -- {{ ----------------------------------
     begin
       if steps /= 0 then
@@ -177,9 +181,11 @@ begin
       variable calc_ldpc_msg    : msg_t;
 
       -- GHDL doens't play well with anonymous vectors, so let's be explicit
-      subtype bfm_data_t is std_logic_array_t(0 to 0)(CONSTELLATION_WIDTH + CODE_RATE_WIDTH - 1 downto 0);
-      constant bfm_data : std_logic_vector := encode(config.code_rate) & encode(config.constellation);
+      subtype bfm_data_t is std_logic_array_t(0 to 0)(FRAME_TYPE_WIDTH + CONSTELLATION_WIDTH + CODE_RATE_WIDTH - 1 downto 0);
+      constant bfm_data : std_logic_vector := encode(config.code_rate) & encode(config.constellation) & encode(config.frame_type);
     begin
+
+      -- read_file("/home/souto/phase4ground/dvb_fpga/gnuradio_data/FECFRAME_SHORT_MOD_8PSK_C3_5/plframe_header_pilots_off_float.bin");
 
       info("Running test with:");
       info(" - constellation  : " & constellation_t'image(config.constellation));
@@ -205,10 +211,12 @@ begin
 
     test_runner_setup(runner, RUNNER_CFG);
     show(display_handler, debug);
-    hide(get_logger("file_reader_t(file_reader)"), display_handler, debug, True);
-    hide(get_logger("file_reader_t(file_checker)"), display_handler, debug, True);
-    hide(get_logger("file_reader_t(ldpc_table)"), display_handler, debug, True);
-
+    hide(
+      logger           => get_logger("axi_stream_bfm_t(cfg)"),
+      log_handler      => display_handler,
+      log_levels       => (debug, info),
+      include_children => True
+    );
 
     while test_suite loop
       rst                <= '1';
@@ -266,5 +274,47 @@ begin
     test_runner_cleanup(runner);
     wait;
   end process; -- }}
+
+
+  receiver_p : process
+    constant logger    : logger_t := get_logger("receiver");
+    variable word_cnt  : natural  := 0;
+    variable frame_cnt : natural  := 0;
+    variable  axi_slave_i : real;
+    variable  axi_slave_q : real;
+
+    function to_real (
+      constant x     : signed) return real is
+      constant width : integer := x'length;
+    begin
+      return real(to_integer(x)) / real(2**(width - 1));
+    end;
+
+  begin
+    wait until axi_slave.tvalid = '1' and axi_slave.tready = '1' and rising_edge(clk);
+    axi_slave_i := to_real(signed(axi_slave.tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2)));
+    axi_slave_q := to_real(signed(axi_slave.tdata(DATA_WIDTH/2 - 1 downto 0)));
+
+    info(
+      logger,
+      sformat(
+        "[%d, %d] (%r, %r) = (%d, %d) = (%s, %s)",
+        fo(frame_cnt),
+        fo(word_cnt),
+        fo(signed(axi_slave.tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2))),
+        fo(signed(axi_slave.tdata(DATA_WIDTH/2 - 1 downto 0))),
+        fo(signed(axi_slave.tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2))),
+        fo(signed(axi_slave.tdata(DATA_WIDTH/2 - 1 downto 0))),
+        real'image(axi_slave_i),
+        real'image(axi_slave_q)
+      ));
+
+    word_cnt := word_cnt + 1;
+    if axi_slave.tlast = '1' then
+      info(logger, sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
+      word_cnt  := 0;
+      frame_cnt := frame_cnt + 1;
+    end if;
+  end process;
 
 end axi_plframe_header_tb;
