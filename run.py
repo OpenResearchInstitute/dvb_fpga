@@ -105,6 +105,29 @@ class TestDefinition(
         super(TestDefinition, self).__init__()
         self.timestamp = p.join(self.test_files_path, "timestamp")
 
+    @staticmethod
+    def fromConfigTuple(frame_type, constellation, code_rate):
+        """
+        Returns a TestDefinition object from a config tuple
+        """
+        test_files_path = p.join(
+            ROOT,
+            "gnuradio_data",
+            f"{frame_type.name}_{constellation.name}_{code_rate.name}".upper(),
+        )
+
+        name = ",".join(
+            [
+                f"FrameType={frame_type.value}",
+                f"ConstellationType={constellation.value}",
+                f"CodeRate={code_rate.value}",
+            ]
+        )
+
+        return TestDefinition(
+            name, test_files_path, code_rate, frame_type, constellation
+        )
+
     def getTestConfigString(self):
         """
         Returns the value for the 'test_cfg' string of the testbench
@@ -122,6 +145,7 @@ class TestDefinition(
 def _getConfigs(
     code_rates=CodeRate, frame_types=FrameType, constellations=ConstellationType
 ):
+    "Iterates over the configs enums and returns a iterator of TestDefinition"
     for code_rate in code_rates:
         for frame_type in frame_types:
             for constellation in constellations:
@@ -131,22 +155,10 @@ def _getConfigs(
                 ):
                     continue
 
-                test_files_path = p.join(
-                    ROOT,
-                    "gnuradio_data",
-                    f"{frame_type.name}_{constellation.name}_{code_rate.name}".upper(),
-                )
-
-                name = ",".join(
-                    [
-                        f"FrameType={frame_type.value}",
-                        f"ConstellationType={constellation.value}",
-                        f"CodeRate={code_rate.value}",
-                    ]
-                )
-
-                yield TestDefinition(
-                    name, test_files_path, code_rate, frame_type, constellation
+                yield TestDefinition.fromConfigTuple(
+                    code_rate=code_rate,
+                    frame_type=frame_type,
+                    constellation=constellation,
                 )
 
 
@@ -247,8 +259,50 @@ LDPC_LENGTH = {
     (FrameType.FECFRAME_SHORT, CodeRate.C8_9): 16_200 - 14_400,
 }
 
+PLFRAME_HEADER_CONFIGS = [
+    TestDefinition.fromConfigTuple(frame_type, constellation, code_rate)
+    for frame_type, constellation, code_rate in (
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C3_5),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C2_3),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C3_4),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C5_6),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C8_9),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C9_10),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C2_3),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C3_4),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C4_5),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C5_6),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C8_9),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C9_10),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C3_4),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C4_5),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C5_6),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C8_9),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C9_10),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C3_5),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C2_3),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C3_4),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C5_6),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C8_9),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C9_10),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C2_3),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C3_4),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C4_5),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C5_6),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C8_9),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C9_10),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C3_4),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C4_5),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C5_6),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C8_9),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C9_10),
+    )
+]
 
-def _populateLdpcTable(frame_type, code_rate, src, dest):
+
+def _populateLdpcTable(
+    frame_type, code_rate, src, dest
+):  # pylint: disable=too-many-locals
     """
     Creates the unrolled binary LDPC table file for the LDPC encoder testbench
     a CSV file with coefficients (from DVB-S2 spec's appendices B and C).
@@ -360,30 +414,15 @@ class GhdlPragmaHandler:
         return "\n".join(lines)
 
 
-def main():
-    "Main entry point for DVB FPGA test runner"
-
-    _generateGnuRadioData()
-    _createLdpcTables()
-
-    cli = VUnitCLI()
-    cli.parser.add_argument(
-        "--individual-config-runs",
-        "-i",
-        action="store_true",
-        help="Create individual test runs for each configuration. By default, "
-        "all combinations of frame types, code rates and modulations are "
-        "tested in the same simulation",
-    )
-    args = cli.parse_args()
-
-    vunit = VUnit.from_args(args=args)
+def setupSources(vunit):
+    """
+    Sets up files and libraries
+    """
     vunit.add_osvvm()
     vunit.add_com()
     vunit.enable_location_preprocessing()
     if vunit.get_simulator_name() == "ghdl":
         vunit.add_preprocessor(GhdlPragmaHandler())
-
     library = vunit.add_library("lib")
     library.add_source_files(p.join(ROOT, "rtl", "*.vhd"))
     library.add_source_files(p.join(ROOT, "rtl", "ldpc", "*.vhd"))
@@ -401,6 +440,11 @@ def main():
         p.join(ROOT, "third_party", "fpga_cores", "sim", "*.vhd")
     )
 
+
+def setupTests(vunit, args):
+    """
+    Creates tests for components
+    """
     if args.individual_config_runs:
         # BCH and LDPC encoding don't depend on the constellation type, choose any
         for config in _getConfigs(constellations=(ConstellationType.MOD_8PSK,)):
@@ -432,13 +476,6 @@ def main():
                 ),
             )
 
-            vunit.library("lib").entity("axi_plframe_header_tb").add_config(
-                name=config.name,
-                generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=1,
-                ),
-            )
-
     else:
         addAllConfigsTest(
             entity=vunit.library("lib").entity("axi_bch_encoder_tb"),
@@ -452,9 +489,7 @@ def main():
 
         addAllConfigsTest(
             entity=vunit.library("lib").entity("axi_ldpc_table_tb"),
-            configs=_getConfigs(
-                constellations=(ConstellationType.MOD_8PSK,),
-            ),
+            configs=_getConfigs(constellations=(ConstellationType.MOD_8PSK,),),
         )
 
         # Run the DVB S2 Tx testbench with a smaller sample of configs to check
@@ -465,15 +500,26 @@ def main():
             configs=_getConfigs(code_rates=(CodeRate.C1_4, CodeRate.C9_10)),
         )
 
-        addAllConfigsTest(
-            vunit.library("lib").entity("axi_plframe_header_tb"),
-            configs=_getConfigs(frame_types=(FrameType.FECFRAME_SHORT,),),
-        )
-
     addAllConfigsTest(
         entity=vunit.library("lib").entity("axi_baseband_scrambler_tb"),
         configs=TEST_CONFIGS,
     )
+
+    # axi_plframe_header does not support every combination out there
+    if args.individual_config_runs:
+        for config in PLFRAME_HEADER_CONFIGS:
+            vunit.library("lib").entity("axi_plframe_header_tb").add_config(
+                name=config.name,
+                generics=dict(
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                ),
+            )
+
+    else:
+        addAllConfigsTest(
+            vunit.library("lib").entity("axi_plframe_header_tb"),
+            configs=PLFRAME_HEADER_CONFIGS,
+        )
 
     # Generate bit interleaver tests
     for data_width in (8,):
@@ -501,23 +547,6 @@ def main():
                 ),
             )
 
-    vunit.set_compile_option("modelsim.vcom_flags", ["-explicit"])
-
-    # Not all options are supported by all GHDL backends
-    vunit.set_sim_option("ghdl.elab_flags", ["-frelaxed-rules"])
-    vunit.set_compile_option("ghdl.a_flags", ["-frelaxed-rules", "-O2", "-g"])
-
-    # Make components not bound (error 3473) an error
-    vsim_flags = ["-error", "3473"]
-    if args.gui:
-        vsim_flags += ['-voptargs="+acc=n"']
-
-    vunit.set_sim_option("modelsim.vsim_flags", vsim_flags)
-
-    vunit.set_sim_option("disable_ieee_warnings", True)
-    vunit.set_sim_option("modelsim.init_file.gui", p.join(ROOT, "wave.do"))
-    vunit.main()
-
 
 def addAllConfigsTest(entity, configs):
     """
@@ -537,6 +566,45 @@ def addAllConfigsTest(entity, configs):
         name="test_all_configs",
         generics=dict(test_cfg="|".join(params), NUMBER_OF_TEST_FRAMES=1),
     )
+
+
+def main():
+    "Main entry point for DVB FPGA test runner"
+
+    _generateGnuRadioData()
+    _createLdpcTables()
+
+    cli = VUnitCLI()
+    cli.parser.add_argument(
+        "--individual-config-runs",
+        "-i",
+        action="store_true",
+        help="Create individual test runs for each configuration. By default, "
+        "all combinations of frame types, code rates and modulations are "
+        "tested in the same simulation",
+    )
+    args = cli.parse_args()
+
+    vunit = VUnit.from_args(args=args)
+    setupSources(vunit)
+    setupTests(vunit, args)
+
+    vunit.set_compile_option("modelsim.vcom_flags", ["-explicit"])
+
+    # Not all options are supported by all GHDL backends
+    vunit.set_sim_option("ghdl.elab_flags", ["-frelaxed-rules"])
+    vunit.set_compile_option("ghdl.a_flags", ["-frelaxed-rules", "-O2", "-g"])
+
+    # Make components not bound (error 3473) an error
+    vsim_flags = ["-error", "3473"]
+    if args.gui:
+        vsim_flags += ['-voptargs="+acc=n"']
+
+    vunit.set_sim_option("modelsim.vsim_flags", vsim_flags)
+
+    vunit.set_sim_option("disable_ieee_warnings", True)
+    vunit.set_sim_option("modelsim.init_file.gui", p.join(ROOT, "wave.do"))
+    vunit.main()
 
 
 if __name__ == "__main__":

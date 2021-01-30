@@ -83,6 +83,11 @@ architecture axi_plframe_header_tb of axi_plframe_header_tb is
   signal m_data_valid    : boolean;
   signal s_data_valid    : boolean;
 
+
+  signal tdata_error_cnt : std_logic_vector(7 downto 0);
+  signal tlast_error_cnt : std_logic_vector(7 downto 0);
+  signal error_cnt       : std_logic_vector(7 downto 0);
+
 begin
 
   -------------------
@@ -130,6 +135,31 @@ begin
       m_tdata           => axi_slave.tdata,
       m_tlast           => axi_slave.tlast);
 
+  axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
+    generic map (
+      READER_NAME     => "axi_file_compare_u",
+      ERROR_CNT_WIDTH => 8,
+      REPORT_SEVERITY => Error,
+      DATA_WIDTH      => axi_slave.tdata'length)
+    port map (
+      -- Usual ports
+      clk                => clk,
+      rst                => rst,
+      -- Config and status
+      tdata_error_cnt    => tdata_error_cnt,
+      tlast_error_cnt    => tlast_error_cnt,
+      error_cnt          => error_cnt,
+      tready_probability => 1.0,
+      -- Debug stuff
+      expected_tdata     => open,
+      expected_tlast     => open,
+      -- Data input
+      s_tready           => axi_slave.tready,
+      s_tdata            => axi_slave.tdata,
+      s_tvalid           => axi_slave.tvalid,
+      s_tlast            => axi_slave.tlast);
+
+
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
@@ -140,17 +170,14 @@ begin
   m_data_valid <= axi_master.tvalid = '1' and axi_master.tready = '1';
   s_data_valid <= axi_slave.tvalid = '1' and axi_slave.tready = '1';
 
-  axi_slave.tready <= '1';
-
   ---------------
   -- Processes --
   ---------------
   main : process -- {{
-    constant self   : actor_t          := new_actor("main");
-    constant logger : logger_t         := get_logger("main");
-    variable dut    : axi_stream_bfm_t := create_bfm("cfg");
-    -- variable file_checker : file_reader_t := new_file_reader(FILE_CHECKER_NAME);
-    -- variable ldpc_table   : file_reader_t := new_file_reader("ldpc_table_u");
+    constant self        : actor_t          := new_actor("main");
+    constant logger      : logger_t         := get_logger("main");
+    variable dut         : axi_stream_bfm_t := create_bfm("cfg");
+    variable file_reader : file_reader_t    := new_file_reader("axi_file_compare_u");
 
     procedure walk(constant steps : natural) is -- {{ ----------------------------------
     begin
@@ -165,8 +192,7 @@ begin
       variable msg : msg_t;
     begin
       join(net, dut);
-      -- wait_all_read(net, file_checker);
-      -- wait_all_read(net, ldpc_table);
+      wait_all_read(net, file_reader);
       walk(4);
       wait until rising_edge(clk) and axi_slave.tvalid = '0' for 1 ms;
       check_equal(axi_slave.tvalid, '0', "axi_slave.tvalid should be '0'");
@@ -185,8 +211,6 @@ begin
       constant bfm_data : std_logic_vector := encode(config.code_rate) & encode(config.constellation) & encode(config.frame_type);
     begin
 
-      -- read_file("/home/souto/phase4ground/dvb_fpga/gnuradio_data/FECFRAME_SHORT_MOD_8PSK_C3_5/plframe_header_pilots_off_float.bin");
-
       info("Running test with:");
       info(" - constellation  : " & constellation_t'image(config.constellation));
       info(" - frame_type     : " & frame_type_t'image(config.frame_type));
@@ -202,7 +226,7 @@ begin
           probability => 1.0,
           blocking    => False);
 
-        -- read_file(net, ldpc_table, data_path & "/ldpc_table.bin", ratio);
+        read_file(net, file_reader, data_path & "/plframe_header_pilots_off_fixed_point.bin");
       end loop;
 
     end procedure run_test; -- }} --------------------------------------------------------
@@ -264,8 +288,7 @@ begin
       end if;
 
       wait_for_completion;
-      -- check_false(has_message(input_cfg_p));
-      -- check_equal(error_cnt, 0);
+      check_equal(error_cnt, 0, sformat("Expected 0 errors, got %d", fo(error_cnt)));
 
       walk(32);
 
@@ -277,11 +300,11 @@ begin
 
 
   receiver_p : process
-    constant logger    : logger_t := get_logger("receiver");
-    variable word_cnt  : natural  := 0;
-    variable frame_cnt : natural  := 0;
-    variable  axi_slave_i : real;
-    variable  axi_slave_q : real;
+    constant logger      : logger_t := get_logger("receiver");
+    variable word_cnt    : natural  := 0;
+    variable frame_cnt   : natural  := 0;
+    variable axi_slave_i : real;
+    variable axi_slave_q : real;
 
     function to_real (
       constant x     : signed) return real is
