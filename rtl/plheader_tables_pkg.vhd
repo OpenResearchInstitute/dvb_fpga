@@ -113,7 +113,7 @@ package body plheader_tables_pkg is
   impure function b_64_8_code (constant v : std_logic_vector(7 downto 0)) return std_logic_vector is
     constant PL_HDR_SCRAMBLE_TAB : std_logic_vector(63 downto 0) := "0111000110011101100000111100100101010011010000100010110111111010";
     variable temp                : std_logic_vector(31 downto 0) := (others => '0');
-    variable bit_var             : std_logic_vector(31 downto 0) := x"80000000";
+    variable bit_mask            : std_logic_vector(31 downto 0) := x"80000000";
     variable result              : std_logic_vector(63 downto 0);
   begin
     if or(v and x"80") then temp := temp xor G(0); end if;
@@ -125,27 +125,16 @@ package body plheader_tables_pkg is
     if or(v and x"02") then temp := temp xor G(6); end if;
 
     for m in 0 to 31 loop
-      if or(temp and bit_var) then
-        result(m*2) := '1';
-      else
-        result(m*2) := '0';
-      end if;
-
-      if or(result(m*2) xor (v and x"01")) then
-        result((m*2) + 1) := '1';
-      else
-        result((m*2) + 1) := '0';
-      end if;
-
-      bit_var := '0' & bit_var(31 downto 1);
-
+      result(m*2)       := or(temp and bit_mask);
+      result((m*2) + 1) := or(result(m*2) xor (v and x"01"));
+      bit_mask          := '0' & bit_mask(31 downto 1);
     end loop;
 
-    -- info(sformat("Encoded %r into %r", fo(v), fo(result)));
+    result := mirror_bits(result);
+
     for m in 0 to 63 loop
       result(m) := result(m) xor PL_HDR_SCRAMBLE_TAB(m);
     end loop;
-    -- info(sformat("Encoded %r into %r", fo(v), fo(result)));
 
     return result;
   end function;
@@ -154,7 +143,6 @@ package body plheader_tables_pkg is
     constant modcode   : std_logic_vector(7 downto 0);
     constant type_code : std_logic_vector(7 downto 0)) return std_logic_vector is
     variable code      : std_logic_vector(7 downto 0);
-    variable result    : std_logic_vector(63 downto 0);
   begin
 
     if or(modcode and x"80") then
@@ -162,20 +150,7 @@ package body plheader_tables_pkg is
     else
       code := (modcode(5 downto 0) & "00") or type_code;
     end if;
-    result := b_64_8_code(code);
-    info(
-      sformat(
-        "modcode=%r (%b), type_code=%r (%b) || code = %r (%b) => %r",
-        fo(modcode),
-        fo(modcode),
-        fo(type_code),
-        fo(type_code),
-        fo(code),
-        fo(code),
-        fo(result)
-      )
-    );
-    return result;
+    return b_64_8_code(code);
   end function;
 
   impure function get_pls_code(
