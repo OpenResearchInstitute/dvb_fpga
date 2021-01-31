@@ -35,7 +35,7 @@ package dvb_utils_pkg is
 
   type frame_type_t is (not_set, fecframe_normal, fecframe_short);
 
-  type constellation_t is ( not_set, mod_8psk, mod_16apsk, mod_32apsk);
+  type constellation_t is ( not_set, mod_qpsk, mod_8psk, mod_16apsk, mod_32apsk);
 
   -- Enum like type for LDPC codes
   type code_rate_t is (

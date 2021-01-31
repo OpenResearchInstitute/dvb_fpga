@@ -74,8 +74,7 @@ architecture axi_ldpc_encoder_core of axi_ldpc_encoder_core is
   constant DATA_WIDTH           : natural := 8;
   constant ROM_DATA_WIDTH       : natural := numbits(max(DVB_N_LDPC));
   constant FRAME_RAM_DATA_WIDTH : natural := 16;
-  constant FRAME_RAM_ADDR_WIDTH : natural
-    := numbits((max(DVB_N_LDPC) + FRAME_RAM_DATA_WIDTH - 1) / FRAME_RAM_DATA_WIDTH);
+  constant FRAME_RAM_ADDR_WIDTH : natural := numbits((max(DVB_N_LDPC) + FRAME_RAM_DATA_WIDTH - 1) / FRAME_RAM_DATA_WIDTH);
 
   -------------
   -- Signals --

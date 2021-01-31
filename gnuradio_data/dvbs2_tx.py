@@ -93,6 +93,8 @@ PLFRAME_SLOT_NUMBER = {
 def get_ratio(constellation):
     ratio = None
 
+    if constellation == dtv.MOD_QPSK:
+        ratio = 2, 8
     if constellation == dtv.MOD_8PSK:
         ratio = 3, 8
     if constellation == dtv.MOD_16APSK:
@@ -629,7 +631,7 @@ def argument_parser():
     parser.add_option(
         "--constellation",
         default="MOD_8PSK",
-        choices=("MOD_8PSK", "MOD_16APSK", "MOD_32APSK"),
+        choices=("MOD_QPSK", "MOD_8PSK", "MOD_16APSK", "MOD_32APSK"),
     )
     parser.add_option(
         "--code-rate",

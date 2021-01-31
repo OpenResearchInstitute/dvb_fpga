@@ -60,7 +60,24 @@ package body plframe_header_pkg is
     constant constellation : in constellation_t;
     constant code_rate : in code_rate_t) return integer is
   begin
-    if (constellation = mod_8psk) then
+    if (constellation = MOD_QPSK) then
+      case code_rate is
+        when C1_4 => return 1;
+        when C1_3 => return 2;
+        when C2_5 => return 3;
+        when C1_2 => return 4;
+        when C3_5 => return 5;
+        when C2_3 => return 6;
+        when C3_4 => return 7;
+        when C4_5 => return 8;
+        when C5_6 => return 9;
+        when C8_9 => return 10;
+        when C9_10 => return 11;
+        when others => null;
+      end case;
+    end if;
+
+    if (constellation = MOD_8PSK) then
       case code_rate is
         when C3_5 => return 12;
         when C2_3 => return 13;
@@ -72,7 +89,7 @@ package body plframe_header_pkg is
       end case;
     end if;
 
-    if constellation = mod_16apsk then
+    if constellation = MOD_16APSK then
       case code_rate is
         when C2_3 => return 18;
         when C3_4 => return 19;
@@ -84,7 +101,7 @@ package body plframe_header_pkg is
       end case;
     end if;
 
-    if constellation = mod_32apsk then
+    if constellation = MOD_32APSK then
       case code_rate is
         when C3_4 => return 24;
         when C4_5 => return 25;
