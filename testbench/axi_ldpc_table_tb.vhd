@@ -396,7 +396,7 @@ begin
       word_cnt  := 0;
       frame_cnt := frame_cnt + 1;
     end if;
-
+    check_equal(0,0);
   end process;
 
 end axi_ldpc_table_tb;
