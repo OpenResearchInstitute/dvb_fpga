@@ -33,10 +33,17 @@ use fpga_cores.axi_pkg.all;
 
 use work.dvb_utils_pkg.all;
 use work.ldpc_pkg.all;
-use work.plheader_tables_pkg.all;
+use work.plframe_header_pkg.all;
 
 -- Creates PLFRAME headers from a set of config parameters. Please note pilots ARE NOT
 -- SUPPORTED yet!
+--
+-- PLS codes and modulation values are pre-calculated and stored in ROMs. The code to
+-- create both ROM's contents are pretty much an implementation of GNU Radio's C code in
+-- VHDL. Relevant files are:
+-- https://github.com/gnuradio/gnuradio/blob/master/gr-dtv/lib/dvbs2/dvbs2_physical_cc_impl.cc
+-- https://github.com/gnuradio/gnuradio/blob/master/gr-dtv/lib/dvbs2/dvbs2_physical_cc_impl.h
+--
 
 ------------------------
 -- Entity declaration --

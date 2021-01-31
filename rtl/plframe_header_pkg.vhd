@@ -24,33 +24,33 @@
 library	ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use ieee.math_real.MATH_PI;
-
-library fpga_cores;
-use fpga_cores.common_pkg.all;
-
-use work.dvb_utils_pkg.all;
-
-package plheader_tables_pkg is
-
-  constant PLFRAME_HEADER_LENGTH : integer := 90;
-
-  impure function get_pls_rom return std_logic_array_t;
-
-  function get_pls_rom_addr (
-    constant constellation : constellation_t;
-    constant frame_type    : frame_type_t;
-    constant code_rate     : code_rate_t) return integer;
-
-end package plheader_tables_pkg;
-
 
 library vunit_lib;
 context vunit_lib.vunit_context;
 library str_format;
 use str_format.str_format_pkg.all;
 
-package body plheader_tables_pkg is
+library fpga_cores;
+use fpga_cores.common_pkg.all;
+
+use work.dvb_utils_pkg.all;
+
+package plframe_header_pkg is
+
+  impure function get_pls_rom return std_logic_array_t;
+
+  -- Code that generates each PLS code is an implementation of GNU Radio's C code in
+  -- VHDL. Relevant files:
+  -- https://github.com/gnuradio/gnuradio/blob/master/gr-dtv/lib/dvbs2/dvbs2_physical_cc_impl.cc
+  -- https://github.com/gnuradio/gnuradio/blob/master/gr-dtv/lib/dvbs2/dvbs2_physical_cc_impl.h
+  function get_pls_rom_addr (
+    constant constellation : constellation_t;
+    constant frame_type    : frame_type_t;
+    constant code_rate     : code_rate_t) return integer;
+
+end package plframe_header_pkg;
+
+package body plframe_header_pkg is
 
   constant G : std_logic_array_t(0 to 6)(31 downto 0) := (
     0 => x"90AC2DDD", 1 => x"55555555", 2 => x"33333333", 3 => x"0F0F0F0F",
@@ -68,7 +68,7 @@ package body plheader_tables_pkg is
         when C5_6 => return 15;
         when C8_9 => return 16;
         when C9_10 => return 17;
-        when others => null; --return 0;
+        when others => null;
       end case;
     end if;
 
@@ -80,7 +80,7 @@ package body plheader_tables_pkg is
         when C5_6 => return 21;
         when C8_9 => return 22;
         when C9_10 => return 23;
-        when others => null; --return 0;
+        when others => null;
       end case;
     end if;
 
@@ -91,14 +91,10 @@ package body plheader_tables_pkg is
         when C5_6 => return 26;
         when C8_9 => return 27;
         when C9_10 => return 28;
-        when others => null; --return 0;
+        when others => null;
       end case;
     end if;
 
-    -- if constellation /= not_set and code_rate /= not_set then
-    --   report "No MODOCDE for constellation=" & constellation_t'image(constellation) & ", code_rate=" & code_rate_t'image(code_rate)
-    --     severity warning;
-    -- end if;
     return -1;
   end;
 
@@ -235,6 +231,6 @@ package body plheader_tables_pkg is
     end if;
   end;
 
-end package body plheader_tables_pkg;
+end package body plframe_header_pkg;
 
 -- vim: set foldmethod=marker foldmarker=--\ {{,--\ }} :
