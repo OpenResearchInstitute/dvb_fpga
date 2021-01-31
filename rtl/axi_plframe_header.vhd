@@ -35,6 +35,9 @@ use work.dvb_utils_pkg.all;
 use work.ldpc_pkg.all;
 use work.plheader_tables_pkg.all;
 
+-- Creates PLFRAME headers from a set of config parameters. Please note pilots ARE NOT
+-- SUPPORTED yet!
+
 ------------------------
 -- Entity declaration --
 ------------------------
@@ -158,7 +161,7 @@ begin
     -- AXI stream input
     s_tready => s_tready,
     -- Need to mirror header because the width converter will output s_tdata LSB first
-    s_tdata  => mirror_bits(pls_code) & mirror_bits(SOF),
+    s_tdata  => mirror_bits(header),
     s_tkeep  => (others => '1'),
     s_tid    => (others => '0'),
     s_tvalid => s_tvalid,
@@ -182,10 +185,7 @@ begin
     addr   => modulation_addr,
     rddata => m_tdata_i);
 
-  -- FIXME: Need to check what's the correct endianess here. Hard coding for now to get
-  -- some tests passing
-  m_tdata <= m_tdata_i(23 downto 16) & m_tdata_i(31 downto 24) & m_tdata_i(7 downto 0) & m_tdata_i(15 downto 8) when m_tvalid_i = '1' else
-             (others => 'U');
+  m_tdata <= m_tdata_i when m_tvalid_i = '1' else (others => 'U');
 
   ---------------
   -- Processes --

@@ -144,7 +144,6 @@ package body plheader_tables_pkg is
     constant type_code : std_logic_vector(7 downto 0)) return std_logic_vector is
     variable code      : std_logic_vector(7 downto 0);
   begin
-
     if or(modcode and x"80") then
       code := modcode or (type_code and x"01");
     else
@@ -208,13 +207,6 @@ package body plheader_tables_pkg is
         for frame_type in frame_type_t'left to frame_type_t'right loop
           addr := get_pls_rom_addr(constellation, frame_type, code_rate);
           if addr /= -1 then
-            info(
-              sformat(
-                "Populating addr=%2d for %10s, %15s, %5s",
-                fo(addr),
-                fo(constellation_t'image(constellation)),
-                fo(frame_type_t'image(frame_type)),
-                fo(code_rate_t'image(code_rate))));
             result(addr) := get_pls_code(constellation, frame_type, code_rate);
           end if;
         end loop;
