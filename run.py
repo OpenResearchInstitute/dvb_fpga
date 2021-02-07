@@ -23,6 +23,7 @@
 # pylint: disable=bad-continuation
 
 import logging
+import math
 import os
 import os.path as p
 import random
@@ -260,8 +261,7 @@ LDPC_LENGTH = {
     (FrameType.FECFRAME_SHORT, CodeRate.C8_9): 16_200 - 14_400,
 }
 
-
-PLFRAME_HEADER_CONFIGS = [
+PLFRAME_HEADER_CONFIGS = {
     TestDefinition.fromConfigTuple(frame_type, constellation, code_rate)
     for frame_type, constellation, code_rate in (
         (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C2_3),
@@ -288,7 +288,7 @@ PLFRAME_HEADER_CONFIGS = [
         (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C4_5),
         (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C5_6),
         (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C8_9),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C9_10),
+        #  (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C9_10),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C2_3),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C3_4),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C4_5),
@@ -318,32 +318,73 @@ PLFRAME_HEADER_CONFIGS = [
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C8_9),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C9_10),
     )
-]
+}
+
+# List specific valid 16 APSK and 32 APSK configs
+CONSTELLATION_MAPPER_CONFIGS = (
+    set(_getConfigs(constellations=(ConstellationType.MOD_QPSK,)))
+    | set(_getConfigs(constellations=(ConstellationType.MOD_8PSK,)))
+    | {
+        TestDefinition.fromConfigTuple(frame_type, constellation, code_rate)
+        for frame_type, constellation, code_rate in (
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C2_3),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C3_4),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C4_5),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C5_6),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C8_9),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C9_10),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C3_5),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C2_3),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C3_4),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C4_5),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C5_6),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C8_9),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C3_5),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C3_4),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C4_5),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C5_6),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C8_9),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C9_10),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C3_4),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C4_5),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C5_6),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C8_9),
+            # this should work but GNU Radio itself doesn't handle it for some
+            # reason
+            # (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C9_10),
+        )
+    }
+)
 
 
-def _populateLdpcTable(
-    frame_type, code_rate, src, dest
-):  # pylint: disable=too-many-locals
+def _populateLdpcTable(config: TestDefinition):  # pylint: disable=too-many-locals
     """
     Creates the unrolled binary LDPC table file for the LDPC encoder testbench
     a CSV file with coefficients (from DVB-S2 spec's appendices B and C).
     """
-    bin_table = p.join(dest, "ldpc_table.bin")
-    text_table = p.join(dest, "ldpc_table.txt")
+    bin_table = p.join(config.test_files_path, "ldpc_table.bin")
+    text_table = p.join(config.test_files_path, "ldpc_table.txt")
 
     if p.exists(bin_table) and p.exists(text_table):
         return
 
-    print(
-        f"Generating LDPC table for FECFRAME={frame_type.value}, "
-        f'code rate={code_rate.value} using "{src}" as reference. '
-        f'Binary data will be written to "{dest}"',
+    csv_table = p.join(
+        ROOT,
+        "misc",
+        "ldpc",
+        f"ldpc_table_{config.frame_type.name}_{config.code_rate.name}.csv",
     )
 
-    table = [x.split(",") for x in open(src, "r").read().split("\n") if x]
+    print(
+        f"Generating LDPC table for FECFRAME={config.frame_type.value}, "
+        f'code rate={config.code_rate.value} using "{csv_table}" as reference. '
+        f'Binary data will be written to "{config.test_files_path}"',
+    )
 
-    table_q = LDPC_Q[(frame_type, code_rate)]
-    table_length = LDPC_LENGTH[(frame_type, code_rate)]
+    table = [x.split(",") for x in open(csv_table, "r").read().split("\n") if x]
+
+    table_q = LDPC_Q[(config.frame_type, config.code_rate)]
+    table_length = LDPC_LENGTH[(config.frame_type, config.code_rate)]
     word_cnt = 0
 
     bin_fd = open(bin_table, "wb")
@@ -378,23 +419,191 @@ def _populateLdpcTable(
         text_fd.close()
 
 
-def _createLdpcTables():
+def _getModulationTable(
+    frame_type: FrameType, constellation: ConstellationType, code_rate: CodeRate
+):
+    """
+    Returns the modulation table for a given config
+    """
+    # pylint: disable=invalid-name
+    if constellation == ConstellationType.MOD_QPSK:
+        return (
+            # QPSK
+            (math.cos(math.pi / 4.0), math.sin(math.pi / 4.0)),
+            (math.cos(7 * math.pi / 4.0), math.sin(7 * math.pi / 4.0)),
+            (math.cos(3 * math.pi / 4.0), math.sin(3 * math.pi / 4.0)),
+            (math.cos(5 * math.pi / 4.0), math.sin(5 * math.pi / 4.0)),
+        )
+
+    if constellation == ConstellationType.MOD_8PSK:
+        return (
+            (math.cos(math.pi / 4.0), math.sin(math.pi / 4.0)),
+            (math.cos(0.0), math.sin(0.0)),
+            (math.cos(4 * math.pi / 4.0), math.sin(4 * math.pi / 4.0)),
+            (math.cos(5 * math.pi / 4.0), math.sin(5 * math.pi / 4.0)),
+            (math.cos(2 * math.pi / 4.0), math.sin(2 * math.pi / 4.0)),
+            (math.cos(7 * math.pi / 4.0), math.sin(7 * math.pi / 4.0)),
+            (math.cos(3 * math.pi / 4.0), math.sin(3 * math.pi / 4.0)),
+            (math.cos(6 * math.pi / 4.0), math.sin(6 * math.pi / 4.0)),
+        )
+
+    if constellation == ConstellationType.MOD_16APSK:
+        r1 = 1.0
+        r2 = 1.0
+        if frame_type == FrameType.FECFRAME_NORMAL:
+            r1 = {
+                CodeRate.C2_3: r2 / 3.15,
+                CodeRate.C3_4: r2 / 2.85,
+                CodeRate.C4_5: r2 / 2.75,
+                CodeRate.C5_6: r2 / 2.70,
+                CodeRate.C8_9: r2 / 2.60,
+                CodeRate.C9_10: r2 / 2.57,
+                CodeRate.C3_5: r2 / 3.70,
+            }.get(code_rate, 0.0)
+        elif frame_type == FrameType.FECFRAME_SHORT:
+            r1 = {
+                CodeRate.C2_3: r2 / 3.15,
+                CodeRate.C3_4: r2 / 2.85,
+                CodeRate.C4_5: r2 / 2.75,
+                CodeRate.C5_6: r2 / 2.70,
+                CodeRate.C8_9: r2 / 2.60,
+                CodeRate.C3_5: r2 / 3.70,
+            }.get(code_rate, 0.0)
+
+        r0 = math.sqrt(4.0 / ((r1 * r1) + 3.0 * (r2 * r2)))
+        r1 = r0 * r1
+        r2 = r0 * r2
+
+        return (
+            (r2 * math.cos(math.pi / 4.0), r2 * math.sin(math.pi / 4.0)),
+            (r2 * math.cos(-math.pi / 4.0), r2 * math.sin(-math.pi / 4.0)),
+            (r2 * math.cos(3 * math.pi / 4.0), r2 * math.sin(3 * math.pi / 4.0)),
+            (r2 * math.cos(-3 * math.pi / 4.0), r2 * math.sin(-3 * math.pi / 4.0)),
+            (r2 * math.cos(math.pi / 12.0), r2 * math.sin(math.pi / 12.0)),
+            (r2 * math.cos(-math.pi / 12.0), r2 * math.sin(-math.pi / 12.0)),
+            (r2 * math.cos(11 * math.pi / 12.0), r2 * math.sin(11 * math.pi / 12.0)),
+            (r2 * math.cos(-11 * math.pi / 12.0), r2 * math.sin(-11 * math.pi / 12.0)),
+            (r2 * math.cos(5 * math.pi / 12.0), r2 * math.sin(5 * math.pi / 12.0)),
+            (r2 * math.cos(-5 * math.pi / 12.0), r2 * math.sin(-5 * math.pi / 12.0)),
+            (r2 * math.cos(7 * math.pi / 12.0), r2 * math.sin(7 * math.pi / 12.0)),
+            (r2 * math.cos(-7 * math.pi / 12.0), r2 * math.sin(-7 * math.pi / 12.0)),
+            (r1 * math.cos(math.pi / 4.0), r1 * math.sin(math.pi / 4.0)),
+            (r1 * math.cos(-math.pi / 4.0), r1 * math.sin(-math.pi / 4.0)),
+            (r1 * math.cos(3 * math.pi / 4.0), r1 * math.sin(3 * math.pi / 4.0)),
+            (r1 * math.cos(-3 * math.pi / 4.0), r1 * math.sin(-3 * math.pi / 4.0)),
+        )
+
+    if constellation == ConstellationType.MOD_32APSK:
+        r1 = 1.0
+        r2 = 1.0
+        r3 = 1.0
+        r1 = {
+            CodeRate.C3_4: r3 / 5.27,
+            CodeRate.C4_5: r3 / 4.87,
+            CodeRate.C5_6: r3 / 4.64,
+            CodeRate.C8_9: r3 / 4.33,
+            CodeRate.C9_10: r3 / 4.30,
+        }.get(code_rate, 0.0)
+
+        r2 = {
+            CodeRate.C3_4: r1 * 2.84,
+            CodeRate.C4_5: r1 * 2.72,
+            CodeRate.C5_6: r1 * 2.64,
+            CodeRate.C8_9: r1 * 2.54,
+            CodeRate.C9_10: r1 * 2.53,
+        }.get(code_rate, 0.0)
+
+        r0 = math.sqrt(8.0 / ((r1 * r1) + 3.0 * (r2 * r2) + 4.0 * (r3 * r3)))
+        r1 *= r0
+        r2 *= r0
+        r3 *= r0
+        return (
+            (r2 * math.cos(math.pi / 4.0), r2 * math.sin(math.pi / 4.0)),
+            (r2 * math.cos(5 * math.pi / 12.0), r2 * math.sin(5 * math.pi / 12.0)),
+            (r2 * math.cos(-math.pi / 4.0), r2 * math.sin(-math.pi / 4.0)),
+            (r2 * math.cos(-5 * math.pi / 12.0), r2 * math.sin(-5 * math.pi / 12.0),),
+            (r2 * math.cos(3 * math.pi / 4.0), r2 * math.sin(3 * math.pi / 4.0)),
+            (r2 * math.cos(7 * math.pi / 12.0), r2 * math.sin(7 * math.pi / 12.0)),
+            (r2 * math.cos(-3 * math.pi / 4.0), r2 * math.sin(-3 * math.pi / 4.0)),
+            (r2 * math.cos(-7 * math.pi / 12.0), r2 * math.sin(-7 * math.pi / 12.0),),
+            (r3 * math.cos(math.pi / 8.0), r3 * math.sin(math.pi / 8.0)),
+            (r3 * math.cos(3 * math.pi / 8.0), r3 * math.sin(3 * math.pi / 8.0)),
+            (r3 * math.cos(-math.pi / 4.0), r3 * math.sin(-math.pi / 4.0)),
+            (r3 * math.cos(-math.pi / 2.0), r3 * math.sin(-math.pi / 2.0)),
+            (r3 * math.cos(3 * math.pi / 4.0), r3 * math.sin(3 * math.pi / 4.0)),
+            (r3 * math.cos(math.pi / 2.0), r3 * math.sin(math.pi / 2.0)),
+            (r3 * math.cos(-7 * math.pi / 8.0), r3 * math.sin(-7 * math.pi / 8.0)),
+            (r3 * math.cos(-5 * math.pi / 8.0), r3 * math.sin(-5 * math.pi / 8.0)),
+            (r2 * math.cos(math.pi / 12.0), r2 * math.sin(math.pi / 12.0)),
+            (r1 * math.cos(math.pi / 4.0), r1 * math.sin(math.pi / 4.0)),
+            (r2 * math.cos(-math.pi / 12.0), r2 * math.sin(-math.pi / 12.0)),
+            (r1 * math.cos(-math.pi / 4.0), r1 * math.sin(-math.pi / 4.0)),
+            (r2 * math.cos(11 * math.pi / 12.0), r2 * math.sin(11 * math.pi / 12.0),),
+            (r1 * math.cos(3 * math.pi / 4.0), r1 * math.sin(3 * math.pi / 4.0)),
+            (r2 * math.cos(-11 * math.pi / 12.0), r2 * math.sin(-11 * math.pi / 12.0),),
+            (r1 * math.cos(-3 * math.pi / 4.0), r1 * math.sin(-3 * math.pi / 4.0)),
+            (r3 * math.cos(0.0), r3 * math.sin(0.0)),
+            (r3 * math.cos(math.pi / 4.0), r3 * math.sin(math.pi / 4.0)),
+            (r3 * math.cos(-math.pi / 8.0), r3 * math.sin(-math.pi / 8.0)),
+            (r3 * math.cos(-3 * math.pi / 8.0), r3 * math.sin(-3 * math.pi / 8.0)),
+            (r3 * math.cos(7 * math.pi / 8.0), r3 * math.sin(7 * math.pi / 8.0)),
+            (r3 * math.cos(5 * math.pi / 8.0), r3 * math.sin(5 * math.pi / 8.0)),
+            (r3 * math.cos(math.pi), r3 * math.sin(math.pi)),
+            (r3 * math.cos(-3 * math.pi / 4.0), r3 * math.sin(-3 * math.pi / 4.0)),
+        )
+
+    # pylint: enable=invalid-name
+
+    return ()
+
+
+def _createModulationTable(config: TestDefinition):
+    """
+    Creates the modulation table file to be used by axi_constellation_mapper_tb
+    """
+    target = p.join(config.test_files_path, "modulation_table.bin")
+
+    if p.exists(target):
+        return
+
+    try:
+        table = _getModulationTable(
+            frame_type=config.frame_type,
+            constellation=config.constellation,
+            code_rate=config.code_rate,
+        )
+    except:
+        print(
+            f"Failed to generate modulation RAM contents for FECFRAME={config.frame_type.value}, "
+            f"modulation={config.constellation.value}, code rate={config.code_rate.value}."
+        )
+        raise
+
+    print(
+        f"Generating modulation RAM contents for FECFRAME={config.frame_type.value}, "
+        f"modulation={config.constellation.value}, code rate={config.code_rate.value}. "
+        f'Data will be written to "{target}"',
+    )
+
+    with open(target, "wb") as fd:
+        # Values dumped from GNU Radio are adjusted for some reason. Adjust so
+        # the max value is 1.0 for now
+        max_value = max(1.0, max([max(abs(x[0]), abs(x[1])) for x in table]))
+        for cos, sin in table:
+            fd.write(bytes(str(cos / max_value), encoding="utf8"))
+            fd.write(b"\n")
+            fd.write(bytes(str(sin / max_value), encoding="utf8"))
+            fd.write(b"\n")
+
+
+def _createAuxiliaryTables():
     """
     Creates the binary LDPC table files if they don't already exist
     """
-    path_to_csv = p.join(ROOT, "misc", "ldpc")
     pool = Pool()
 
-    for config in TEST_CONFIGS:
-        csv_table = (
-            f"{path_to_csv}/"
-            f"ldpc_table_{config.frame_type.name}_{config.code_rate.name}.csv"
-        )
-
-        pool.apply_async(
-            _populateLdpcTable,
-            (config.frame_type, config.code_rate, csv_table, config.test_files_path),
-        )
+    pool.map_async(_populateLdpcTable, TEST_CONFIGS)
+    pool.map_async(_createModulationTable, CONSTELLATION_MAPPER_CONFIGS)
 
     pool.close()
     pool.join()
@@ -489,11 +698,11 @@ def setupTests(vunit, args):
                 ),
             )
 
-        for config in _getConfigs():
-            vunit.library("lib").entity("dvbs2_tx_tb").add_config(
+        for config in CONSTELLATION_MAPPER_CONFIGS:
+            vunit.library("lib").entity("axi_constellation_mapper_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=2,
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
 
@@ -501,6 +710,11 @@ def setupTests(vunit, args):
         addAllConfigsTest(
             entity=vunit.library("lib").entity("axi_bch_encoder_tb"),
             configs=TEST_CONFIGS,
+        )
+
+        addAllConfigsTest(
+            entity=vunit.library("lib").entity("axi_constellation_mapper_tb"),
+            configs=CONSTELLATION_MAPPER_CONFIGS,
         )
 
         addAllConfigsTest(
@@ -518,7 +732,7 @@ def setupTests(vunit, args):
         # --individual-config-runs is passed, all configs are added
         addAllConfigsTest(
             entity=vunit.library("lib").entity("dvbs2_tx_tb"),
-            configs=_getConfigs(code_rates=(CodeRate.C1_4, CodeRate.C9_10)),
+            configs=PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS
         )
 
     addAllConfigsTest(
@@ -533,6 +747,13 @@ def setupTests(vunit, args):
                 name=config.name,
                 generics=dict(
                     test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                ),
+            )
+        for config in PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS:
+            vunit.library("lib").entity("dvbs2_tx_tb").add_config(
+                name=config.name,
+                generics=dict(
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=2,
                 ),
             )
 
@@ -558,7 +779,7 @@ def setupTests(vunit, args):
                 vunit.library("lib").entity("axi_bit_interleaver_tb").add_config(
                     name=f"data_width={data_width},{config.name}",
                     generics=dict(
-                        DATA_WIDTH=data_width,
+                        TDATA_WIDTH=data_width,
                         test_cfg=config.getTestConfigString(),
                         NUMBER_OF_TEST_FRAMES=8,
                     ),
@@ -568,7 +789,7 @@ def setupTests(vunit, args):
             vunit.library("lib").entity("axi_bit_interleaver_tb").add_config(
                 name=f"data_width={data_width},all_parameters",
                 generics=dict(
-                    DATA_WIDTH=data_width,
+                    TDATA_WIDTH=data_width,
                     test_cfg="|".join(all_configs),
                     NUMBER_OF_TEST_FRAMES=2,
                 ),
@@ -599,7 +820,7 @@ def main():
     "Main entry point for DVB FPGA test runner"
 
     _generateGnuRadioData()
-    _createLdpcTables()
+    _createAuxiliaryTables()
 
     cli = VUnitCLI()
     cli.parser.add_argument(

@@ -1,7 +1,6 @@
 # DVB FPGA
 
-![Unit tests](https://github.com/phase4ground/dvb_fpga/workflows/Unit%20tests/badge.svg)
-![Yosys Synth](https://github.com/phase4ground/dvb_fpga/workflows/Yosys%20Synth/badge.svg)
+![CI](https://github.com/phase4ground/dvb_fpga/workflows/Continuous%20integration/badge.svg)
 
 This project aims to implement RTL components for DVB-S2, initially focusing on
 the transmission side.
@@ -51,12 +50,12 @@ the transmission side.
 
 | Component name         | Simulation | HW testing | HW integration |
 | :---                   | :---:      | :--:       | :--:           |
-| Baseband scrambler     | ✔️          | TODO       | TODO           |
-| BCH encoder            | ✔️          | TODO       | TODO           |
-| Bit interleaver        | ✔️          | TODO       | TODO           |
-| Constellation mapper   | TODO       | TODO       | TODO           |
-| LDPC Encoder           | ✔️          | TODO       | TODO           |
-| Physical layer framing | TODO       | TODO       | TODO           |
+| Baseband scrambler     | ✔          | TODO       | TODO           |
+| BCH encoder            | ✔          | TODO       | TODO           |
+| Bit interleaver        | ✔          | TODO       | TODO           |
+| Constellation mapper   | ✔          | TODO       | TODO           |
+| LDPC Encoder           | ✔          | TODO       | TODO           |
+| Physical layer framing | WIP        | TODO       | TODO           |
 
 ### Performance and resource usage (WIP)
 
@@ -66,10 +65,10 @@ with a clock frequency of 333 MHz (both arbitrary). No timing issues were
 reported and the resource usage post implementation is as follows:
 
 | Resource | Usage |
-|:---      | :--:  |
-| LUT      | 2864  |
-| LUTRAM   | 106   |
-| FF       | 2197  |
+| :---     | :--:  |
+| LUT      | 3,415 |
+| LUTRAM   | 218   |
+| FF       | 2,562 |
 | BRAM     | 16    |
 
 ## Running tests
@@ -109,9 +108,11 @@ cd dvb_fpga
 # Run the tests
 ./run.py
 ```
+
 The first invocation of `run.py` will run GNURadio and create stimulus files.
 
 To list tests use `./run.py -l`:
+
 ```sh
 $ ./run.py -l
 lib.axi_bit_interleaver_tb.data_width=8,all_parameters.back_to_back
@@ -140,6 +141,7 @@ lib.axi_baseband_scrambler_tb.test_all_configs.slow_slave
 lib.axi_baseband_scrambler_tb.test_all_configs.both_slow
 Listed 24 tests
 ```
+
 ## Running synthesis
 
 Scripts are provided as an example to get things going, currently this has not

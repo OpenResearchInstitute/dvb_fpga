@@ -1,3 +1,4 @@
+-- vim: set foldmethod=marker foldmarker=--\ {{,--\ }} :
 --
 -- DVB FPGA
 --
@@ -38,6 +39,7 @@ use work.dvb_utils_pkg.all;
 use work.dvb_sim_utils_pkg.all;
 
 library fpga_cores;
+use fpga_cores.axi_pkg.all;
 use fpga_cores.common_pkg.all;
 
 library fpga_cores_sim;
@@ -54,7 +56,7 @@ entity axi_bit_interleaver_tb is
   generic (
     RUNNER_CFG            : string;
     TEST_CFG              : string;
-    DATA_WIDTH            : integer := 8;
+    TDATA_WIDTH           : integer := 8;
     NUMBER_OF_TEST_FRAMES : integer := 8);
 end axi_bit_interleaver_tb;
 
@@ -66,7 +68,6 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   constant configs                    : config_array_t := get_test_cfg(TEST_CFG);
 
   constant CLK_PERIOD                 : time := 5 ns;
-  constant ERROR_CNT_WIDTH            : integer := 8;
 
   constant DBG_CHECK_FRAME_RAM_WRITES : boolean := False;
 
@@ -102,95 +103,76 @@ architecture axi_bit_interleaver_tb of axi_bit_interleaver_tb is
   signal tready_probability : real range 0.0 to 1.0 := 1.0;
 
   -- AXI input
-  signal m_tready           : std_logic;
-  signal m_tvalid           : std_logic;
-  signal m_tdata            : std_logic_vector(DATA_WIDTH - 1 downto 0);
-  signal m_tlast            : std_logic;
-  signal m_data_valid       : boolean;
+  signal axi_master         : axi_stream_bus_t(tdata(TDATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+  signal axi_master_dv      : boolean;
+  signal axi_slave          : axi_stream_bus_t(tdata(TDATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+  signal axi_slave_dv       : boolean;
 
-  -- AXI output
-  signal s_tvalid           : std_logic;
-  signal s_tdata            : std_logic_vector(DATA_WIDTH - 1 downto 0);
-  signal s_tlast            : std_logic;
-  signal s_tready           : std_logic;
-  signal s_data_valid       : boolean;
-
-  signal expected_tdata     : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal expected_tdata     : std_logic_vector(TDATA_WIDTH - 1 downto 0);
   signal expected_tlast     : std_logic;
-  signal tdata_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
-  signal tlast_error_cnt    : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
-  signal error_cnt          : std_logic_vector(ERROR_CNT_WIDTH - 1 downto 0);
+  signal tdata_error_cnt    : std_logic_vector(7 downto 0);
+  signal tlast_error_cnt    : std_logic_vector(7 downto 0);
+  signal error_cnt          : std_logic_vector(7 downto 0);
 
 begin
 
   -------------------
   -- Port mappings --
   -------------------
+  axi_file_reader_u : entity fpga_cores_sim.axi_file_reader
+    generic map (
+      READER_NAME => "axi_file_reader_u",
+      DATA_WIDTH  => TDATA_WIDTH,
+      TID_WIDTH   => ENCODED_CONFIG_WIDTH)
+    port map (
+      -- Usual ports
+      clk                => clk,
+      rst                => rst,
+      -- Config and status
+      completed          => open,
+      tvalid_probability => tvalid_probability,
+
+      -- Data output
+      m_tready           => axi_master.tready,
+      m_tdata            => axi_master.tdata,
+      m_tid              => axi_master.tuser,
+      m_tvalid           => axi_master.tvalid,
+      m_tlast            => axi_master.tlast);
+
   dut : entity work.axi_bit_interleaver
-    generic map ( DATA_WIDTH => DATA_WIDTH )
+    generic map (
+      TDATA_WIDTH => TDATA_WIDTH,
+      TID_WIDTH   => ENCODED_CONFIG_WIDTH
+    )
     port map (
       -- Usual ports
       clk               => clk,
       rst               => rst,
 
-      cfg_constellation => cfg_constellation,
-      cfg_frame_type    => cfg_frame_type,
-      cfg_code_rate     => cfg_code_rate,
+      cfg_constellation => decode(axi_master.tuser).constellation,
+      cfg_frame_type    => decode(axi_master.tuser).frame_type,
+      cfg_code_rate     => decode(axi_master.tuser).code_rate,
 
       -- AXI input
-      s_tvalid          => m_tvalid,
-      s_tdata           => m_tdata,
-      s_tlast           => m_tlast,
-      s_tready          => m_tready,
+      s_tvalid          => axi_master.tvalid,
+      s_tlast           => axi_master.tlast,
+      s_tready          => axi_master.tready,
+      s_tdata           => axi_master.tdata,
+      s_tid             => axi_master.tuser,
 
       -- AXI output
-      m_tready          => s_tready,
-      m_tvalid          => s_tvalid,
-      m_tlast           => s_tlast,
-      m_tdata           => s_tdata);
-
-
-  -- AXI file read
-  axi_file_reader_block : block
-    constant CONFIG_INPUT_WIDTHS: fpga_cores.common_pkg.integer_vector_t := (
-      0 => FRAME_TYPE_WIDTH,
-      1 => CONSTELLATION_WIDTH,
-      2 => CODE_RATE_WIDTH);
-
-    signal m_tid : std_logic_vector(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0);
-  begin
-    axi_file_reader_u : entity fpga_cores_sim.axi_file_reader
-      generic map (
-        READER_NAME => "axi_file_reader_u",
-        DATA_WIDTH  => DATA_WIDTH,
-        TID_WIDTH   => sum(CONFIG_INPUT_WIDTHS))
-      port map (
-        -- Usual ports
-        clk                => clk,
-        rst                => rst,
-        -- Config and status
-        completed          => open,
-        tvalid_probability => tvalid_probability,
-
-        -- Data output
-        m_tready           => m_tready,
-        m_tdata            => m_tdata,
-        m_tid              => m_tid,
-        m_tvalid           => m_tvalid,
-        m_tlast            => m_tlast);
-
-    -- Decode the TID field with the actual config types
-    cfg_frame_type    <= decode(get_field(m_tid, 0, CONFIG_INPUT_WIDTHS));
-    cfg_constellation <= decode(get_field(m_tid, 1, CONFIG_INPUT_WIDTHS));
-    cfg_code_rate     <= decode(get_field(m_tid, 2, CONFIG_INPUT_WIDTHS));
-  end block axi_file_reader_block;
+      m_tready          => axi_slave.tready,
+      m_tvalid          => axi_slave.tvalid,
+      m_tlast           => axi_slave.tlast,
+      m_tdata           => axi_slave.tdata,
+      m_tid             => axi_slave.tuser);
 
   axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
     generic map (
       READER_NAME     => "axi_file_compare_u",
-      ERROR_CNT_WIDTH => ERROR_CNT_WIDTH,
+      ERROR_CNT_WIDTH => 8,
       REPORT_SEVERITY => Warning,
-      DATA_WIDTH      => DATA_WIDTH)
+      DATA_WIDTH      => TDATA_WIDTH)
     port map (
       -- Usual ports
       clk                => clk,
@@ -204,10 +186,10 @@ begin
       expected_tdata     => expected_tdata,
       expected_tlast     => expected_tlast,
       -- Data input
-      s_tready           => s_tready,
-      s_tdata            => s_tdata,
-      s_tvalid           => s_tvalid,
-      s_tlast            => s_tlast);
+      s_tready           => axi_slave.tready,
+      s_tdata            => axi_slave.tdata,
+      s_tvalid           => axi_slave.tvalid,
+      s_tlast            => axi_slave.tlast);
 
   ------------------------------
   -- Asynchronous assignments --
@@ -216,13 +198,13 @@ begin
 
   test_runner_watchdog(runner, 3 ms);
 
-  m_data_valid <= m_tvalid = '1' and m_tready = '1';
-  s_data_valid <= s_tvalid = '1' and s_tready = '1';
+  axi_master_dv <= axi_master.tvalid = '1' and axi_master.tready = '1';
+  axi_slave_dv  <= axi_slave.tvalid = '1' and axi_slave.tready = '1';
 
   ---------------
   -- Processes --
   ---------------
-  main : process
+  main : process -- {{ -----------------------------------------------------------------
     constant self         : actor_t := new_actor("main");
     variable file_reader  : file_reader_t := new_file_reader("axi_file_reader_u");
     variable file_checker : file_reader_t := new_file_reader("axi_file_compare_u");
@@ -242,6 +224,7 @@ begin
       constant number_of_frames : in positive) is
       variable msg              : msg_t;
       constant data_path        : string := strip(config.base_path, chars => (1 to 1 => nul));
+      variable config_tuple     : config_tuple_t;
     begin
 
       info("Running test with:");
@@ -250,14 +233,20 @@ begin
       info(" - code_rate      : " & code_rate_t'image(config.code_rate));
       info(" - data path      : " & data_path);
 
+      config_tuple := (code_rate => config.code_rate, constellation => config.constellation, frame_type => config.frame_type);
+
       for i in 0 to number_of_frames - 1 loop
+        -- Update the expected TID
+        msg := new_msg;
+        push(msg, encode(config_tuple));
+        send(net, find("tid_check"), msg);
+
         read_file(net,
           file_reader => file_reader,
           filename    => data_path & "/bit_interleaver_input.bin",
           ratio       => "1:8",
-          tid         => encode(config.code_rate) & encode(config.constellation) & encode(config.frame_type)
+          tid         => encode(config_tuple)
         );
-
 
         if DBG_CHECK_FRAME_RAM_WRITES then
           msg        := new_msg;
@@ -276,7 +265,6 @@ begin
           data_path & "/bit_interleaver_output.bin",
           get_checker_data_ratio(config.constellation)
         );
-
       end loop;
 
     end procedure run_test;
@@ -286,7 +274,7 @@ begin
       info("Waiting for completion");
       wait_all_read(net, file_checker);
 
-      wait until rising_edge(clk) and s_tvalid = '0' for 1 ms;
+      wait until rising_edge(clk) and axi_slave.tvalid = '0' for 1 ms;
 
       walk(2);
     end procedure wait_for_completion; -- }} -------------------------------------------
@@ -305,7 +293,7 @@ begin
       tvalid_probability <= 1.0;
       tready_probability <= 1.0;
 
-      set_timeout(runner, configs'length * NUMBER_OF_TEST_FRAMES * 4 ms / DATA_WIDTH);
+      set_timeout(runner, configs'length * NUMBER_OF_TEST_FRAMES * 4 ms / TDATA_WIDTH);
 
       if run("back_to_back") then
         tvalid_probability <= 1.0;
@@ -343,7 +331,7 @@ begin
 
       wait_for_completion;
       check_equal(error_cnt, 0, sformat("Expected 0 errors but got %d", fo(error_cnt)));
-      check_equal(s_tvalid, '0', "s_tvalid should be low after the test");
+      check_equal(axi_slave.tvalid, '0', "axi_slave.tvalid should be low after the test");
 
       walk(32);
 
@@ -351,10 +339,41 @@ begin
 
     test_runner_cleanup(runner);
     wait;
-  end process;
+  end process; -- }} -------------------------------------------------------------------
+
+  tid_check_p : process -- {{ ----------------------------------------------------------
+    constant self         : actor_t := new_actor("tid_check");
+    variable msg          : msg_t;
+    variable expected_tid : std_logic_vector(ENCODED_CONFIG_WIDTH - 1 downto 0);
+    variable first_word   : boolean;
+    variable frame_cnt    : integer := 0;
+    variable word_cnt     : integer := 0;
+  begin
+    first_word := True;
+    while true loop
+      wait until rising_edge(clk) and axi_slave.tvalid = '1' and axi_slave.tready = '1';
+      if first_word then
+        check_true(has_message(self), "Expected TID not set");
+        receive(net, self, msg);
+        expected_tid := pop(msg);
+        info(sformat("[%d / %d] Updated expected TID to %r", fo(frame_cnt), fo(word_cnt), fo(expected_tid)));
+      end if;
+
+      check_equal(axi_slave.tuser, expected_tid, sformat("[%d / %d] Got %r, expected %r", fo(frame_cnt), fo(word_cnt), fo(axi_slave.tuser), fo(expected_tid)));
+
+      first_word := False;
+      word_cnt   := word_cnt + 1;
+      if axi_slave.tlast = '1' then
+        info(sformat("[%d / %d] Setting first word", fo(frame_cnt), fo(word_cnt)));
+        frame_cnt  := frame_cnt + 1;
+        word_cnt   := 0;
+        first_word := True;
+      end if;
+    end loop;
+  end process; -- }} -------------------------------------------------------------------
 
   -- ghdl translate_off
-  whitebox_monitor : if DBG_CHECK_FRAME_RAM_WRITES generate
+  whitebox_monitor : if DBG_CHECK_FRAME_RAM_WRITES generate -- {{ ----------------------
 
     constant logger : logger_t := get_logger("whitebox_monitor");
 
@@ -370,12 +389,12 @@ begin
     end record;
 
     constant RAM_PTR_WIDTH : integer := 2;
-    constant MAX_ROWS      : integer := 21_600 / DATA_WIDTH;
+    constant MAX_ROWS      : integer := 21_600 / TDATA_WIDTH;
     constant MAX_COLUMNS   : integer := 5;
 
     type addr_array_t is array (natural range <>)
       of unsigned(numbits(MAX_ROWS) + RAM_PTR_WIDTH - 1 downto 0);
-    type data_array_t is array (natural range <>) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    type data_array_t is array (natural range <>) of std_logic_vector(TDATA_WIDTH - 1 downto 0);
 
     -- signal ram_wr_addr               : addr_array_t(MAX_COLUMNS - 1 downto 0);
     -- signal ram_wr_data               : data_array_t(MAX_COLUMNS - 1 downto 0);
@@ -383,7 +402,7 @@ begin
 
     type ram_wr_t is record
       addr : unsigned(numbits(MAX_ROWS) + RAM_PTR_WIDTH - 1 downto 0);
-      data : std_logic_vector(DATA_WIDTH - 1 downto 0);
+      data : std_logic_vector(TDATA_WIDTH - 1 downto 0);
       en   : std_logic;
     end record;
 
@@ -431,9 +450,9 @@ begin
         columns := 5;
       end if;
 
-      return (row_number    => rows / DATA_WIDTH + 1,
+      return (row_number    => rows / TDATA_WIDTH + 1,
               column_number => columns,
-              remainder     => rows mod DATA_WIDTH);
+              remainder     => rows mod TDATA_WIDTH);
 
     end function get_interleaver_config;
 
@@ -465,13 +484,13 @@ begin
       constant cfg           : cfg_t ) is
       variable msg           : msg_t;
 
-      variable data_sr       : std_logic_vector(2*DATA_WIDTH - 1 downto 0);
+      variable data_sr       : std_logic_vector(2*TDATA_WIDTH - 1 downto 0);
       variable is_last       : boolean := False;
       variable bit_cnt       : natural := 0;
 
-      variable expected_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
+      variable expected_data : std_logic_vector(TDATA_WIDTH - 1 downto 0);
       variable ram_addr      : unsigned(numbits(MAX_ROWS) - 1 downto 0);
-      variable ram_data      : std_logic_vector(DATA_WIDTH - 1 downto 0);
+      variable ram_data      : std_logic_vector(TDATA_WIDTH - 1 downto 0);
       variable offset        : natural := 0;
     begin
 
@@ -480,11 +499,11 @@ begin
         for row in 0 to cfg.row_number - 1 loop
 
           -- Receive AXI data if we need more
-          if bit_cnt < DATA_WIDTH and not is_last then
+          if bit_cnt < TDATA_WIDTH and not is_last then
             receive(net, whitebox_axi_monitor, msg);
-            data_sr := data_sr(data_sr'length - DATA_WIDTH - 1 downto 0) & std_logic_vector'(pop(msg));
+            data_sr := data_sr(data_sr'length - TDATA_WIDTH - 1 downto 0) & std_logic_vector'(pop(msg));
             is_last := pop(msg);
-            bit_cnt := bit_cnt + DATA_WIDTH;
+            bit_cnt := bit_cnt + TDATA_WIDTH;
           end if;
 
           -- Receive RAM data
@@ -496,9 +515,9 @@ begin
           -- For the last row we'll only compare the relevant bits
           if row = cfg.row_number - 1 then
             expected_data := data_sr(bit_cnt - 1 downto bit_cnt - cfg.remainder)
-                             & (DATA_WIDTH - 1 downto cfg.remainder => 'U');
+                             & (TDATA_WIDTH - 1 downto cfg.remainder => 'U');
           else
-            expected_data := data_sr(bit_cnt - 1 downto bit_cnt - DATA_WIDTH);
+            expected_data := data_sr(bit_cnt - 1 downto bit_cnt - TDATA_WIDTH);
           end if;
 
           info(
@@ -554,7 +573,7 @@ begin
             bit_cnt := bit_cnt - cfg.remainder;
             data_sr := (data_sr'length - bit_cnt - 1 downto 0 => 'U') & data_sr(bit_cnt - 1 downto 0);
           else
-            bit_cnt := bit_cnt - DATA_WIDTH;
+            bit_cnt := bit_cnt - TDATA_WIDTH;
           end if;
         end loop;
       end loop;
@@ -590,18 +609,18 @@ begin
       variable frame_cnt : natural  := 0;
       variable word_cnt  : natural  := 0;
     begin
-      wait until m_tvalid = '1' and m_tready = '1' and rising_edge(clk);
+      wait until axi_master.tvalid = '1' and axi_master.tready = '1' and rising_edge(clk);
       msg := new_msg;
-      push(msg, m_tdata);
-      if m_tlast = '1' then
+      push(msg, axi_master.tdata);
+      if axi_master.tlast = '1' then
         push(msg, True);
       else
         push(msg, False);
       end if;
-      debug(logger, sformat("[frame=%d, word=%d] tdata=%r", fo(frame_cnt), fo(word_cnt), fo(m_tdata)));
+      debug(logger, sformat("[frame=%d, word=%d] tdata=%r", fo(frame_cnt), fo(word_cnt), fo(axi_master.tdata)));
       send(net, find("whitebox_monitor_axi_data"), msg);
       word_cnt := word_cnt + 1;
-      if m_tlast = '1' then
+      if axi_master.tlast = '1' then
         word_cnt := 0;
         frame_cnt := frame_cnt + 1;
       end if;
@@ -629,7 +648,7 @@ begin
       end loop;
     end process;
 
-  end generate whitebox_monitor;
+  end generate whitebox_monitor; -- }} -------------------------------------------------
   -- ghdl translate_on
 
 end axi_bit_interleaver_tb;

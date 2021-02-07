@@ -75,6 +75,7 @@ BBFRAME_LENGTH = {
         dtv.C4_5: 12432,
         dtv.C5_6: 13152,
         dtv.C8_9: 14232,
+        dtv.C9_10: 14412,
     },
 }
 
@@ -108,6 +109,13 @@ def get_ratio(constellation):
 
 class UnknownFrameLength(Exception):
     def __init__(self, frame_type, code_rate):
+        if frame_type == dtv.FECFRAME_NORMAL:
+            self.frame_type = 'FECFRAME_NORMAL'
+        elif frame_type == dtv.FECFRAME_SHORT:
+            self.frame_type = 'FECFRAME_SHORT'
+        else:
+            self.frame_type = frame_type
+
         self.frame_type = frame_type
         self.code_rate = code_rate
 
