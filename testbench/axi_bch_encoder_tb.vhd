@@ -1,3 +1,4 @@
+-- vim: set foldmethod=marker foldmarker=--\ {{,--\ }} :
 --
 -- DVB FPGA
 --
@@ -30,9 +31,6 @@ library vunit_lib;
 context vunit_lib.vunit_context;
 context vunit_lib.com_context;
 
-library osvvm;
-use osvvm.RandomPkg.all;
-
 library str_format;
 use str_format.str_format_pkg.all;
 
@@ -62,7 +60,6 @@ architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
   constant configs           : config_array_t := get_test_cfg(TEST_CFG);
 
   constant CLK_PERIOD        : time := 5 ns;
-  constant TDATA_WIDTH       : integer := 8;
 
   -------------
   -- Signals --
@@ -75,15 +72,15 @@ architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
   signal cfg_code_rate      : code_rate_t;
 
   -- AXI input
-  signal axi_master         : axi_stream_bus_t(tdata(TDATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+  signal axi_master         : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   signal axi_master_dv      : boolean;
-  signal axi_slave          : axi_stream_bus_t(tdata(TDATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+  signal axi_slave          : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   signal axi_slave_dv       : boolean;
 
   signal tvalid_probability : real range 0.0 to 1.0 := 1.0;
   signal tready_probability : real range 0.0 to 1.0 := 1.0;
 
-  signal expected_tdata     : std_logic_vector(TDATA_WIDTH - 1 downto 0);
+  signal expected_tdata     : std_logic_vector(7 downto 0);
   signal expected_tlast     : std_logic;
   signal tdata_error_cnt    : std_logic_vector(7 downto 0);
   signal tlast_error_cnt    : std_logic_vector(7 downto 0);
@@ -94,36 +91,10 @@ begin
   -------------------
   -- Port mappings --
   -------------------
-  dut : entity work.axi_bch_encoder
-    generic map (
-      TDATA_WIDTH => TDATA_WIDTH,
-      TID_WIDTH   => ENCODED_CONFIG_WIDTH)
-    port map (
-      -- Usual ports
-      clk            => clk,
-      rst            => rst,
-
-      cfg_frame_type => decode(axi_master.tuser).frame_type,
-      cfg_code_rate  => decode(axi_master.tuser).code_rate,
-
-      -- AXI input
-      s_tvalid       => axi_master.tvalid,
-      s_tlast        => axi_master.tlast,
-      s_tready       => axi_master.tready,
-      s_tdata        => axi_master.tdata,
-      s_tid          => axi_master.tuser,
-
-      -- AXI output
-      m_tready       => axi_slave.tready,
-      m_tvalid       => axi_slave.tvalid,
-      m_tlast        => axi_slave.tlast,
-      m_tdata        => axi_slave.tdata,
-      m_tid          => axi_slave.tuser);
-
   axi_file_reader_u : entity fpga_cores_sim.axi_file_reader
     generic map (
       READER_NAME => "axi_file_reader_u",
-      DATA_WIDTH  => TDATA_WIDTH,
+      DATA_WIDTH  => 8,
       TID_WIDTH   => ENCODED_CONFIG_WIDTH)
     port map (
       -- Usual ports
@@ -132,7 +103,6 @@ begin
       -- Config and status
       completed          => open,
       tvalid_probability => tvalid_probability,
-
       -- Data output
       m_tready           => axi_master.tready,
       m_tdata            => axi_master.tdata,
@@ -140,12 +110,34 @@ begin
       m_tvalid           => axi_master.tvalid,
       m_tlast            => axi_master.tlast);
 
+  dut : entity work.axi_bch_encoder
+    generic map ( TID_WIDTH => ENCODED_CONFIG_WIDTH )
+    port map (
+      -- Usual ports
+      clk            => clk,
+      rst            => rst,
+      -- Config input
+      cfg_frame_type => decode(axi_master.tuser).frame_type,
+      cfg_code_rate  => decode(axi_master.tuser).code_rate,
+      -- AXI input
+      s_tvalid       => axi_master.tvalid,
+      s_tlast        => axi_master.tlast,
+      s_tready       => axi_master.tready,
+      s_tdata        => axi_master.tdata,
+      s_tid          => axi_master.tuser,
+      -- AXI output
+      m_tready       => axi_slave.tready,
+      m_tvalid       => axi_slave.tvalid,
+      m_tlast        => axi_slave.tlast,
+      m_tdata        => axi_slave.tdata,
+      m_tid          => axi_slave.tuser);
+
   axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
     generic map (
       READER_NAME     => "axi_file_compare_u",
       ERROR_CNT_WIDTH => 8,
       -- REPORT_SEVERITY => Warning,
-      DATA_WIDTH      => TDATA_WIDTH)
+      DATA_WIDTH      => 8)
     port map (
       -- Usual ports
       clk                => clk,
@@ -322,7 +314,15 @@ begin
         info(sformat("[%d / %d] Updated expected TID to %r", fo(frame_cnt), fo(word_cnt), fo(expected_tid)));
       end if;
 
-      check_equal(axi_slave.tuser, expected_tid, sformat("[%d / %d] Got %r, expected %r", fo(frame_cnt), fo(word_cnt), fo(axi_slave.tuser), fo(expected_tid)));
+      check_equal(
+        axi_slave.tuser,
+        expected_tid,
+        sformat(
+          "[%d / %d] TID check error: got %r, expected %r",
+          fo(frame_cnt),
+          fo(word_cnt),
+          fo(axi_slave.tuser),
+          fo(expected_tid)));
 
       first_word := False;
       word_cnt   := word_cnt + 1;
