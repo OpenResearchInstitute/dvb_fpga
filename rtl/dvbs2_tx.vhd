@@ -324,6 +324,33 @@ begin
       -- m_tid             constellation_mapper_in.tuser,
       m_tdata           => constellation_mapper_out.tdata);
 
+  physical_layer_framer_u : entity work.axi_physical_layer_framer
+    generic map (
+      TDATA_WIDTH => DATA_WIDTH,
+      TID_WIDTH   => 0)
+    port map (
+      -- Usual ports
+      clk                      => clk,
+      rst                      => rst,
+      -- Static config
+      cfg_generate_dummy_frame => '1',
+      -- Per frame config
+      cfg_constellation        => decode(constellation_mapper_out.tuser).constellation,
+      cfg_frame_type           => decode(constellation_mapper_out.tuser).frame_type,
+      cfg_code_rate            => decode(constellation_mapper_out.tuser).code_rate,
+      -- AXI input
+      s_tvalid                 => constellation_mapper_out.tvalid,
+      s_tlast                  => constellation_mapper_out.tlast,
+      s_tready                 => constellation_mapper_out.tready,
+      s_tdata                  => constellation_mapper_out.tdata,
+      s_tid                    => (others => 'U'),
+      -- AXI output
+      m_tready                 => m_tready,
+      m_tvalid                 => m_tvalid,
+      m_tlast                  => m_tlast,
+      m_tdata                  => m_tdata,
+      m_tid                    => open);
+
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
@@ -333,12 +360,4 @@ begin
 
   mux_sel <= "10" when decode(ldpc_encoder_out.tuser).constellation = mod_qpsk else "01";
 
-  constellation_mapper_out.tready <= m_tready;
-  m_tvalid                        <= constellation_mapper_out.tvalid;
-  m_tlast                         <= constellation_mapper_out.tlast;
-  m_tdata                         <= constellation_mapper_out.tdata;
-
-  ---------------
-  -- Processes --
-  ---------------
 end dvbs2_tx;
