@@ -48,6 +48,9 @@ package plframe_header_pkg is
     constant frame_type    : frame_type_t;
     constant code_rate     : code_rate_t) return integer;
 
+  constant SOF                  : std_logic_vector(25 downto 0) := "01" & x"8D2E82";
+  constant DUMMY_FRAME_PLS_CODE : std_logic_vector;
+
 end package plframe_header_pkg;
 
 package body plframe_header_pkg is
@@ -123,7 +126,7 @@ package body plframe_header_pkg is
   end function;
 
 -- void dvbs2_physical_cc_impl::b_64_8_code(unsigned char in, int* out)
-  impure function b_64_8_code (constant v : std_logic_vector(7 downto 0)) return std_logic_vector is
+  function b_64_8_code (constant v : std_logic_vector(7 downto 0)) return std_logic_vector is
     constant PL_HDR_SCRAMBLE_TAB : std_logic_vector(63 downto 0) := "0111000110011101100000111100100101010011010000100010110111111010";
     variable temp                : std_logic_vector(31 downto 0) := (others => '0');
     variable bit_mask            : std_logic_vector(31 downto 0) := x"80000000";
@@ -152,26 +155,28 @@ package body plframe_header_pkg is
     return result;
   end function;
 
-  impure function pl_header_encode(
-    constant modcode   : std_logic_vector(7 downto 0);
-    constant type_code : std_logic_vector(7 downto 0)) return std_logic_vector is
-    variable code      : std_logic_vector(7 downto 0);
+  function pl_header_encode(
+    constant modcode          : std_logic_vector(7 downto 0);
+    constant type_code        : std_logic_vector(1 downto 0)) return std_logic_vector is
+    variable type_code_padded : std_logic_vector(7 downto 0);
+    variable code             : std_logic_vector(7 downto 0);
   begin
+    type_code_padded(type_code'range) := type_code;
     if or(modcode and x"80") then
-      code := modcode or (type_code and x"01");
+      code := modcode or (type_code_padded and x"01");
     else
-      code := (modcode(5 downto 0) & "00") or type_code;
+      code := (modcode(5 downto 0) & "00") or type_code_padded;
     end if;
     return b_64_8_code(code);
   end function;
 
-  impure function get_pls_code(
+  function get_pls_code(
     constant constellation : in constellation_t;
     constant frame_type    : in frame_type_t;
     constant code_rate     : in code_rate_t) return std_logic_vector is
 
     variable modcode       : std_logic_vector(7 downto 0);
-    variable type_code     : std_logic_vector(7 downto 0);
+    variable type_code     : std_logic_vector(1 downto 0);
     variable has_pilots    : boolean := False;
 
   begin
@@ -247,6 +252,10 @@ package body plframe_header_pkg is
       return addr + 32;
     end if;
   end;
+
+  constant DUMMY_FRAME_PLS_CODE : std_logic_vector := pl_header_encode(
+    modcode   => (others => '0'),
+    type_code => (others => '0'));
 
 end package body plframe_header_pkg;
 

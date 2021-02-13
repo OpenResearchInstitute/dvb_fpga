@@ -66,31 +66,14 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
   ---------------
   -- Constants --
   ---------------
-  constant configs           : config_array_t := get_test_cfg(TEST_CFG);
-  constant DATA_WIDTH        : integer := 8;
-  constant OUTPUT_DATA_WIDTH : integer := 32;
+  constant configs                   : config_array_t := get_test_cfg(TEST_CFG);
+  constant CLK_PERIOD                : time := 5 ns;
 
-  constant BB_SCRAMBLER_CHECKER_NAME  : string  := "bb_scrambler";
-  constant BCH_ENCODER_CHECKER_NAME   : string  := "bch_encoder";
-  constant LDPC_ENCODER_CHECKER_NAME  : string  := "ldpc_encoder";
+  constant DATA_WIDTH                : integer := 32;
 
-  constant CLK_PERIOD        : time := 5 ns;
-
-  function get_checker_data_ratio ( constant constellation : in constellation_t)
-  return string is
-  begin
-    case constellation is
-      when   mod_8psk => return "3:8";
-      when mod_16apsk => return "4:8";
-      when mod_32apsk => return "5:8";
-      when others =>
-        report "Invalid constellation: " & constellation_t'image(constellation)
-        severity Failure;
-    end case;
-
-    -- Just to avoid the warning, should never be reached
-    return "";
-  end;
+  constant BB_SCRAMBLER_CHECKER_NAME : string  := "bb_scrambler";
+  constant BCH_ENCODER_CHECKER_NAME  : string  := "bch_encoder";
+  constant LDPC_ENCODER_CHECKER_NAME : string  := "ldpc_encoder";
 
   type axi_checker_t is record
     axi             : axi_stream_data_bus_t;
@@ -127,16 +110,16 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
   signal s_data_valid          : std_logic;
 
   signal axi_bb_scrambler      : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)), expected_tdata(DATA_WIDTH - 1 downto 0));
-  signal axi_bch_encoder       : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)), expected_tdata(DATA_WIDTH - 1 downto 0));
-  signal axi_ldpc_encoder_core : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)), expected_tdata(DATA_WIDTH - 1 downto 0));
-  signal axi_slave             : axi_checker_t(axi(tdata(OUTPUT_DATA_WIDTH - 1 downto 0)), expected_tdata(OUTPUT_DATA_WIDTH - 1 downto 0));
-  signal axi_slave_tdata       : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+  signal axi_bch_encoder       : axi_checker_t(axi(tdata(7 downto 0)), expected_tdata(7 downto 0));
+  signal axi_ldpc_encoder_core : axi_checker_t(axi(tdata(7 downto 0)), expected_tdata(7 downto 0));
+  signal axi_slave             : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)), expected_tdata(DATA_WIDTH - 1 downto 0));
+  signal axi_slave_tdata       : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
   -- Mapping RAM config
   signal ram_wren              : std_logic;
   signal ram_addr              : std_logic_vector(5 downto 0);
-  signal ram_wdata             : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
-  signal ram_rdata             : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+  signal ram_wdata             : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal ram_rdata             : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
 begin
 
@@ -182,9 +165,7 @@ begin
       m_tlast            => axi_master.tlast);
 
   dut : entity work.dvbs2_tx
-    generic map (
-      DATA_WIDTH        => DATA_WIDTH,
-      OUTPUT_DATA_WIDTH => OUTPUT_DATA_WIDTH)
+    generic map ( DATA_WIDTH => DATA_WIDTH )
     port map (
       -- Usual ports
       clk               => clk,
@@ -242,7 +223,7 @@ begin
       READER_NAME     => BCH_ENCODER_CHECKER_NAME,
       ERROR_CNT_WIDTH => 8,
       REPORT_SEVERITY => Error,
-      DATA_WIDTH      => DATA_WIDTH)
+      DATA_WIDTH      => 8)
     port map (
       -- Usual ports
       clk                => clk,
@@ -266,7 +247,7 @@ begin
       READER_NAME     => LDPC_ENCODER_CHECKER_NAME,
       ERROR_CNT_WIDTH => 8,
       REPORT_SEVERITY => Error,
-      DATA_WIDTH      => DATA_WIDTH)
+      DATA_WIDTH      => 8)
     port map (
       -- Usual ports
       clk                => clk,
@@ -291,7 +272,7 @@ begin
   output_ref_data_u : entity fpga_cores_sim.axi_file_reader
     generic map (
       READER_NAME => "output_ref_data_u",
-      DATA_WIDTH  => OUTPUT_DATA_WIDTH)
+      DATA_WIDTH  => DATA_WIDTH)
     port map (
       -- Usual ports
       clk                => clk,
@@ -369,7 +350,7 @@ begin
 
     procedure write_ram ( -- {{ --------------------------------------------------------
       constant addr : in integer;
-      constant data : in std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0)) is
+      constant data : in std_logic_vector(DATA_WIDTH - 1 downto 0)) is
     begin
       ram_wren  <= '1';
       ram_addr  <= std_logic_vector(to_unsigned(addr, 6));
@@ -405,16 +386,16 @@ begin
             fo(index),
             fo(addr),
             real'image(r0),
-            fo(to_fixed_point(r0, OUTPUT_DATA_WIDTH/2)),
+            fo(to_fixed_point(r0, DATA_WIDTH/2)),
             real'image(r1),
-            fo(to_fixed_point(r1, OUTPUT_DATA_WIDTH/2))
+            fo(to_fixed_point(r1, DATA_WIDTH/2))
           )
         );
 
         write_ram(
           addr,
-          std_logic_vector(to_fixed_point(r0, OUTPUT_DATA_WIDTH/2)) &
-          std_logic_vector(to_fixed_point(r1, OUTPUT_DATA_WIDTH/2))
+          std_logic_vector(to_fixed_point(r0, DATA_WIDTH/2)) &
+          std_logic_vector(to_fixed_point(r1, DATA_WIDTH/2))
         );
         addr := addr + 1;
         index := index + 1;
@@ -528,8 +509,8 @@ begin
 -- ghdl translate_off
   signal_spy_block : block -- {{ -------------------------------------------------------
     signal bb_scrambler_out : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-    signal bch_encoder_out  : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-    signal ldpc_encoder_out : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal bch_encoder_out  : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal ldpc_encoder_out : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   begin
 
     axi_bb_scrambler.axi.tdata     <= bb_scrambler_out.tdata;
@@ -582,9 +563,9 @@ begin
     variable expected_r       : complex;
     variable recv_p           : complex_polar;
     variable expected_p       : complex_polar;
-    variable expected_lendian : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
-    variable expected_i       : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0);
-    variable expected_q       : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0);
+    variable expected_lendian : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    variable expected_i       : signed(DATA_WIDTH/2 - 1 downto 0);
+    variable expected_q       : signed(DATA_WIDTH/2 - 1 downto 0);
 
   begin
     wait until axi_slave.axi.tvalid = '1' and axi_slave.axi.tready = '1' and rising_edge(clk);

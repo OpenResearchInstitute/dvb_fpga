@@ -86,8 +86,6 @@ architecture axi_plframe_header of axi_plframe_header is
     7 => std_logic_vector(cos(      MATH_PI / 4.0, DATA_WIDTH/2) & sin(      MATH_PI / 4.0, DATA_WIDTH/2))
   );
 
-  constant SOF           : std_logic_vector(25 downto 0) := "01" & x"8D2E82";
-
   -- SOF is the same for all configs, so we'll only store the PLS
   constant PLS_ROM       : std_logic_array_t(open)(63 downto 0) := get_pls_rom;
   constant PLS_ROM_DEPTH : integer := PLS_ROM'length;
