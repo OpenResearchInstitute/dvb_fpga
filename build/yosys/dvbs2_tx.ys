@@ -23,12 +23,15 @@ ghdl --std=08                                                                  \
   --work=work       rtl/axi_baseband_scrambler.vhd                             \
                     rtl/axi_bit_interleaver.vhd                                \
                     rtl/axi_constellation_mapper.vhd                           \
+                    rtl/axi_physical_layer_framer.vhd                          \
+                    rtl/axi_physical_layer_scrambler.vhd                       \
                     rtl/dvb_utils_pkg.vhd                                      \
                     rtl/bch_encoder_mux.vhd                                    \
                     rtl/axi_ldpc_table.vhd                                     \
                     rtl/axi_ldpc_encoder_core.vhd                              \
                     rtl/axi_ldpc_encoder.vhd                                   \
                     rtl/axi_plframe_header.vhd                                 \
+                    rtl/dummy_frame_generator.vhd                              \
                     rtl/plframe_header_pkg.vhd                                 \
                     rtl/ldpc/ldpc_pkg.vhd                                      \
                     rtl/ldpc/ldpc_tables_pkg.vhd                               \
