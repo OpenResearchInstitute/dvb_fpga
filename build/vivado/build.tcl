@@ -33,6 +33,11 @@ set_property FILE_TYPE {VHDL 2008} [get_files *.vhd]
 # "ldpc_encoder_u/frame_ram_u/ram_u/ram_reg", trying to implement using LUTRAM
 set_msg_config -id "Synth 8-6849" -new_severity ERROR
 
+# CRITICAL WARNING: [Synth 8-507] null range (31 downto 32) not supported
+# We're largely OK with null ranges, make it a regular warning
+set_msg_config -id "Synth 8-507" -new_severity WARNING
+
+
 # INFO: [Synth 8-7053] The timing for the instance
 # ldpc_encoder_u/frame_ram_u/ram_u/ram_reg_bram_0 (implemented as a Block RAM) might be
 # sub-optimal as no optional output register could be merged into the ram block. Providing
