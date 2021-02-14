@@ -170,23 +170,22 @@ begin
       -- Usual ports
       clk               => clk,
       rst               => rst,
-
+      -- Static config
+      cfg_enable_dummy_frames => '0',
+      -- Per frame config input
       cfg_constellation => encode(cfg_constellation),
       cfg_frame_type    => encode(cfg_frame_type),
       cfg_code_rate     => encode(cfg_code_rate),
-
       -- Mapping RAM config
       ram_wren          => ram_wren,
       ram_addr          => ram_addr,
       ram_wdata         => ram_wdata,
       ram_rdata         => ram_rdata,
-
       -- AXI input
       s_tvalid          => axi_master.tvalid,
       s_tdata           => axi_master.tdata,
       s_tlast           => axi_master.tlast,
       s_tready          => axi_master.tready,
-
       -- AXI output
       m_tready          => axi_slave.axi.tready,
       m_tvalid          => axi_slave.axi.tvalid,

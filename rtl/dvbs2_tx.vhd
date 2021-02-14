@@ -39,6 +39,8 @@ entity dvbs2_tx is
     -- Usual ports
     clk               : in  std_logic;
     rst               : in  std_logic;
+    -- Static config
+    cfg_enable_dummy_frames : in  std_logic;
     -- Per frame config input
     cfg_constellation : in  std_logic_vector(CONSTELLATION_WIDTH - 1 downto 0);
     cfg_frame_type    : in  std_logic_vector(FRAME_TYPE_WIDTH - 1 downto 0);
@@ -311,7 +313,7 @@ begin
       clk                 => clk,
       rst                 => rst,
       -- Static config
-      cfg_enable_dummy_frames => '1',
+      cfg_enable_dummy_frames => cfg_enable_dummy_frames,
       -- Per frame config
       cfg_constellation   => decode(constellation_mapper_out.tuser).constellation,
       cfg_frame_type      => decode(constellation_mapper_out.tuser).frame_type,
