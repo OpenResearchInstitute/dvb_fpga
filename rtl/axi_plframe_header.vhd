@@ -93,6 +93,7 @@ architecture axi_plframe_header of axi_plframe_header is
   -------------
   -- Signals --
   -------------
+  signal s_tready_i       : std_logic;
   signal header_bit       : std_logic;
   signal modulation_index : std_logic;
   signal modulation_addr  : std_logic_vector(2 downto 0);
@@ -103,20 +104,26 @@ architecture axi_plframe_header of axi_plframe_header is
   signal m_tdata_i        : std_logic_vector(DATA_WIDTH - 1 downto 0);
   signal m_tvalid_i       : std_logic;
   signal m_tlast_i        : std_logic;
+  signal header_sr        : std_logic_vector(89 downto 0);
+  signal header_sr_cnt    : unsigned(numbits(90) - 1 downto 0);
 
 begin
 
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  m_tlast  <= m_tlast_i;
-  m_tvalid <= m_tvalid_i;
+  m_tlast   <= m_tlast_i and m_tvalid_i;
+  m_tvalid  <= m_tvalid_i;
+  s_tready  <= s_tready_i;
+
+  m_tlast_i <= '1' when header_sr_cnt = 89 else '0';
 
   pls_rom_addr    <= (others => 'U') when get_pls_rom_addr(cfg_constellation, cfg_frame_type, cfg_code_rate) = -1 else
                      std_logic_vector(to_unsigned(get_pls_rom_addr(cfg_constellation, cfg_frame_type, cfg_code_rate), numbits(PLS_ROM_DEPTH)));
 
   header          <= SOF & pls_code;
   modulation_addr <= '0' & modulation_index & header_bit;
+  header_bit      <= header_sr(89);
 
   -------------------
   -- Port Mappings --
@@ -132,32 +139,6 @@ begin
     addr   => pls_rom_addr,
     rddata => pls_code);
 
-  -- Each raw header bit should be modulated, so convert it into a single bit data stream
-  width_conversion_u : entity fpga_cores.axi_stream_width_converter
-  generic map (
-    -- Round the header length to the nearest multiple of 8 (AXI is always in bytes)
-    INPUT_DATA_WIDTH  => 90,
-    OUTPUT_DATA_WIDTH => 1)
-  port map (
-    -- Usual ports
-    clk      => clk,
-    rst      => rst,
-    -- AXI stream input
-    s_tready => s_tready,
-    -- Need to mirror header because the width converter will output s_tdata LSB first
-    s_tdata  => mirror_bits(header),
-    s_tkeep  => (others => '1'),
-    s_tid    => (others => '0'),
-    s_tvalid => s_tvalid,
-    s_tlast  => s_tvalid,
-    -- AXI stream output
-    m_tready  => m_tready,
-    m_tdata(0)=> header_bit,
-    m_tkeep   => open,
-    m_tid     => open,
-    m_tvalid  => m_tvalid_i,
-    m_tlast   => m_tlast_i);
-
   modulation_rom_u : entity fpga_cores.rom_inference
   generic map (
     ROM_DATA     => MOD_8PSK_MAP,
@@ -169,7 +150,7 @@ begin
     addr   => modulation_addr,
     rddata => m_tdata_i);
 
-  m_tdata <= m_tdata_i when m_tvalid_i = '1' else (others => 'U');
+  m_tdata   <= m_tdata_i when m_tvalid_i = '1' else (others => 'U');
 
   ---------------
   -- Processes --
@@ -177,12 +158,28 @@ begin
   process(clk, rst)
   begin
     if rst = '1' then
-      modulation_index <= '0';
+      modulation_index <= 'U';
+      s_tready_i       <= '1';
+      m_tvalid_i       <= '0';
+      header_sr        <= (others => 'U');
+      header_sr_cnt    <= (others => 'U');
     elsif rising_edge(clk) then
-      if m_tready = '1' and m_tvalid_i = '1' then
+      if s_tready_i and s_tvalid then
+        s_tready_i       <= '0';
+        header_sr        <= header;
+        m_tvalid_i       <= '1';
+        modulation_index <= '0';
+        header_sr_cnt    <= (others => '0');
+      end if;
+
+      if m_tvalid_i and m_tready then
+        header_sr        <= header_sr(88 downto 0) & '0';
+        header_sr_cnt    <= header_sr_cnt + 1;
         modulation_index <= not modulation_index;
-        if m_tlast_i = '1' then
+        if m_tlast_i then
           modulation_index <= '0';
+          m_tvalid_i <= '0';
+          s_tready_i <= '1';
         end if;
       end if;
     end if;
