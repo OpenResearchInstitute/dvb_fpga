@@ -50,7 +50,7 @@ entity axi_physical_layer_framer is
 
     -- This takes effect for the following frame
     cfg_shift_reg_init       : in  std_logic_vector(17 downto 0) := (0 => '1', others => '0');
-    cfg_generate_dummy_frame : in  std_logic;
+    cfg_enable_dummy_frames  : in  std_logic;
 
     cfg_constellation        : in  constellation_t;
     cfg_frame_type           : in  frame_type_t;
@@ -211,7 +211,7 @@ begin
       clk            => clk,
       rst            => rst,
       -- Pulse to trigger generating a dummy frame
-      generate_frame => cfg_generate_dummy_frame,
+      generate_frame => cfg_enable_dummy_frames,
       -- AXI output
       m_tready       => dummy_frame_gen.tready,
       m_tvalid       => dummy_frame_gen.tvalid,

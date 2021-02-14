@@ -121,7 +121,7 @@ begin
       clk                      => clk,
       rst                      => rst,
       -- Static config
-      cfg_generate_dummy_frame => '0', -- Not supported by the TB yet
+      cfg_enable_dummy_frames  => '0', -- Not supported by the TB yet
       -- Per frame config
       cfg_constellation        => decode(axi_master.tuser).constellation,
       cfg_frame_type           => decode(axi_master.tuser).frame_type,

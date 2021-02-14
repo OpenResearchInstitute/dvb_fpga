@@ -58,11 +58,9 @@ entity axi_plframe_header is
     cfg_constellation : in  constellation_t;
     cfg_frame_type    : in  frame_type_t;
     cfg_code_rate     : in  code_rate_t;
-
     -- AXI data input
     s_tready          : out std_logic;
     s_tvalid          : in  std_logic;
-
     -- AXI output
     m_tready          : in  std_logic;
     m_tvalid          : out std_logic;
@@ -94,7 +92,6 @@ architecture axi_plframe_header of axi_plframe_header is
   -- Signals --
   -------------
   signal s_tready_i       : std_logic;
-  signal header_bit       : std_logic;
   signal modulation_index : std_logic;
   signal modulation_addr  : std_logic_vector(2 downto 0);
   signal pls_rom_addr     : std_logic_vector(numbits(PLS_ROM_DEPTH) - 1 downto 0);
@@ -122,8 +119,7 @@ begin
                      std_logic_vector(to_unsigned(get_pls_rom_addr(cfg_constellation, cfg_frame_type, cfg_code_rate), numbits(PLS_ROM_DEPTH)));
 
   header          <= SOF & pls_code;
-  modulation_addr <= '0' & modulation_index & header_bit;
-  header_bit      <= header_sr(89);
+  modulation_addr <= '0' & modulation_index & header_sr(89);
 
   -------------------
   -- Port Mappings --

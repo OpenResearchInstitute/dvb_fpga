@@ -47,24 +47,20 @@ entity axi_constellation_mapper is
     -- Usual ports
     clk               : in  std_logic;
     rst               : in  std_logic;
-
     -- Mapping RAM config
     ram_wren          : in  std_logic;
     ram_addr          : in  std_logic_vector(5 downto 0);
     ram_wdata         : in  std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
     ram_rdata         : out std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
-
     -- Config input
     cfg_constellation : in  constellation_t;
     cfg_frame_type    : in  frame_type_t;
     cfg_code_rate     : in  code_rate_t;
-
     -- AXI data input
     s_tready          : out std_logic;
     s_tvalid          : in  std_logic;
     s_tlast           : in  std_logic;
     s_tdata           : in  std_logic_vector(INPUT_DATA_WIDTH - 1 downto 0);
-
     -- AXI output
     m_tready          : in  std_logic;
     m_tvalid          : out std_logic;
@@ -246,7 +242,6 @@ begin
       addr_a    => ram_addr,
       wrdata_a  => ram_wdata,
       rddata_a  => ram_rdata,
-
       -- Port B
       clk_b     => clk,
       clken_b   => '1',

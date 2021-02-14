@@ -44,17 +44,15 @@ entity dummy_frame_generator is
   generic ( TDATA_WIDTH : natural := 32 );
   port (
     -- Usual ports
-    clk                : in  std_logic;
-    rst                : in  std_logic;
-
+    clk            : in  std_logic;
+    rst            : in  std_logic;
     -- Pulse to trigger generating a dummy frame
-    generate_frame     : in  std_logic;
-
+    generate_frame : in  std_logic;
     -- AXI output
-    m_tready           : in  std_logic;
-    m_tvalid           : out std_logic;
-    m_tlast            : out std_logic;
-    m_tdata            : out std_logic_vector(TDATA_WIDTH - 1 downto 0));
+    m_tready       : in  std_logic;
+    m_tvalid       : out std_logic;
+    m_tlast        : out std_logic;
+    m_tdata        : out std_logic_vector(TDATA_WIDTH - 1 downto 0));
 end dummy_frame_generator;
 
 architecture dummy_frame_generator of dummy_frame_generator is
@@ -175,4 +173,3 @@ begin
   end process;
 
 end dummy_frame_generator;
-

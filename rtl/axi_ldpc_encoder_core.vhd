@@ -41,11 +41,10 @@ entity axi_ldpc_encoder_core is
     -- Usual ports
     clk               : in  std_logic;
     rst               : in  std_logic;
-
+    -- Config input
     cfg_constellation : in  constellation_t;
     cfg_frame_type    : in  frame_type_t;
     cfg_code_rate     : in  code_rate_t;
-
     -- AXI LDPC table input
     s_ldpc_tready     : out std_logic;
     s_ldpc_tvalid     : in  std_logic;
@@ -53,14 +52,12 @@ entity axi_ldpc_encoder_core is
     s_ldpc_next       : in  std_logic;
     s_ldpc_tuser      : in  std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
     s_ldpc_tlast      : in  std_logic;
-
     -- AXI data input
     s_tready          : out std_logic;
     s_tvalid          : in  std_logic;
     s_tlast           : in  std_logic;
     s_tdata           : in  std_logic_vector(7 downto 0);
     s_tid             : in  std_logic_vector(TID_WIDTH - 1 downto 0);
-
     -- AXI output
     m_tready          : in  std_logic;
     m_tvalid          : out std_logic;
