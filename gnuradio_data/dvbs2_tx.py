@@ -27,14 +27,15 @@
 ##################################################
 
 
-import math
 from optparse import OptionParser
 
 import numpy
 
-from gnuradio import analog, blocks, digital, dtv, eng_notation, filter, gr
-from gnuradio.eng_option import eng_option
-from gnuradio.filter import firdes
+# pylint: disable=import-error
+from gnuradio import blocks, dtv, gr  # type: ignore
+from gnuradio.eng_option import eng_option  # type: ignore
+
+# pylint: enable=import-error
 
 CODE_RATES = {
     dtv.C1_2: 1.0 / 2,
@@ -278,19 +279,19 @@ class dvbs2_tx(gr.top_block):
         self.dtv_dvbs2_modulator_bc_0 = dtv.dvbs2_modulator_bc(
             frame_type, code_rate, constellation, dtv.INTERPOLATION_OFF
         )
-        self.dtv_dvbs2_interleaver_bb_0 = dtv.dvbs2_interleaver_bb(
+        self.bit_interleaver = dtv.dvbs2_interleaver_bb(
             frame_type, code_rate, constellation
         )
-        self.dtv_dvb_ldpc_bb_0 = dtv.dvb_ldpc_bb(
+        self.ldpc_encoder = dtv.dvb_ldpc_bb(
             dtv.STANDARD_DVBS2, frame_type, code_rate, dtv.MOD_OTHER
         )
-        self.dtv_dvb_bch_bb_0 = dtv.dvb_bch_bb(
+        self.bch_encoder = dtv.dvb_bch_bb(
             dtv.STANDARD_DVBS2, frame_type, code_rate
         )
-        self.dtv_dvb_bbscrambler_bb_0 = dtv.dvb_bbscrambler_bb(
+        self.baseband_scrambler = dtv.dvb_bbscrambler_bb(
             dtv.STANDARD_DVBS2, frame_type, code_rate
         )
-        self.dtv_dvb_bbheader_bb_0 = dtv.dvb_bbheader_bb(
+        self.baseband_header = dtv.dvb_bbheader_bb(
             dtv.STANDARD_DVBS2,
             frame_type,
             code_rate,
@@ -307,9 +308,6 @@ class dvbs2_tx(gr.top_block):
         self.blocks_stream_mux_0_0_0 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
         self.blocks_stream_mux_0_0 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
         self.blocks_stream_mux_0 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
-        self.blocks_repack_bits_bb_0 = blocks.repack_bits_bb(
-            bits_per_input, bits_per_output, "", False, gr.GR_MSB_FIRST
-        )
         self.blocks_float_to_short_0_3 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_2 = blocks.float_to_short(1, 32768)
         self.blocks_float_to_short_0_1_1 = blocks.float_to_short(1, 32768)
@@ -333,10 +331,6 @@ class dvbs2_tx(gr.top_block):
         )
         self.bit_mapper_output_float.set_unbuffered(False)
         self.bit_mapper_complex_to_float = blocks.complex_to_float(1)
-        self.bit_interleaver_output_packed = blocks.file_sink(
-            gr.sizeof_char * 1, "bit_interleaver_output_packed.bin", False
-        )
-        self.bit_interleaver_output_packed.set_unbuffered(False)
         self.bit_interleaver_output = blocks.file_sink(
             gr.sizeof_char * 1, "bit_interleaver_output.bin", False
         )
@@ -361,7 +355,7 @@ class dvbs2_tx(gr.top_block):
         # Connections
         ##################################################
         self.connect(
-            (self.analog_random_source_x_0, 0), (self.dtv_dvb_bbheader_bb_0, 0)
+            (self.analog_random_source_x_0, 0), (self.baseband_header, 0)
         )
         self.connect(
             (self.bit_mapper_complex_to_float, 0), (self.blocks_float_to_short_0_0_2, 0)
@@ -409,9 +403,6 @@ class dvbs2_tx(gr.top_block):
             (self.blocks_float_to_short_0_3, 0), (self.blocks_stream_mux_0_2, 1)
         )
         self.connect(
-            (self.blocks_repack_bits_bb_0, 0), (self.bit_interleaver_output_packed, 0)
-        )
-        self.connect(
             (self.blocks_stream_mux_0, 0), (self.plframe_pilots_on_fixed_point, 0)
         )
         self.connect(
@@ -434,24 +425,21 @@ class dvbs2_tx(gr.top_block):
             (self.blocks_stream_mux_0_1, 0), (self.plframe_pilots_off_fixed_point, 0)
         )
         self.connect((self.blocks_stream_mux_0_2, 0), (self.bit_mapper_output_fixed, 0))
-        self.connect((self.dtv_dvb_bbheader_bb_0, 0), (self.bb_scrambler_input_0, 0))
+        self.connect((self.baseband_header, 0), (self.bb_scrambler_input_0, 0))
         self.connect(
-            (self.dtv_dvb_bbheader_bb_0, 0), (self.dtv_dvb_bbscrambler_bb_0, 0)
+            (self.baseband_header, 0), (self.baseband_scrambler, 0)
         )
-        self.connect((self.dtv_dvb_bbscrambler_bb_0, 0), (self.bch_encoder_input, 0))
-        self.connect((self.dtv_dvb_bbscrambler_bb_0, 0), (self.dtv_dvb_bch_bb_0, 0))
-        self.connect((self.dtv_dvb_bch_bb_0, 0), (self.dtv_dvb_ldpc_bb_0, 0))
-        self.connect((self.dtv_dvb_bch_bb_0, 0), (self.ldpc_encoder_input, 0))
-        self.connect((self.dtv_dvb_ldpc_bb_0, 0), (self.bit_interleaver_input, 0))
-        self.connect((self.dtv_dvb_ldpc_bb_0, 0), (self.dtv_dvbs2_interleaver_bb_0, 0))
+        self.connect((self.baseband_scrambler, 0), (self.bch_encoder_input, 0))
+        self.connect((self.baseband_scrambler, 0), (self.bch_encoder, 0))
+        self.connect((self.bch_encoder, 0), (self.ldpc_encoder, 0))
+        self.connect((self.bch_encoder, 0), (self.ldpc_encoder_input, 0))
+        self.connect((self.ldpc_encoder, 0), (self.bit_interleaver_input, 0))
+        self.connect((self.ldpc_encoder, 0), (self.bit_interleaver, 0))
         self.connect(
-            (self.dtv_dvbs2_interleaver_bb_0, 0), (self.bit_interleaver_output, 0)
-        )
-        self.connect(
-            (self.dtv_dvbs2_interleaver_bb_0, 0), (self.blocks_repack_bits_bb_0, 0)
+            (self.bit_interleaver, 0), (self.bit_interleaver_output, 0)
         )
         self.connect(
-            (self.dtv_dvbs2_interleaver_bb_0, 0), (self.dtv_dvbs2_modulator_bc_0, 0)
+            (self.bit_interleaver, 0), (self.dtv_dvbs2_modulator_bc_0, 0)
         )
         self.connect(
             (self.dtv_dvbs2_modulator_bc_0, 0), (self.bit_mapper_complex_to_float, 0)
@@ -561,6 +549,12 @@ class dvbs2_tx(gr.top_block):
             (self.undo_bit_stuffing_pilots_on, 0), (self.plframe_pilots_on_float, 0)
         )
 
+        self.repackAndDump(self.baseband_header, "bb_header_output_packed.bin", (1, 8))
+        self.repackAndDump(self.baseband_scrambler, "bb_scrambler_output_packed.bin", (1, 8))
+        self.repackAndDump(self.bch_encoder, "bch_encoder_output_packed.bin", (1, 8))
+        self.repackAndDump(self.ldpc_encoder, "ldpc_output_packed.bin", (1, 8))
+        self.repackAndDump(self.bit_interleaver, "bit_interleaver_output_packed.bin", (bits_per_input, bits_per_output))
+
     def get_frame_length(self):
         return self.frame_length
 
@@ -629,6 +623,17 @@ class dvbs2_tx(gr.top_block):
 
     def set_center_freq(self, center_freq):
         self.center_freq = center_freq
+
+    def repackAndDump(self, source, filename, ratio):
+        (bits_per_input, bits_per_output) = ratio
+        repack = blocks.repack_bits_bb(bits_per_input, bits_per_output, "", False, gr.GR_MSB_FIRST)
+        self.connect((source, 0), (repack, 0))
+
+        sink = blocks.file_sink(
+            gr.sizeof_char * 1, filename, False
+        )
+        sink.set_unbuffered(False)
+        self.connect((repack, 0), (sink, 0))
 
 
 def argument_parser():

@@ -136,7 +136,6 @@ begin
     generic map (
       READER_NAME     => "axi_file_compare_u",
       ERROR_CNT_WIDTH => 8,
-      -- REPORT_SEVERITY => Warning,
       DATA_WIDTH      => 8)
     port map (
       -- Usual ports
@@ -199,16 +198,8 @@ begin
       info(" - data path      : " & data_path);
 
       for i in 0 to number_of_frames - 1 loop
-        read_file(net,
-          file_reader => file_reader,
-          filename    => data_path & "/bch_encoder_input.bin",
-          ratio       => "1:8",
-          tid         => encode(config_tuple));
-
-        read_file(net,
-          file_reader => file_checker,
-          filename    => data_path & "/ldpc_encoder_input.bin",
-          ratio       => "1:8");
+        read_file(net, file_reader, data_path & "/bb_scrambler_output_packed.bin", tid => encode(config_tuple));
+        read_file(net, file_checker, data_path & "/bch_encoder_output_packed.bin");
 
         msg := new_msg;
         push(msg, encode(config_tuple));

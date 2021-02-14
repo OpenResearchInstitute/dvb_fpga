@@ -253,13 +253,7 @@ begin
       for i in 0 to number_of_frames - 1 loop
         debug(logger, "Setting up frame #" & to_string(i));
 
-        read_file(
-          net,
-          file_reader,
-          data_path & "/ldpc_encoder_input.bin",
-          "1:8",
-          encode(config_tuple)
-        );
+        read_file(net, file_reader, data_path & "/bch_encoder_output_packed.bin", tid => encode(config_tuple));
 
         -- ghdl translate_off
         calc_ldpc_msg := new_msg(sender => self);
@@ -267,12 +261,7 @@ begin
         send(net, find("calc_ldpc_p"), calc_ldpc_msg);
         -- ghdl translate_on
 
-        read_file(
-          net,
-          file_checker,
-          data_path & "/bit_interleaver_input.bin",
-          "1:8"
-        );
+        read_file( net, file_checker, data_path & "/ldpc_output_packed.bin");
 
         read_file(net, ldpc_table, data_path & "/ldpc_table.bin");
 

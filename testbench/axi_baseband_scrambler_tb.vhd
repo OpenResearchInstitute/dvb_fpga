@@ -137,7 +137,7 @@ begin
     generic map (
       READER_NAME     => "axi_file_compare_u",
       ERROR_CNT_WIDTH => 8,
-      REPORT_SEVERITY => Warning,
+      REPORT_SEVERITY => Error,
       DATA_WIDTH      => TDATA_WIDTH)
     port map (
       -- Usual ports
@@ -196,8 +196,8 @@ begin
       info(" - data path      : " & data_path);
 
       for i in 0 to number_of_frames - 1 loop
-        read_file(net, file_reader, data_path & "/bb_scrambler_input.bin", "1:8", tid_rand_gen.RandSlv(TID_WIDTH));
-        read_file(net, file_checker, data_path & "/bch_encoder_input.bin", "1:8");
+        read_file(net, file_reader, data_path & "/bb_header_output_packed.bin", tid => tid_rand_gen.RandSlv(TID_WIDTH));
+        read_file(net, file_checker, data_path & "/bb_scrambler_output_packed.bin");
       end loop;
 
     end procedure run_test;

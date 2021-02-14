@@ -224,12 +224,7 @@ begin
         push(msg, encode(config_tuple));
         send(net, find("tid_check"), msg);
 
-        read_file(net,
-          file_reader => file_reader,
-          filename    => data_path & "/bit_interleaver_input.bin",
-          ratio       => "1:8",
-          tid         => encode(config_tuple)
-        );
+        read_file(net, file_reader, data_path & "/ldpc_output_packed.bin", tid => encode(config_tuple));
 
         if DBG_CHECK_FRAME_RAM_WRITES then
           msg        := new_msg;
@@ -242,12 +237,7 @@ begin
           send(net, find("whitebox_monitor_p"), msg);
         end if;
 
-        read_file(
-          net,
-          file_checker,
-          data_path & "/bit_interleaver_output.bin",
-          get_checker_data_ratio(config.constellation)
-        );
+        read_file(net, file_checker, data_path & "/bit_interleaver_output_packed.bin");
       end loop;
 
     end procedure run_test;

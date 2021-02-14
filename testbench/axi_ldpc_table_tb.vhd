@@ -171,7 +171,7 @@ begin
 
   axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
     generic map (
-      READER_NAME     => "ldpc_table_u",
+      READER_NAME     => "ldpc_table",
       ERROR_CNT_WIDTH => 8,
       REPORT_SEVERITY => Error,
       DATA_WIDTH      => axi_slave.tdata'length)
@@ -215,7 +215,7 @@ begin
     constant logger       : logger_t := get_logger("main");
     constant input_cfg_p  : actor_t := find("input_cfg_p");
     variable file_checker : file_reader_t := new_file_reader(FILE_CHECKER_NAME);
-    variable ldpc_table   : file_reader_t := new_file_reader("ldpc_table_u");
+    variable ldpc_table   : file_reader_t := new_file_reader("ldpc_table");
 
     variable config_bfm : axi_stream_bfm_t := create_bfm("axi_config_input_u");
 
@@ -251,12 +251,12 @@ begin
       subtype bfm_data_t is std_logic_array_t(0 to 0)(FRAME_TYPE_WIDTH + CONSTELLATION_WIDTH + CODE_RATE_WIDTH - 1 downto 0);
       constant bfm_data : std_logic_vector := encode(config.code_rate) & encode(config.constellation) & encode(config.frame_type);
 
-      -- In the config file, the 'next' bit is actually an entire byte, so we'll read
-      -- a slightly smaller ratio of the data in multiple of bytes
-      constant ratio            : ratio_t := (
-        axi_slave.tdata'length,
-        8*((axi_slave.tdata'length + 7) / 8)
-      );
+      -- -- In the config file, the 'next' bit is actually an entire byte, so we'll read
+      -- -- a slightly smaller ratio of the data in multiple of bytes
+      -- constant ratio            : ratio_t := (
+      --   axi_slave.tdata'length,
+      --   8*((axi_slave.tdata'length + 7) / 8)
+      -- );
     begin
 
       info("Running test with:");
@@ -274,7 +274,7 @@ begin
           probability => 1.0,
           blocking    => False);
 
-        read_file(net, ldpc_table, data_path & "/ldpc_table.bin", ratio);
+        read_file(net, ldpc_table, data_path & "/ldpc_table.bin"); --, ratio);
       end loop;
 
     end procedure run_test; -- }} --------------------------------------------------------
