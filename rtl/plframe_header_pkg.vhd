@@ -137,7 +137,7 @@ package body plframe_header_pkg is
 
     for m in 0 to 31 loop
       result(m*2)       := or(temp and bit_mask);
-      result((m*2) + 1) := or(result(m*2) xor (v and x"01"));
+      result((m*2) + 1) := or((7 downto 0 => result(m*2)) xor (v and x"01"));
       bit_mask          := '0' & bit_mask(31 downto 1);
     end loop;
 

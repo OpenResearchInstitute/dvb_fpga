@@ -85,8 +85,8 @@ architecture axi_plframe_header of axi_plframe_header is
   );
 
   -- SOF is the same for all configs, so we'll only store the PLS
-  constant PLS_ROM       : std_logic_array_t(open)(63 downto 0) := get_pls_rom;
-  constant PLS_ROM_DEPTH : integer := PLS_ROM'length;
+  constant PLS_ROM       : std_logic_array_t := get_pls_rom;
+  constant PLS_ROM_DEPTH : integer           := PLS_ROM'length;
 
   -------------
   -- Signals --
