@@ -73,11 +73,6 @@ end axi_physical_layer_framer;
 
 architecture axi_physical_layer_framer of axi_physical_layer_framer is
 
-  ---------------
-  -- Constants --
-  ---------------
-  constant FRAME_FIFO_DEPTH : integer := FECFRAME_NORMAL_BIT_LENGTH;
-
   -------------
   -- Signals --
   -------------
@@ -87,19 +82,14 @@ architecture axi_physical_layer_framer of axi_physical_layer_framer is
   signal s_first_word            : std_logic;
   signal s_tready_header         : std_logic;
   signal s_tvalid_header         : std_logic;
-  signal header_in_dv            : std_logic;
   signal arbiter_tlast           : std_logic;
   signal selected                : std_logic_vector(1 downto 0);
   signal sampled                 : axi_stream_data_bus_t(tdata(TDATA_WIDTH - 1 downto 0));
   signal axi_header_out          : axi_stream_data_bus_t(tdata(TDATA_WIDTH - 1 downto 0));
   signal scrambled               : axi_stream_data_bus_t(tdata(TDATA_WIDTH - 1 downto 0));
-  signal fifo_in                 : axi_stream_bus_t(tdata(TDATA_WIDTH - 1 downto 0), tuser(TID_WIDTH - 1 downto 0));
-  signal fifo_out                : axi_stream_bus_t(tdata(TDATA_WIDTH - 1 downto 0), tuser(TID_WIDTH - 1 downto 0));
+  signal plframe                 : axi_stream_bus_t(tdata(TDATA_WIDTH - 1 downto 0), tuser(TID_WIDTH - 1 downto 0));
   signal dummy_frame_gen         : axi_stream_data_bus_t(tdata(TDATA_WIDTH - 1 downto 0));
 
-  signal frame_fifo_empty        : std_logic;
-  signal frame_fifo_full         : std_logic;
-  signal frame_fifo_entries      : std_logic_vector(numbits(FRAME_FIFO_DEPTH) downto 0);
   signal output_arbiter_selected : std_logic_vector(1 downto 0);
 
 begin
@@ -209,49 +199,10 @@ begin
       s_tlast(1)       => scrambled.tlast,
 
       -- AXI master output
-      m_tvalid         => fifo_in.tvalid,
-      m_tready         => fifo_in.tready,
-      m_tdata          => fifo_in.tdata,
+      m_tvalid         => plframe.tvalid,
+      m_tready         => plframe.tready,
+      m_tdata          => plframe.tdata,
       m_tlast          => arbiter_tlast);
-
-  -- Since we need to generate dummy frames whenever there's no data, write the complete
-  -- frame to a frame FIFO to ensure the frame it's only read when complete
-  frame_fifo_block : block
-    signal tdata_agg_in  : std_logic_vector(TDATA_WIDTH + TID_WIDTH downto 0);
-    signal tdata_agg_out : std_logic_vector(TDATA_WIDTH + TID_WIDTH downto 0);
-  begin
-    frame_fifo_u : entity fpga_cores.axi_stream_frame_fifo
-      generic map (
-        FIFO_DEPTH => FRAME_FIFO_DEPTH,
-        DATA_WIDTH => TDATA_WIDTH + TID_WIDTH + 1,
-        RAM_TYPE   => auto)
-      port map (
-        -- Usual ports
-        clk     => clk,
-        rst     => rst,
-
-        -- status
-        entries  => frame_fifo_entries,
-        empty    => frame_fifo_empty,
-        full     => frame_fifo_full,
-
-        -- Write side
-        s_tvalid => fifo_in.tvalid,
-        s_tready => fifo_in.tready,
-        s_tdata  => tdata_agg_in,
-        s_tlast  => fifo_in.tlast,
-
-        -- Read side
-        m_tvalid => fifo_out.tvalid,
-        m_tready => fifo_out.tready,
-        m_tdata  => tdata_agg_out,
-        m_tlast  => fifo_out.tlast);
-
-    tdata_agg_in   <= fifo_in.tlast & fifo_in.tuser & fifo_in.tdata;
-    fifo_out.tdata <= tdata_agg_out(TDATA_WIDTH - 1 downto 0);
-    fifo_out.tuser <= tdata_agg_out(TDATA_WIDTH + TID_WIDTH - 1 downto TDATA_WIDTH);
-    fifo_out.tlast <= tdata_agg_out(TDATA_WIDTH + TID_WIDTH);
-  end block;
 
   dummy_frame_generator_u : entity work.dummy_frame_generator
     generic map ( TDATA_WIDTH => TDATA_WIDTH )
@@ -286,13 +237,13 @@ begin
         selected         => output_arbiter_selected,
         selected_encoded => open,
         -- AXI slave input
-        s_tvalid(0)      => fifo_out.tvalid,
+        s_tvalid(0)      => plframe.tvalid,
         s_tvalid(1)      => dummy_frame_gen.tvalid,
-        s_tready(0)      => fifo_out.tready,
+        s_tready(0)      => plframe.tready,
         s_tready(1)      => dummy_frame_gen.tready,
         s_tdata(0)       => tdata_agg_in,  
         s_tdata(1)       => (TID_WIDTH - 1 downto 0 => '0') & dummy_frame_gen.tdata,
-        s_tlast(0)       => fifo_out.tlast,
+        s_tlast(0)       => plframe.tlast,
         s_tlast(1)       => dummy_frame_gen.tlast,
         -- AXI master output
         m_tvalid         => m_tvalid_i,
@@ -300,7 +251,7 @@ begin
         m_tdata          => tdata_agg_out,
         m_tlast          => m_tlast_i);
 
-      tdata_agg_in <= fifo_out.tuser & fifo_out.tdata;
+      tdata_agg_in <= plframe.tuser & plframe.tdata;
       m_tdata      <= tdata_agg_out(TDATA_WIDTH - 1 downto 0);
       m_tid        <= tdata_agg_out(TDATA_WIDTH + TID_WIDTH - 1 downto TDATA_WIDTH);
   end block;
@@ -310,9 +261,8 @@ begin
   ------------------------------
   s_tready        <= s_tready_i;
   s_tvalid_header <= s_tvalid and s_first_word;
-  header_in_dv    <= s_tvalid_header and s_tready_header;
 
-  fifo_in.tlast   <= arbiter_tlast and selected(1);
+  plframe.tlast   <= arbiter_tlast and selected(1);
 
   -- Suppress tlast from plframe header and let s_tlast pass through
   m_tlast  <= m_tlast_i and m_tvalid_i;
@@ -328,7 +278,7 @@ begin
     elsif clk'event and clk = '1' then
       if s_tvalid = '1' and s_tready_i = '1' then
         s_first_word  <= s_tlast;
-        fifo_in.tuser <= s_tid;
+        plframe.tuser <= s_tid;
       end if;
     end if;
   end process;
