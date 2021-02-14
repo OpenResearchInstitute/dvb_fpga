@@ -47,7 +47,6 @@ ghdl --std=08                                                                  \
                     rtl/bch_generated/bch_192x16.vhd                           \
                     rtl/bch_generated/bch_160x8.vhd                            \
                     rtl/axi_bch_encoder.vhd                                    \
-                    rtl/config_fifo.vhd                                        \
   -e dvbs2_tx
 
 # read design
