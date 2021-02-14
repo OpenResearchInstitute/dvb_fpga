@@ -55,7 +55,7 @@ the transmission side.
 | Bit interleaver        | ✔          | TODO       | TODO           |
 | Constellation mapper   | ✔          | TODO       | TODO           |
 | LDPC Encoder           | ✔          | TODO       | TODO           |
-| Physical layer framing | WIP        | TODO       | TODO           |
+| Physical layer framing | ✔          | TODO       | TODO           |
 
 ### Performance and resource usage (WIP)
 
@@ -66,9 +66,9 @@ reported and the resource usage post implementation is as follows:
 
 | Resource | Usage |
 | :---     | :--:  |
-| LUT      | 3,415 |
-| LUTRAM   | 218   |
-| FF       | 2,562 |
+| LUT      | 3,894 |
+| LUTRAM   | 226   |
+| FF       | 2,892 |
 | BRAM     | 16    |
 
 ## Running tests
