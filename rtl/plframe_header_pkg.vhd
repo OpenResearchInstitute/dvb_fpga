@@ -25,11 +25,6 @@ library	ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library vunit_lib;
-context vunit_lib.vunit_context;
-library str_format;
-use str_format.str_format_pkg.all;
-
 library fpga_cores;
 use fpga_cores.common_pkg.all;
 
@@ -37,7 +32,7 @@ use work.dvb_utils_pkg.all;
 
 package plframe_header_pkg is
 
-  impure function get_pls_rom return std_logic_array_t;
+  function get_pls_rom return std_logic_array_t;
 
   -- Code that generates each PLS code is an implementation of GNU Radio's C code in
   -- VHDL. Relevant files:
@@ -195,9 +190,8 @@ package body plframe_header_pkg is
     return pl_header_encode(modcode, type_code);
   end function get_pls_code;
 
-
-  impure function get_pls_rom return std_logic_array_t is
-    impure function get_rom_depth return integer is
+  function get_pls_rom return std_logic_array_t is
+    function get_rom_depth return integer is
       variable addr  : integer := -2;
       variable depth : integer := 0;
       variable cnt   : integer := 0;
@@ -213,7 +207,6 @@ package body plframe_header_pkg is
           end loop;
         end loop;
       end loop;
-      info(sformat("ROM depth is %d (%d entries)", fo(depth), fo(cnt)));
       return depth;
     end;
     constant ROM_DEPTH : integer := get_rom_depth;

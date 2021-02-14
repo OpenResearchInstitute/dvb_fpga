@@ -138,7 +138,8 @@ begin
     INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
     OUTPUT_DATA_WIDTH => 2,
     AXI_TID_WIDTH     => sum(CONFIG_INPUT_WIDTHS),
-    ENDIANNESS        => LEFT_FIRST)
+    ENDIANNESS        => LEFT_FIRST,
+    IGNORE_TKEEP      => True)
   port map (
     -- Usual ports
     clk      => clk,
@@ -146,14 +147,12 @@ begin
     -- AXI stream input
     s_tready => conv_tready(0),
     s_tdata  => s_tdata,
-    s_tkeep  => (others => '1'),
     s_tid    => s_tid,
     s_tvalid => conv_tvalid(0),
     s_tlast  => s_tlast,
     -- AXI stream output
     m_tready => axi_qpsk.tready,
     m_tdata  => axi_qpsk.tdata,
-    m_tkeep  => open,
     m_tid    => axi_qpsk.tuser,
     m_tvalid => axi_qpsk.tvalid,
     m_tlast  => axi_qpsk.tlast);
@@ -163,7 +162,8 @@ begin
     INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
     OUTPUT_DATA_WIDTH => 3,
     AXI_TID_WIDTH     => sum(CONFIG_INPUT_WIDTHS),
-    ENDIANNESS        => LEFT_FIRST)
+    ENDIANNESS        => LEFT_FIRST,
+    IGNORE_TKEEP      => True)
   port map (
     -- Usual ports
     clk      => clk,
@@ -171,14 +171,12 @@ begin
     -- AXI stream input
     s_tready => conv_tready(1),
     s_tdata  => s_tdata,
-    s_tkeep  => (others => '1'),
     s_tid    => s_tid,
     s_tvalid => conv_tvalid(1),
     s_tlast  => s_tlast,
     -- AXI stream output
     m_tready => axi_8psk.tready,
     m_tdata  => axi_8psk.tdata,
-    m_tkeep  => open,
     m_tid    => axi_8psk.tuser,
     m_tvalid => axi_8psk.tvalid,
     m_tlast  => axi_8psk.tlast);
@@ -188,7 +186,8 @@ begin
     INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
     OUTPUT_DATA_WIDTH => 4,
     AXI_TID_WIDTH     => sum(CONFIG_INPUT_WIDTHS),
-    ENDIANNESS        => LEFT_FIRST)
+    ENDIANNESS        => LEFT_FIRST,
+    IGNORE_TKEEP      => True)
   port map (
     -- Usual ports
     clk      => clk,
@@ -196,14 +195,12 @@ begin
     -- AXI stream input
     s_tready => conv_tready(2),
     s_tdata  => s_tdata,
-    s_tkeep  => (others => '1'),
     s_tid    => s_tid,
     s_tvalid => conv_tvalid(2),
     s_tlast  => s_tlast,
     -- AXI stream output
     m_tready => axi_16apsk.tready,
     m_tdata  => axi_16apsk.tdata,
-    m_tkeep  => open,
     m_tid    => axi_16apsk.tuser,
     m_tvalid => axi_16apsk.tvalid,
     m_tlast  => axi_16apsk.tlast);
@@ -213,7 +210,8 @@ begin
     INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
     OUTPUT_DATA_WIDTH => 5,
     AXI_TID_WIDTH     => sum(CONFIG_INPUT_WIDTHS),
-    ENDIANNESS        => LEFT_FIRST)
+    ENDIANNESS        => LEFT_FIRST,
+    IGNORE_TKEEP      => True)
   port map (
     -- Usual ports
     clk      => clk,
@@ -221,14 +219,12 @@ begin
     -- AXI stream input
     s_tready => conv_tready(3),
     s_tdata  => s_tdata,
-    s_tkeep  => (others => '1'),
     s_tid    => s_tid,
     s_tvalid => conv_tvalid(3),
     s_tlast  => s_tlast,
     -- AXI stream output
     m_tready => axi_32apsk.tready,
     m_tdata  => axi_32apsk.tdata,
-    m_tkeep  => open,
     m_tid    => axi_32apsk.tuser,
     m_tvalid => axi_32apsk.tvalid,
     m_tlast  => axi_32apsk.tlast);

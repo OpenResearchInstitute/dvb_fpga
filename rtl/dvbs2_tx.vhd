@@ -124,7 +124,8 @@ begin
       INPUT_DATA_WIDTH  => DATA_WIDTH,
       OUTPUT_DATA_WIDTH => 8,
       AXI_TID_WIDTH     => ENCODED_CONFIG_WIDTH,
-      ENDIANNESS        => LEFT_FIRST)
+      ENDIANNESS        => LEFT_FIRST,
+      IGNORE_TKEEP      => True)
     port map (
       -- Usual ports
       clk      => clk,
