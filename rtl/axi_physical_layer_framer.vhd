@@ -241,7 +241,7 @@ begin
         s_tvalid(1)      => dummy_frame_gen.tvalid,
         s_tready(0)      => plframe.tready,
         s_tready(1)      => dummy_frame_gen.tready,
-        s_tdata(0)       => tdata_agg_in,  
+        s_tdata(0)       => tdata_agg_in,
         s_tdata(1)       => (TID_WIDTH - 1 downto 0 => '0') & dummy_frame_gen.tdata,
         s_tlast(0)       => plframe.tlast,
         s_tlast(1)       => dummy_frame_gen.tlast,

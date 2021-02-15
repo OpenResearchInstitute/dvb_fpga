@@ -71,10 +71,6 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
 
   constant DATA_WIDTH                : integer := 32;
 
-  constant BB_SCRAMBLER_CHECKER_NAME : string  := "bb_scrambler";
-  constant BCH_ENCODER_CHECKER_NAME  : string  := "bch_encoder";
-  constant LDPC_ENCODER_CHECKER_NAME : string  := "ldpc_encoder";
-
   type axi_checker_t is record
     axi             : axi_stream_data_bus_t;
     tdata_error_cnt : std_logic_vector(7 downto 0);
@@ -111,11 +107,12 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
   -- AXI output
   signal s_data_valid          : std_logic;
 
-  signal axi_bb_scrambler      : axi_checker_t(axi(tdata(7 downto 0)), expected_tdata(7 downto 0));
-  signal axi_bch_encoder       : axi_checker_t(axi(tdata(7 downto 0)), expected_tdata(7 downto 0));
-  signal axi_ldpc_encoder_core : axi_checker_t(axi(tdata(7 downto 0)), expected_tdata(7 downto 0));
-  signal axi_slave             : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)), expected_tdata(DATA_WIDTH - 1 downto 0));
-  signal axi_slave_tdata       : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal axi_bb_scrambler         : axi_checker_t(axi(tdata(7 downto 0)), expected_tdata(7 downto 0));
+  signal axi_bch_encoder          : axi_checker_t(axi(tdata(7 downto 0)), expected_tdata(7 downto 0));
+  signal axi_ldpc_encoder_core    : axi_checker_t(axi(tdata(7 downto 0)), expected_tdata(7 downto 0));
+  signal axi_constellation_mapper : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)), expected_tdata(DATA_WIDTH - 1 downto 0));
+  signal axi_slave                : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)), expected_tdata(DATA_WIDTH - 1 downto 0));
+  signal axi_slave_tdata          : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
   -- Mapping RAM config
   signal ram_wren              : std_logic;
@@ -131,7 +128,7 @@ begin
   -- AXI file read
   axi_table_u : entity fpga_cores_sim.axi_file_reader
     generic map (
-      READER_NAME => "axi_table",
+      READER_NAME => "ldpc_table",
       DATA_WIDTH  => axi_ldpc.tdata'length)
     port map (
       -- Usual ports
@@ -162,7 +159,7 @@ begin
       -- Data output
       m_tready           => axi_master.tready,
       m_tdata            => axi_master.tdata,
-      -- m_tkeep            => axi_master.tkeep,
+      m_tkeep            => axi_master.tkeep,
       m_tid              => axi_master.tuser,
       m_tvalid           => axi_master.tvalid,
       m_tlast            => axi_master.tlast);
@@ -199,7 +196,7 @@ begin
   -- ghdl translate_off
   bb_scrambler_checker_u : entity fpga_cores_sim.axi_file_compare
     generic map (
-      READER_NAME     => BB_SCRAMBLER_CHECKER_NAME,
+      READER_NAME     => "bb_scrambler",
       ERROR_CNT_WIDTH => 8,
       REPORT_SEVERITY => Error,
       DATA_WIDTH      => 8)
@@ -223,7 +220,7 @@ begin
 
   bch_encoder_checker_u : entity fpga_cores_sim.axi_file_compare
     generic map (
-      READER_NAME     => BCH_ENCODER_CHECKER_NAME,
+      READER_NAME     => "bch_encoder",
       ERROR_CNT_WIDTH => 8,
       REPORT_SEVERITY => Error,
       DATA_WIDTH      => 8)
@@ -247,7 +244,7 @@ begin
 
   ldpc_encoder_checker_u : entity fpga_cores_sim.axi_file_compare
     generic map (
-      READER_NAME     => LDPC_ENCODER_CHECKER_NAME,
+      READER_NAME     => "ldpc_encoder",
       ERROR_CNT_WIDTH => 8,
       REPORT_SEVERITY => Error,
       DATA_WIDTH      => 8)
@@ -268,6 +265,32 @@ begin
       s_tdata            => axi_ldpc_encoder_core.axi.tdata,
       s_tvalid           => axi_ldpc_encoder_core.axi.tvalid and axi_ldpc_encoder_core.axi.tready,
       s_tlast            => axi_ldpc_encoder_core.axi.tlast);
+
+  -- FIXME: Removing for now as the file has different endianess, which requires us to
+  -- make the checking outside. Need to find a way to properly fix this
+  -- constellation_mapper_checker_u : entity fpga_cores_sim.axi_file_compare
+  --   generic map (
+  --     READER_NAME     => "constellation_mapper",
+  --     ERROR_CNT_WIDTH => 8,
+  --     REPORT_SEVERITY => Error,
+  --     DATA_WIDTH      => DATA_WIDTH)
+  --   port map (
+  --     -- Usual ports
+  --     clk                => clk,
+  --     rst                => rst,
+  --     -- Config and status
+  --     tdata_error_cnt    => axi_constellation_mapper.tdata_error_cnt,
+  --     tlast_error_cnt    => axi_constellation_mapper.tlast_error_cnt,
+  --     error_cnt          => axi_constellation_mapper.error_cnt,
+  --     tready_probability => 1.0,
+  --     -- Debug stuff
+  --     expected_tdata     => axi_constellation_mapper.expected_tdata,
+  --     expected_tlast     => axi_constellation_mapper.expected_tlast,
+  --     -- Data input
+  --     s_tready           => open,
+  --     s_tdata            => axi_constellation_mapper.axi.tdata,
+  --     s_tvalid           => axi_constellation_mapper.axi.tvalid and axi_constellation_mapper.axi.tready,
+  --     s_tlast            => axi_constellation_mapper.axi.tlast);
   -- ghdl translate_on
 
   -- Can't check against expected data directly because of rounding errors, so use a file
@@ -283,7 +306,6 @@ begin
       -- Config and status
       completed          => open,
       tvalid_probability => 1.0,
-
       -- Data output
       m_tready           => axi_slave.axi.tready and axi_slave.axi.tvalid,
       m_tdata            => axi_slave.expected_tdata,
@@ -313,14 +335,15 @@ begin
   -- Processes --
   ---------------
   main : process -- {{ -----------------------------------------------------------------
-    constant self                 : actor_t       := new_actor("main");
-    variable file_reader          : file_reader_t := new_file_reader("input_stream");
-    variable file_checker         : file_reader_t := new_file_reader("output_ref_data");
-    variable ldpc_table           : file_reader_t := new_file_reader("axi_table");
+    constant self                         : actor_t       := new_actor("main");
+    variable input_stream                 : file_reader_t := new_file_reader("input_stream");
+    variable output_ref                   : file_reader_t := new_file_reader("output_ref_data");
+    variable ldpc_table                   : file_reader_t := new_file_reader("ldpc_table");
 
-    variable bb_scrambler_checker : file_reader_t := new_file_reader(BB_SCRAMBLER_CHECKER_NAME);
-    variable bch_encoder_checker  : file_reader_t := new_file_reader(BCH_ENCODER_CHECKER_NAME);
-    variable ldpc_encoder_checker : file_reader_t := new_file_reader(LDPC_ENCODER_CHECKER_NAME);
+    variable bb_scrambler_checker         : file_reader_t := new_file_reader("bb_scrambler");
+    variable bch_encoder_checker          : file_reader_t := new_file_reader("bch_encoder");
+    variable ldpc_encoder_checker         : file_reader_t := new_file_reader("ldpc_encoder");
+    variable constellation_mapper_checker : file_reader_t := new_file_reader("constellation_mapper");
 
     variable prev_config          : config_t;
 
@@ -337,8 +360,8 @@ begin
       variable msg : msg_t;
     begin
       info("Waiting for test completion");
-      wait_all_read(net, file_reader);
-      wait_all_read(net, file_checker);
+      wait_all_read(net, input_stream);
+      wait_all_read(net, output_ref);
       -- ghdl translate_off
       wait_all_read(net, bb_scrambler_checker);
       wait_all_read(net, bch_encoder_checker);
@@ -438,33 +461,19 @@ begin
       end if;
 
       for i in 0 to number_of_frames - 1 loop
-        file_reader_msg := new_msg;
+        file_reader_msg        := new_msg;
         file_reader_msg.sender := self;
 
-        read_file(net,
-          file_reader => file_reader,
-          filename    => data_path & "/bb_header_output_packed.bin",
-          tid         => encode(config_tuple)
-        );
-
-        -- if config.constellation /= mod_qpsk then
-        --   read_file(
-        --     net,
-        --     file_checker,
-        --     data_path & "/bit_interleaver_output.bin",
-        --     get_checker_data_ratio(config.constellation)
-        --   );
-        -- end if;
-
+        read_file(net, input_stream, data_path & "/bb_header_output_packed.bin", encode(config_tuple));
         read_file(net, ldpc_table, data_path & "/ldpc_table.bin");
+        read_file(net, output_ref, data_path & "/plframe_pilots_off_fixed_point.bin");
 
         -- ghdl translate_off
         read_file(net, bb_scrambler_checker, data_path & "/bb_scrambler_output_packed.bin");
         read_file(net, bch_encoder_checker, data_path & "/bch_encoder_output_packed.bin");
         read_file(net, ldpc_encoder_checker, data_path & "/ldpc_output_packed.bin");
+        read_file(net, constellation_mapper_checker, data_path & "/bit_mapper_output_fixed.bin");
         -- ghdl translate_on
-
-        read_file(net, file_checker, data_path & "/bit_mapper_output_fixed.bin");
 
       end loop;
 
@@ -476,12 +485,7 @@ begin
     show(display_handler, debug);
     hide(get_logger("file_reader_t(input_stream)"), display_handler, debug, True);
     hide(get_logger("file_reader_t(output_ref_data)"), display_handler, debug, True);
-    hide(get_logger("file_reader_t(axi_table)"), display_handler, debug, True);
-
-    hide(get_logger("axi_table"), display_handler, debug, True);
-    hide(get_logger("bb_scrambler"), display_handler, debug, True);
-    hide(get_logger("bch_encoder"), display_handler, debug, True);
-    hide(get_logger("ldpc_encoder"), display_handler, debug, True);
+    hide(get_logger("file_reader_t(ldpc_table)"), display_handler, debug, True);
 
     ram_wren  <= '0';
 
@@ -517,31 +521,38 @@ begin
 
 -- ghdl translate_off
   signal_spy_block : block -- {{ -------------------------------------------------------
-    signal bb_scrambler : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-    signal bch_encoder  : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-    signal ldpc_encoder : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal bb_scrambler         : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal bch_encoder          : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal ldpc_encoder         : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal constellation_mapper : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   begin
 
-    axi_bb_scrambler.axi.tdata     <= bb_scrambler.tdata;
-    axi_bb_scrambler.axi.tvalid    <= bb_scrambler.tvalid;
-    axi_bb_scrambler.axi.tready    <= bb_scrambler.tready;
-    axi_bb_scrambler.axi.tlast     <= bb_scrambler.tlast;
+    axi_bb_scrambler.axi.tdata          <= bb_scrambler.tdata;
+    axi_bb_scrambler.axi.tvalid         <= bb_scrambler.tvalid;
+    axi_bb_scrambler.axi.tready         <= bb_scrambler.tready;
+    axi_bb_scrambler.axi.tlast          <= bb_scrambler.tlast;
 
-    axi_bch_encoder.axi.tdata      <= bch_encoder.tdata;
-    axi_bch_encoder.axi.tvalid     <= bch_encoder.tvalid;
-    axi_bch_encoder.axi.tready     <= bch_encoder.tready;
-    axi_bch_encoder.axi.tlast      <= bch_encoder.tlast;
+    axi_bch_encoder.axi.tdata           <= bch_encoder.tdata;
+    axi_bch_encoder.axi.tvalid          <= bch_encoder.tvalid;
+    axi_bch_encoder.axi.tready          <= bch_encoder.tready;
+    axi_bch_encoder.axi.tlast           <= bch_encoder.tlast;
 
     axi_ldpc_encoder_core.axi.tdata     <= ldpc_encoder.tdata;
     axi_ldpc_encoder_core.axi.tvalid    <= ldpc_encoder.tvalid;
     axi_ldpc_encoder_core.axi.tready    <= ldpc_encoder.tready;
     axi_ldpc_encoder_core.axi.tlast     <= ldpc_encoder.tlast;
 
+    axi_constellation_mapper.axi.tdata  <= constellation_mapper.tdata;
+    axi_constellation_mapper.axi.tvalid <= constellation_mapper.tvalid;
+    axi_constellation_mapper.axi.tready <= constellation_mapper.tready;
+    axi_constellation_mapper.axi.tlast  <= constellation_mapper.tlast;
+
     process
     begin
       init_signal_spy("/dvbs2_tx_tb/dut/bb_scrambler",  "/dvbs2_tx_tb/signal_spy_block/bb_scrambler",  0);
       init_signal_spy("/dvbs2_tx_tb/dut/bch_encoder", "/dvbs2_tx_tb/signal_spy_block/bch_encoder", 0);
       init_signal_spy("/dvbs2_tx_tb/dut/ldpc_encoder",  "/dvbs2_tx_tb/signal_spy_block/ldpc_encoder",  0);
+      init_signal_spy("/dvbs2_tx_tb/dut/constellation_mapper_out ",  "/dvbs2_tx_tb/signal_spy_block/constellation_mapper",  0);
       wait;
     end process;
   end block signal_spy_block; -- }} ----------------------------------------------------

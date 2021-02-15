@@ -65,6 +65,15 @@ end dvbs2_tx;
 
 architecture dvbs2_tx of dvbs2_tx is
 
+  -----------
+  -- Types --
+  -----------
+  -- tvalid/tready pair for control only buses
+  type axi_stream_ctrl_t is record
+    tvalid : std_logic;
+    tready : std_logic;
+  end record;
+
   -------------
   -- Signals --
   -------------
@@ -76,11 +85,16 @@ architecture dvbs2_tx of dvbs2_tx is
   signal bb_scrambler             : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   signal bch_encoder              : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   signal ldpc_encoder             : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-  signal mux_to_bit_interleaver   : axi_stream_bus_t(tdata(7 downto 0), tuser(-1 downto 0));
-  signal mux_bypass               : axi_stream_bus_t(tdata(7 downto 0), tuser(-1 downto 0));
+  signal ldpc_fifo                : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+  signal fork_bit_interleaver     : axi_stream_ctrl_t;
+  signal fork_ldpc_fifo           : axi_stream_ctrl_t;
   signal bit_interleaver          : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   signal constellation_mapper_in  : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   signal constellation_mapper_out : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+
+  signal ldpc_fifo_entries        : std_logic_vector(numbits(max(DVB_N_LDPC)) downto 0);
+  signal ldpc_fifo_empty          : std_logic;
+  signal ldpc_fifo_full           : std_logic;
 
 begin
 
@@ -195,11 +209,11 @@ begin
       s_tready       => ldpc_encoder.tready,
       s_tdata        => ldpc_encoder.tdata,
 
-      m_tvalid(0)    => mux_to_bit_interleaver.tvalid,
-      m_tvalid(1)    => mux_bypass.tvalid,
+      m_tvalid(0)    => fork_bit_interleaver.tvalid,
+      m_tvalid(1)    => fork_ldpc_fifo.tvalid,
 
-      m_tready(0)    => mux_to_bit_interleaver.tready,
-      m_tready(1)    => mux_bypass.tready,
+      m_tready(0)    => fork_bit_interleaver.tready,
+      m_tready(1)    => fork_ldpc_fifo.tready,
 
       m_tdata        => open);
 
@@ -217,8 +231,8 @@ begin
       cfg_constellation => decode(ldpc_encoder.tuser).constellation,
       cfg_code_rate     => decode(ldpc_encoder.tuser).code_rate,
       -- AXI input
-      s_tready          => mux_to_bit_interleaver.tready,
-      s_tvalid          => mux_to_bit_interleaver.tvalid,
+      s_tready          => fork_bit_interleaver.tready,
+      s_tvalid          => fork_bit_interleaver.tvalid,
       s_tlast           => ldpc_encoder.tlast,
       s_tdata           => ldpc_encoder.tdata,
       s_tid             => ldpc_encoder.tuser,
@@ -228,6 +242,39 @@ begin
       m_tlast           => bit_interleaver.tlast,
       m_tdata           => bit_interleaver.tdata,
       m_tid             => bit_interleaver.tuser);
+
+  ldpc_fifo_block : block
+    signal tdata_agg_in  : std_logic_vector(ENCODED_CONFIG_WIDTH + 7 downto 0);
+    signal tdata_agg_out : std_logic_vector(ENCODED_CONFIG_WIDTH + 7 downto 0);
+  begin
+    ldpc_fifo_u : entity fpga_cores.axi_stream_frame_fifo
+      generic map (
+        FIFO_DEPTH => max(DVB_N_LDPC),
+        DATA_WIDTH => ENCODED_CONFIG_WIDTH + 8,
+        RAM_TYPE   => auto)
+      port map (
+        -- Usual ports
+        clk     => clk,
+        rst     => rst,
+        -- status
+        entries  => ldpc_fifo_entries,
+        empty    => ldpc_fifo_empty,
+        full     => ldpc_fifo_full,
+        -- Write side
+        s_tvalid => fork_ldpc_fifo.tvalid,
+        s_tready => fork_ldpc_fifo.tready,
+        s_tdata  => tdata_agg_in,
+        s_tlast  => ldpc_encoder.tlast,
+        -- Read side
+        m_tvalid => ldpc_fifo.tvalid,
+        m_tready => ldpc_fifo.tready,
+        m_tdata  => tdata_agg_out,
+        m_tlast  => ldpc_fifo.tlast);
+
+    tdata_agg_in    <= ldpc_encoder.tuser & ldpc_encoder.tdata;
+    ldpc_fifo.tdata <= tdata_agg_out(7 downto 0);
+    ldpc_fifo.tuser <= tdata_agg_out(ENCODED_CONFIG_WIDTH + 7 downto 8);
+  end block;
 
   pre_constellaion_mapper_arbiter_block : block
     signal tdata_in0 : std_logic_vector(8 + ENCODED_CONFIG_WIDTH - 1 downto 0);
@@ -257,13 +304,13 @@ begin
         selected_encoded => open,
 
         -- AXI slave input
-        s_tvalid(0)      => mux_bypass.tvalid,
+        s_tvalid(0)      => ldpc_fifo.tvalid,
         s_tvalid(1)      => bit_interleaver.tvalid,
 
-        s_tready(0)      => mux_bypass.tready,
+        s_tready(0)      => ldpc_fifo.tready,
         s_tready(1)      => bit_interleaver.tready,
 
-        s_tlast(0)       => ldpc_encoder.tlast,
+        s_tlast(0)       => ldpc_fifo.tlast,
         s_tlast(1)       => bit_interleaver.tlast,
 
         s_tdata(0)       => tdata_in0,
@@ -279,7 +326,8 @@ begin
   constellation_mapper_u : entity work.axi_constellation_mapper
     generic map (
       INPUT_DATA_WIDTH  => 8,
-      OUTPUT_DATA_WIDTH => DATA_WIDTH
+      OUTPUT_DATA_WIDTH => DATA_WIDTH,
+      TID_WIDTH         => ENCODED_CONFIG_WIDTH
     )
     port map (
       -- Usual ports
@@ -291,19 +339,19 @@ begin
       ram_wdata         => ram_wdata,
       ram_rdata         => ram_rdata,
       -- Per frame config input
-      cfg_frame_type    => decode(constellation_mapper_in.tuser).frame_type,
       cfg_constellation => decode(constellation_mapper_in.tuser).constellation,
-      cfg_code_rate     => decode(constellation_mapper_in.tuser).code_rate,
       -- AXI input
       s_tvalid          => constellation_mapper_in.tvalid,
       s_tlast           => constellation_mapper_in.tlast,
       s_tready          => constellation_mapper_in.tready,
       s_tdata           => constellation_mapper_in.tdata,
+      s_tid             => constellation_mapper_in.tuser,
       -- AXI output
       m_tvalid          => constellation_mapper_out.tvalid,
       m_tlast           => constellation_mapper_out.tlast,
       m_tready          => constellation_mapper_out.tready,
-      m_tdata           => constellation_mapper_out.tdata);
+      m_tdata           => constellation_mapper_out.tdata,
+      m_tid             => constellation_mapper_out.tuser);
 
   physical_layer_framer_u : entity work.axi_physical_layer_framer
     generic map (
