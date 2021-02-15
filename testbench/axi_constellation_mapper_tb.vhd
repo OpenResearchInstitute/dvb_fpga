@@ -73,23 +73,6 @@ architecture axi_constellation_mapper_tb of axi_constellation_mapper_tb is
 
   constant CLK_PERIOD        : time    := 5 ns;
 
-  function get_checker_data_ratio ( constant constellation : in constellation_t)
-  return string is
-  begin
-    case constellation is
-      when   mod_qpsk => return "2:8";
-      when   mod_8psk => return "3:8";
-      when mod_16apsk => return "4:8";
-      when mod_32apsk => return "5:8";
-      when others =>
-        report "Invalid constellation: " & constellation_t'image(constellation)
-        severity Failure;
-    end case;
-
-    -- Just to avoid the warning, should never be reached
-    return "";
-  end function;
-
   -------------
   -- Signals --
   -------------
@@ -102,10 +85,6 @@ architecture axi_constellation_mapper_tb of axi_constellation_mapper_tb is
   signal ram_wdata              : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
   signal ram_rdata              : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
 
-  signal cfg_constellation      : constellation_t;
-  signal cfg_frame_type         : frame_type_t;
-  signal cfg_code_rate          : code_rate_t;
-
   signal data_probability       : real range 0.0 to 1.0 := 1.0;
   signal tready_probability     : real range 0.0 to 1.0 := 1.0;
 
@@ -116,9 +95,9 @@ architecture axi_constellation_mapper_tb of axi_constellation_mapper_tb is
   signal s_data_valid           : boolean;
 
   -- AXI input
-  signal axi_master             : axi_stream_data_bus_t(tdata(INPUT_DATA_WIDTH - 1 downto 0));
+  signal axi_master             : axi_stream_bus_t(tdata(INPUT_DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   -- AXI output
-  signal axi_slave              : axi_stream_data_bus_t(tdata(OUTPUT_DATA_WIDTH - 1 downto 0));
+  signal axi_slave              : axi_stream_bus_t(tdata(OUTPUT_DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   signal receiver_busy          : boolean := False;
 
 begin
@@ -126,43 +105,31 @@ begin
   -------------------
   -- Port mappings --
   -------------------
-  -- AXI file read
-  axi_file_reader_block : block
-    constant CONFIG_INPUT_WIDTHS: fpga_cores.common_pkg.integer_vector_t := (
-      0 => FRAME_TYPE_WIDTH,
-      1 => CONSTELLATION_WIDTH,
-      2 => CODE_RATE_WIDTH);
+  input_data_u : entity fpga_cores_sim.axi_file_reader
+    generic map (
+      READER_NAME => "input_data_u",
+      DATA_WIDTH  => INPUT_DATA_WIDTH,
+      TID_WIDTH   => ENCODED_CONFIG_WIDTH)
+    port map (
+      -- Usual ports
+      clk                => clk,
+      rst                => rst,
+      -- Config and status
+      completed          => open,
+      tvalid_probability => data_probability,
 
-    signal m_tid : std_logic_vector(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0);
-  begin
-    input_data_u : entity fpga_cores_sim.axi_file_reader
-      generic map (
-        READER_NAME => "input_data_u",
-        DATA_WIDTH  => INPUT_DATA_WIDTH,
-        TID_WIDTH   => sum(CONFIG_INPUT_WIDTHS))
-      port map (
-        -- Usual ports
-        clk                => clk,
-        rst                => rst,
-        -- Config and status
-        completed          => open,
-        tvalid_probability => data_probability,
-
-        -- Data output
-        m_tready           => axi_master.tready,
-        m_tdata            => axi_master.tdata,
-        m_tid              => m_tid,
-        m_tvalid           => axi_master.tvalid,
-        m_tlast            => axi_master.tlast);
-
-    -- Decode the TID field with the actual config types
-    cfg_frame_type    <= decode(get_field(m_tid, 0, CONFIG_INPUT_WIDTHS));
-    cfg_constellation <= decode(get_field(m_tid, 1, CONFIG_INPUT_WIDTHS));
-    cfg_code_rate     <= decode(get_field(m_tid, 2, CONFIG_INPUT_WIDTHS));
-  end block axi_file_reader_block;
+      -- Data output
+      m_tready           => axi_master.tready,
+      m_tdata            => axi_master.tdata,
+      m_tid              => axi_master.tuser,
+      m_tvalid           => axi_master.tvalid,
+      m_tlast            => axi_master.tlast);
 
   dut : entity work.axi_constellation_mapper
-    generic map ( INPUT_DATA_WIDTH => INPUT_DATA_WIDTH )
+    generic map (
+      INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
+      OUTPUT_DATA_WIDTH => OUTPUT_DATA_WIDTH,
+      TID_WIDTH         => ENCODED_CONFIG_WIDTH)
     port map (
       -- Usual ports
       clk               => clk,
@@ -173,21 +140,21 @@ begin
       ram_wdata         => ram_wdata,
       ram_rdata         => ram_rdata,
 
-      cfg_constellation => cfg_constellation,
-      cfg_frame_type    => cfg_frame_type,
-      cfg_code_rate     => cfg_code_rate,
+      cfg_constellation => decode(axi_master.tuser).constellation,
 
       -- AXI input
       s_tvalid          => axi_master.tvalid,
-      s_tdata           => axi_master.tdata,
       s_tlast           => axi_master.tlast,
       s_tready          => axi_master.tready,
+      s_tdata           => axi_master.tdata,
+      s_tid             => axi_master.tuser,
 
       -- AXI output
       m_tready          => axi_slave.tready,
       m_tvalid          => axi_slave.tvalid,
       m_tlast           => axi_slave.tlast,
-      m_tdata           => axi_slave.tdata);
+      m_tdata           => axi_slave.tdata,
+      m_tid             => axi_slave.tuser);
 
   ref_data_u : entity fpga_cores_sim.axi_file_reader
     generic map (
@@ -277,7 +244,7 @@ begin
       variable addr         : integer := initial_addr;
       variable index        : unsigned(5 downto 0) := (others => '0');
     begin
-      info(sformat("Updating mapping RAM from '%s' (initial address is %d)", fo(path), fo(initial_addr)));
+      info(logger, sformat("Updating mapping RAM from '%s' (initial address is %d)", fo(path), fo(initial_addr)));
 
       file_open(file_handler, path, read_mode);
       while not endfile(file_handler) loop
@@ -285,7 +252,8 @@ begin
         read(L, map_i);
         readline(file_handler, L);
         read(L, map_q);
-        info(
+        debug(
+          logger,
           sformat(
             "[%b] Writing RAM: %2d => (%13s, %13s) => %13s (%r) / %13s (%r)",
             fo(index),
@@ -318,12 +286,16 @@ begin
       constant number_of_frames : in positive) is
       constant data_path        : string := strip(config.base_path, chars => (1 to 1 => nul));
       variable initial_addr     : integer := 0;
+      variable msg              : msg_t;
+      variable config_tuple     : config_tuple_t;
     begin
       info(logger, "Running test with:");
       info(logger, " - constellation  : " & constellation_t'image(config.constellation));
       info(logger, " - frame_type     : " & frame_type_t'image(config.frame_type));
       info(logger, " - code_rate      : " & code_rate_t'image(config.code_rate));
       info(logger, " - data path      : " & data_path);
+
+      config_tuple := (code_rate => config.code_rate, constellation => config.constellation, frame_type => config.frame_type);
 
       -- Only update the mapping RAM if the config actually requires that
       if config /= prev_config then
@@ -342,12 +314,13 @@ begin
       for i in 0 to number_of_frames - 1 loop
         debug(logger, "Setting up frame #" & to_string(i));
 
-        read_file(net => net,
-          file_reader => input_data,
-          filename    => data_path & "/bit_interleaver_output_packed.bin",
-          tid         => encode(config.code_rate) & encode(config.constellation) & encode(config.frame_type)
-        );
-
+        -- Update the expected TID
+        msg := new_msg;
+        push(msg, encode(config_tuple));
+        send(net, find("tid_check"), msg);
+        -- Setup file reader
+        read_file(net, input_data, data_path & "/bit_interleaver_output_packed.bin", encode(config_tuple));
+        -- Setup file checker
         read_file(net, ref_data, data_path & "/bit_mapper_output_fixed.bin");
 
       end loop;
@@ -493,5 +466,45 @@ begin
       end if;
     end if;
   end process;
+
+  tid_check_p : process -- {{ ----------------------------------------------------------
+    constant self         : actor_t  := new_actor("tid_check");
+    constant logger       : logger_t := get_logger("tid_check");
+    variable msg          : msg_t;
+    variable expected_tid : std_logic_vector(ENCODED_CONFIG_WIDTH - 1 downto 0);
+    variable first_word   : boolean;
+    variable frame_cnt    : integer := 0;
+    variable word_cnt     : integer := 0;
+  begin
+    first_word := True;
+    while true loop
+      wait until rising_edge(clk) and axi_slave.tvalid = '1' and axi_slave.tready = '1';
+      if first_word then
+        check_true(has_message(self), "Expected TID not set");
+        receive(net, self, msg);
+        expected_tid := pop(msg);
+        info(logger, sformat("[%d / %d] Updated expected TID to %r", fo(frame_cnt), fo(word_cnt), fo(expected_tid)));
+      end if;
+
+      check_equal(
+        axi_slave.tuser,
+        expected_tid,
+        sformat(
+          "[%d / %d] TID check error: got %r, expected %r",
+          fo(frame_cnt),
+          fo(word_cnt),
+          fo(axi_slave.tuser),
+          fo(expected_tid)));
+
+      first_word := False;
+      word_cnt   := word_cnt + 1;
+      if axi_slave.tlast = '1' then
+        info(logger, sformat("[%d / %d] Setting first word", fo(frame_cnt), fo(word_cnt)));
+        frame_cnt  := frame_cnt + 1;
+        word_cnt   := 0;
+        first_word := True;
+      end if;
+    end loop;
+  end process; -- }} -------------------------------------------------------------------
 
 end axi_constellation_mapper_tb;

@@ -41,7 +41,8 @@ use work.dvb_utils_pkg.all;
 entity axi_constellation_mapper is
   generic (
     INPUT_DATA_WIDTH  : integer := 8;
-    OUTPUT_DATA_WIDTH : integer := 32
+    OUTPUT_DATA_WIDTH : integer := 32;
+    TID_WIDTH         : integer := 0
   );
   port (
     -- Usual ports
@@ -54,33 +55,32 @@ entity axi_constellation_mapper is
     ram_rdata         : out std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
     -- Config input
     cfg_constellation : in  constellation_t;
-    cfg_frame_type    : in  frame_type_t;
-    cfg_code_rate     : in  code_rate_t;
     -- AXI data input
     s_tready          : out std_logic;
     s_tvalid          : in  std_logic;
     s_tlast           : in  std_logic;
     s_tdata           : in  std_logic_vector(INPUT_DATA_WIDTH - 1 downto 0);
+    s_tid             : in  std_logic_vector(TID_WIDTH - 1 downto 0);
     -- AXI output
     m_tready          : in  std_logic;
     m_tvalid          : out std_logic;
     m_tlast           : out std_logic;
-    m_tdata           : out std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0));
+    m_tdata           : out std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+    m_tid             : out std_logic_vector(TID_WIDTH - 1 downto 0));
 end axi_constellation_mapper;
 
 architecture axi_constellation_mapper of axi_constellation_mapper is
 
   constant CONFIG_INPUT_WIDTHS: fpga_cores.common_pkg.integer_vector_t := (
-    0 => FRAME_TYPE_WIDTH,
-    1 => CONSTELLATION_WIDTH,
-    2 => CODE_RATE_WIDTH);
+    0 => CONSTELLATION_WIDTH,
+    1 => TID_WIDTH);
 
   constant TUSER_WIDTH : integer := sum(CONFIG_INPUT_WIDTHS);
 
   -------------
   -- Signals --
   -------------
-  signal s_tid                : std_logic_vector(TUSER_WIDTH - 1 downto 0);
+  signal s_tid_internal       : std_logic_vector(TUSER_WIDTH - 1 downto 0);
   signal mux_sel              : std_logic_vector(3 downto 0);
   signal conv_tready          : std_logic_vector(3 downto 0);
   signal conv_tvalid          : std_logic_vector(3 downto 0);
@@ -101,8 +101,8 @@ architecture axi_constellation_mapper of axi_constellation_mapper is
 
   -- ROM side config, so won't need to wait until an entire frame goes through
   signal egress_constellation : constellation_t;
-  signal egress_frame_type    : frame_type_t;
-  signal egress_code_rate     : code_rate_t;
+  signal egress_tid           : std_logic_vector(TID_WIDTH - 1 downto 0);
+  signal egress_tid_reg       : std_logic_vector(TID_WIDTH - 1 downto 0);
 
   signal adapter_wr_en        : std_logic;
   signal adapter_full         : std_logic;
@@ -143,7 +143,7 @@ begin
     -- AXI stream input
     s_tready => conv_tready(0),
     s_tdata  => s_tdata,
-    s_tid    => s_tid,
+    s_tid    => s_tid_internal,
     s_tvalid => conv_tvalid(0),
     s_tlast  => s_tlast,
     -- AXI stream output
@@ -167,7 +167,7 @@ begin
     -- AXI stream input
     s_tready => conv_tready(1),
     s_tdata  => s_tdata,
-    s_tid    => s_tid,
+    s_tid    => s_tid_internal,
     s_tvalid => conv_tvalid(1),
     s_tlast  => s_tlast,
     -- AXI stream output
@@ -191,7 +191,7 @@ begin
     -- AXI stream input
     s_tready => conv_tready(2),
     s_tdata  => s_tdata,
-    s_tid    => s_tid,
+    s_tid    => s_tid_internal,
     s_tvalid => conv_tvalid(2),
     s_tlast  => s_tlast,
     -- AXI stream output
@@ -215,7 +215,7 @@ begin
     -- AXI stream input
     s_tready => conv_tready(3),
     s_tdata  => s_tdata,
-    s_tid    => s_tid,
+    s_tid    => s_tid_internal,
     s_tvalid => conv_tvalid(3),
     s_tlast  => s_tlast,
     -- AXI stream output
@@ -248,26 +248,35 @@ begin
       addr_b    => map_addr,
       rddata_b  => map_data);
 
-  -- map data comes with 1 cycle of latency, compensate for that
-  output_adapter_u : entity fpga_cores.axi_stream_master_adapter
-    generic map (
-      MAX_SKEW_CYCLES => 1,
-      TDATA_WIDTH     => OUTPUT_DATA_WIDTH)
-    port map (
-      -- Usual ports
-      clk      => clk,
-      reset    => rst,
-      -- wanna-be AXI interface
-      wr_en    => adapter_wr_en,
-      wr_full  => adapter_full,
-      wr_empty => open,
-      wr_data  => map_data,
-      wr_last  => adapter_wr_last,
-      -- AXI master
-      m_tvalid => m_tvalid,
-      m_tready => m_tready,
-      m_tdata  => m_tdata,
-      m_tlast  => m_tlast);
+  output_adapter_block : block
+    signal agg_data_in : std_logic_vector(TID_WIDTH + OUTPUT_DATA_WIDTH - 1 downto 0);
+    signal agg_data_out : std_logic_vector(TID_WIDTH + OUTPUT_DATA_WIDTH - 1 downto 0);
+  begin
+    -- map data comes with 1 cycle of latency, compensate for that
+    output_adapter_u : entity fpga_cores.axi_stream_master_adapter
+      generic map (
+        MAX_SKEW_CYCLES => 1,
+        TDATA_WIDTH     => OUTPUT_DATA_WIDTH + TID_WIDTH)
+      port map (
+        -- Usual ports
+        clk      => clk,
+        reset    => rst,
+        -- wanna-be AXI interface
+        wr_en    => adapter_wr_en,
+        wr_full  => adapter_full,
+        wr_empty => open,
+        wr_data  => agg_data_in,
+        wr_last  => adapter_wr_last,
+        -- AXI master
+        m_tvalid => m_tvalid,
+        m_tready => m_tready,
+        m_tdata  => agg_data_out,
+        m_tlast  => m_tlast);
+
+    agg_data_in <= egress_tid_reg & map_data;
+    m_tdata     <= agg_data_out(OUTPUT_DATA_WIDTH - 1 downto 0);
+    m_tid       <= agg_data_out(OUTPUT_DATA_WIDTH + TID_WIDTH - 1 downto OUTPUT_DATA_WIDTH);
+  end block;
 
   ------------------------------
   -- Asynchronous assignments --
@@ -298,25 +307,25 @@ begin
              (axi_16apsk.tuser and (sum(CONFIG_INPUT_WIDTHS) - 1 downto 0 => axi_16apsk.tvalid)) or
              (axi_32apsk.tuser and (sum(CONFIG_INPUT_WIDTHS) - 1 downto 0 => axi_32apsk.tvalid));
 
-  egress_frame_type    <= decode(get_field(map_cfg, 0, CONFIG_INPUT_WIDTHS));
-  egress_constellation <= decode(get_field(map_cfg, 1, CONFIG_INPUT_WIDTHS));
-  egress_code_rate     <= decode(get_field(map_cfg, 2, CONFIG_INPUT_WIDTHS));
+  egress_constellation <= decode(get_field(map_cfg, 0, CONFIG_INPUT_WIDTHS));
+  egress_tid           <= get_field(map_cfg, 1, CONFIG_INPUT_WIDTHS);
 
   axi_qpsk.tready      <= not adapter_full when egress_constellation = mod_qpsk else '0';
   axi_8psk.tready      <= not adapter_full when egress_constellation = mod_8psk else '0';
   axi_16apsk.tready    <= not adapter_full when egress_constellation = mod_16apsk else '0';
   axi_32apsk.tready    <= not adapter_full when egress_constellation = mod_32apsk else '0';
 
-  s_tid    <= encode(cfg_code_rate) & encode(cfg_constellation) & encode(cfg_frame_type);
+  s_tid_internal    <= s_tid & encode(cfg_constellation);
 
   ---------------
   -- Processes --
   ---------------
   process(clk)
   begin
-    if clk'event and clk = '1' then
+    if rising_edge(clk) then
       adapter_wr_en   <= '0';
       adapter_wr_last <= '0';
+      egress_tid_reg  <= egress_tid;
       if not adapter_full then
         adapter_wr_en   <= axi_qpsk.tvalid or axi_8psk.tvalid or axi_16apsk.tvalid or axi_32apsk.tvalid;
         adapter_wr_last <= axi_qpsk.tlast or axi_8psk.tlast or axi_16apsk.tlast or axi_32apsk.tlast;
