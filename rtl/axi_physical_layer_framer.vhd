@@ -220,7 +220,8 @@ begin
 
   -- Arbitrate between a frame from the frame FIFO or from the dummy frame generator
   dummy_frame_arbiter_block : block
-    signal tdata_agg_in  : std_logic_vector(TDATA_WIDTH + TID_WIDTH - 1 downto 0);
+    signal tdata0_agg_in : std_logic_vector(TDATA_WIDTH + TID_WIDTH - 1 downto 0);
+    signal tdata1_agg_in : std_logic_vector(TDATA_WIDTH + TID_WIDTH - 1 downto 0);
     signal tdata_agg_out : std_logic_vector(TDATA_WIDTH + TID_WIDTH - 1 downto 0);
   begin
     dummy_frame_arbiter_u : entity fpga_cores.axi_stream_arbiter
@@ -241,8 +242,8 @@ begin
         s_tvalid(1)      => dummy_frame_gen.tvalid,
         s_tready(0)      => plframe.tready,
         s_tready(1)      => dummy_frame_gen.tready,
-        s_tdata(0)       => tdata_agg_in,
-        s_tdata(1)       => (TID_WIDTH - 1 downto 0 => '0') & dummy_frame_gen.tdata,
+        s_tdata(0)       => tdata0_agg_in,
+        s_tdata(1)       => tdata1_agg_in,
         s_tlast(0)       => plframe.tlast,
         s_tlast(1)       => dummy_frame_gen.tlast,
         -- AXI master output
@@ -251,9 +252,10 @@ begin
         m_tdata          => tdata_agg_out,
         m_tlast          => m_tlast_i);
 
-      tdata_agg_in <= plframe.tuser & plframe.tdata;
-      m_tdata      <= tdata_agg_out(TDATA_WIDTH - 1 downto 0);
-      m_tid        <= tdata_agg_out(TDATA_WIDTH + TID_WIDTH - 1 downto TDATA_WIDTH);
+      tdata0_agg_in <= plframe.tuser & plframe.tdata;
+      tdata1_agg_in <= (TID_WIDTH - 1 downto 0 => '0') & dummy_frame_gen.tdata;
+      m_tdata       <= tdata_agg_out(TDATA_WIDTH - 1 downto 0);
+      m_tid         <= tdata_agg_out(TDATA_WIDTH + TID_WIDTH - 1 downto TDATA_WIDTH);
   end block;
 
   ------------------------------

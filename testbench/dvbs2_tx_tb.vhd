@@ -297,7 +297,7 @@ begin
   -- reader to get the contents
   output_ref_data_u : entity fpga_cores_sim.axi_file_reader
     generic map (
-      READER_NAME => "output_ref_data",
+      READER_NAME => "output_ref",
       DATA_WIDTH  => DATA_WIDTH)
     port map (
       -- Usual ports
@@ -337,13 +337,12 @@ begin
   main : process -- {{ -----------------------------------------------------------------
     constant self                         : actor_t       := new_actor("main");
     variable input_stream                 : file_reader_t := new_file_reader("input_stream");
-    variable output_ref                   : file_reader_t := new_file_reader("output_ref_data");
+    variable output_ref                   : file_reader_t := new_file_reader("output_ref");
     variable ldpc_table                   : file_reader_t := new_file_reader("ldpc_table");
 
     variable bb_scrambler_checker         : file_reader_t := new_file_reader("bb_scrambler");
     variable bch_encoder_checker          : file_reader_t := new_file_reader("bch_encoder");
     variable ldpc_encoder_checker         : file_reader_t := new_file_reader("ldpc_encoder");
-    variable constellation_mapper_checker : file_reader_t := new_file_reader("constellation_mapper");
 
     variable prev_config          : config_t;
 
@@ -472,7 +471,6 @@ begin
         read_file(net, bb_scrambler_checker, data_path & "/bb_scrambler_output_packed.bin");
         read_file(net, bch_encoder_checker, data_path & "/bch_encoder_output_packed.bin");
         read_file(net, ldpc_encoder_checker, data_path & "/ldpc_output_packed.bin");
-        read_file(net, constellation_mapper_checker, data_path & "/bit_mapper_output_fixed.bin");
         -- ghdl translate_on
 
       end loop;
@@ -483,9 +481,11 @@ begin
 
     test_runner_setup(runner, RUNNER_CFG);
     show(display_handler, debug);
-    hide(get_logger("file_reader_t(input_stream)"), display_handler, debug, True);
-    hide(get_logger("file_reader_t(output_ref_data)"), display_handler, debug, True);
-    hide(get_logger("file_reader_t(ldpc_table)"), display_handler, debug, True);
+    -- hide(get_logger("file_reader_t(input_stream)"), display_handler, debug, True);
+    -- hide(get_logger("file_reader_t(output_ref_data)"), display_handler, debug, True);
+    -- hide(get_logger("file_reader_t(ldpc_table)"), display_handler, debug, True);
+
+    -- show(get_logger("input_stream"), display_handler, (trace, debug), True);
 
     ram_wren  <= '0';
 

@@ -23,6 +23,7 @@
 ---------------
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library fpga_cores;
 use fpga_cores.axi_pkg.all;
@@ -78,6 +79,9 @@ architecture dvbs2_tx of dvbs2_tx is
   -- Signals --
   -------------
   signal s_tid                    : std_logic_vector(ENCODED_CONFIG_WIDTH - 1 downto 0);
+  signal m_tvalid_i               : std_logic;
+  signal m_tlast_i                : std_logic;
+  signal s_tready_i               : std_logic;
 
   signal mux_sel                  : std_logic_vector(1 downto 0);
 
@@ -92,6 +96,8 @@ architecture dvbs2_tx of dvbs2_tx is
   signal constellation_mapper_in  : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   signal constellation_mapper_out : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
 
+  -- Status
+  signal frames_in_transit        : unsigned(7 downto 0);
   signal ldpc_fifo_entries        : std_logic_vector(numbits(max(DVB_N_LDPC)) downto 0);
   signal ldpc_fifo_empty          : std_logic;
   signal ldpc_fifo_full           : std_logic;
@@ -113,7 +119,7 @@ begin
       clk      => clk,
       rst      => rst,
       -- AXI stream input
-      s_tready => s_tready,
+      s_tready => s_tready_i,
       s_tdata  => s_tdata,
       s_tkeep  => s_tkeep,
       s_tid    => s_tid,
@@ -282,7 +288,7 @@ begin
     signal tdata_out : std_logic_vector(8 + ENCODED_CONFIG_WIDTH - 1 downto 0);
   begin
 
-    tdata_in0 <= ldpc_encoder.tuser & ldpc_encoder.tdata;
+    tdata_in0 <= ldpc_fifo.tuser & ldpc_fifo.tdata;
     tdata_in1 <= bit_interleaver.tuser & bit_interleaver.tdata;
 
     constellation_mapper_in.tdata <= tdata_out(8 - 1 downto 0);
@@ -375,8 +381,8 @@ begin
       s_tid               => (others => 'U'),
       -- AXI output
       m_tready            => m_tready,
-      m_tvalid            => m_tvalid,
-      m_tlast             => m_tlast,
+      m_tvalid            => m_tvalid_i,
+      m_tlast             => m_tlast_i,
       m_tdata             => m_tdata,
       m_tid               => open);
 
@@ -386,5 +392,32 @@ begin
   s_tid <= encode((frame_type    => decode(cfg_frame_type),
                    constellation => decode(cfg_constellation),
                    code_rate     => decode(cfg_code_rate)));
+
+  m_tvalid <= m_tvalid_i;
+  m_tlast  <= m_tlast_i;
+  s_tready <= s_tready_i;
+
+  ---------------
+  -- Processes --
+  ---------------
+  status_block : block
+  begin
+    process(clk, rst)
+    begin
+      if rst = '1' then
+        frames_in_transit <= (others => '0');
+      elsif rising_edge(clk) then
+        -- Only increment if only one is active
+        if (s_tvalid and s_tready_i and s_tlast) xor (m_tvalid_i and m_tready and m_tlast_i) then
+          if (s_tvalid and s_tready_i and s_tlast) then
+            frames_in_transit <= frames_in_transit + 1;
+          end if;
+          if (m_tvalid_i and m_tready and m_tlast_i) then
+            frames_in_transit <= frames_in_transit - 1;
+          end if;
+        end if;
+      end if;
+    end process;
+  end block;
 
 end dvbs2_tx;
