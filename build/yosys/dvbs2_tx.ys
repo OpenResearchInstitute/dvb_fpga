@@ -15,6 +15,7 @@ ghdl --std=08                                                                  \
                     third_party/fpga_cores/src/axi_stream_master_adapter.vhd   \
                     third_party/fpga_cores/src/axi_stream_duplicate.vhd        \
                     third_party/fpga_cores/src/axi_stream_fifo.vhd             \
+                    third_party/fpga_cores/src/axi_stream_frame_fifo.vhd       \
                     third_party/fpga_cores/src/async_fifo.vhd                  \
                     third_party/fpga_cores/src/axi_stream_width_converter.vhd  \
                     third_party/fpga_cores/src/axi_stream_mux.vhd              \
