@@ -388,6 +388,7 @@ def _populateLdpcTable(config: TestDefinition):  # pylint: disable=too-many-loca
     word_cnt = 0
 
     bin_fd = open(bin_table, "wb")
+    bin_fd.write(b"# Offset, next, bit index\n")
     text_fd = open(text_table, "w")
 
     try:
@@ -402,12 +403,9 @@ def _populateLdpcTable(config: TestDefinition):  # pylint: disable=too-many-loca
                 text_fd.write(f"{bit_index:5d} || ")
                 for i, coefficient in enumerate(tuple(int(x) for x in line)):
                     offset = (coefficient + (bit_index % 360) * table_q) % table_length
-                    # Just to recap:
-                    # - "H" -> Unsigned short
-                    # - "?" -> boolean
-                    bin_fd.write(
-                        struct.pack(">?HH", i == len(line) - 1, bit_index, offset)
-                    )
+                    bin_fd.write(bytes(f"{offset},", encoding='utf8'))
+                    bin_fd.write(bytes(f"{int(i == len(line) - 1)},", encoding='utf8'))
+                    bin_fd.write(bytes(f"{bit_index}\n", encoding='utf8'))
 
                     text_fd.write(f" {word_cnt:5d}, {offset:5d}  |")
                     word_cnt += 1
