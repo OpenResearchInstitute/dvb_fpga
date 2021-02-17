@@ -94,7 +94,16 @@ architecture axi_ldpc_encoder_core_tb of axi_ldpc_encoder_core_tb is
   signal table_probability  : real range 0.0 to 1.0 := 1.0;
   signal tready_probability : real range 0.0 to 1.0 := 1.0;
 
-  signal axi_ldpc           : axi_stream_data_bus_t(tdata(2*numbits(max(DVB_N_LDPC)) + 8 - 1 downto 0));
+  type axi_stream_table_t is record
+    offset    : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+    is_next   : std_logic;
+    bit_index : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+    tvalid    : std_logic;
+    tready    : std_logic;
+    tlast     : std_logic;
+  end record;
+
+  signal axi_table           : axi_stream_table_t;
 
   signal axi_master         : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   signal axi_slave          : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
@@ -130,24 +139,6 @@ begin
       m_tvalid           => axi_master.tvalid,
       m_tlast            => axi_master.tlast);
 
-  -- Read LDPC tables
-  axi_table_u : entity fpga_cores_sim.axi_file_reader
-    generic map (
-      READER_NAME => "axi_table_u",
-      DATA_WIDTH  => axi_ldpc.tdata'length)
-    port map (
-      -- Usual ports
-      clk                => clk,
-      rst                => rst,
-      -- Config and status
-      completed          => open,
-      tvalid_probability => table_probability,
-      -- AXI stream output
-      m_tready           => axi_ldpc.tready,
-      m_tdata            => axi_ldpc.tdata,
-      m_tvalid           => axi_ldpc.tvalid,
-      m_tlast            => axi_ldpc.tlast);
-
   dut : entity work.axi_ldpc_encoder_core
     generic map ( TID_WIDTH => ENCODED_CONFIG_WIDTH )
     port map (
@@ -159,12 +150,12 @@ begin
       cfg_frame_type    => decode(axi_master.tuser).frame_type,
       cfg_code_rate     => decode(axi_master.tuser).code_rate,
 
-      s_ldpc_offset     => axi_ldpc.tdata(numbits(max(DVB_N_LDPC)) - 1 downto 0),
-      s_ldpc_tuser      => axi_ldpc.tdata(2*numbits(max(DVB_N_LDPC)) - 1 downto numbits(max(DVB_N_LDPC)) ),
-      s_ldpc_next       => axi_ldpc.tdata(2*numbits(max(DVB_N_LDPC))),
-      s_ldpc_tvalid     => axi_ldpc.tvalid,
-      s_ldpc_tlast      => axi_ldpc.tlast,
-      s_ldpc_tready     => axi_ldpc.tready,
+      s_ldpc_offset     => std_logic_vector(axi_table.offset),
+      s_ldpc_tuser      => std_logic_vector(axi_table.bit_index),
+      s_ldpc_next       => axi_table.is_next,
+      s_ldpc_tvalid     => axi_table.tvalid,
+      s_ldpc_tlast      => axi_table.tlast,
+      s_ldpc_tready     => axi_table.tready,
 
       -- AXI input
       s_tvalid          => axi_master.tvalid,
@@ -218,11 +209,11 @@ begin
   -- Processes --
   ---------------
   main : process -- {{
-    constant self         : actor_t       := new_actor("main");
-    constant logger       : logger_t      := get_logger("main");
-    variable file_reader  : file_reader_t := new_file_reader("axi_file_reader_u");
-    variable ldpc_table   : file_reader_t := new_file_reader("axi_table_u");
-    variable file_checker : file_reader_t := new_file_reader("axi_file_compare_u");
+    constant self             : actor_t       := new_actor("main");
+    constant logger           : logger_t      := get_logger("main");
+    variable file_reader      : file_reader_t := new_file_reader("axi_file_reader_u");
+    constant ldpc_table_write : actor_t       := find("ldpc_table_write");
+    variable file_checker     : file_reader_t := new_file_reader("axi_file_compare_u");
 
     procedure walk(constant steps : natural) is -- {{ ----------------------------------
     begin
@@ -263,7 +254,9 @@ begin
 
         read_file( net, file_checker, data_path & "/ldpc_output_packed.bin");
 
-        read_file(net, ldpc_table, data_path & "/ldpc_table.bin");
+        msg := new_msg(sender => self);
+        push(msg, data_path & "/ldpc_table.bin");
+        send(net, ldpc_table_write, msg);
 
         -- Update the expected TID
         msg := new_msg;
@@ -279,7 +272,9 @@ begin
     begin
       info(logger, "Waiting for all frames to be read");
       wait_all_read(net, file_checker);
-      wait_all_read(net, ldpc_table);
+      while has_message(self) loop
+        receive(net, self, msg);
+      end loop;
       info(logger, "All data has now been read");
 
       wait until rising_edge(clk) and axi_slave.tvalid = '0' for 1 ms;
@@ -294,7 +289,6 @@ begin
     show(display_handler, debug);
     hide(get_logger("file_reader_t(file_reader)"), display_handler, debug, True);
     hide(get_logger("file_reader_t(file_checker)"), display_handler, debug, True);
-    hide(get_logger("file_reader_t(ldpc_table)"), display_handler, debug, True);
 
     while test_suite loop
       rst                <= '1';
@@ -387,6 +381,71 @@ begin
     test_runner_cleanup(runner);
     wait;
   end process; -- }}
+
+  ldpc_table_write_p : process -- {{ ---------------------------------------------------
+    constant self   : actor_t := new_actor("ldpc_table_write");
+    constant logger : logger_t := get_logger("ldpc_table_write");
+    variable msg    : msg_t;
+
+    procedure write_table ( constant path : string ) is
+      file file_handler  : text;
+      variable lineno    : integer := 0;
+      variable L         : line;
+      variable fields    : lines_t;
+      variable offset    : integer;
+      variable is_next   : std_logic;
+      variable bit_index : integer;
+    begin
+      info(logger, sformat("Writing table from '%s'", path));
+      file_open(file_handler, path, read_mode);
+      while not endfile(file_handler) loop
+        readline(file_handler, L);
+        trace(logger, sformat("[%d, %s] %s", fo(lineno), fo(endfile(file_handler)), L.all));
+        lineno := lineno + 1;
+        if L.all(1) = '#' then
+          trace(logger, sformat("Ignoring %s", L.all));
+          next;
+        end if;
+
+        fields := split(L.all, ",");
+        trace(logger, sformat("fields(0).all = '%s'", fields(0).all));
+        read(fields.all(0), offset);
+        trace(logger, sformat("fields(1).all = '%s'", fields(1).all));
+        read(fields.all(1), is_next);
+        trace(logger, sformat("fields(2).all = '%s'", fields(2).all));
+        read(fields.all(2), bit_index);
+        trace(logger, sformat("Expecting offset=%d, is_next=%d, bit_index=%d", fo(offset), fo(is_next), fo(bit_index)));
+
+        axi_table.offset    <= to_unsigned(offset, axi_table.offset'length);
+        axi_table.bit_index <= to_unsigned(bit_index, axi_table.bit_index'length);
+        axi_table.is_next   <= is_next;
+        axi_table.tvalid    <= '1';
+        if endfile(file_handler) then
+          axi_table.tlast     <= '1';
+        else
+          axi_table.tlast     <= '0';
+        end if;
+
+        wait until axi_table.tvalid = '1' and axi_table.tready = '1' and rising_edge(clk);
+
+        axi_table.offset    <= (others => 'U');
+        axi_table.bit_index <= (others => 'U');
+        axi_table.is_next   <= 'U';
+        axi_table.tvalid    <= '0';
+        axi_table.tvalid    <= '0';
+
+      end loop;
+
+      file_close(file_handler);
+      info(logger, sformat("Finished writing '%s'", path));
+    end procedure;
+
+  begin
+    receive(net, self, msg);
+    write_table(pop(msg));
+    -- Acknowledge so the sender knows we're done
+    acknowledge(net, msg);
+  end process; -- }} -------------------------------------------------------------------
 
   cnt_p : process -- {{ ----------------------------------------------------------------
   begin
