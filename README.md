@@ -66,10 +66,10 @@ reported and the resource usage post implementation is as follows:
 
 | Resource | Usage |
 | :---     | :--:  |
-| LUT      | 3,894 |
-| LUTRAM   | 226   |
-| FF       | 2,892 |
-| BRAM     | 16    |
+| LUT      | ~4,6k |
+| LUTRAM   | 242   |
+| FF       | ~3k   |
+| BRAM     | 20    |
 
 ## Running tests
 

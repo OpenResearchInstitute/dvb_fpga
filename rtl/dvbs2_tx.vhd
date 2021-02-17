@@ -98,7 +98,7 @@ architecture dvbs2_tx of dvbs2_tx is
 
   -- Status
   signal frames_in_transit        : unsigned(7 downto 0);
-  signal ldpc_fifo_entries        : std_logic_vector(numbits(max(DVB_N_LDPC)) downto 0);
+  signal ldpc_fifo_entries        : std_logic_vector(numbits(max(DVB_N_LDPC)/8) downto 0);
   signal ldpc_fifo_empty          : std_logic;
   signal ldpc_fifo_full           : std_logic;
 
@@ -255,7 +255,7 @@ begin
   begin
     ldpc_fifo_u : entity fpga_cores.axi_stream_frame_fifo
       generic map (
-        FIFO_DEPTH => max(DVB_N_LDPC),
+        FIFO_DEPTH => max(DVB_N_LDPC) / 8,
         DATA_WIDTH => ENCODED_CONFIG_WIDTH + 8,
         RAM_TYPE   => auto)
       port map (
