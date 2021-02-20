@@ -32,6 +32,7 @@ from optparse import OptionParser
 import numpy
 
 # pylint: disable=import-error
+import gnuradio  # type: ignore
 from gnuradio import blocks, dtv, gr  # type: ignore
 from gnuradio.eng_option import eng_option  # type: ignore
 
@@ -171,105 +172,51 @@ class dvbs2_tx(gr.top_block):
         ##################################################
         # Blocks
         ##################################################
-        self.undo_bit_stuffing_pilots_off = blocks.keep_m_in_n(
+        self.plframe_pilots_off_no_stuffing = blocks.keep_m_in_n(
             gr.sizeof_gr_complex, 1, 2, 0
         )
-        self.undo_bit_stuffing_pilots_on = blocks.keep_m_in_n(
+        self.plframe_pilots_on_no_stuffing = blocks.keep_m_in_n(
             gr.sizeof_gr_complex, 1, 2, 0
         )
-        self.plframe_pilots_on_float = blocks.file_sink(
-            gr.sizeof_gr_complex * 1, "plframe_pilots_on_float.bin", False
-        )
-        self.plframe_pilots_on_float.set_unbuffered(False)
-        self.plframe_pilots_on_fixed_point = blocks.file_sink(
-            gr.sizeof_short * 1, "plframe_pilots_on_fixed_point.bin", False
-        )
-        self.plframe_pilots_on_fixed_point.set_unbuffered(False)
-        self.plframe_pilots_off_float = blocks.file_sink(
-            gr.sizeof_gr_complex * 1, "plframe_pilots_off_float.bin", False
-        )
-        self.plframe_pilots_off_float.set_unbuffered(False)
-        self.plframe_pilots_off_fixed_point = blocks.file_sink(
-            gr.sizeof_short * 1, "plframe_pilots_off_fixed_point.bin", False
-        )
-        self.plframe_pilots_off_fixed_point.set_unbuffered(False)
-        self.plframe_payload_pilots_on_float = blocks.file_sink(
-            gr.sizeof_gr_complex * 1, "plframe_payload_pilots_on_float.bin", False
-        )
-        self.plframe_payload_pilots_on_float.set_unbuffered(False)
-        self.plframe_payload_pilots_on_fixed_point = blocks.file_sink(
-            gr.sizeof_short * 1, "plframe_payload_pilots_on_fixed_point.bin", False
-        )
-        self.plframe_payload_pilots_on_fixed_point.set_unbuffered(False)
-        self.plframe_payload_pilots_off_float = blocks.file_sink(
-            gr.sizeof_gr_complex * 1, "plframe_payload_pilots_off_float.bin", False
-        )
-        self.plframe_payload_pilots_off_float.set_unbuffered(False)
-        self.plframe_payload_pilots_off_fixed_point = blocks.file_sink(
-            gr.sizeof_short * 1, "plframe_payload_pilots_off_fixed_point.bin", False
-        )
-        self.plframe_payload_pilots_off_fixed_point.set_unbuffered(False)
-        self.plframe_header_pilots_on_float = blocks.file_sink(
-            gr.sizeof_gr_complex * 1, "plframe_header_pilots_on_float.bin", False
-        )
-        self.plframe_header_pilots_on_float.set_unbuffered(False)
-        self.plframe_header_pilots_on_fixed_point = blocks.file_sink(
-            gr.sizeof_short * 1, "plframe_header_pilots_on_fixed_point.bin", False
-        )
-        self.plframe_header_pilots_on_fixed_point.set_unbuffered(False)
-        self.plframe_header_pilots_off_float = blocks.file_sink(
-            gr.sizeof_gr_complex * 1, "plframe_header_pilots_off_float.bin", False
-        )
-        self.plframe_header_pilots_off_float.set_unbuffered(False)
-        self.plframe_header_pilots_off_fixed_point = blocks.file_sink(
-            gr.sizeof_short * 1, "plframe_header_pilots_off_fixed_point.bin", False
-        )
-        self.plframe_header_pilots_off_fixed_point.set_unbuffered(False)
-        self.pl_complex_to_float_1 = blocks.complex_to_float(1)
-        self.pl_complex_to_float_0_1 = blocks.complex_to_float(1)
-        self.pl_complex_to_float_0_0_0 = blocks.complex_to_float(1)
-        self.pl_complex_to_float_0_0 = blocks.complex_to_float(1)
-        self.pl_complex_to_float_0 = blocks.complex_to_float(1)
-        self.pl_complex_to_float = blocks.complex_to_float(1)
         self.organize = blocks.multiply_const_vcc((1,))
         self.ldpc_encoder_input = blocks.file_sink(
             gr.sizeof_char * 1, "ldpc_encoder_input.bin", False
         )
         self.ldpc_encoder_input.set_unbuffered(False)
-        self.keep_plframe_payload_pilots_off = blocks.keep_m_in_n(
+        self.plframe_payload_pilots_off = blocks.keep_m_in_n(
             gr.sizeof_gr_complex,
             self.get_physical_layer_frame_size(dtv.PILOTS_OFF)
             - physical_layer_header_length,
             self.get_physical_layer_frame_size(dtv.PILOTS_OFF),
             physical_layer_header_length,
         )
-        self.keep_plframe_payload_pilots_on = blocks.keep_m_in_n(
+        self.plframe_payload_pilots_on = blocks.keep_m_in_n(
             gr.sizeof_gr_complex,
             self.get_physical_layer_frame_size(dtv.PILOTS_ON)
             - physical_layer_header_length,
             self.get_physical_layer_frame_size(dtv.PILOTS_ON),
             physical_layer_header_length,
         )
-        self.keep_plframe_header_pilots_off = blocks.keep_m_in_n(
+        self.plframe_header_pilots_off = blocks.keep_m_in_n(
             gr.sizeof_gr_complex,
             physical_layer_header_length,
             self.get_physical_layer_frame_size(dtv.PILOTS_OFF),
             0,
         )
-        self.keep_plframe_header_pilots_on = blocks.keep_m_in_n(
+        self.plframe_header_pilots_on = blocks.keep_m_in_n(
             gr.sizeof_gr_complex,
             physical_layer_header_length,
             self.get_physical_layer_frame_size(dtv.PILOTS_ON),
             0,
         )
-        self.dtv_dvbs2_physical_cc_with_pilots = dtv.dvbs2_physical_cc(
+        self.physical_layer_framer_pilots_on = dtv.dvbs2_physical_cc(
             frame_type,
             code_rate,
             constellation,
             dtv.PILOTS_ON,
             physical_layer_gold_code,
         )
-        self.dtv_dvbs2_physical_cc_pilots_off = dtv.dvbs2_physical_cc(
+        self.physical_layer_framer_pilots_off = dtv.dvbs2_physical_cc(
             frame_type,
             code_rate,
             constellation,
@@ -285,9 +232,7 @@ class dvbs2_tx(gr.top_block):
         self.ldpc_encoder = dtv.dvb_ldpc_bb(
             dtv.STANDARD_DVBS2, frame_type, code_rate, dtv.MOD_OTHER
         )
-        self.bch_encoder = dtv.dvb_bch_bb(
-            dtv.STANDARD_DVBS2, frame_type, code_rate
-        )
+        self.bch_encoder = dtv.dvb_bch_bb(dtv.STANDARD_DVBS2, frame_type, code_rate)
         self.baseband_scrambler = dtv.dvb_bbscrambler_bb(
             dtv.STANDARD_DVBS2, frame_type, code_rate
         )
@@ -301,36 +246,6 @@ class dvbs2_tx(gr.top_block):
             168,
             4000000,
         )
-        self.blocks_stream_mux_0_2 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
-        self.blocks_stream_mux_0_1 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
-        self.blocks_stream_mux_0_0_1 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
-        self.blocks_stream_mux_0_0_0_0 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
-        self.blocks_stream_mux_0_0_0 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
-        self.blocks_stream_mux_0_0 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
-        self.blocks_stream_mux_0 = blocks.stream_mux(gr.sizeof_short * 1, (1, 1))
-        self.blocks_float_to_short_0_3 = blocks.float_to_short(1, 32768)
-        self.blocks_float_to_short_0_2 = blocks.float_to_short(1, 32768)
-        self.blocks_float_to_short_0_1_1 = blocks.float_to_short(1, 32768)
-        self.blocks_float_to_short_0_1_0_0 = blocks.float_to_short(1, 32768)
-        self.blocks_float_to_short_0_1_0 = blocks.float_to_short(1, 32768)
-        self.blocks_float_to_short_0_1 = blocks.float_to_short(1, 32768)
-        self.blocks_float_to_short_0_0_2 = blocks.float_to_short(1, 32768)
-        self.blocks_float_to_short_0_0_1 = blocks.float_to_short(1, 32768)
-        self.blocks_float_to_short_0_0_0_1 = blocks.float_to_short(1, 32768)
-        self.blocks_float_to_short_0_0_0_0_0 = blocks.float_to_short(1, 32768)
-        self.blocks_float_to_short_0_0_0_0 = blocks.float_to_short(1, 32768)
-        self.blocks_float_to_short_0_0_0 = blocks.float_to_short(1, 32768)
-        self.blocks_float_to_short_0_0 = blocks.float_to_short(1, 32768)
-        self.blocks_float_to_short_0 = blocks.float_to_short(1, 32768)
-        self.bit_mapper_output_fixed = blocks.file_sink(
-            gr.sizeof_short * 1, "bit_mapper_output_fixed.bin", False
-        )
-        self.bit_mapper_output_fixed.set_unbuffered(False)
-        self.bit_mapper_output_float = blocks.file_sink(
-            gr.sizeof_gr_complex * 1, "bit_mapper_output_float.bin", False
-        )
-        self.bit_mapper_output_float.set_unbuffered(False)
-        self.bit_mapper_complex_to_float = blocks.complex_to_float(1)
         self.bit_interleaver_output = blocks.file_sink(
             gr.sizeof_char * 1, "bit_interleaver_output.bin", False
         )
@@ -350,210 +265,133 @@ class dvbs2_tx(gr.top_block):
         self.analog_random_source_x_0 = blocks.vector_source_b(
             map(int, numpy.random.randint(0, 255, self.frame_length)), False
         )
+        self.fft_filter_pilots_on = gnuradio.filter.fft_filter_ccc(
+            1,
+            (
+                gnuradio.filter.firdes.root_raised_cosine(
+                    1.0, samp_rate, samp_rate / 2, rolloff, taps
+                )
+            ),
+            1,
+        )
+        self.fft_filter_pilots_on.declare_sample_delay(0)
+        self.fft_filter_pilots_off = gnuradio.filter.fft_filter_ccc(
+            1,
+            (
+                gnuradio.filter.firdes.root_raised_cosine(
+                    1.0, samp_rate, samp_rate / 2, rolloff, taps
+                )
+            ),
+            1,
+        )
+        self.fft_filter_pilots_off.declare_sample_delay(0)
 
         ##################################################
         # Connections
         ##################################################
-        self.connect(
-            (self.analog_random_source_x_0, 0), (self.baseband_header, 0)
-        )
-        self.connect(
-            (self.bit_mapper_complex_to_float, 0), (self.blocks_float_to_short_0_0_2, 0)
-        )
-        self.connect(
-            (self.bit_mapper_complex_to_float, 1), (self.blocks_float_to_short_0_3, 0)
-        )
-        self.connect((self.blocks_float_to_short_0, 0), (self.blocks_stream_mux_0, 1))
-        self.connect((self.blocks_float_to_short_0_0, 0), (self.blocks_stream_mux_0, 0))
-        self.connect(
-            (self.blocks_float_to_short_0_0_0, 0), (self.blocks_stream_mux_0_0, 0)
-        )
-        self.connect(
-            (self.blocks_float_to_short_0_0_0_0, 0), (self.blocks_stream_mux_0_0_0, 0)
-        )
-        self.connect(
-            (self.blocks_float_to_short_0_0_0_0_0, 0),
-            (self.blocks_stream_mux_0_0_0_0, 0),
-        )
-        self.connect(
-            (self.blocks_float_to_short_0_0_0_1, 0), (self.blocks_stream_mux_0_0_1, 0)
-        )
-        self.connect(
-            (self.blocks_float_to_short_0_0_1, 0), (self.blocks_stream_mux_0_1, 0)
-        )
-        self.connect(
-            (self.blocks_float_to_short_0_0_2, 0), (self.blocks_stream_mux_0_2, 0)
-        )
-        self.connect(
-            (self.blocks_float_to_short_0_1, 0), (self.blocks_stream_mux_0_0, 1)
-        )
-        self.connect(
-            (self.blocks_float_to_short_0_1_0, 0), (self.blocks_stream_mux_0_0_0, 1)
-        )
-        self.connect(
-            (self.blocks_float_to_short_0_1_0_0, 0), (self.blocks_stream_mux_0_0_0_0, 1)
-        )
-        self.connect(
-            (self.blocks_float_to_short_0_1_1, 0), (self.blocks_stream_mux_0_0_1, 1)
-        )
-        self.connect(
-            (self.blocks_float_to_short_0_2, 0), (self.blocks_stream_mux_0_1, 1)
-        )
-        self.connect(
-            (self.blocks_float_to_short_0_3, 0), (self.blocks_stream_mux_0_2, 1)
-        )
-        self.connect(
-            (self.blocks_stream_mux_0, 0), (self.plframe_pilots_on_fixed_point, 0)
-        )
-        self.connect(
-            (self.blocks_stream_mux_0_0, 0),
-            (self.plframe_payload_pilots_on_fixed_point, 0),
-        )
-        self.connect(
-            (self.blocks_stream_mux_0_0_0, 0),
-            (self.plframe_header_pilots_on_fixed_point, 0),
-        )
-        self.connect(
-            (self.blocks_stream_mux_0_0_0_0, 0),
-            (self.plframe_header_pilots_off_fixed_point, 0),
-        )
-        self.connect(
-            (self.blocks_stream_mux_0_0_1, 0),
-            (self.plframe_payload_pilots_off_fixed_point, 0),
-        )
-        self.connect(
-            (self.blocks_stream_mux_0_1, 0), (self.plframe_pilots_off_fixed_point, 0)
-        )
-        self.connect((self.blocks_stream_mux_0_2, 0), (self.bit_mapper_output_fixed, 0))
+        self.connect((self.analog_random_source_x_0, 0), (self.baseband_header, 0))
         self.connect((self.baseband_header, 0), (self.bb_scrambler_input_0, 0))
-        self.connect(
-            (self.baseband_header, 0), (self.baseband_scrambler, 0)
-        )
+        self.connect((self.baseband_header, 0), (self.baseband_scrambler, 0))
         self.connect((self.baseband_scrambler, 0), (self.bch_encoder_input, 0))
         self.connect((self.baseband_scrambler, 0), (self.bch_encoder, 0))
         self.connect((self.bch_encoder, 0), (self.ldpc_encoder, 0))
         self.connect((self.bch_encoder, 0), (self.ldpc_encoder_input, 0))
         self.connect((self.ldpc_encoder, 0), (self.bit_interleaver_input, 0))
         self.connect((self.ldpc_encoder, 0), (self.bit_interleaver, 0))
-        self.connect(
-            (self.bit_interleaver, 0), (self.bit_interleaver_output, 0)
-        )
-        self.connect(
-            (self.bit_interleaver, 0), (self.dtv_dvbs2_modulator_bc_0, 0)
-        )
-        self.connect(
-            (self.dtv_dvbs2_modulator_bc_0, 0), (self.bit_mapper_complex_to_float, 0)
-        )
-        self.connect(
-            (self.dtv_dvbs2_modulator_bc_0, 0), (self.bit_mapper_output_float, 0)
+        self.connect((self.bit_interleaver, 0), (self.bit_interleaver_output, 0))
+        self.connect((self.bit_interleaver, 0), (self.dtv_dvbs2_modulator_bc_0, 0))
+        self.dumpComplexAndFixedPoint(
+            source=self.dtv_dvbs2_modulator_bc_0,
+            basename="bit_mapper_output",
+            size=gr.sizeof_short,
         )
         self.connect((self.dtv_dvbs2_modulator_bc_0, 0), (self.organize, 0))
         self.connect(
-            (self.dtv_dvbs2_physical_cc_pilots_off, 0),
-            (self.undo_bit_stuffing_pilots_off, 0),
+            (self.physical_layer_framer_pilots_off, 0),
+            (self.plframe_pilots_off_no_stuffing, 0),
         )
         self.connect(
-            (self.dtv_dvbs2_physical_cc_with_pilots, 0),
-            (self.undo_bit_stuffing_pilots_on, 0),
+            (self.physical_layer_framer_pilots_on, 0),
+            (self.plframe_pilots_on_no_stuffing, 0),
+        )
+        self.connect((self.organize, 0), (self.physical_layer_framer_pilots_off, 0))
+        self.connect((self.organize, 0), (self.physical_layer_framer_pilots_on, 0))
+        self.connect(
+            (self.plframe_pilots_off_no_stuffing, 0),
+            (self.plframe_header_pilots_off, 0),
         )
         self.connect(
-            (self.keep_plframe_header_pilots_off, 0),
-            (self.pl_complex_to_float_0_0_0, 0),
+            (self.plframe_pilots_off_no_stuffing, 0),
+            (self.plframe_payload_pilots_off, 0),
         )
         self.connect(
-            (self.keep_plframe_header_pilots_off, 0),
-            (self.plframe_header_pilots_off_float, 0),
+            (self.plframe_pilots_on_no_stuffing, 0), (self.plframe_header_pilots_on, 0),
         )
         self.connect(
-            (self.keep_plframe_header_pilots_on, 0), (self.pl_complex_to_float_0_0, 0)
+            (self.plframe_pilots_on_no_stuffing, 0),
+            (self.plframe_payload_pilots_on, 0),
         )
         self.connect(
-            (self.keep_plframe_header_pilots_on, 0),
-            (self.plframe_header_pilots_on_float, 0),
+            (self.physical_layer_framer_pilots_on, 0), (self.fft_filter_pilots_on, 0),
         )
         self.connect(
-            (self.keep_plframe_payload_pilots_off, 0), (self.pl_complex_to_float_0_1, 0)
-        )
-        self.connect(
-            (self.keep_plframe_payload_pilots_off, 0),
-            (self.plframe_payload_pilots_off_float, 0),
-        )
-        self.connect(
-            (self.keep_plframe_payload_pilots_on, 0), (self.pl_complex_to_float_0, 0)
-        )
-        self.connect(
-            (self.keep_plframe_payload_pilots_on, 0),
-            (self.plframe_payload_pilots_on_float, 0),
-        )
-        self.connect((self.organize, 0), (self.dtv_dvbs2_physical_cc_pilots_off, 0))
-        self.connect((self.organize, 0), (self.dtv_dvbs2_physical_cc_with_pilots, 0))
-        self.connect((self.pl_complex_to_float, 1), (self.blocks_float_to_short_0, 0))
-        self.connect((self.pl_complex_to_float, 0), (self.blocks_float_to_short_0_0, 0))
-        self.connect(
-            (self.pl_complex_to_float_0, 0), (self.blocks_float_to_short_0_0_0, 0)
-        )
-        self.connect(
-            (self.pl_complex_to_float_0, 1), (self.blocks_float_to_short_0_1, 0)
-        )
-        self.connect(
-            (self.pl_complex_to_float_0_0, 0), (self.blocks_float_to_short_0_0_0_0, 0)
-        )
-        self.connect(
-            (self.pl_complex_to_float_0_0, 1), (self.blocks_float_to_short_0_1_0, 0)
-        )
-        self.connect(
-            (self.pl_complex_to_float_0_0_0, 0),
-            (self.blocks_float_to_short_0_0_0_0_0, 0),
-        )
-        self.connect(
-            (self.pl_complex_to_float_0_0_0, 1), (self.blocks_float_to_short_0_1_0_0, 0)
-        )
-        self.connect(
-            (self.pl_complex_to_float_0_1, 0), (self.blocks_float_to_short_0_0_0_1, 0)
-        )
-        self.connect(
-            (self.pl_complex_to_float_0_1, 1), (self.blocks_float_to_short_0_1_1, 0)
-        )
-        self.connect(
-            (self.pl_complex_to_float_1, 0), (self.blocks_float_to_short_0_0_1, 0)
-        )
-        self.connect(
-            (self.pl_complex_to_float_1, 1), (self.blocks_float_to_short_0_2, 0)
-        )
-        self.connect(
-            (self.undo_bit_stuffing_pilots_off, 0),
-            (self.keep_plframe_header_pilots_off, 0),
-        )
-        self.connect(
-            (self.undo_bit_stuffing_pilots_off, 0),
-            (self.keep_plframe_payload_pilots_off, 0),
-        )
-        self.connect(
-            (self.undo_bit_stuffing_pilots_off, 0), (self.pl_complex_to_float_1, 0)
-        )
-        self.connect(
-            (self.undo_bit_stuffing_pilots_off, 0), (self.plframe_pilots_off_float, 0)
-        )
-        self.connect(
-            (self.undo_bit_stuffing_pilots_on, 0),
-            (self.keep_plframe_header_pilots_on, 0),
-        )
-        self.connect(
-            (self.undo_bit_stuffing_pilots_on, 0),
-            (self.keep_plframe_payload_pilots_on, 0),
-        )
-        self.connect(
-            (self.undo_bit_stuffing_pilots_on, 0), (self.pl_complex_to_float, 0)
-        )
-        self.connect(
-            (self.undo_bit_stuffing_pilots_on, 0), (self.plframe_pilots_on_float, 0)
+            (self.physical_layer_framer_pilots_off, 0), (self.fft_filter_pilots_off, 0),
         )
 
         self.repackAndDump(self.baseband_header, "bb_header_output_packed.bin", (1, 8))
-        self.repackAndDump(self.baseband_scrambler, "bb_scrambler_output_packed.bin", (1, 8))
+        self.repackAndDump(
+            self.baseband_scrambler, "bb_scrambler_output_packed.bin", (1, 8)
+        )
         self.repackAndDump(self.bch_encoder, "bch_encoder_output_packed.bin", (1, 8))
         self.repackAndDump(self.ldpc_encoder, "ldpc_output_packed.bin", (1, 8))
-        self.repackAndDump(self.bit_interleaver, "bit_interleaver_output_packed.bin", (bits_per_input, bits_per_output))
+        self.repackAndDump(
+            self.bit_interleaver,
+            "bit_interleaver_output_packed.bin",
+            (bits_per_input, bits_per_output),
+        )
+
+        self.dumpComplexAndFixedPoint(
+            source=self.plframe_pilots_off_no_stuffing,
+            basename="plframe_pilots_off",
+            size=gr.sizeof_short,
+        )
+        self.dumpComplexAndFixedPoint(
+            source=self.plframe_pilots_on_no_stuffing,
+            basename="plframe_pilots_on",
+            size=gr.sizeof_short,
+        )
+        self.dumpComplexAndFixedPoint(
+            source=self.plframe_header_pilots_off,
+            basename="plframe_header_pilots_off",
+            size=gr.sizeof_short,
+        )
+        self.dumpComplexAndFixedPoint(
+            source=self.plframe_header_pilots_on,
+            basename="plframe_header_pilots_on",
+            size=gr.sizeof_short,
+        )
+        self.dumpComplexAndFixedPoint(
+            source=self.plframe_payload_pilots_off,
+            basename="plframe_payload_pilots_off",
+            size=gr.sizeof_short,
+        )
+        self.dumpComplexAndFixedPoint(
+            source=self.plframe_payload_pilots_on,
+            basename="plframe_payload_pilots_on",
+            size=gr.sizeof_short,
+        )
+
+        self.dumpComplexAndFixedPoint(
+            source=self.fft_filter_pilots_on,
+            basename="modulated_pilots_on",
+            size=gr.sizeof_short,
+        )
+
+        self.dumpComplexAndFixedPoint(
+            source=self.fft_filter_pilots_off,
+            basename="modulated_pilots_off",
+            size=gr.sizeof_short,
+        )
 
     def get_frame_length(self):
         return self.frame_length
@@ -624,14 +462,36 @@ class dvbs2_tx(gr.top_block):
     def set_center_freq(self, center_freq):
         self.center_freq = center_freq
 
+    def dumpComplexAndFixedPoint(self, source, basename, size):
+        sink_complex = blocks.file_sink(
+            gr.sizeof_gr_complex * 1, basename + "_floating_point.bin", False
+        )
+        sink_complex.set_unbuffered(False)
+        self.connect((source, 0), (sink_complex, 0))
+
+        data_width = 1 << (8 * size - 1)
+        complex_to_float = blocks.complex_to_float(1)
+        float_to_short_0 = blocks.float_to_short(1, data_width)
+        float_to_short_1 = blocks.float_to_short(1, data_width)
+        stream_mux = blocks.stream_mux(size * 1, (1, 1))
+        sink_fixed = blocks.file_sink(size * 1, basename + "_fixed_point.bin", False)
+        sink_fixed.set_unbuffered(False)
+
+        self.connect((source, 0), (complex_to_float, 0))
+        self.connect((complex_to_float, 0), (float_to_short_0, 0))
+        self.connect((complex_to_float, 1), (float_to_short_1, 0))
+        self.connect((float_to_short_0, 0), (stream_mux, 0))
+        self.connect((float_to_short_1, 0), (stream_mux, 1))
+        self.connect((stream_mux, 0), (sink_fixed, 0))
+
     def repackAndDump(self, source, filename, ratio):
         (bits_per_input, bits_per_output) = ratio
-        repack = blocks.repack_bits_bb(bits_per_input, bits_per_output, "", False, gr.GR_MSB_FIRST)
+        repack = blocks.repack_bits_bb(
+            bits_per_input, bits_per_output, "", False, gr.GR_MSB_FIRST
+        )
         self.connect((source, 0), (repack, 0))
 
-        sink = blocks.file_sink(
-            gr.sizeof_char * 1, filename, False
-        )
+        sink = blocks.file_sink(gr.sizeof_char * 1, filename, False)
         sink.set_unbuffered(False)
         self.connect((repack, 0), (sink, 0))
 

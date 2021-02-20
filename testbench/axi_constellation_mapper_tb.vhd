@@ -321,7 +321,7 @@ begin
         -- Setup file reader
         read_file(net, input_data, data_path & "/bit_interleaver_output_packed.bin", encode(config_tuple));
         -- Setup file checker
-        read_file(net, ref_data, data_path & "/bit_mapper_output_fixed.bin");
+        read_file(net, ref_data, data_path & "/bit_mapper_output_fixed_point.bin");
 
       end loop;
 

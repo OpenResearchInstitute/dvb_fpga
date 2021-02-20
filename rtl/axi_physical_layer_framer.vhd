@@ -218,7 +218,8 @@ begin
       m_tlast        => dummy_frame_gen.tlast,
       m_tdata        => dummy_frame_gen.tdata);
 
-  -- Arbitrate between a frame from the frame FIFO or from the dummy frame generator
+  -- Always prioritize data from the scrambler. If there's nothing to send then allow
+  -- a dummy frame to go through
   dummy_frame_arbiter_block : block
     signal tdata0_agg_in : std_logic_vector(TDATA_WIDTH + TID_WIDTH - 1 downto 0);
     signal tdata1_agg_in : std_logic_vector(TDATA_WIDTH + TID_WIDTH - 1 downto 0);

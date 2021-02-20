@@ -403,9 +403,9 @@ def _populateLdpcTable(config: TestDefinition):  # pylint: disable=too-many-loca
                 text_fd.write(f"{bit_index:5d} || ")
                 for i, coefficient in enumerate(tuple(int(x) for x in line)):
                     offset = (coefficient + (bit_index % 360) * table_q) % table_length
-                    bin_fd.write(bytes(f"{offset},", encoding='utf8'))
-                    bin_fd.write(bytes(f"{int(i == len(line) - 1)},", encoding='utf8'))
-                    bin_fd.write(bytes(f"{bit_index}\n", encoding='utf8'))
+                    bin_fd.write(bytes(f"{offset},", encoding="utf8"))
+                    bin_fd.write(bytes(f"{int(i == len(line) - 1)},", encoding="utf8"))
+                    bin_fd.write(bytes(f"{bit_index}\n", encoding="utf8"))
 
                     text_fd.write(f" {word_cnt:5d}, {offset:5d}  |")
                     word_cnt += 1
@@ -656,6 +656,7 @@ def setupSources(vunit):
     library.add_source_files(p.join(ROOT, "rtl", "ldpc", "*.vhd"))
     library.add_source_files(p.join(ROOT, "rtl", "bch_generated", "*.vhd"))
     library.add_source_files(p.join(ROOT, "testbench", "*.vhd"))
+    library.add_source_files(p.join(ROOT, "third_party", "polyphase_filter", "*.v"))
 
     vunit.add_library("str_format").add_source_files(
         p.join(ROOT, "third_party", "hdl_string_format", "src", "*.vhd")

@@ -216,7 +216,7 @@ begin
 
         read_file(net,
           file_reader => file_reader,
-          filename    => data_path & "/bit_mapper_output_fixed.bin",
+          filename    => data_path & "/bit_mapper_output_fixed_point.bin",
           tid         => encode(config_tuple)
         );
 
