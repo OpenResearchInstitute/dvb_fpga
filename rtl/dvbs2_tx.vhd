@@ -26,7 +26,6 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library fpga_cores;
-use fpga_cores.axi_pkg.all;
 use fpga_cores.common_pkg.all;
 
 use work.dvb_utils_pkg.all;
@@ -38,43 +37,48 @@ entity dvbs2_tx is
   generic ( DATA_WIDTH : positive := 32 );
   port (
     -- Usual ports
-    clk               : in  std_logic;
-    rst               : in  std_logic;
-    -- Static config
+    clk                     : in  std_logic;
+    rst                     : in  std_logic;
+    -- FIXME: Replace individual status/config, bit mapper RAM and coefficients ports with
+    -- a simple UPC interface, preferably non AXI4-MM as it adds a lot of unnecessary
+    -- complexity to the testbench
+    -- Status and static parameters
     cfg_enable_dummy_frames : in  std_logic;
+    cfg_coefficients_rst    : in  std_logic;
+    sts_frame_in_transit    : out std_logic_vector(7 downto 0);
+    sts_ldpc_fifo_entries   : out std_logic_vector(numbits(max(DVB_N_LDPC)/8) downto 0);
+    sts_ldpc_fifo_empty     : out std_logic;
+    sts_ldpc_fifo_full      : out std_logic;
+    -- Constellation mapper RAM interface
+    bit_mapper_ram_wren     : in  std_logic;
+    bit_mapper_ram_addr     : in  std_logic_vector(5 downto 0);
+    bit_mapper_ram_wdata    : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
+    bit_mapper_ram_rdata    : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+    -- Polyphase filter coefficients interface
+    coefficients_in_tready  : out std_logic;
+    coefficients_in_tdata   : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
+    coefficients_in_tlast   : in  std_logic;
+    coefficients_in_tvalid  : in  std_logic;
     -- Per frame config input
-    cfg_constellation : in  std_logic_vector(CONSTELLATION_WIDTH - 1 downto 0);
-    cfg_frame_type    : in  std_logic_vector(FRAME_TYPE_WIDTH - 1 downto 0);
-    cfg_code_rate     : in  std_logic_vector(CODE_RATE_WIDTH - 1 downto 0);
-    -- Mapping RAM config
-    ram_wren          : in  std_logic;
-    ram_addr          : in  std_logic_vector(5 downto 0);
-    ram_wdata         : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
-    ram_rdata         : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+    cfg_constellation       : in  std_logic_vector(CONSTELLATION_WIDTH - 1 downto 0);
+    cfg_frame_type          : in  std_logic_vector(FRAME_TYPE_WIDTH - 1 downto 0);
+    cfg_code_rate           : in  std_logic_vector(CODE_RATE_WIDTH - 1 downto 0);
     -- AXI input
-    s_tvalid          : in  std_logic;
-    s_tdata           : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
-    s_tkeep           : in  std_logic_vector(DATA_WIDTH/8 - 1 downto 0);
-    s_tlast           : in  std_logic;
-    s_tready          : out std_logic;
+    s_tvalid                : in  std_logic;
+    s_tdata                 : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
+    s_tkeep                 : in  std_logic_vector(DATA_WIDTH/8 - 1 downto 0);
+    s_tlast                 : in  std_logic;
+    s_tready                : out std_logic;
     -- AXI output
-    m_tready          : in  std_logic;
-    m_tvalid          : out std_logic;
-    m_tlast           : out std_logic;
-    m_tdata           : out std_logic_vector(DATA_WIDTH - 1 downto 0));
+    m_tready                : in  std_logic;
+    m_tvalid                : out std_logic;
+    m_tlast                 : out std_logic;
+    m_tdata                 : out std_logic_vector(DATA_WIDTH - 1 downto 0));
 end dvbs2_tx;
 
 architecture dvbs2_tx of dvbs2_tx is
 
-  constant COEFFS : std_logic_array_t := (
-    x"ffae", x"ffe1", x"0057", x"0086",
-    x"0018", x"ff7a", x"ff86", x"007e",
-    x"015b", x"007e", x"fd9b", x"fafe",
-    x"fc9d", x"0502", x"127b", x"1f20",
-    x"244e", x"1f20", x"127b", x"0502",
-    x"fc9d", x"fafe", x"fd9b", x"007e",
-    x"015b", x"007e", x"ff86", x"ff7a",
-    x"0018", x"0086", x"0057", x"ffe1");
+  constant POLYPHASE_FILTER_NUMBER_TAPS : integer := 32;
 
   -----------
   -- Types --
@@ -96,32 +100,27 @@ architecture dvbs2_tx of dvbs2_tx is
   -------------
   -- Signals --
   -------------
-  signal rst_n                  : std_logic;
-  signal s_tid                  : std_logic_vector(ENCODED_CONFIG_WIDTH - 1 downto 0);
-  signal m_tvalid_i             : std_logic;
-  signal m_tlast_i              : std_logic;
-  signal s_tready_i             : std_logic;
+  signal rst_n                : std_logic;
+  signal s_tid                : std_logic_vector(ENCODED_CONFIG_WIDTH - 1 downto 0);
+  signal m_tvalid_i           : std_logic;
+  signal m_tlast_i            : std_logic;
+  signal s_tready_i           : std_logic;
 
-  signal mux_sel                : std_logic_vector(1 downto 0);
+  signal mux_sel              : std_logic_vector(1 downto 0);
 
-  signal width_conv             : data_and_config_t(tdata(7 downto 0));
-  signal bb_scrambler           : data_and_config_t(tdata(7 downto 0));
-  signal bch_encoder            : data_and_config_t(tdata(7 downto 0));
-  signal ldpc_encoder           : data_and_config_t(tdata(7 downto 0));
-  signal ldpc_fifo              : data_and_config_t(tdata(7 downto 0));
-  signal fork_bit_interleaver   : axi_stream_ctrl_t;
-  signal fork_ldpc_fifo         : axi_stream_ctrl_t;
-  signal bit_interleaver        : data_and_config_t(tdata(7 downto 0));
-  signal arbiter_out            : data_and_config_t(tdata(7 downto 0));
-  signal constellation_mapper   : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
-  signal pl_frame               : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
-  signal polyphase_filter_coeff : axi_stream_data_bus_t(tdata(DATA_WIDTH/2 - 1 downto 0));
+  signal width_conv           : data_and_config_t(tdata(7 downto 0));
+  signal bb_scrambler         : data_and_config_t(tdata(7 downto 0));
+  signal bch_encoder          : data_and_config_t(tdata(7 downto 0));
+  signal ldpc_encoder         : data_and_config_t(tdata(7 downto 0));
+  signal ldpc_fifo            : data_and_config_t(tdata(7 downto 0));
+  signal fork_bit_interleaver : axi_stream_ctrl_t;
+  signal fork_ldpc_fifo       : axi_stream_ctrl_t;
+  signal bit_interleaver      : data_and_config_t(tdata(7 downto 0));
+  signal arbiter_out          : data_and_config_t(tdata(7 downto 0));
+  signal constellation_mapper : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
+  signal pl_frame             : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
 
-  -- Status
-  signal frames_in_transit      : unsigned(7 downto 0);
-  signal ldpc_fifo_entries      : std_logic_vector(numbits(max(DVB_N_LDPC)/8) downto 0);
-  signal ldpc_fifo_empty        : std_logic;
-  signal ldpc_fifo_full         : std_logic;
+  signal coefficients_aresetn : std_logic;
 
 begin
 
@@ -284,9 +283,9 @@ begin
         clk     => clk,
         rst     => rst,
         -- status
-        entries  => ldpc_fifo_entries,
-        empty    => ldpc_fifo_empty,
-        full     => ldpc_fifo_full,
+        entries  => sts_ldpc_fifo_entries,
+        empty    => sts_ldpc_fifo_empty,
+        full     => sts_ldpc_fifo_full,
         -- Write side
         s_tvalid => fork_ldpc_fifo.tvalid,
         s_tready => fork_ldpc_fifo.tready,
@@ -361,10 +360,10 @@ begin
       clk               => clk,
       rst               => rst,
       -- Mapping RAM config
-      ram_wren          => ram_wren,
-      ram_addr          => ram_addr,
-      ram_wdata         => ram_wdata,
-      ram_rdata         => ram_rdata,
+      ram_wren          => bit_mapper_ram_wren,
+      ram_addr          => bit_mapper_ram_addr,
+      ram_wdata         => bit_mapper_ram_wdata,
+      ram_rdata         => bit_mapper_ram_rdata,
       -- Per frame config input
       cfg_constellation => decode(arbiter_out.tid).constellation,
       -- AXI input
@@ -409,7 +408,7 @@ begin
 
   polyphase_filter_q : entity work.polyphase_filter
     generic map (
-      NUMBER_TAPS          => 32,
+      NUMBER_TAPS          => POLYPHASE_FILTER_NUMBER_TAPS,
       DATA_IN_WIDTH        => DATA_WIDTH/2,
       DATA_OUT_WIDTH       => DATA_WIDTH/2,
       COEFFICIENT_WIDTH    => DATA_WIDTH/2,
@@ -433,14 +432,14 @@ begin
       -- coefficients input interface
       coefficients_in_aclk    => clk,
       coefficients_in_aresetn => rst_n,
-      coefficients_in_tready  => polyphase_filter_coeff.tready,
-      coefficients_in_tdata   => polyphase_filter_coeff.tdata,
-      coefficients_in_tlast   => '0',
-      coefficients_in_tvalid  => polyphase_filter_coeff.tvalid);
+      coefficients_in_tready  => coefficients_in_tready,
+      coefficients_in_tdata   => coefficients_in_tdata(DATA_WIDTH/2 - 1 downto 0),
+      coefficients_in_tlast   => coefficients_in_tlast,
+      coefficients_in_tvalid  => coefficients_in_tvalid);
 
   polyphase_filter_i : entity work.polyphase_filter
     generic map (
-      NUMBER_TAPS          => 32,
+      NUMBER_TAPS          => POLYPHASE_FILTER_NUMBER_TAPS,
       DATA_IN_WIDTH        => DATA_WIDTH/2,
       DATA_OUT_WIDTH       => DATA_WIDTH/2,
       COEFFICIENT_WIDTH    => DATA_WIDTH/2,
@@ -463,16 +462,18 @@ begin
       data_out_tvalid         => open,
       -- coefficients input interface
       coefficients_in_aclk    => clk,
-      coefficients_in_aresetn => rst_n,
-      coefficients_in_tready  => polyphase_filter_coeff.tready,
-      coefficients_in_tdata   => polyphase_filter_coeff.tdata,
-      coefficients_in_tlast   => '0',
-      coefficients_in_tvalid  => polyphase_filter_coeff.tvalid);
+      coefficients_in_aresetn => coefficients_aresetn,
+      coefficients_in_tready  => open,
+      coefficients_in_tdata   => coefficients_in_tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2),
+      coefficients_in_tlast   => coefficients_in_tlast,
+      coefficients_in_tvalid  => coefficients_in_tvalid);
 
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  rst_n <= not rst;
+  rst_n                <= not rst;
+  coefficients_aresetn <= not cfg_coefficients_rst;
+
   s_tid <= encode((frame_type    => decode(cfg_frame_type),
                    constellation => decode(cfg_constellation),
                    code_rate     => decode(cfg_code_rate)));
@@ -481,40 +482,32 @@ begin
   m_tlast  <= m_tlast_i;
   s_tready <= s_tready_i;
 
-  -- Temporary for POC only
-  process
-  begin
-    polyphase_filter_coeff.tvalid <= '0';
-    polyphase_filter_coeff.tdata  <= (others => 'U');
-    wait until rst = '0';
-    wait until rising_edge(clk);
-    for i in COEFFS'range loop
-      polyphase_filter_coeff.tvalid <= '1';
-      polyphase_filter_coeff.tdata  <= COEFFS(i);
-      wait until polyphase_filter_coeff.tvalid = '1' and polyphase_filter_coeff.tready = '1' and rising_edge(clk);
-      polyphase_filter_coeff.tvalid <= '0';
-      polyphase_filter_coeff.tdata  <= (others => 'U');
-    end loop;
-    wait;
-  end process;
-
   ---------------
   -- Processes --
   ---------------
   status_block : block
+    signal s_first_word       : std_logic;
+    signal frame_in_transit_i : unsigned(7 downto 0);
   begin
+    sts_frame_in_transit <= std_logic_vector(frame_in_transit_i);
+
     process(clk, rst)
     begin
       if rst = '1' then
-        frames_in_transit <= (others => '0');
+        frame_in_transit_i <= (others => '0');
+        s_first_word       <= '1';
       elsif rising_edge(clk) then
+        if s_tvalid and s_tready_i then
+          s_first_word <= s_tlast;
+        end if;
+
         -- Only increment if only one is active
-        if (s_tvalid and s_tready_i and s_tlast) xor (m_tvalid_i and m_tready and m_tlast_i) then
-          if (s_tvalid and s_tready_i and s_tlast) then
-            frames_in_transit <= frames_in_transit + 1;
+        if (s_tvalid and s_tready_i and s_first_word) xor (m_tvalid_i and m_tready and m_tlast_i) then
+          if (s_tvalid and s_tready_i and s_first_word) then
+            frame_in_transit_i <= frame_in_transit_i + 1;
           end if;
           if (m_tvalid_i and m_tready and m_tlast_i) then
-            frames_in_transit <= frames_in_transit - 1;
+            frame_in_transit_i <= frame_in_transit_i - 1;
           end if;
         end if;
       end if;
