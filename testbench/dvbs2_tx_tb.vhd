@@ -70,6 +70,7 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
   constant CLK_PERIOD : time := 5 ns;
 
   constant DATA_WIDTH : integer := 32;
+  constant POLYPHASE_FILTER_NUMBER_TAPS : integer := 101;
 
   type axi_checker_t is record
     axi             : axi_stream_data_bus_t;
@@ -171,7 +172,9 @@ begin
       m_tlast            => axi_master.tlast);
 
   dut : entity work.dvbs2_tx
-    generic map ( DATA_WIDTH => DATA_WIDTH )
+    generic map (
+      DATA_WIDTH                   => DATA_WIDTH,
+      POLYPHASE_FILTER_NUMBER_TAPS => POLYPHASE_FILTER_NUMBER_TAPS)
     port map (
       -- Usual ports
       clk                     => clk,
@@ -478,6 +481,32 @@ begin
       file_close(file_handler);
     end procedure; -- }} ---------------------------------------------------------------
 
+    procedure update_coefficients ( constant c : std_logic_array_t ) is
+    begin
+      assert c'length = POLYPHASE_FILTER_NUMBER_TAPS
+        report sformat("Coefficients' array has %d items but it must have %d", fo(c'length), fo(POLYPHASE_FILTER_NUMBER_TAPS));
+
+      info("Updating polyphase filter coefficients with " & to_string(c));
+
+      cfg_coefficients_rst   <= '1';
+      walk(1);
+      cfg_coefficients_rst   <= '0';
+      walk(1);
+
+      for i in c'range loop
+        coefficients_in.tvalid <= '1';
+        coefficients_in.tdata  <= c(i) & c(i);
+        coefficients_in.tlast  <= '0';
+        if i = c'length then
+          coefficients_in.tlast  <= '1';
+        end if;
+        wait until coefficients_in.tvalid = '1' and coefficients_in.tready = '1' and rising_edge(clk);
+        coefficients_in.tvalid <= '0';
+        coefficients_in.tlast  <= '0';
+        coefficients_in.tdata  <= (others => 'U');
+      end loop;
+    end procedure;
+
     procedure run_test ( -- {{ ---------------------------------------------------------
       constant config           : config_t;
       constant number_of_frames : in positive) is
@@ -538,7 +567,9 @@ begin
 
     -- show(get_logger("input_stream"), display_handler, (trace, debug), True);
 
-    bit_mapper_ram_wren  <= '0';
+    bit_mapper_ram_wren    <= '0';
+    coefficients_in.tvalid <= '0';
+    cfg_coefficients_rst   <= '0';
 
     while test_suite loop
       rst <= '1';
@@ -548,6 +579,20 @@ begin
 
       data_probability <= 1.0;
       tready_probability <= 1.0;
+
+      update_coefficients((x"FFF6", x"0003", x"0009", x"FFF7", x"FFFC", x"000C", x"FFFD", x"FFF6",
+                           x"000B", x"0003", x"FFF0", x"0006", x"000F", x"FFF0", x"FFF9", x"0015",
+                           x"FFFB", x"FFEE", x"0013", x"0006", x"FFE3", x"000C", x"001C", x"FFE1",
+                           x"FFF1", x"002A", x"FFF7", x"FFDB", x"0028", x"000B", x"FFBE", x"001F",
+                           x"0049", x"FFAE", x"FFD1", x"0077", x"FFED", x"FF91", x"0081", x"0015",
+                           x"FEEA", x"00C8", x"01C0", x"FD93", x"FD96", x"056F", x"02FB", x"F42D",
+                           x"FCA3", x"2825", x"4383", x"2825", x"FCA3", x"F42D", x"02FB", x"056F",
+                           x"FD96", x"FD93", x"01C0", x"00C8", x"FEEA", x"0015", x"0081", x"FF91",
+                           x"FFED", x"0077", x"FFD1", x"FFAE", x"0049", x"001F", x"FFBE", x"000B",
+                           x"0028", x"FFDB", x"FFF7", x"002A", x"FFF1", x"FFE1", x"001C", x"000C",
+                           x"FFE3", x"0006", x"0013", x"FFEE", x"FFFB", x"0015", x"FFF9", x"FFF0",
+                           x"000F", x"0006", x"FFF0", x"0003", x"000B", x"FFF6", x"FFFD", x"000C",
+                           x"FFFC", x"FFF7", x"0009", x"0003", x"FFF6"));
 
       if run("back_to_back") then
         data_probability <= 1.0;

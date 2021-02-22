@@ -34,7 +34,10 @@ use work.dvb_utils_pkg.all;
 -- Entity declaration --
 ------------------------
 entity dvbs2_tx is
-  generic ( DATA_WIDTH : positive := 32 );
+  generic (
+    DATA_WIDTH                   : positive := 32;
+    POLYPHASE_FILTER_NUMBER_TAPS : positive := 32
+  );
   port (
     -- Usual ports
     clk                     : in  std_logic;
@@ -77,8 +80,6 @@ entity dvbs2_tx is
 end dvbs2_tx;
 
 architecture dvbs2_tx of dvbs2_tx is
-
-  constant POLYPHASE_FILTER_NUMBER_TAPS : integer := 32;
 
   -----------
   -- Types --
