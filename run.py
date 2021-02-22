@@ -206,6 +206,7 @@ def _generateGnuRadioData():
         if not p.exists(config.timestamp):
             configs += [config]
 
+    #  list(map(_runGnuRadio, configs))
     # Generate needed data on a process pool to speed up things
     pool = Pool()
     pool.map(_runGnuRadio, configs)

@@ -412,7 +412,7 @@ begin
       DATA_IN_WIDTH        => DATA_WIDTH/2,
       DATA_OUT_WIDTH       => DATA_WIDTH/2,
       COEFFICIENT_WIDTH    => DATA_WIDTH/2,
-      RATE_CHANGE          => 8,
+      RATE_CHANGE          => 1,
       DECIMATE_INTERPOLATE => 1) -- 0 => decimate, 1 => interpolate
     port map (
       -- input data interface
@@ -443,7 +443,7 @@ begin
       DATA_IN_WIDTH        => DATA_WIDTH/2,
       DATA_OUT_WIDTH       => DATA_WIDTH/2,
       COEFFICIENT_WIDTH    => DATA_WIDTH/2,
-      RATE_CHANGE          => 8,
+      RATE_CHANGE          => 1,
       DECIMATE_INTERPOLATE => 1) -- 0 => decimate, 1 => interpolate
     port map (
       -- input data interface

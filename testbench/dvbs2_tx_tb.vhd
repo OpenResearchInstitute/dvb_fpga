@@ -66,10 +66,10 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
   ---------------
   -- Constants --
   ---------------
-  constant configs                   : config_array_t := get_test_cfg(TEST_CFG);
-  constant CLK_PERIOD                : time := 5 ns;
+  constant configs    : config_array_t := get_test_cfg(TEST_CFG);
+  constant CLK_PERIOD : time := 5 ns;
 
-  constant DATA_WIDTH                : integer := 32;
+  constant DATA_WIDTH : integer := 32;
 
   type axi_checker_t is record
     axi             : axi_stream_data_bus_t;
@@ -83,41 +83,48 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
   -------------
   -- Signals --
   -------------
-  -- Usual ports
-  signal clk                : std_logic := '1';
-  signal rst                : std_logic;
+  signal clk                     : std_logic := '1';
+  signal rst                     : std_logic;
 
-  signal cfg_constellation  : constellation_t;
-  signal cfg_frame_type     : frame_type_t;
-  signal cfg_code_rate      : code_rate_t;
-
-  signal data_probability   : real range 0.0 to 1.0 := 1.0;
-  signal table_probability  : real range 0.0 to 1.0 := 1.0;
-  signal tready_probability : real range 0.0 to 1.0 := 1.0;
+  signal data_probability        : real range 0.0 to 1.0 := 1.0;
+  signal table_probability       : real range 0.0 to 1.0 := 1.0;
+  signal tready_probability      : real range 0.0 to 1.0 := 1.0;
 
   -- AXI input
-  signal axi_master         : axi_stream_qualified_data_t(tdata(DATA_WIDTH - 1 downto 0),
-                                                          tkeep(DATA_WIDTH/8 - 1 downto 0),
-                                                          tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-  signal m_data_valid       : std_logic;
+  signal cfg_constellation       : constellation_t;
+  signal cfg_frame_type          : frame_type_t;
+  signal cfg_code_rate           : code_rate_t;
+
+  signal axi_master              : axi_stream_qualified_data_t(tdata(DATA_WIDTH - 1 downto 0),
+                                                               tkeep(DATA_WIDTH/8 - 1 downto 0),
+                                                               tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+  signal m_data_valid            : std_logic;
 
   -- AXI LDPC table input
-  signal axi_ldpc           : axi_stream_data_bus_t(tdata(2*numbits(max(DVB_N_LDPC)) + 8 - 1 downto 0));
+  signal axi_ldpc                : axi_stream_data_bus_t(tdata(2*numbits(max(DVB_N_LDPC)) + 8 - 1 downto 0));
 
   -- AXI output
-  signal s_data_valid       : std_logic;
+  signal s_data_valid            : std_logic;
 
-  signal axi_slave          : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)), expected_tdata(DATA_WIDTH - 1 downto 0));
-  signal axi_slave_tdata    : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal axi_slave               : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)), expected_tdata(DATA_WIDTH - 1 downto 0));
+  signal axi_slave_tdata         : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
+  signal cfg_enable_dummy_frames : std_logic;
+  signal cfg_coefficients_rst    : std_logic;
+  signal sts_frame_in_transit    : std_logic_vector(7 downto 0);
+  signal sts_ldpc_fifo_entries   : std_logic_vector(numbits(max(DVB_N_LDPC)/8) downto 0);
+  signal sts_ldpc_fifo_empty     : std_logic;
+  signal sts_ldpc_fifo_full      : std_logic;
   -- Mapping RAM config
-  signal ram_wren           : std_logic;
-  signal ram_addr           : std_logic_vector(5 downto 0);
-  signal ram_wdata          : std_logic_vector(DATA_WIDTH - 1 downto 0);
-  signal ram_rdata          : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal bit_mapper_ram_wren     : std_logic;
+  signal bit_mapper_ram_addr     : std_logic_vector(5 downto 0);
+  signal bit_mapper_ram_wdata    : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal bit_mapper_ram_rdata    : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
-  signal dbg_recv           : complex;
-  signal dbg_expected       : complex;
+  signal coefficients_in         : axi_stream_data_bus_t(tdata(DATA_WIDTH - 1 downto 0));
+
+  signal dbg_recv                : complex;
+  signal dbg_expected            : complex;
 
 begin
 
@@ -167,30 +174,39 @@ begin
     generic map ( DATA_WIDTH => DATA_WIDTH )
     port map (
       -- Usual ports
-      clk               => clk,
-      rst               => rst,
-      -- Static config
-      cfg_enable_dummy_frames => '0',
-      -- Per frame config input
-      cfg_constellation => encode(cfg_constellation),
-      cfg_frame_type    => encode(cfg_frame_type),
-      cfg_code_rate     => encode(cfg_code_rate),
-      -- Mapping RAM config
-      ram_wren          => ram_wren,
-      ram_addr          => ram_addr,
-      ram_wdata         => ram_wdata,
-      ram_rdata         => ram_rdata,
+      clk                     => clk,
+      rst                     => rst,
+      -- Status and static parameters
+      cfg_enable_dummy_frames => cfg_enable_dummy_frames,
+      cfg_coefficients_rst    => cfg_coefficients_rst,
+      sts_frame_in_transit    => sts_frame_in_transit,
+      sts_ldpc_fifo_entries   => sts_ldpc_fifo_entries,
+      sts_ldpc_fifo_empty     => sts_ldpc_fifo_empty,
+      sts_ldpc_fifo_full      => sts_ldpc_fifo_full,
+      -- Constellation mapper RAM interface
+      bit_mapper_ram_wren     => bit_mapper_ram_wren,
+      bit_mapper_ram_addr     => bit_mapper_ram_addr,
+      bit_mapper_ram_wdata    => bit_mapper_ram_wdata,
+      bit_mapper_ram_rdata    => bit_mapper_ram_rdata,
+      -- Polyphase filter coefficients interface
+      coefficients_in_tready  => coefficients_in.tready,
+      coefficients_in_tdata   => coefficients_in.tdata,
+      coefficients_in_tlast   => coefficients_in.tlast,
+      coefficients_in_tvalid  => coefficients_in.tvalid,
       -- AXI input
-      s_tvalid          => axi_master.tvalid,
-      s_tdata           => axi_master.tdata,
-      s_tkeep           => axi_master.tkeep,
-      s_tlast           => axi_master.tlast,
-      s_tready          => axi_master.tready,
+      cfg_constellation       => encode(cfg_constellation),
+      cfg_frame_type          => encode(cfg_frame_type),
+      cfg_code_rate           => encode(cfg_code_rate),
+      s_tvalid                => axi_master.tvalid,
+      s_tdata                 => axi_master.tdata,
+      s_tkeep                 => axi_master.tkeep,
+      s_tlast                 => axi_master.tlast,
+      s_tready                => axi_master.tready,
       -- AXI output
-      m_tready          => axi_slave.axi.tready,
-      m_tvalid          => axi_slave.axi.tvalid,
-      m_tlast           => axi_slave.axi.tlast,
-      m_tdata           => axi_slave.axi.tdata);
+      m_tready                => axi_slave.axi.tready,
+      m_tvalid                => axi_slave.axi.tvalid,
+      m_tlast                 => axi_slave.axi.tlast,
+      m_tdata                 => axi_slave.axi.tdata);
 
   -- Can't check against expected data directly because of rounding errors, so use a file
   -- reader to get the contents
@@ -411,13 +427,13 @@ begin
       constant addr : in integer;
       constant data : in std_logic_vector(DATA_WIDTH - 1 downto 0)) is
     begin
-      ram_wren  <= '1';
-      ram_addr  <= std_logic_vector(to_unsigned(addr, 6));
-      ram_wdata <= data;
+      bit_mapper_ram_wren  <= '1';
+      bit_mapper_ram_addr  <= std_logic_vector(to_unsigned(addr, 6));
+      bit_mapper_ram_wdata <= data;
       walk(1);
-      ram_wren  <= '0';
-      ram_addr  <= (others => 'U');
-      ram_wdata <= (others => 'U');
+      bit_mapper_ram_wren  <= '0';
+      bit_mapper_ram_addr  <= (others => 'U');
+      bit_mapper_ram_wdata <= (others => 'U');
     end procedure; -- }} ---------------------------------------------------------------
 
     -- Write the exact value so we know data was picked up correctly without having to
@@ -522,7 +538,7 @@ begin
 
     -- show(get_logger("input_stream"), display_handler, (trace, debug), True);
 
-    ram_wren  <= '0';
+    bit_mapper_ram_wren  <= '0';
 
     while test_suite loop
       rst <= '1';
@@ -575,56 +591,62 @@ begin
     end function;
 
     constant TOLERANCE        : real := 0.10;
-    variable recv_r           : complex;
-    variable expected_r       : complex;
-    variable recv_p           : complex_polar;
-    variable expected_p       : complex_polar;
+    -- Recv/expected in rect coords
+    variable recv_rect        : complex;
+    variable expected_rect    : complex;
+    -- Recv/expected in polar coords
+    variable recv_pol         : complex_polar;
+    variable expected_pol     : complex_polar;
+
+    variable error_cnt        : integer := 0;
     variable expected_lendian : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    variable expected_i       : signed(DATA_WIDTH/2 - 1 downto 0);
-    variable expected_q       : signed(DATA_WIDTH/2 - 1 downto 0);
 
   begin
     wait until axi_slave.axi.tvalid = '1' and axi_slave.axi.tready = '1' and rising_edge(clk);
-    -- receiver_busy    <= True;
-    expected_lendian := axi_slave.expected_tdata(23 downto 16) & axi_slave.expected_tdata(31 downto 24) & axi_slave.expected_tdata(7 downto 0) & axi_slave.expected_tdata(15 downto 8);
+    expected_lendian := axi_slave.expected_tdata(23 downto 16)
+                      & axi_slave.expected_tdata(31 downto 24)
+                      & axi_slave.expected_tdata(7 downto 0)
+                      & axi_slave.expected_tdata(15 downto 8);
 
-    recv_r       := to_complex(axi_slave.axi.tdata);
-    expected_r   := to_complex(expected_lendian);
+    recv_rect       := to_complex(axi_slave.axi.tdata);
+    expected_rect   := to_complex(expected_lendian);
 
-    dbg_recv     <= recv_r;
-    dbg_expected <= expected_r;
+    dbg_recv     <= recv_rect;
+    dbg_expected <= expected_rect;
 
-    recv_p       := complex_to_polar(recv_r);
-    expected_p   := complex_to_polar(expected_r);
+    recv_pol       := complex_to_polar(recv_rect);
+    expected_pol   := complex_to_polar(expected_rect);
 
-    -- if axi_slave.axi.tdata /= expected_lendian then
-    --   if    (recv_p.mag >= 0.0 xor expected_p.mag >= 0.0)
-    --      or (recv_p.arg >= 0.0 xor expected_p.arg >= 0.0)
-    --      or abs(recv_p.mag) < abs(expected_p.mag) * (1.0 - TOLERANCE)
-    --      or abs(recv_p.mag) > abs(expected_p.mag) * (1.0 + TOLERANCE)
-    --      or abs(recv_p.arg) < abs(expected_p.arg) * (1.0 - TOLERANCE)
-    --      or abs(recv_p.arg) > abs(expected_p.arg) * (1.0 + TOLERANCE) then
-    --     error(
-    --       logger,
-    --       sformat(
-    --         "[%d, %d] Comparison failed. " & lf &
-    --         "Got      %r rect(%s, %s) / polar(%s, %s)" & lf &
-    --         "Expected %r rect(%s, %s) / polar(%s, %s)",
-    --         fo(frame_cnt),
-    --         fo(word_cnt),
-    --         fo(axi_slave.axi.tdata),
-    --         real'image(recv_r.re), real'image(recv_r.im),
-    --         real'image(recv_p.mag), real'image(recv_p.arg),
-    --         fo(expected_lendian),
-    --         real'image(expected_r.re), real'image(expected_r.im),
-    --         real'image(expected_p.mag), real'image(expected_p.arg)
-    --       ));
-    --   end if;
-    -- end if;
+    if axi_slave.axi.tdata /= expected_lendian then
+      if    (recv_pol.mag >= 0.0 xor expected_pol.mag >= 0.0)
+         or (recv_pol.arg >= 0.0 xor expected_pol.arg >= 0.0)
+         or abs(recv_pol.mag) < abs(expected_pol.mag) * (1.0 - TOLERANCE)
+         or abs(recv_pol.mag) > abs(expected_pol.mag) * (1.0 + TOLERANCE)
+         or abs(recv_pol.arg) < abs(expected_pol.arg) * (1.0 - TOLERANCE)
+         or abs(recv_pol.arg) > abs(expected_pol.arg) * (1.0 + TOLERANCE) then
+        warning(
+          logger,
+          sformat(
+            "[%d, %d] Comparison failed. " & lf &
+            "Got      %r rect(%s, %s) / polar(%s, %s)" & lf &
+            "Expected %r rect(%s, %s) / polar(%s, %s)",
+            fo(frame_cnt),
+            fo(word_cnt),
+            fo(axi_slave.axi.tdata),
+            real'image(recv_rect.re), real'image(recv_rect.im),
+            real'image(recv_pol.mag), real'image(recv_pol.arg),
+            fo(expected_lendian),
+            real'image(expected_rect.re), real'image(expected_rect.im),
+            real'image(expected_pol.mag), real'image(expected_pol.arg)
+          ));
+        error_cnt := error_cnt + 1;
+      end if;
+    end if;
+
+    assert error_cnt < 256 report "Too many errors" severity Failure;
 
     word_cnt := word_cnt + 1;
     if axi_slave.axi.tlast = '1' then
-      -- receiver_busy <= False;
       info(logger, sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
       word_cnt  := 0;
       frame_cnt := frame_cnt + 1;
