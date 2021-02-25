@@ -69,8 +69,47 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
   constant configs    : config_array_t := get_test_cfg(TEST_CFG);
   constant CLK_PERIOD : time := 5 ns;
 
+
+--   constant COEFFS : std_logic_array_t := (
+--   x"FFFF", x"FFFB", x"0005", x"0001", x"FFF9", x"0002", x"0006", x"FFFA" ,
+-- x"FFFE", x"0008", x"FFFE", x"FFF9", x"0007", x"0002", x"FFF6", x"0003" ,
+-- x"0009", x"FFF7", x"FFFC", x"000C", x"FFFD", x"FFF6", x"000B", x"0003" ,
+-- x"FFF0", x"0006", x"000F", x"FFF0", x"FFF9", x"0015", x"FFFB", x"FFEE" ,
+-- x"0013", x"0006", x"FFE3", x"000C", x"001C", x"FFE1", x"FFF1", x"002A" ,
+-- x"FFF7", x"FFDB", x"0028", x"000B", x"FFBE", x"001F", x"0049", x"FFAE" ,
+-- x"FFD1", x"0077", x"FFED", x"FF91", x"0081", x"0015", x"FEEA", x"00C7" ,
+-- x"01C0", x"FD93", x"FD96", x"056E", x"02FB", x"F42E", x"FCA3", x"2823" ,
+-- x"4381", x"2823", x"FCA3", x"F42E", x"02FB", x"056E", x"FD96", x"FD93" ,
+-- x"01C0", x"00C7", x"FEEA", x"0015", x"0081", x"FF91", x"FFED", x"0077" ,
+-- x"FFD1", x"FFAE", x"0049", x"001F", x"FFBE", x"000B", x"0028", x"FFDB" ,
+-- x"FFF7", x"002A", x"FFF1", x"FFE1", x"001C", x"000C", x"FFE3", x"0006" ,
+-- x"0013", x"FFEE", x"FFFB", x"0015", x"FFF9", x"FFF0", x"000F", x"0006" ,
+-- x"FFF0", x"0003", x"000B", x"FFF6", x"FFFD", x"000C", x"FFFC", x"FFF7" ,
+-- x"0009", x"0003", x"FFF6", x"0002", x"0007", x"FFF9", x"FFFE", x"0008" ,
+-- x"FFFE", x"FFFA", x"0006", x"0002", x"FFF9", x"0001", x"0005", x"FFFB");
+
+--   constant COEFFS : std_logic_array_t := (
+--   x"FFAE", x"FFE1", x"0057", x"0086", x"0018", x"FF7A", x"FF86", x"007E" ,
+-- x"015B", x"007E", x"FD9B", x"FAFE", x"FC9D", x"0502", x"127B", x"1F20" ,
+-- x"244E", x"1F20", x"127B", x"0502", x"FC9D", x"FAFE", x"FD9B", x"007E" ,
+-- x"015B", x"007E", x"FF86", x"FF7A", x"0018", x"0086", x"0057", x"FFE1" );
+
+  constant COEFFS : std_logic_array_t := (
+  x"FFEC", x"0000", x"001A", x"FFFF", x"FFDC", x"0001", x"0034", x"FFFD" ,
+x"FFAF", x"0007", x"0091", x"FFEB", x"FEB5", x"0063", x"056E", x"F26C" ,
+x"9178", x"F26C", x"056E", x"0063", x"FEB5", x"FFEB", x"0091", x"0007" ,
+x"FFAF", x"FFFD", x"0034", x"0001", x"FFDC", x"FFFF", x"001A", x"0000");
+
+
+-- x"FFD8", x"0023", x"0003", x"FFD8", x"0048", x"FFBD", x"FFF6", x"0051" ,
+-- x"FF5B", x"00AF", x"0031", x"FF0B", x"02B7", x"FB34", x"F937", x"2505" ,
+-- x"48B8", x"2505", x"F937", x"FB34", x"02B7", x"FF0B", x"0031", x"00AF" ,
+-- x"FF5B", x"0051", x"FFF6", x"FFBD", x"0048", x"FFD8", x"0003", x"0023");
+
+
   constant DATA_WIDTH : integer := 32;
-  constant POLYPHASE_FILTER_NUMBER_TAPS : integer := 101;
+  constant POLYPHASE_FILTER_NUMBER_TAPS : integer := COEFFS'length;
+  constant POLYPHASE_FILTER_RATE_CHANGE : integer := 1;
 
   type axi_checker_t is record
     axi             : axi_stream_data_bus_t;
@@ -110,7 +149,7 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
   signal axi_slave               : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)), expected_tdata(DATA_WIDTH - 1 downto 0));
   signal axi_slave_tdata         : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
-  signal cfg_enable_dummy_frames : std_logic;
+  signal cfg_enable_dummy_frames : std_logic := '0';
   signal cfg_coefficients_rst    : std_logic;
   signal sts_frame_in_transit    : std_logic_vector(7 downto 0);
   signal sts_ldpc_fifo_entries   : std_logic_vector(numbits(max(DVB_N_LDPC)/8) downto 0);
@@ -126,6 +165,13 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
 
   signal dbg_recv                : complex;
   signal dbg_expected            : complex;
+
+  signal dbg_expected_i : signed(15 downto 0);
+  signal dbg_expected_q : signed(15 downto 0);
+  signal dbg_input_i    : signed(15 downto 0);
+  signal dbg_input_q    : signed(15 downto 0);
+  signal dbg_recv_i     : signed(15 downto 0);
+  signal dbg_recv_q     : signed(15 downto 0);
 
 begin
 
@@ -174,7 +220,8 @@ begin
   dut : entity work.dvbs2_tx
     generic map (
       DATA_WIDTH                   => DATA_WIDTH,
-      POLYPHASE_FILTER_NUMBER_TAPS => POLYPHASE_FILTER_NUMBER_TAPS)
+      POLYPHASE_FILTER_NUMBER_TAPS => POLYPHASE_FILTER_NUMBER_TAPS,
+      POLYPHASE_FILTER_RATE_CHANGE => POLYPHASE_FILTER_RATE_CHANGE)
     port map (
       -- Usual ports
       clk                     => clk,
@@ -389,12 +436,12 @@ begin
     constant self                         : actor_t       := new_actor("main");
     variable input_stream                 : file_reader_t := new_file_reader("input_stream");
     variable output_ref                   : file_reader_t := new_file_reader("output_ref");
-    variable ldpc_table                   : file_reader_t := new_file_reader("ldpc_table");
 
       -- ghdl translate_off
     variable bb_scrambler_checker         : file_reader_t := new_file_reader("bb_scrambler");
     variable bch_encoder_checker          : file_reader_t := new_file_reader("bch_encoder");
     variable ldpc_encoder_checker         : file_reader_t := new_file_reader("ldpc_encoder");
+    variable ldpc_table                   : file_reader_t := new_file_reader("ldpc_table");
       -- ghdl translate_on
 
     variable prev_config          : config_t;
@@ -415,10 +462,10 @@ begin
       wait_all_read(net, input_stream);
       wait_all_read(net, output_ref);
       -- ghdl translate_off
-      -- wait_all_read(net, bb_scrambler_checker);
-      -- wait_all_read(net, bch_encoder_checker);
-      -- wait_all_read(net, ldpc_encoder_checker);
-      -- wait_all_read(net, ldpc_table);
+      wait_all_read(net, bb_scrambler_checker);
+      wait_all_read(net, bch_encoder_checker);
+      wait_all_read(net, ldpc_encoder_checker);
+      wait_all_read(net, ldpc_table);
       -- ghdl translate_on
 
       wait until rising_edge(clk) and axi_slave.axi.tvalid = '0' for 1 ms;
@@ -489,9 +536,9 @@ begin
       info("Updating polyphase filter coefficients with " & to_string(c));
 
       cfg_coefficients_rst   <= '1';
-      walk(1);
+      walk(16);
       cfg_coefficients_rst   <= '0';
-      walk(1);
+      walk(16);
 
       for i in c'range loop
         coefficients_in.tvalid <= '1';
@@ -543,14 +590,14 @@ begin
         file_reader_msg.sender := self;
 
         read_file(net, input_stream, data_path & "/bb_header_output_packed.bin", encode(config_tuple));
-        read_file(net, ldpc_table, data_path & "/ldpc_table.bin");
         -- read_file(net, output_ref, data_path & "/plframe_pilots_off_fixed_point.bin");
         read_file(net, output_ref, data_path & "/modulated_pilots_off_fixed_point.bin");
 
         -- ghdl translate_off
-        -- read_file(net, bb_scrambler_checker, data_path & "/bb_scrambler_output_packed.bin");
-        -- read_file(net, bch_encoder_checker, data_path & "/bch_encoder_output_packed.bin");
-        -- read_file(net, ldpc_encoder_checker, data_path & "/ldpc_output_packed.bin");
+        read_file(net, ldpc_table, data_path & "/ldpc_table.bin");
+        read_file(net, bb_scrambler_checker, data_path & "/bb_scrambler_output_packed.bin");
+        read_file(net, bch_encoder_checker, data_path & "/bch_encoder_output_packed.bin");
+        read_file(net, ldpc_encoder_checker, data_path & "/ldpc_output_packed.bin");
         -- ghdl translate_on
 
       end loop;
@@ -580,19 +627,7 @@ begin
       data_probability <= 1.0;
       tready_probability <= 1.0;
 
-      update_coefficients((x"FFF6", x"0003", x"0009", x"FFF7", x"FFFC", x"000C", x"FFFD", x"FFF6",
-                           x"000B", x"0003", x"FFF0", x"0006", x"000F", x"FFF0", x"FFF9", x"0015",
-                           x"FFFB", x"FFEE", x"0013", x"0006", x"FFE3", x"000C", x"001C", x"FFE1",
-                           x"FFF1", x"002A", x"FFF7", x"FFDB", x"0028", x"000B", x"FFBE", x"001F",
-                           x"0049", x"FFAE", x"FFD1", x"0077", x"FFED", x"FF91", x"0081", x"0015",
-                           x"FEEA", x"00C8", x"01C0", x"FD93", x"FD96", x"056F", x"02FB", x"F42D",
-                           x"FCA3", x"2825", x"4383", x"2825", x"FCA3", x"F42D", x"02FB", x"056F",
-                           x"FD96", x"FD93", x"01C0", x"00C8", x"FEEA", x"0015", x"0081", x"FF91",
-                           x"FFED", x"0077", x"FFD1", x"FFAE", x"0049", x"001F", x"FFBE", x"000B",
-                           x"0028", x"FFDB", x"FFF7", x"002A", x"FFF1", x"FFE1", x"001C", x"000C",
-                           x"FFE3", x"0006", x"0013", x"FFEE", x"FFFB", x"0015", x"FFF9", x"FFF0",
-                           x"000F", x"0006", x"FFF0", x"0003", x"000B", x"FFF6", x"FFFD", x"000C",
-                           x"FFFC", x"FFF7", x"0009", x"0003", x"FFF6"));
+      update_coefficients(COEFFS);
 
       if run("back_to_back") then
         data_probability <= 1.0;
@@ -653,42 +688,48 @@ begin
                       & axi_slave.expected_tdata(7 downto 0)
                       & axi_slave.expected_tdata(15 downto 8);
 
-    recv_rect       := to_complex(axi_slave.axi.tdata);
-    expected_rect   := to_complex(expected_lendian);
+    recv_rect      := to_complex(axi_slave.axi.tdata);
+    expected_rect  := to_complex(expected_lendian);
 
-    dbg_recv     <= recv_rect;
-    dbg_expected <= expected_rect;
+    dbg_recv       <= recv_rect;
+    dbg_expected   <= expected_rect;
+
+    dbg_expected_i <= signed(expected_lendian(31 downto 16));
+    dbg_expected_q <= signed(expected_lendian(15 downto 0));
+
+    dbg_recv_i     <= signed(axi_slave.axi.tdata(31 downto 16));
+    dbg_recv_q     <= signed(axi_slave.axi.tdata(15 downto 0));
 
     recv_pol       := complex_to_polar(recv_rect);
     expected_pol   := complex_to_polar(expected_rect);
 
-    if axi_slave.axi.tdata /= expected_lendian then
-      if    (recv_pol.mag >= 0.0 xor expected_pol.mag >= 0.0)
-         or (recv_pol.arg >= 0.0 xor expected_pol.arg >= 0.0)
-         or abs(recv_pol.mag) < abs(expected_pol.mag) * (1.0 - TOLERANCE)
-         or abs(recv_pol.mag) > abs(expected_pol.mag) * (1.0 + TOLERANCE)
-         or abs(recv_pol.arg) < abs(expected_pol.arg) * (1.0 - TOLERANCE)
-         or abs(recv_pol.arg) > abs(expected_pol.arg) * (1.0 + TOLERANCE) then
-        warning(
-          logger,
-          sformat(
-            "[%d, %d] Comparison failed. " & lf &
-            "Got      %r rect(%s, %s) / polar(%s, %s)" & lf &
-            "Expected %r rect(%s, %s) / polar(%s, %s)",
-            fo(frame_cnt),
-            fo(word_cnt),
-            fo(axi_slave.axi.tdata),
-            real'image(recv_rect.re), real'image(recv_rect.im),
-            real'image(recv_pol.mag), real'image(recv_pol.arg),
-            fo(expected_lendian),
-            real'image(expected_rect.re), real'image(expected_rect.im),
-            real'image(expected_pol.mag), real'image(expected_pol.arg)
-          ));
-        error_cnt := error_cnt + 1;
-      end if;
-    end if;
+    -- if axi_slave.axi.tdata /= expected_lendian then
+    --   if    (recv_pol.mag >= 0.0 xor expected_pol.mag >= 0.0)
+    --      or (recv_pol.arg >= 0.0 xor expected_pol.arg >= 0.0)
+    --      or abs(recv_pol.mag) < abs(expected_pol.mag) * (1.0 - TOLERANCE)
+    --      or abs(recv_pol.mag) > abs(expected_pol.mag) * (1.0 + TOLERANCE)
+    --      or abs(recv_pol.arg) < abs(expected_pol.arg) * (1.0 - TOLERANCE)
+    --      or abs(recv_pol.arg) > abs(expected_pol.arg) * (1.0 + TOLERANCE) then
+    --     warning(
+    --       logger,
+    --       sformat(
+    --         "[%d, %d] Comparison failed. " & lf &
+    --         "Got      %r rect(%s, %s) / polar(%s, %s)" & lf &
+    --         "Expected %r rect(%s, %s) / polar(%s, %s)",
+    --         fo(frame_cnt),
+    --         fo(word_cnt),
+    --         fo(axi_slave.axi.tdata),
+    --         real'image(recv_rect.re), real'image(recv_rect.im),
+    --         real'image(recv_pol.mag), real'image(recv_pol.arg),
+    --         fo(expected_lendian),
+    --         real'image(expected_rect.re), real'image(expected_rect.im),
+    --         real'image(expected_pol.mag), real'image(expected_pol.arg)
+    --       ));
+    --     error_cnt := error_cnt + 1;
+    --   end if;
+    -- end if;
 
-    assert error_cnt < 256 report "Too many errors" severity Failure;
+    -- assert error_cnt < 256 report "Too many errors" severity Failure;
 
     word_cnt := word_cnt + 1;
     if axi_slave.axi.tlast = '1' then

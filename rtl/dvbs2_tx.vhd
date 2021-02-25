@@ -36,7 +36,8 @@ use work.dvb_utils_pkg.all;
 entity dvbs2_tx is
   generic (
     DATA_WIDTH                   : positive := 32;
-    POLYPHASE_FILTER_NUMBER_TAPS : positive := 32
+    POLYPHASE_FILTER_NUMBER_TAPS : positive := 32;
+    POLYPHASE_FILTER_RATE_CHANGE : positive := 2
   );
   port (
     -- Usual ports
@@ -80,6 +81,38 @@ entity dvbs2_tx is
 end dvbs2_tx;
 
 architecture dvbs2_tx of dvbs2_tx is
+
+  -- Need a component to make this work in Yosys
+  component polyphase_filter is
+    generic (
+      NUMBER_TAPS          : integer := 32;
+      DATA_IN_WIDTH        : integer := 16;
+      DATA_OUT_WIDTH       : integer := 16;
+      COEFFICIENT_WIDTH    : integer := 16;
+      RATE_CHANGE          : integer := 8;
+      DECIMATE_INTERPOLATE : integer := 1);
+    port (
+      data_in_aclk            : in std_logic;
+      data_in_aresetn         : in std_logic;
+      data_in_tready          : out std_logic;
+      data_in_tdata           : in std_logic_vector(DATA_IN_WIDTH - 1 downto 0);
+      data_in_tlast           : in std_logic;
+      data_in_tvalid          : in std_logic;
+
+      data_out_aclk           : in std_logic;
+      data_out_aresetn        : in std_logic;
+      data_out_tready         : in std_logic;
+      data_out_tdata          : out std_logic_vector(DATA_OUT_WIDTH - 1 downto 0);
+      data_out_tlast          : out std_logic;
+      data_out_tvalid         : out std_logic;
+
+      coefficients_in_aclk    : in std_logic;
+      coefficients_in_aresetn : in std_logic;
+      coefficients_in_tready  : out std_logic;
+      coefficients_in_tdata   : in std_logic_vector(DATA_OUT_WIDTH - 1 downto 0);
+      coefficients_in_tlast   : in std_logic;
+      coefficients_in_tvalid  : in std_logic);
+    end component;
 
   -----------
   -- Types --
@@ -407,13 +440,13 @@ begin
       m_tdata             => pl_frame.tdata,
       m_tid               => pl_frame.tid);
 
-  polyphase_filter_q : entity work.polyphase_filter
+  polyphase_filter_q : polyphase_filter
     generic map (
       NUMBER_TAPS          => POLYPHASE_FILTER_NUMBER_TAPS,
       DATA_IN_WIDTH        => DATA_WIDTH/2,
       DATA_OUT_WIDTH       => DATA_WIDTH/2,
       COEFFICIENT_WIDTH    => DATA_WIDTH/2,
-      RATE_CHANGE          => 1,
+      RATE_CHANGE          => POLYPHASE_FILTER_RATE_CHANGE,
       DECIMATE_INTERPOLATE => 1) -- 0 => decimate, 1 => interpolate
     port map (
       -- input data interface
@@ -438,13 +471,13 @@ begin
       coefficients_in_tlast   => coefficients_in_tlast,
       coefficients_in_tvalid  => coefficients_in_tvalid);
 
-  polyphase_filter_i : entity work.polyphase_filter
+  polyphase_filter_i : polyphase_filter
     generic map (
       NUMBER_TAPS          => POLYPHASE_FILTER_NUMBER_TAPS,
       DATA_IN_WIDTH        => DATA_WIDTH/2,
       DATA_OUT_WIDTH       => DATA_WIDTH/2,
       COEFFICIENT_WIDTH    => DATA_WIDTH/2,
-      RATE_CHANGE          => 1,
+      RATE_CHANGE          => POLYPHASE_FILTER_RATE_CHANGE,
       DECIMATE_INTERPOLATE => 1) -- 0 => decimate, 1 => interpolate
     port map (
       -- input data interface
@@ -473,7 +506,7 @@ begin
   -- Asynchronous assignments --
   ------------------------------
   rst_n                <= not rst;
-  coefficients_aresetn <= not cfg_coefficients_rst;
+  coefficients_aresetn <= rst_n and not cfg_coefficients_rst;
 
   s_tid <= encode((frame_type    => decode(cfg_frame_type),
                    constellation => decode(cfg_constellation),

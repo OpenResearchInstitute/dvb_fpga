@@ -1,3 +1,5 @@
+read_verilog third_party/polyphase_filter/*.v
+
 ghdl --std=08                                                                  \
   --work=fpga_cores third_party/fpga_cores/src/common_pkg.vhd                  \
                     third_party/fpga_cores/src/synchronizer.vhd                \
