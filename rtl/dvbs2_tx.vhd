@@ -37,7 +37,9 @@ entity dvbs2_tx is
   generic (
     DATA_WIDTH                   : positive := 32;
     POLYPHASE_FILTER_NUMBER_TAPS : positive := 32;
-    POLYPHASE_FILTER_RATE_CHANGE : positive := 2
+    POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
+    C_AXI_ADDR_WIDTH             : positive := 4;
+    C_AXI_DATA_WIDTH             : positive := 32
   );
   port (
     -- Usual ports
@@ -59,10 +61,26 @@ entity dvbs2_tx is
     bit_mapper_ram_wdata    : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
     bit_mapper_ram_rdata    : out std_logic_vector(DATA_WIDTH - 1 downto 0);
     -- Polyphase filter coefficients interface
-    coefficients_in_tready  : out std_logic;
-    coefficients_in_tdata   : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
-    coefficients_in_tlast   : in  std_logic;
-    coefficients_in_tvalid  : in  std_logic;
+    coeffs_axi_awvalid      : in  std_logic;
+    coeffs_axi_awready      : out std_logic;
+    coeffs_axi_awaddr       : in  std_logic_vector(C_AXI_ADDR_WIDTH-1 downto 0);
+    coeffs_axi_awprot       : in  std_logic_vector(2 downto 0);
+    coeffs_axi_wvalid       : in  std_logic;
+    coeffs_axi_wready       : out std_logic;
+    coeffs_axi_wdata        : in  std_logic_vector(C_AXI_DATA_WIDTH-1 downto 0);
+    coeffs_axi_wstrb        : in  std_logic_vector(C_AXI_DATA_WIDTH/8-1 downto 0);
+    coeffs_axi_bvalid       : out std_logic;
+    coeffs_axi_bready       : in  std_logic;
+    coeffs_axi_bresp        : out std_logic_vector(1 downto 0);
+    coeffs_axi_arvalid      : in  std_logic;
+    coeffs_axi_arready      : out std_logic;
+    coeffs_axi_araddr       : in  std_logic_vector(C_AXI_ADDR_WIDTH-1 downto 0);
+    coeffs_axi_arprot       : in  std_logic_vector(2 downto 0);
+    coeffs_axi_rvalid       : out std_logic;
+    coeffs_axi_rready       : in  std_logic;
+    coeffs_axi_rdata        : out std_logic_vector(C_AXI_DATA_WIDTH-1 downto 0);
+    coeffs_axi_rresp        : out std_logic_vector(1 downto 0);
+
     -- Per frame config input
     cfg_constellation       : in  std_logic_vector(CONSTELLATION_WIDTH - 1 downto 0);
     cfg_frame_type          : in  std_logic_vector(FRAME_TYPE_WIDTH - 1 downto 0);
@@ -106,12 +124,27 @@ architecture dvbs2_tx of dvbs2_tx is
       data_out_tlast          : out std_logic;
       data_out_tvalid         : out std_logic;
 
-      coefficients_in_aclk    : in std_logic;
-      coefficients_in_aresetn : in std_logic;
-      coefficients_in_tready  : out std_logic;
-      coefficients_in_tdata   : in std_logic_vector(DATA_OUT_WIDTH - 1 downto 0);
-      coefficients_in_tlast   : in std_logic;
-      coefficients_in_tvalid  : in std_logic);
+      coeffs_axi_aclk         : in std_logic;
+      coeffs_axi_aresetn      : in std_logic;
+      coeffs_axi_awvalid      : in std_logic;
+      coeffs_axi_awready      : out std_logic;
+      coeffs_axi_awaddr       : in std_logic_vector(C_AXI_ADDR_WIDTH-1 downto 0);
+      coeffs_axi_awprot       : in std_logic_vector(2 downto 0);
+      coeffs_axi_wvalid       : in std_logic;
+      coeffs_axi_wready       : out std_logic;
+      coeffs_axi_wdata        : in std_logic_vector(C_AXI_DATA_WIDTH-1 downto 0);
+      coeffs_axi_wstrb        : in std_logic_vector(C_AXI_DATA_WIDTH/8-1 downto 0);
+      coeffs_axi_bvalid       : out std_logic;
+      coeffs_axi_bready       : in std_logic;
+      coeffs_axi_bresp        : out std_logic_vector(1 downto 0);
+      coeffs_axi_arvalid      : in std_logic;
+      coeffs_axi_arready      : out std_logic;
+      coeffs_axi_araddr       : in std_logic_vector(C_AXI_ADDR_WIDTH-1 downto 0);
+      coeffs_axi_arprot       : in std_logic_vector(2 downto 0);
+      coeffs_axi_rvalid       : out std_logic;
+      coeffs_axi_rready       : in std_logic;
+      coeffs_axi_rdata        : out std_logic_vector(C_AXI_DATA_WIDTH-1 downto 0);
+      coeffs_axi_rresp        : out std_logic_vector(1 downto 0));
     end component;
 
   -----------
@@ -464,12 +497,27 @@ begin
       data_out_tlast          => m_tlast_i,
       data_out_tvalid         => m_tvalid_i,
       -- coefficients input interface
-      coefficients_in_aclk    => clk,
-      coefficients_in_aresetn => rst_n,
-      coefficients_in_tready  => coefficients_in_tready,
-      coefficients_in_tdata   => coefficients_in_tdata(DATA_WIDTH/2 - 1 downto 0),
-      coefficients_in_tlast   => coefficients_in_tlast,
-      coefficients_in_tvalid  => coefficients_in_tvalid);
+      coeffs_axi_aclk         => clk,
+      coeffs_axi_aresetn      => rst_n,
+      coeffs_axi_awvalid      => coeffs_axi_awvalid,
+      coeffs_axi_awready      => coeffs_axi_awready,
+      coeffs_axi_awaddr       => coeffs_axi_awaddr,
+      coeffs_axi_awprot       => coeffs_axi_awprot,
+      coeffs_axi_wvalid       => coeffs_axi_wvalid,
+      coeffs_axi_wready       => coeffs_axi_wready,
+      coeffs_axi_wdata        => coeffs_axi_wdata,
+      coeffs_axi_wstrb        => coeffs_axi_wstrb,
+      coeffs_axi_bvalid       => coeffs_axi_bvalid,
+      coeffs_axi_bready       => coeffs_axi_bready,
+      coeffs_axi_bresp        => coeffs_axi_bresp,
+      coeffs_axi_arvalid      => coeffs_axi_arvalid,
+      coeffs_axi_arready      => coeffs_axi_arready,
+      coeffs_axi_araddr       => coeffs_axi_araddr,
+      coeffs_axi_arprot       => coeffs_axi_arprot,
+      coeffs_axi_rvalid       => coeffs_axi_rvalid,
+      coeffs_axi_rready       => coeffs_axi_rready,
+      coeffs_axi_rdata        => coeffs_axi_rdata,
+      coeffs_axi_rresp        => coeffs_axi_rresp);
 
   polyphase_filter_i : polyphase_filter
     generic map (
@@ -495,18 +543,32 @@ begin
       data_out_tlast          => open,
       data_out_tvalid         => open,
       -- coefficients input interface
-      coefficients_in_aclk    => clk,
-      coefficients_in_aresetn => coefficients_aresetn,
-      coefficients_in_tready  => open,
-      coefficients_in_tdata   => coefficients_in_tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2),
-      coefficients_in_tlast   => coefficients_in_tlast,
-      coefficients_in_tvalid  => coefficients_in_tvalid);
+      coeffs_axi_aclk         => clk,
+      coeffs_axi_aresetn      => rst_n,
+      coeffs_axi_awvalid      => coeffs_axi_awvalid,
+      coeffs_axi_awready      => open,
+      coeffs_axi_awaddr       => coeffs_axi_awaddr,
+      coeffs_axi_awprot       => coeffs_axi_awprot,
+      coeffs_axi_wvalid       => coeffs_axi_wvalid,
+      coeffs_axi_wready       => open,
+      coeffs_axi_wdata        => coeffs_axi_wdata,
+      coeffs_axi_wstrb        => coeffs_axi_wstrb,
+      coeffs_axi_bvalid       => open,
+      coeffs_axi_bready       => coeffs_axi_bready,
+      coeffs_axi_bresp        => open,
+      coeffs_axi_arvalid      => coeffs_axi_arvalid,
+      coeffs_axi_arready      => open,
+      coeffs_axi_araddr       => coeffs_axi_araddr,
+      coeffs_axi_arprot       => coeffs_axi_arprot,
+      coeffs_axi_rvalid       => open,
+      coeffs_axi_rready       => coeffs_axi_rready,
+      coeffs_axi_rdata        => open,
+      coeffs_axi_rresp        => open);
 
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
   rst_n                <= not rst;
-  coefficients_aresetn <= rst_n and not cfg_coefficients_rst;
 
   s_tid <= encode((frame_type    => decode(cfg_frame_type),
                    constellation => decode(cfg_constellation),

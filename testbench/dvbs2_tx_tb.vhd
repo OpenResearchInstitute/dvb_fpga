@@ -94,11 +94,25 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
 -- x"244E", x"1F20", x"127B", x"0502", x"FC9D", x"FAFE", x"FD9B", x"007E" ,
 -- x"015B", x"007E", x"FF86", x"FF7A", x"0018", x"0086", x"0057", x"FFE1" );
 
-  constant COEFFS : std_logic_array_t := (
-  x"FFEC", x"0000", x"001A", x"FFFF", x"FFDC", x"0001", x"0034", x"FFFD" ,
-x"FFAF", x"0007", x"0091", x"FFEB", x"FEB5", x"0063", x"056E", x"F26C" ,
-x"9178", x"F26C", x"056E", x"0063", x"FEB5", x"FFEB", x"0091", x"0007" ,
-x"FFAF", x"FFFD", x"0034", x"0001", x"FFDC", x"FFFF", x"001A", x"0000");
+--   constant COEFFS : std_logic_array_t := (
+--   x"FFEC", x"0000", x"001A", x"FFFF", x"FFDC", x"0001", x"0034", x"FFFD" ,
+-- x"FFAF", x"0007", x"0091", x"FFEB", x"FEB5", x"0063", x"056E", x"F26C" ,
+-- x"9178", x"F26C", x"056E", x"0063", x"FEB5", x"FFEB", x"0091", x"0007" ,
+-- x"FFAF", x"FFFD", x"0034", x"0001", x"FFDC", x"FFFF", x"001A", x"0000");
+
+  constant COEFFS : std_logic_array_t := (x"FFFA", x"0001", x"0004", x"FFFB", x"FFFD", x"0006", x"FFFE", x"FFFA", 
+                                          x"0005", x"0001", x"FFF7", x"0003", x"0007", x"FFF7", x"FFFC", x"000A", 
+                                          x"FFFD", x"FFF6", x"0009", x"0003", x"FFF1", x"0006", x"000E", x"FFF0", 
+                                          x"FFF8", x"0015", x"FFFB", x"FFED", x"0014", x"0005", x"FFDE", x"000F", 
+                                          x"0024", x"FFD6", x"FFE8", x"003B", x"FFF6", x"FFC8", x"0041", x"000A", 
+                                          x"FF74", x"0064", x"00E0", x"FEC9", x"FECA", x"02B7", x"017D", x"FA16", 
+                                          x"FE51", x"1412", x"21C2", x"1412", x"FE51", x"FA16", x"017D", x"02B7", 
+                                          x"FECA", x"FEC9", x"00E0", x"0064", x"FF74", x"000A", x"0041", x"FFC8", 
+                                          x"FFF6", x"003B", x"FFE8", x"FFD6", x"0024", x"000F", x"FFDE", x"0005", 
+                                          x"0014", x"FFED", x"FFFB", x"0015", x"FFF8", x"FFF0", x"000E", x"0006", 
+                                          x"FFF1", x"0003", x"0009", x"FFF6", x"FFFD", x"000A", x"FFFC", x"FFF7", 
+                                          x"0007", x"0003", x"FFF7", x"0001", x"0005", x"FFFA", x"FFFE", x"0006", 
+                                          x"FFFD", x"FFFB", x"0004", x"0001", x"FFFA");
 
 
 -- x"FFD8", x"0023", x"0003", x"FFD8", x"0048", x"FFBD", x"FFF6", x"0051" ,
@@ -109,7 +123,9 @@ x"FFAF", x"FFFD", x"0034", x"0001", x"FFDC", x"FFFF", x"001A", x"0000");
 
   constant DATA_WIDTH : integer := 32;
   constant POLYPHASE_FILTER_NUMBER_TAPS : integer := COEFFS'length;
-  constant POLYPHASE_FILTER_RATE_CHANGE : integer := 1;
+  constant POLYPHASE_FILTER_RATE_CHANGE : integer := 2;
+  constant C_AXI_ADDR_WIDTH             : integer := 4;
+  constant C_AXI_DATA_WIDTH             : integer := 32;
 
   type axi_checker_t is record
     axi             : axi_stream_data_bus_t;
@@ -161,7 +177,9 @@ x"FFAF", x"FFFD", x"0034", x"0001", x"FFDC", x"FFFF", x"001A", x"0000");
   signal bit_mapper_ram_wdata    : std_logic_vector(DATA_WIDTH - 1 downto 0);
   signal bit_mapper_ram_rdata    : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
-  signal coefficients_in         : axi_stream_data_bus_t(tdata(DATA_WIDTH - 1 downto 0));
+  signal coeffs_axi_wready       : std_logic;
+  signal coeffs_axi_wvalid       : std_logic;
+  signal coeffs_axi_wdata        : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
   signal dbg_recv                : complex;
   signal dbg_expected            : complex;
@@ -239,10 +257,25 @@ begin
       bit_mapper_ram_wdata    => bit_mapper_ram_wdata,
       bit_mapper_ram_rdata    => bit_mapper_ram_rdata,
       -- Polyphase filter coefficients interface
-      coefficients_in_tready  => coefficients_in.tready,
-      coefficients_in_tdata   => coefficients_in.tdata,
-      coefficients_in_tlast   => coefficients_in.tlast,
-      coefficients_in_tvalid  => coefficients_in.tvalid,
+      coeffs_axi_awvalid      => '0',
+      coeffs_axi_awready      => open,
+      coeffs_axi_awaddr       => (others => '0'),
+      coeffs_axi_awprot       => (others => '0'),
+      coeffs_axi_wvalid       => coeffs_axi_wvalid,
+      coeffs_axi_wready       => coeffs_axi_wready,
+      coeffs_axi_wdata        => coeffs_axi_wdata,
+      coeffs_axi_wstrb        => (others => '0'),
+      coeffs_axi_bvalid       => open,
+      coeffs_axi_bready       => '0',
+      coeffs_axi_bresp        => open,
+      coeffs_axi_arvalid      => '0',
+      coeffs_axi_arready      => open,
+      coeffs_axi_araddr       => (others => '0'),
+      coeffs_axi_arprot       => (others => '0'),
+      coeffs_axi_rvalid       => open,
+      coeffs_axi_rready       => '0',
+      coeffs_axi_rdata        => open,
+      coeffs_axi_rresp        => open,
       -- AXI input
       cfg_constellation       => encode(cfg_constellation),
       cfg_frame_type          => encode(cfg_frame_type),
@@ -541,16 +574,13 @@ begin
       walk(16);
 
       for i in c'range loop
-        coefficients_in.tvalid <= '1';
-        coefficients_in.tdata  <= c(i) & c(i);
-        coefficients_in.tlast  <= '0';
-        if i = c'length then
-          coefficients_in.tlast  <= '1';
-        end if;
-        wait until coefficients_in.tvalid = '1' and coefficients_in.tready = '1' and rising_edge(clk);
-        coefficients_in.tvalid <= '0';
-        coefficients_in.tlast  <= '0';
-        coefficients_in.tdata  <= (others => 'U');
+        coeffs_axi_wvalid <= '1';
+        coeffs_axi_wdata  <= c(i) & c(i);
+        wait until coeffs_axi_wvalid = '1' and coeffs_axi_wready = '1' and rising_edge(clk);
+        coeffs_axi_wvalid <= '0';
+        coeffs_axi_wdata  <= (others => 'U');
+        wait until rising_edge(clk);
+        wait until rising_edge(clk);
       end loop;
     end procedure;
 
@@ -615,7 +645,7 @@ begin
     -- show(get_logger("input_stream"), display_handler, (trace, debug), True);
 
     bit_mapper_ram_wren    <= '0';
-    coefficients_in.tvalid <= '0';
+    coeffs_axi_wvalid      <= '0';
     cfg_coefficients_rst   <= '0';
 
     while test_suite loop
