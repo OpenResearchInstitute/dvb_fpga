@@ -115,7 +115,7 @@ module multiply_accumulate_behavioural #
 
     // output the trimmed and full precision outputs
     assign carry_out = mac_value;
-    assign data_out = mac_value[2*DATA_WIDTH-2-1+:DATA_WIDTH];
+    assign data_out = mac_value[2*DATA_WIDTH-2-1:DATA_WIDTH-2];
 
 
     // used to create the GTKwave dump file
