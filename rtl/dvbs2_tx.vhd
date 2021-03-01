@@ -61,6 +61,8 @@ entity dvbs2_tx is
     bit_mapper_ram_wdata    : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
     bit_mapper_ram_rdata    : out std_logic_vector(DATA_WIDTH - 1 downto 0);
     -- Polyphase filter coefficients interface
+    coeffs_axi_aclk         : in  std_logic;
+    coeffs_axi_aresetn      : in  std_logic;
     coeffs_axi_awvalid      : in  std_logic;
     coeffs_axi_awready      : out std_logic;
     coeffs_axi_awaddr       : in  std_logic_vector(C_AXI_ADDR_WIDTH-1 downto 0);
@@ -497,8 +499,8 @@ begin
       data_out_tlast          => m_tlast_i,
       data_out_tvalid         => m_tvalid_i,
       -- coefficients input interface
-      coeffs_axi_aclk         => clk,
-      coeffs_axi_aresetn      => rst_n,
+      coeffs_axi_aclk         => coeffs_axi_aclk,
+      coeffs_axi_aresetn      => coeffs_axi_aresetn,
       coeffs_axi_awvalid      => coeffs_axi_awvalid,
       coeffs_axi_awready      => coeffs_axi_awready,
       coeffs_axi_awaddr       => coeffs_axi_awaddr,
@@ -543,8 +545,8 @@ begin
       data_out_tlast          => open,
       data_out_tvalid         => open,
       -- coefficients input interface
-      coeffs_axi_aclk         => clk,
-      coeffs_axi_aresetn      => rst_n,
+      coeffs_axi_aclk         => coeffs_axi_aclk,
+      coeffs_axi_aresetn      => coeffs_axi_aresetn,
       coeffs_axi_awvalid      => coeffs_axi_awvalid,
       coeffs_axi_awready      => open,
       coeffs_axi_awaddr       => coeffs_axi_awaddr,

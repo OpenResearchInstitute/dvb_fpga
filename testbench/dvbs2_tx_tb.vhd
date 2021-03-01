@@ -257,6 +257,8 @@ begin
       bit_mapper_ram_wdata    => bit_mapper_ram_wdata,
       bit_mapper_ram_rdata    => bit_mapper_ram_rdata,
       -- Polyphase filter coefficients interface
+      coeffs_axi_aclk         => clk,
+      coeffs_axi_aresetn      => not rst,
       coeffs_axi_awvalid      => '0',
       coeffs_axi_awready      => open,
       coeffs_axi_awaddr       => (others => '0'),
