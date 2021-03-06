@@ -13,7 +13,7 @@ module polyphase_filter #(
     parameter integer COEFFICIENT_WIDTH         = 16,
     parameter integer RATE_CHANGE               = 8,
     parameter integer DECIMATE_INTERPOLATE      = 1, // 0 = decimate, 1 = interpolate
-    parameter integer C_AXI_ADDR_WIDTH          = 4,
+    parameter integer C_AXI_ADDR_WIDTH          = 32,
     parameter integer C_AXI_DATA_WIDTH          = 32,
     parameter [0:0]   OPT_SKIDBUFFER            = 1'b0,
     parameter [0:0]   OPT_LOWPOWER              = 0,

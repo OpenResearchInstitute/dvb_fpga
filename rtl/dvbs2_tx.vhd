@@ -38,7 +38,7 @@ entity dvbs2_tx is
     DATA_WIDTH                   : positive := 32;
     POLYPHASE_FILTER_NUMBER_TAPS : positive := 32;
     POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
-    C_AXI_ADDR_WIDTH             : positive := 4;
+    C_AXI_ADDR_WIDTH             : positive := 32;
     C_AXI_DATA_WIDTH             : positive := 32
   );
   port (
