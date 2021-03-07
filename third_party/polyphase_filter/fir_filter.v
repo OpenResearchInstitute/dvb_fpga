@@ -32,28 +32,9 @@ module fir_filter #
     output wire 							data_out_tvalid,
 
     // coeffs input interface
-    input  wire								coeffs_axi_aclk,
-    input  wire								coeffs_axi_aresetn,
-    input  wire								coeffs_axi_awvalid,
-    output wire								coeffs_axi_awready,
-    input  wire [C_AXI_ADDR_WIDTH-1:0]		coeffs_axi_awaddr,
-    input  wire [2:0]						coeffs_axi_awprot,
-    input  wire								coeffs_axi_wvalid,
-    output wire								coeffs_axi_wready,
-    input  wire [C_AXI_DATA_WIDTH-1:0]		coeffs_axi_wdata,
-    input  wire [C_AXI_DATA_WIDTH/8-1:0]	coeffs_axi_wstrb,
-    // output reg								coeffs_axi_bvalid,
-    output wire 							coeffs_axi_bvalid,
-    input  wire								coeffs_axi_bready,
-    output wire [1:0]						coeffs_axi_bresp,
-    input  wire								coeffs_axi_arvalid,
-    output wire								coeffs_axi_arready,
-    input  wire [C_AXI_ADDR_WIDTH-1:0]		coeffs_axi_araddr,
-    input  wire [2:0]						coeffs_axi_arprot,
-    output wire								coeffs_axi_rvalid,
-    input  wire								coeffs_axi_rready,
-    output wire [C_AXI_DATA_WIDTH-1:0]		coeffs_axi_rdata,
-    output wire [1:0]						coeffs_axi_rresp,
+    input  wire                             coeffs_wren,
+    input  wire [$clog2(NUMBER_TAPS)-1:0]	coeffs_addr,
+    input  wire [COEFFICIENT_WIDTH-1:0]	    coeffs_wdata,
 
     // flags
     output  wire							samples_remaining
@@ -81,10 +62,7 @@ module fir_filter #
     wire [CARRY_WIDTH-1:0] 			calc_carry [CARRY_LENGTH-1:0];
 
     // coeffient signals
-    wire 							coefficient_reset;
-    wire [COEFFICIENT_WIDTH-1:0]	coefficient_in;
-    reg [$clog2(NUMBER_TAPS)-1:0]	coefficient_index;
-    reg [NUMBER_TAPS-1:0] 			coefficient_load_en;
+    wire [NUMBER_TAPS-1:0] 			coefficient_load_en;
 
     // filter delay lines
     reg [FILTER_DELAY-1:0]			tvalid_delay_line;
@@ -123,7 +101,7 @@ module fir_filter #
     assign data_out_tlast = tlast_delay_line[TLAST_DELAY-1];
 
     // create delay lines for the valid and last signals
-    //  TODO I'm not happy with this yet as it will not clear if the number of valid inputs is 
+    //  TODO I'm not happy with this yet as it will not clear if the number of valid inputs is
     //       less than the delay line width.  Ideally this should be fixed
     assign filter_data_in = tlast_latch ? 0 : data_in_tdata;
 
@@ -153,7 +131,7 @@ module fir_filter #
         end
         else begin
 
-            // we need to clear out remaining samples within the delay line			
+            // we need to clear out remaining samples within the delay line
             if (tlast_latch & empty_remaining) begin
                 tlast_clear_count <= tlast_clear_count + 1;
                 tvalid_delay_line <= {tvalid_delay_line[FILTER_DELAY-2:0], 1'b1};
@@ -181,42 +159,15 @@ module fir_filter #
 
     //// create the coefficient loading signals
 
-    // TODO: For now assume that coeffs AXI interface is clocked
+    // TODO: For now assume that coeffs interface is clocked
     // 		 at the same rate as the DSP48E1.  This will need to change
-    //		 for serial/parallel implementation where we will want to 
+    //		 for serial/parallel implementation where we will want to
     //		 clock the DSP48E1 at a much higher rate.  Need to figure out
     //		 the best way to clock in at a lower rate possibly with the
     //		 interaction between the coefficient bus clock and register A
-    //		 clock enable. 
+    //		 clock enable.
 
-    // allow the AXI interface to reset the loaded coeffs
-    assign coefficient_reset = !coeffs_axi_aresetn; 
-
-    // coeffs always ready - maybe not a good idea?
-    assign coeffs_axi_wready = 1;
-
-    // map the input coeffs to the instance
-    assign coefficient_in = coeffs_axi_wdata[COEFFICIENT_WIDTH-1:0];
-
-    // increment the coefficient index if a coefficient has been loaded
-    always @(posedge clock) begin
-        if (coefficient_reset) begin
-            coefficient_index <= 0;
-        end
-        else begin
-            if (coeffs_axi_wvalid & coeffs_axi_wready) begin
-                coefficient_index <= coefficient_index + 1;
-            end
-        end
-    end
-
-    // create coefficient load enable signals
-    integer i=0;
-    always @* begin
-        for (i=0; i < NUMBER_TAPS; i=i+1) begin
-            coefficient_load_en[i] = (coefficient_index == i & coeffs_axi_wvalid) ? 1: 0;
-        end
-    end
+    assign coefficient_load_en = coeffs_wren << coeffs_addr;
 
     // shift the clock enable signal
     always @(posedge clock) begin
@@ -246,98 +197,84 @@ module fir_filter #
 
             if (index==0) begin
                 multiply_accumulate_behavioural #(
-                    .DATA_WIDTH(DATA_IN_WIDTH),
-                    .COEFFICIENT_WIDTH(COEFFICIENT_WIDTH),
-                    .CARRY_WIDTH(CARRY_WIDTH),
-                    .OUTPUT_OFFSET(FIR_OFFSET),
-                    .DATA_IN_NUMBER_REGS(1),
-                    .COEFFICIENTS_NUMBER_REGS(2),
-                    .USE_SILICON_CARRY(1),
-                    .FIRST_IN_CHAIN(1),
-                    .LAST_IN_CHAIN(0)
+                    .DATA_WIDTH               (DATA_IN_WIDTH),
+                    .COEFFICIENT_WIDTH        (COEFFICIENT_WIDTH),
+                    .CARRY_WIDTH              (CARRY_WIDTH),
+                    .OUTPUT_OFFSET            (FIR_OFFSET),
+                    .DATA_IN_NUMBER_REGS      (1),
+                    .COEFFICIENTS_NUMBER_REGS (2),
+                    .USE_SILICON_CARRY        (1),
+                    .FIRST_IN_CHAIN           (1),
+                    .LAST_IN_CHAIN            (0)
                 ) mac_inst (
-                    .clock(clock),
-                    .reset(reset),
-                    .data_in(filter_data_in),
-                    .coefficient_in(coefficient_in),
-                    .carry_in({CARRY_WIDTH{1'b0}}),
-                    .carry_out(calc_carry[index]),
-                    .data_carry(data_carry[index]),
-                    .data_out(),
-                    .ce_calculate((data_in_tvalid & data_in_tready & data_in_tvalid) | empty_remaining),
-                    .ce_coefficient(coefficient_load_en[index]),
-                    .reset_coefficient(coefficient_reset),
-                    .op_mode(7'b0000101),
-                    .in_mode(5'b00001)
+                    .clock             (clock),
+                    .reset             (reset),
+                    .data_in           (filter_data_in),
+                    .coefficient_in    (coeffs_wdata),
+                    .carry_in          ({CARRY_WIDTH{1'b0}}),
+                    .carry_out         (calc_carry[index]),
+                    .data_carry        (data_carry[index]),
+                    .data_out          (),
+                    .ce_calculate      ((data_in_tvalid & data_in_tready & data_in_tvalid) | empty_remaining),
+                    .ce_coefficient    (coefficient_load_en[index]),
+                    .op_mode           (7'b0000101),
+                    .in_mode           (5'b00001)
                 );
             end
             else if (index==NUMBER_TAPS-1) begin
                 multiply_accumulate_behavioural #(
-                    .DATA_WIDTH(DATA_IN_WIDTH),
-                    .COEFFICIENT_WIDTH(COEFFICIENT_WIDTH),
-                    .CARRY_WIDTH(CARRY_WIDTH),
-                    .OUTPUT_OFFSET(FIR_OFFSET),
-                    .DATA_IN_NUMBER_REGS(2),
-                    .COEFFICIENTS_NUMBER_REGS(2),
-                    .USE_SILICON_CARRY(1),
-                    .FIRST_IN_CHAIN(0),
-                    .LAST_IN_CHAIN(1)
+                    .DATA_WIDTH               (DATA_IN_WIDTH),
+                    .COEFFICIENT_WIDTH        (COEFFICIENT_WIDTH),
+                    .CARRY_WIDTH              (CARRY_WIDTH),
+                    .OUTPUT_OFFSET            (FIR_OFFSET),
+                    .DATA_IN_NUMBER_REGS      (2),
+                    .COEFFICIENTS_NUMBER_REGS (2),
+                    .USE_SILICON_CARRY        (1),
+                    .FIRST_IN_CHAIN           (0),
+                    .LAST_IN_CHAIN            (1)
                 ) mac_inst (
-                    .clock(clock),
-                    .reset(reset),
-                    .data_in(data_carry[index-1]),
-                    .coefficient_in(coefficient_in),
-                    .carry_in(calc_carry[index-1]),
-                    .carry_out(),
-                    .data_carry(data_carry[index]),
-                    .data_out(data_out),
-                    .ce_calculate((tvalid_delay_line[index-1] & data_in_tready & data_in_tvalid) | empty_remaining),
-                    .ce_coefficient(coefficient_load_en[index]),
-                    .reset_coefficient(coefficient_reset),
-                    .op_mode(7'b0010101),
-                    .in_mode(5'b00001)
+                    .clock             (clock),
+                    .reset             (reset),
+                    .data_in           (data_carry[index-1]),
+                    .coefficient_in    (coeffs_wdata),
+                    .carry_in          (calc_carry[index-1]),
+                    .carry_out         (),
+                    .data_carry        (data_carry[index]),
+                    .data_out          (data_out),
+                    .ce_calculate      ((tvalid_delay_line[index-1] & data_in_tready & data_in_tvalid) | empty_remaining),
+                    .ce_coefficient    (coefficient_load_en[index]),
+                    .op_mode           (7'b0010101),
+                    .in_mode           (5'b00001)
                 );
             end
             else begin
                 multiply_accumulate_behavioural #(
-                    .DATA_WIDTH(DATA_IN_WIDTH),
-                    .COEFFICIENT_WIDTH(COEFFICIENT_WIDTH),
-                    .CARRY_WIDTH(CARRY_WIDTH),
-                    .OUTPUT_OFFSET(FIR_OFFSET),
-                    .DATA_IN_NUMBER_REGS(2),
-                    .COEFFICIENTS_NUMBER_REGS(2),
-                    .USE_SILICON_CARRY(1),
-                    .FIRST_IN_CHAIN(0),
-                    .LAST_IN_CHAIN(0)
+                    .DATA_WIDTH               (DATA_IN_WIDTH),
+                    .COEFFICIENT_WIDTH        (COEFFICIENT_WIDTH),
+                    .CARRY_WIDTH              (CARRY_WIDTH),
+                    .OUTPUT_OFFSET            (FIR_OFFSET),
+                    .DATA_IN_NUMBER_REGS      (2),
+                    .COEFFICIENTS_NUMBER_REGS (2),
+                    .USE_SILICON_CARRY        (1),
+                    .FIRST_IN_CHAIN           (0),
+                    .LAST_IN_CHAIN            (0)
                 ) mac_inst (
-                    .clock(clock),
-                    .reset(reset),
-                    .data_in(data_carry[index-1]),
-                    .coefficient_in(coefficient_in),
-                    .carry_in(calc_carry[index-1]),
-                    .carry_out(calc_carry[index]),
-                    .data_carry(data_carry[index]),
-                    .data_out(),
-                    .ce_calculate((tvalid_delay_line[index-1] & data_in_tready & data_in_tvalid) | empty_remaining),
-                    .ce_coefficient(coefficient_load_en[index]),
-                    .reset_coefficient(coefficient_reset),
-                    .op_mode(7'b0010101),
-                    .in_mode(5'b00001)
+                    .clock             (clock),
+                    .reset             (reset),
+                    .data_in           (data_carry[index-1]),
+                    .coefficient_in    (coeffs_wdata),
+                    .carry_in          (calc_carry[index-1]),
+                    .carry_out         (calc_carry[index]),
+                    .data_carry        (data_carry[index]),
+                    .data_out          (),
+                    .ce_calculate      ((tvalid_delay_line[index-1] & data_in_tready & data_in_tvalid) | empty_remaining),
+                    .ce_coefficient    (coefficient_load_en[index]),
+                    .op_mode           (7'b0010101),
+                    .in_mode           (5'b00001)
                 );
             end
         end
     endgenerate
-
-    // terminate AXI signals
-    assign coeffs_axi_bresp = 2'b00;
-    assign coeffs_axi_rresp = 2'b00;
-
-    assign coeffs_axi_bvalid    = 1'b1;
-    assign coeffs_axi_awready   = 1'b1;
-    assign coeffs_axi_rvalid    = 1'b0;
-    assign coeffs_axi_arready   = 1'b1;
-    assign coeffs_axi_rdata     = {C_AXI_DATA_WIDTH{1'b0}};
-
 
     // used to create the GTKwave dump file
     `ifdef COCOTB_SIM

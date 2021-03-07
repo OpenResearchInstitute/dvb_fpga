@@ -33,7 +33,6 @@ module multiply_accumulate_behavioural #
     // control signals
     input wire                          ce_calculate,
     input wire                          ce_coefficient,
-    input wire                          reset_coefficient,
     input wire [6:0]                    op_mode,
     input wire [4:0]                    in_mode
 );
@@ -43,19 +42,9 @@ module multiply_accumulate_behavioural #
 
     // store the coefficient
     always @(posedge clock) begin
-        if (reset_coefficient) begin
-            coefficient_register <= 0;
-        end
-        else begin
-            if (reset_coefficient) begin
-                coefficient_register <= 0;
-            end
-            else if (ce_coefficient) begin
-                coefficient_register <= coefficient_in;
-            end
-            else begin
-                coefficient_register <= coefficient_register;
-            end
+        if (ce_coefficient) begin
+            $display("[%t] %m: Updating coefficient to %x", $time, coefficient_in);
+            coefficient_register <= coefficient_in;
         end
     end
 

@@ -37,27 +37,9 @@ module polyphase_filter #(
     output wire                             data_out_tvalid,
 
     // coeffs input interface
-    input  wire                             coeffs_axi_aclk,
-    input  wire                             coeffs_axi_aresetn,
-    input  wire                             coeffs_axi_awvalid,
-    output wire                             coeffs_axi_awready,
-    input  wire [C_AXI_ADDR_WIDTH-1:0]      coeffs_axi_awaddr,
-    input  wire [2:0]                       coeffs_axi_awprot,
-    input  wire                             coeffs_axi_wvalid,
-    output wire                             coeffs_axi_wready,
-    input  wire [C_AXI_DATA_WIDTH-1:0]      coeffs_axi_wdata,
-    input  wire [C_AXI_DATA_WIDTH/8-1:0]    coeffs_axi_wstrb,
-    output wire                             coeffs_axi_bvalid,
-    input  wire                             coeffs_axi_bready,
-    output wire [1:0]                       coeffs_axi_bresp,
-    input  wire                             coeffs_axi_arvalid,
-    output wire                             coeffs_axi_arready,
-    input  wire [C_AXI_ADDR_WIDTH-1:0]      coeffs_axi_araddr,
-    input  wire [2:0]                       coeffs_axi_arprot,
-    output wire                             coeffs_axi_rvalid,
-    input  wire                             coeffs_axi_rready,
-    output wire [C_AXI_DATA_WIDTH-1:0]      coeffs_axi_rdata,
-    output wire [1:0]                       coeffs_axi_rresp
+    input  wire                             coeffs_wren,
+    input  wire [$clog2(NUMBER_TAPS)-1:0]	coeffs_addr,
+    input  wire [COEFFICIENT_WIDTH-1:0]	    coeffs_wdata
 );
 
     // internal parameters
@@ -92,9 +74,6 @@ module polyphase_filter #(
     wire [RATE_CHANGE-1:0]              data_out_tready_array;
     wire [RATE_CHANGE-1:0]              data_out_tvalid_array;
     wire [RATE_CHANGE-1:0]              data_out_tlast_array;
-    wire [RATE_CHANGE-1:0]              coeffs_axi_wready_array;
-    reg [RATE_CHANGE-1:0]               coeffs_axi_wvalid_array;
-    wire [RATE_CHANGE-1:0]              coeffs_axi_tlast_array;
 
     wire [RATE_CHANGE-1:0]              samples_remaining_array;
 
@@ -104,30 +83,6 @@ module polyphase_filter #(
 
     // flip the logic of the reset signal
     assign reset = !data_in_aresetn | (data_out_tlast & data_out_tvalid & data_out_tready);
-
-
-    ////// Control logic to load the coeffs into the FIR filters
-
-    // coeffs are always ready
-    //  however the module should be reset before coeffs are reloaded
-    assign coeffs_axi_wready = &coeffs_axi_wready_array;
-
-    // count how much of the filter has been filled and create signals for loading
-    always @(posedge clock) begin
-        if (reset | data_out_tlast | !coeffs_axi_aresetn) begin
-            coeffs_axi_wvalid_array <= 1;
-        end
-        else begin
-            // valid inputs, shift the register
-            if (coeffs_axi_wvalid & coeffs_axi_wready) begin
-                coeffs_axi_wvalid_array <= {coeffs_axi_wvalid_array[RATE_CHANGE-2:0], coeffs_axi_wvalid_array[RATE_CHANGE-1]};
-            end
-            else begin
-                coeffs_axi_wvalid_array <= coeffs_axi_wvalid_array;
-            end
-        end
-    end
-
 
 
     ////// Control logic to arrange data into and out of the FIR filter stages
@@ -143,7 +98,7 @@ module polyphase_filter #(
 
             // map signals to each of the filter sections
             for (i = 0; i < RATE_CHANGE; i = i + 1) begin
-                
+
                 // register the input data
                 always @(posedge clock) begin
                     if(reset) begin
@@ -209,7 +164,7 @@ module polyphase_filter #(
                 else begin
 
                     // increment the phase counter if the input is valid, ready and the output is ready or if we're trying to clear
-                    //   samples out at the end 
+                    //   samples out at the end
                     if ((data_in_tvalid & data_out_tready & (|data_in_tready_array)) | (data_out_tready & data_in_tlast_latched)) begin
                         phase_counter <= (phase_counter + 1) % RATE_CHANGE;
                     end
@@ -242,6 +197,9 @@ module polyphase_filter #(
         end
     endgenerate
 
+    wire [$clog2(RATE_CHANGE)-1:0] target_fir = coeffs_addr[$clog2(RATE_CHANGE)-1:0];
+    wire [$clog2(SUB_LENGTH)-1:0] fir_addr = coeffs_addr[$clog2(NUMBER_TAPS)-1:$clog2(NUMBER_TAPS)-$clog2(SUB_LENGTH)];
+
 
     // create the parallel FIR filters
     genvar dsp_array;
@@ -250,46 +208,29 @@ module polyphase_filter #(
         begin : fir_filter
 
             fir_filter #(
-                .NUMBER_TAPS(SUB_LENGTH),
-                .DATA_IN_WIDTH(DATA_IN_WIDTH),
-                .COEFFICIENT_WIDTH(COEFFICIENT_WIDTH),
-                .DATA_OUT_WIDTH(DATA_OUT_WIDTH)
+                .NUMBER_TAPS       (SUB_LENGTH),
+                .DATA_IN_WIDTH     (DATA_IN_WIDTH),
+                .COEFFICIENT_WIDTH (COEFFICIENT_WIDTH),
+                .DATA_OUT_WIDTH    (DATA_OUT_WIDTH)
             ) fir_filter_inst (
-                .data_in_aclk(data_in_aclk),
-                .data_in_aresetn(data_in_aresetn & !reset),
-                .data_in_tready(data_in_tready_array[dsp_array]),
-                .data_in_tdata(data_in_tdata_array[dsp_array]),
-                .data_in_tlast(data_in_tlast_array[dsp_array]),
-                .data_in_tvalid(data_in_tvalid_array[dsp_array]),
-                .data_out_aclk(data_out_aclk),
-                .data_out_aresetn(data_out_aresetn),
-                .data_out_tready(data_out_tready_array[dsp_array]),
-                .data_out_tdata(data_out_tdata_array[dsp_array]),
-                .data_out_tlast(data_out_tlast_array[dsp_array]),
-                .data_out_tvalid(data_out_tvalid_array[dsp_array]),
-                .coeffs_axi_aclk(coeffs_axi_aclk),
-                .coeffs_axi_aresetn(coeffs_axi_aresetn),
-                .coeffs_axi_awvalid(coeffs_axi_awvalid),
-                .coeffs_axi_awready(coeffs_axi_awready),
-                .coeffs_axi_awaddr(coeffs_axi_awaddr),
-                .coeffs_axi_awprot(coeffs_axi_awprot),
-                .coeffs_axi_wvalid(coeffs_axi_wvalid_array[dsp_array] & coeffs_axi_wvalid),
-                .coeffs_axi_wready(coeffs_axi_wready_array[dsp_array]),
-                .coeffs_axi_wdata(coeffs_axi_wdata),
-                .coeffs_axi_wstrb(coeffs_axi_wstrb),
-                .coeffs_axi_bvalid(coeffs_axi_bvalid),
-                .coeffs_axi_bready(coeffs_axi_bready),
-                .coeffs_axi_bresp(coeffs_axi_bresp),
-                .coeffs_axi_arvalid(coeffs_axi_arvalid),
-                .coeffs_axi_arready(coeffs_axi_arready),
-                .coeffs_axi_araddr(coeffs_axi_araddr),
-                .coeffs_axi_arprot(coeffs_axi_arprot),
-                .coeffs_axi_rvalid(coeffs_axi_rvalid),
-                .coeffs_axi_rready(coeffs_axi_rready),
-                .coeffs_axi_rdata(coeffs_axi_rdata),
-                .coeffs_axi_rresp(coeffs_axi_rresp),
-                .samples_remaining(samples_remaining_array[dsp_array])
-            );
+                .data_in_aclk     (data_in_aclk),
+                .data_in_aresetn  (data_in_aresetn & !reset),
+                .data_in_tready   (data_in_tready_array[dsp_array]),
+                .data_in_tdata    (data_in_tdata_array[dsp_array]),
+                .data_in_tlast    (data_in_tlast_array[dsp_array]),
+                .data_in_tvalid   (data_in_tvalid_array[dsp_array]),
+                .data_out_aclk    (data_out_aclk),
+                .data_out_aresetn (data_out_aresetn),
+                .data_out_tready  (data_out_tready_array[dsp_array]),
+                .data_out_tdata   (data_out_tdata_array[dsp_array]),
+                .data_out_tlast   (data_out_tlast_array[dsp_array]),
+                .data_out_tvalid  (data_out_tvalid_array[dsp_array]),
+                //
+                .samples_remaining(),
+                // Upper bits address the coefficient. Lower bits address FIR instance
+                .coeffs_wren      (target_fir == dsp_array ? coeffs_wren : 1'b0),
+                .coeffs_addr      (fir_addr),
+                .coeffs_wdata     (coeffs_wdata));
         end
     endgenerate
 

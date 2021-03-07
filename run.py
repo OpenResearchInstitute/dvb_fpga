@@ -656,6 +656,7 @@ def setupSources(vunit):
     library.add_source_files(p.join(ROOT, "rtl", "*.vhd"))
     library.add_source_files(p.join(ROOT, "rtl", "ldpc", "*.vhd"))
     library.add_source_files(p.join(ROOT, "rtl", "bch_generated", "*.vhd"))
+    library.add_source_files(p.join(ROOT, "rtl", "register_map", "*.vhd"))
     library.add_source_files(p.join(ROOT, "testbench", "*.vhd"))
     library.add_source_files(p.join(ROOT, "third_party", "polyphase_filter", "*.v"))
 
