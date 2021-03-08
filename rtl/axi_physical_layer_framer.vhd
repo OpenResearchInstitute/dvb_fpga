@@ -265,9 +265,9 @@ begin
   s_tready        <= s_tready_i;
   s_tvalid_header <= s_tvalid and s_first_word;
 
+  -- Suppress tlast from plframe header and let s_tlast pass through
   plframe.tlast   <= arbiter_tlast and selected(1);
 
-  -- Suppress tlast from plframe header and let s_tlast pass through
   m_tlast  <= m_tlast_i and m_tvalid_i;
   m_tvalid <= m_tvalid_i;
 

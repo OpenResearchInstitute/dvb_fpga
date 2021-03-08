@@ -157,6 +157,7 @@ architecture dvbs2_tx of dvbs2_tx is
   signal arbiter_out          : data_and_config_t(tdata(7 downto 0));
   signal constellation_mapper : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
   signal pl_frame             : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
+  signal polyphase_filter_in  : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
 
   -- User signals  :
   signal user2regs : user2regs_t;
@@ -446,6 +447,37 @@ begin
       m_tdata             => pl_frame.tdata,
       m_tid               => pl_frame.tid);
 
+  plframe_delay_block : block
+    signal tdata_agg_in  : std_logic_vector(ENCODED_CONFIG_WIDTH + DATA_WIDTH downto 0);
+    signal tdata_agg_out : std_logic_vector(ENCODED_CONFIG_WIDTH + DATA_WIDTH downto 0);
+  begin
+    input_delay_u : entity fpga_cores.axi_stream_delay
+      generic map (
+        DELAY_CYCLES => 1,
+        TDATA_WIDTH  => tdata_agg_in'length)
+      port map (
+        -- Usual ports
+        clk     => clk,
+        rst     => rst,
+
+        -- AXI slave input
+        s_tvalid => pl_frame.tvalid,
+        s_tready => pl_frame.tready,
+        s_tdata  => tdata_agg_in,
+
+        -- AXI master output
+        m_tvalid => polyphase_filter_in.tvalid,
+        m_tready => polyphase_filter_in.tready,
+        m_tdata  => tdata_agg_out);
+
+      tdata_agg_in              <= pl_frame.tlast & pl_frame.tid & pl_frame.tdata;
+      polyphase_filter_in.tdata <= tdata_agg_out(DATA_WIDTH - 1 downto 0);
+      polyphase_filter_in.tid   <= tdata_agg_out(ENCODED_CONFIG_WIDTH + DATA_WIDTH - 1 downto DATA_WIDTH);
+      polyphase_filter_in.tlast <= tdata_agg_out(ENCODED_CONFIG_WIDTH + DATA_WIDTH);
+
+    end block;
+
+
   polyphase_filter_q : polyphase_filter
     generic map (
       NUMBER_TAPS          => POLYPHASE_FILTER_NUMBER_TAPS,
@@ -458,10 +490,10 @@ begin
       -- input data interface
       data_in_aclk            => clk,
       data_in_aresetn         => rst_n,
-      data_in_tready          => pl_frame.tready,
-      data_in_tdata           => pl_frame.tdata(DATA_WIDTH/2 - 1 downto 0),
-      data_in_tlast           => pl_frame.tlast ,
-      data_in_tvalid          => pl_frame.tvalid,
+      data_in_tready          => polyphase_filter_in.tready,
+      data_in_tdata           => polyphase_filter_in.tdata(DATA_WIDTH/2 - 1 downto 0),
+      data_in_tlast           => polyphase_filter_in.tlast ,
+      data_in_tvalid          => polyphase_filter_in.tvalid,
       -- output data interface
       data_out_aclk           => clk,
       data_out_aresetn        => rst_n,
@@ -487,9 +519,9 @@ begin
       data_in_aclk            => clk,
       data_in_aresetn         => rst_n,
       data_in_tready          => open,
-      data_in_tdata           => pl_frame.tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2),
-      data_in_tlast           => pl_frame.tlast ,
-      data_in_tvalid          => pl_frame.tvalid,
+      data_in_tdata           => polyphase_filter_in.tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2),
+      data_in_tlast           => polyphase_filter_in.tlast ,
+      data_in_tvalid          => polyphase_filter_in.tvalid,
       -- output data interface
       data_out_aclk           => clk,
       data_out_aresetn        => rst_n,
