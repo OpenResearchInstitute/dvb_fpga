@@ -402,7 +402,7 @@ begin
       rst               => rst,
       -- Mapping RAM config
       ram_wren          => or(regs2user.bit_mapper_ram_wen),
-      ram_addr          => regs2user.bit_mapper_ram_addr(7 downto 2), -- register map addresses bytes
+      ram_addr          => regs2user.bit_mapper_ram_addr(5 downto 0), -- register map addresses bytes
       ram_wdata         => regs2user.bit_mapper_ram_wdata,
       ram_rdata         => user2regs.bit_mapper_ram_rdata,
       -- Per frame config input

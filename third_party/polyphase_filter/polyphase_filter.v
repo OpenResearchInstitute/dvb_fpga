@@ -197,9 +197,9 @@ module polyphase_filter #(
         end
     endgenerate
 
-    wire [$clog2(RATE_CHANGE)-1:0] target_fir = coeffs_addr[$clog2(RATE_CHANGE)-1:0];
-    wire [$clog2(SUB_LENGTH)-1:0] fir_addr = coeffs_addr[$clog2(NUMBER_TAPS)-1:$clog2(NUMBER_TAPS)-$clog2(SUB_LENGTH)];
-
+    wire [$clog2(RATE_CHANGE)-1:0] selected_filter;
+    wire [$clog2(SUB_LENGTH)-1:0] addr_filter;
+    assign {addr_filter, selected_filter} = coeffs_addr;
 
     // create the parallel FIR filters
     genvar dsp_array;
@@ -226,10 +226,10 @@ module polyphase_filter #(
                 .data_out_tlast   (data_out_tlast_array[dsp_array]),
                 .data_out_tvalid  (data_out_tvalid_array[dsp_array]),
                 //
-                .samples_remaining(),
+                .samples_remaining(samples_remaining_array),
                 // Upper bits address the coefficient. Lower bits address FIR instance
-                .coeffs_wren      (target_fir == dsp_array ? coeffs_wren : 1'b0),
-                .coeffs_addr      (fir_addr),
+                .coeffs_wren      (selected_filter == dsp_array ? coeffs_wren : 1'b0),
+                .coeffs_addr      (addr_filter),
                 .coeffs_wdata     (coeffs_wdata));
         end
     endgenerate
