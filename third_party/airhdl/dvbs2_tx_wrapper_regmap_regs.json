@@ -1,0 +1,130 @@
+{
+  "jsonVersion": 2,
+  "registerMap": {
+    "name": "dvbs2_tx_wrapper_regmap",
+    "description": "",
+    "width": 32,
+    "baseAddress": 0,
+    "registers": [
+      {
+        "type": "Register",
+        "name": "config",
+        "description": "",
+        "access": "READ_WRITE",
+        "addressOffset": 0,
+        "size": 32,
+        "fields": [
+          {
+            "name": "enable_dummy_frames",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "ldpc_fifo_status",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 4,
+        "size": 32,
+        "fields": [
+          {
+            "name": "ldpc_fifo_entries",
+            "description": "",
+            "bitWidth": 14,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "ldpc_fifo_empty",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 16,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "ldpc_fifo_full",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 17,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "frames_in_transit",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 8,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 8,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Memory",
+        "depth": 240,
+        "readLatency": 1,
+        "name": "bit_mapper_ram",
+        "description": "- 0x00 - 0x03: QPSK map\r\n- 0x04 - 0x0B: 8PSK map\r\n- 0x0C - 0x1B: 16APSK map\r\n- 0x1C - 0x3B: 32APSK map",
+        "access": "READ_WRITE",
+        "addressOffset": 12,
+        "size": 32,
+        "fields": [
+          {
+            "name": "data",
+            "description": "- 0x00 - 0x03: QPSK map\r\n- 0x04 - 0x0B: 8PSK map\r\n- 0x0C - 0x1B: 16APSK map\r\n- 0x1C - 0x3B: 32APSK map",
+            "bitWidth": 32,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Memory",
+        "depth": 128,
+        "readLatency": 1,
+        "name": "polyphase_filter_coefficients",
+        "description": "Depth needs to match polyphase_filter\u0027s NUMBER_TAPS",
+        "access": "WRITE_ONLY",
+        "addressOffset": 972,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "Depth needs to match polyphase_filter\u0027s NUMBER_TAPS",
+            "bitWidth": 32,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      }
+    ],
+    "revision": 39,
+    "generateRecordPorts": true
+  }
+}

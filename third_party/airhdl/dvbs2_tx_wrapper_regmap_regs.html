@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>dvbs2_tx_wrapper_regmap Register Map</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">        
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+        <style>
+            .dl-horizontal dt {
+                text-align: left;
+                margin-bottom: 1em;
+            }
+            
+            .dl-horizontal dl {
+                margin-bottom: 1em;
+            }        
+        </style>
+    </head>
+    <body>
+        <div class="row">
+            <div class="col-md-offset-2 col-md-8">
+                <h2 class="page-header">dvbs2_tx_wrapper_regmap
+                    <small>register map</small>
+                </h2>
+
+                <dl class="dl-horizontal">
+                    <dt><strong>Description</strong></dt><dd>n/a</dd>
+                    <dt><strong>Default base address</strong></dt><dd style="font-family:monospace;">0x0</dd>
+                    <dt><strong>Register Width</strong></dt><dd>32 bits</dd>
+                    <dt><strong>Register Count</strong></dt><dd>5</dd>
+                    <dt>Range</dt>
+                    <dd>1484 bytes 
+                    </dd>                    
+                    <dt><strong>Revision</strong></dt><dd>39</dd>
+                </dl>
+<a id="OVERVIEW"></a>
+                <h3 class="page-header">Overview</h3>
+                <div class="panel panel-default">
+                    <table class="table table-hover">
+                        <colgroup>
+                            <col class="col-md-1">
+                            <col class="col-md-2">
+                            <col class="col-md-8">
+                            <col class="col-md-1">
+                        </colgroup>                    
+                        <tr class="active">
+                            <th style="padding-left: 2em;">Offset</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Type</th>
+                        </tr>
+                        <tr onclick="window.location='#REG@config';">                        
+                            <td style="font-family: monospace; padding-left: 2em;">0x0</td>
+                            <td>config</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@ldpc_fifo_status';">                        
+                            <td style="font-family: monospace; padding-left: 2em;">0x4</td>
+                            <td>ldpc_fifo_status</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@frames_in_transit';">                        
+                            <td style="font-family: monospace; padding-left: 2em;">0x8</td>
+                            <td>frames_in_transit</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@bit_mapper_ram';">                        
+                            <td style="font-family: monospace; padding-left: 2em;">0xC</td>
+                            <td>bit_mapper_ram</td>
+                            <td>- 0x00 - 0x03: QPSK map
+- 0x04 - 0x0B: 8PSK map
+- 0x0C - 0x1B: 16APSK map
+- 0x1C - 0x3B: 32APSK map</td>
+                            <td style="font-family: monospace;">MEM[240]</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@polyphase_filter_coefficients';">                        
+                            <td style="font-family: monospace; padding-left: 2em;">0x3CC</td>
+                            <td>polyphase_filter_coefficients</td>
+                            <td>Depth needs to match polyphase_filter&#39;s NUMBER_TAPS</td>
+                            <td style="font-family: monospace;">MEM[128]</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <h3 class="page-header">Registers</h3>
+
+<a id="REG@config"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>config&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0x0
+                            <br/>Access: READ_WRITE
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[0]</td>
+                        <td><strong>enable_dummy_frames</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@ldpc_fifo_status"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>ldpc_fifo_status&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0x4
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[13:0]</td>
+                        <td><strong>ldpc_fifo_entries</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[16]</td>
+                        <td><strong>ldpc_fifo_empty</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[17]</td>
+                        <td><strong>ldpc_fifo_full</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@frames_in_transit"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>frames_in_transit&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0x8
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[7:0]</td>
+                        <td><strong>value</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@bit_mapper_ram"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>bit_mapper_ram&nbsp;</span></strong><br/>- 0x00 - 0x03: QPSK map
+- 0x04 - 0x0B: 8PSK map
+- 0x0C - 0x1B: 16APSK map
+- 0x1C - 0x3B: 32APSK map</td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Memory
+                            (depth: 240, read latency: 1)
+                            <br/>Offset: 0xC
+                            <br/>Access: READ_WRITE
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[31:0]</td>
+                        <td><strong>data</strong><br/>
+                        <ul>
+<li>0x00 - 0x03: QPSK map</li>
+<li>0x04 - 0x0B: 8PSK map</li>
+<li>0x0C - 0x1B: 16APSK map</li>
+<li>0x1C - 0x3B: 32APSK map</li>
+</ul>
+
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@polyphase_filter_coefficients"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>polyphase_filter_coefficients&nbsp;</span></strong><br/>Depth needs to match polyphase_filter&#39;s NUMBER_TAPS</td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Memory
+                            (depth: 128, read latency: 1)
+                            <br/>Offset: 0x3CC
+                            <br/>Access: WRITE_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[31:0]</td>
+                        <td><strong>value</strong><br/>
+                        <p>Depth needs to match polyphase_filter's NUMBER_TAPS</p>
+
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+            </div>
+        </div>        
+        <div class="row">
+            <div class="col-md-offset-3 col-md-6">
+                <p class="text-center" style="padding-top:1em; color:#888;">Generated on 2021-03-07 at 16:11 (UTC) by airhdl version 2021.02.1</p>
+            </div>
+        </div>
+    </body>
+</html>
