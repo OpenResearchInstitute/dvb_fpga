@@ -62,6 +62,9 @@ module polyphase_filter #(
 
     // monitor the current phase in the upsampling/downsampling
     reg [$clog2(RATE_CHANGE)-1:0]       phase_counter;
+    wire [$clog2(RATE_CHANGE)-1:0]       phase_counter_i;
+
+    assign phase_counter_i = phase_counter;
 
 
     // FIR filter connection signals

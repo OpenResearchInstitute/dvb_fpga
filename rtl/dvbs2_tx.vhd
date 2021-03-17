@@ -86,7 +86,7 @@ end dvbs2_tx;
 
 architecture dvbs2_tx of dvbs2_tx is
 
-  constant POLYPHASE_FILTER_NUMBER_TAPS : positive := 32;
+  constant POLYPHASE_FILTER_NUMBER_TAPS : positive := 128;
   constant POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
 
   -- Need a component to make this work in Yosys
@@ -503,7 +503,7 @@ begin
       data_out_tvalid         => m_tvalid_i,
       -- coefficients input interface
       coeffs_wren             => or(regs2user.polyphase_filter_coefficients_wen),
-      coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(4 downto 0),
+      coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(6 downto 0),
       coeffs_wdata            => regs2user.polyphase_filter_coefficients_wdata(DATA_WIDTH/2 - 1 downto 0));
 
   polyphase_filter_i : polyphase_filter
@@ -531,51 +531,51 @@ begin
       data_out_tvalid         => open,
       -- coefficients input interface
       coeffs_wren             => or(regs2user.polyphase_filter_coefficients_wen),
-      coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(4 downto 0),
+      coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(6 downto 0),
       coeffs_wdata            => regs2user.polyphase_filter_coefficients_wdata(DATA_WIDTH - 1 downto DATA_WIDTH/2));
 
   -- Register map decoder
   regmap_u : entity work.dvbs2_tx_wrapper_regmap_regs
-      generic map (
-          AXI_ADDR_WIDTH => 32,
-          BASEADDR       => (others => '0'))
-      port map (
-          -- Clock and Reset
-          axi_aclk    => clk,
-          axi_aresetn => rst_n,
-          -- AXI Write Address Channel
-          s_axi_awaddr  => s_axi_awaddr,
-          s_axi_awprot  => (others => '0'),
-          s_axi_awvalid => s_axi_awvalid,
-          s_axi_awready => s_axi_awready,
-          -- AXI Write Data Channel
-          s_axi_wdata   => s_axi_wdata,
-          s_axi_wstrb   => s_axi_wstrb,
-          s_axi_wvalid  => s_axi_wvalid,
-          s_axi_wready  => s_axi_wready,
-          -- AXI Read Address Channel
-          s_axi_araddr  => s_axi_araddr,
-          s_axi_arprot  => (others => '0'),
-          s_axi_arvalid => s_axi_arvalid,
-          s_axi_arready => s_axi_arready,
-          -- AXI Read Data Channel
-          s_axi_rdata   => s_axi_rdata,
-          s_axi_rresp   => s_axi_rresp,
-          s_axi_rvalid  => s_axi_rvalid,
-          s_axi_rready  => s_axi_rready,
-          -- AXI Write Response Channel
-          s_axi_bresp   => s_axi_bresp,
-          s_axi_bvalid  => s_axi_bvalid,
-          s_axi_bready  => s_axi_bready,
-          -- User Ports
-          user2regs     => user2regs,
-          regs2user     => regs2user);
+    generic map (
+      AXI_ADDR_WIDTH => 32,
+      BASEADDR       => (others => '0'))
+    port map (
+      -- Clock and Reset
+      axi_aclk    => clk,
+      axi_aresetn => rst_n,
+      -- AXI Write Address Channel
+      s_axi_awaddr  => s_axi_awaddr,
+      s_axi_awprot  => (others => '0'),
+      s_axi_awvalid => s_axi_awvalid,
+      s_axi_awready => s_axi_awready,
+      -- AXI Write Data Channel
+      s_axi_wdata   => s_axi_wdata,
+      s_axi_wstrb   => s_axi_wstrb,
+      s_axi_wvalid  => s_axi_wvalid,
+      s_axi_wready  => s_axi_wready,
+      -- AXI Read Address Channel
+      s_axi_araddr  => s_axi_araddr,
+      s_axi_arprot  => (others => '0'),
+      s_axi_arvalid => s_axi_arvalid,
+      s_axi_arready => s_axi_arready,
+      -- AXI Read Data Channel
+      s_axi_rdata   => s_axi_rdata,
+      s_axi_rresp   => s_axi_rresp,
+      s_axi_rvalid  => s_axi_rvalid,
+      s_axi_rready  => s_axi_rready,
+      -- AXI Write Response Channel
+      s_axi_bresp   => s_axi_bresp,
+      s_axi_bvalid  => s_axi_bvalid,
+      s_axi_bready  => s_axi_bready,
+      -- User Ports
+      user2regs     => user2regs,
+      regs2user     => regs2user);
 
 
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  rst_n                <= not rst;
+  rst_n <= not rst;
 
   s_tid <= encode((frame_type    => decode(cfg_frame_type),
                    constellation => decode(cfg_constellation),

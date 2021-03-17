@@ -70,49 +70,23 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
   constant configs    : config_array_t := get_test_cfg(TEST_CFG);
   constant CLK_PERIOD : time := 5 ns;
 
-
---   constant COEFFS : std_logic_array_t := (
---   x"FFFF", x"FFFB", x"0005", x"0001", x"FFF9", x"0002", x"0006", x"FFFA" ,
--- x"FFFE", x"0008", x"FFFE", x"FFF9", x"0007", x"0002", x"FFF6", x"0003" ,
--- x"0009", x"FFF7", x"FFFC", x"000C", x"FFFD", x"FFF6", x"000B", x"0003" ,
--- x"FFF0", x"0006", x"000F", x"FFF0", x"FFF9", x"0015", x"FFFB", x"FFEE" ,
--- x"0013", x"0006", x"FFE3", x"000C", x"001C", x"FFE1", x"FFF1", x"002A" ,
--- x"FFF7", x"FFDB", x"0028", x"000B", x"FFBE", x"001F", x"0049", x"FFAE" ,
--- x"FFD1", x"0077", x"FFED", x"FF91", x"0081", x"0015", x"FEEA", x"00C7" ,
--- x"01C0", x"FD93", x"FD96", x"056E", x"02FB", x"F42E", x"FCA3", x"2823" ,
--- x"4381", x"2823", x"FCA3", x"F42E", x"02FB", x"056E", x"FD96", x"FD93" ,
--- x"01C0", x"00C7", x"FEEA", x"0015", x"0081", x"FF91", x"FFED", x"0077" ,
--- x"FFD1", x"FFAE", x"0049", x"001F", x"FFBE", x"000B", x"0028", x"FFDB" ,
--- x"FFF7", x"002A", x"FFF1", x"FFE1", x"001C", x"000C", x"FFE3", x"0006" ,
--- x"0013", x"FFEE", x"FFFB", x"0015", x"FFF9", x"FFF0", x"000F", x"0006" ,
--- x"FFF0", x"0003", x"000B", x"FFF6", x"FFFD", x"000C", x"FFFC", x"FFF7" ,
--- x"0009", x"0003", x"FFF6", x"0002", x"0007", x"FFF9", x"FFFE", x"0008" ,
--- x"FFFE", x"FFFA", x"0006", x"0002", x"FFF9", x"0001", x"0005", x"FFFB");
-
---   constant COEFFS : std_logic_array_t := (
---   x"FFAE", x"FFE1", x"0057", x"0086", x"0018", x"FF7A", x"FF86", x"007E" ,
--- x"015B", x"007E", x"FD9B", x"FAFE", x"FC9D", x"0502", x"127B", x"1F20" ,
--- x"244E", x"1F20", x"127B", x"0502", x"FC9D", x"FAFE", x"FD9B", x"007E" ,
--- x"015B", x"007E", x"FF86", x"FF7A", x"0018", x"0086", x"0057", x"FFE1" );
-
---   constant COEFFS : std_logic_array_t := (
---   x"FFEC", x"0000", x"001A", x"FFFF", x"FFDC", x"0001", x"0034", x"FFFD" ,
--- x"FFAF", x"0007", x"0091", x"FFEB", x"FEB5", x"0063", x"056E", x"F26C" ,
--- x"9178", x"F26C", x"056E", x"0063", x"FEB5", x"FFEB", x"0091", x"0007" ,
--- x"FFAF", x"FFFD", x"0034", x"0001", x"FFDC", x"FFFF", x"001A", x"0000");
-
   constant COEFFS : std_logic_array_t  := (
-    x"FFE8", x"003B", x"FFF6", x"FFC8", x"0040", x"000A", x"FF75", x"0063",
-    x"00DF", x"FEC9", x"FECB", x"02B6", x"017D", x"FA18", x"FE52", x"140B",
-    x"21B5", x"140B", x"FE52", x"FA18", x"017D", x"02B6", x"FECB", x"FEC9",
-    x"00DF", x"0063", x"FF75", x"000A", x"0040", x"FFC8", x"FFF6", x"003B",
-    x"FFE8");
-
--- x"FFD8", x"0023", x"0003", x"FFD8", x"0048", x"FFBD", x"FFF6", x"0051" ,
--- x"FF5B", x"00AF", x"0031", x"FF0B", x"02B7", x"FB34", x"F937", x"2505" ,
--- x"48B8", x"2505", x"F937", x"FB34", x"02B7", x"FF0B", x"0031", x"00AF" ,
--- x"FF5B", x"0051", x"FFF6", x"FFBD", x"0048", x"FFD8", x"0003", x"0023");
-
+    x"FFFA", x"0001", x"0004", x"FFFB",  x"FFFD", x"0006", x"FFFE", x"FFFA",
+    x"0005", x"0001", x"FFF7", x"0003",  x"0007", x"FFF7", x"FFFC", x"000A",
+    x"FFFD", x"FFF6", x"0009", x"0003",  x"FFF1", x"0006", x"000E", x"FFF0",
+    x"FFF8", x"0015", x"FFFB", x"FFED",  x"0014", x"0005", x"FFDE", x"000F",
+    x"0024", x"FFD6", x"FFE8", x"003B",  x"FFF6", x"FFC8", x"0041", x"000A",
+    x"FF74", x"0064", x"00E0", x"FEC9",  x"FECA", x"02B7", x"017D", x"FA16",
+    x"FE51", x"1412", x"21C2", x"1412",  x"FE51", x"FA16", x"017D", x"02B7",
+    x"FECA", x"FEC9", x"00E0", x"0064",  x"FF74", x"000A", x"0041", x"FFC8",
+    x"FFF6", x"003B", x"FFE8", x"FFD6",  x"0024", x"000F", x"FFDE", x"0005",
+    x"0014", x"FFED", x"FFFB", x"0015",  x"FFF8", x"FFF0", x"000E", x"0006",
+    x"FFF1", x"0003", x"0009", x"FFF6",  x"FFFD", x"000A", x"FFFC", x"FFF7",
+    x"0007", x"0003", x"FFF7", x"0001",  x"0005", x"FFFA", x"FFFE", x"0006",
+    x"FFFD", x"FFFB", x"0004", x"0001",  x"FFFA", x"0000", x"0000", x"0000",
+    x"0000", x"0000", x"0000", x"0000",  x"0000", x"0000", x"0000", x"0000",
+    x"0000", x"0000", x"0000", x"0000",  x"0000", x"0000", x"0000", x"0000",
+    x"0000", x"0000", x"0000", x"0000",  x"0000", x"0000", x"0000", x"0000");
 
   constant DATA_WIDTH : integer := 32;
 
@@ -150,6 +124,15 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
     bresp       : std_logic_vector(1 downto 0);
   end record;
 
+  type axi_stream_qualified_data_t is record
+    tdata  : std_logic_vector;
+    tkeep  : std_logic_vector;
+    tuser  : std_logic_vector;
+    tvalid : std_logic;
+    tready : std_logic;
+    tlast  : std_logic;
+  end record;
+
   -------------
   -- Signals --
   -------------
@@ -181,12 +164,12 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
   signal dbg_recv           : complex;
   signal dbg_expected       : complex;
 
-  signal dbg_expected_i : signed(15 downto 0);
-  signal dbg_expected_q : signed(15 downto 0);
-  signal dbg_input_i    : signed(15 downto 0);
-  signal dbg_input_q    : signed(15 downto 0);
-  signal dbg_recv_i     : signed(15 downto 0);
-  signal dbg_recv_q     : signed(15 downto 0);
+  signal dbg_expected_i     : signed(15 downto 0);
+  signal dbg_expected_q     : signed(15 downto 0);
+  signal dbg_input_i        : signed(15 downto 0);
+  signal dbg_input_q        : signed(15 downto 0);
+  signal dbg_recv_i         : signed(15 downto 0);
+  signal dbg_recv_q         : signed(15 downto 0);
 
 begin
 
@@ -261,25 +244,30 @@ begin
       m_tlast           => axi_slave.axi.tlast,
       m_tdata           => axi_slave.axi.tdata);
 
-  -- Can't check against expected data directly because of rounding errors, so use a file
-  -- reader to get the contents
-  output_ref_data_u : entity fpga_cores_sim.axi_file_reader
+  output_checker_u : entity work.axi_file_compare_tolerance
     generic map (
-      READER_NAME => "output_ref",
-      DATA_WIDTH  => DATA_WIDTH)
+      READER_NAME         => "output_ref",
+      DATA_WIDTH          => DATA_WIDTH,
+      TOLERANCE           => 32,
+      SWAP_BYTE_ENDIANESS => True,
+      ERROR_CNT_WIDTH     => 8,
+      REPORT_SEVERITY     => Error)
     port map (
       -- Usual ports
       clk                => clk,
       rst                => rst,
       -- Config and status
-      completed          => open,
-      tvalid_probability => 1.0,
-      -- Data output
-      m_tready           => axi_slave.axi.tready and axi_slave.axi.tvalid,
-      m_tdata            => axi_slave.expected_tdata,
-      -- m_tid              => axi_slave.axi.tuser,
-      m_tvalid           => open,
-      m_tlast            => open);
+      tdata_error_cnt    => open,
+      tlast_error_cnt    => open,
+      error_cnt          => open,
+      -- Debug stuff
+      expected_tdata     => open,
+      expected_tlast     => open,
+      -- Data input
+      s_tready           => axi_slave.axi.tready,
+      s_tdata            => axi_slave.axi.tdata,
+      s_tvalid           => axi_slave.axi.tvalid,
+      s_tlast            => axi_slave.axi.tlast);
 
   axi_slave.axi.tready <= '1';
 
@@ -310,18 +298,19 @@ begin
       expected_tlast  : std_logic;
     end record;
 
-    signal bb_scrambler      : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-    signal bch_encoder       : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-    signal ldpc_encoder      : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal bb_scrambler              : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal bch_encoder               : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal ldpc_encoder              : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
 
-    signal bb_scrambler_info : file_compare_info_t(expected_tdata(7 downto 0));
-    signal bch_encoder_info  : file_compare_info_t(expected_tdata(7 downto 0));
-    signal ldpc_encoder_info : file_compare_info_t(expected_tdata(7 downto 0));
+    signal bb_scrambler_info         : file_compare_info_t(expected_tdata(7 downto 0));
+    signal bch_encoder_info          : file_compare_info_t(expected_tdata(7 downto 0));
+    signal ldpc_encoder_info         : file_compare_info_t(expected_tdata(7 downto 0));
 
-    signal pl_frame          : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal pl_frame_expected         : axi_stream_data_bus_t(tdata(DATA_WIDTH - 1 downto 0));
+    signal pl_frame                  : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
 
-    -- signal constellation_mapper      : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-    -- signal constellation_mapper_info : file_compare_info_t(expected_tdata(DATA_WIDTH  - 1 downto 0));
+    signal constellation_mapper      : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal constellation_mapper_info : file_compare_info_t(expected_tdata(DATA_WIDTH  - 1 downto 0));
 
   begin
 
@@ -402,31 +391,30 @@ begin
         s_tvalid           => ldpc_encoder.tvalid and ldpc_encoder.tready,
         s_tlast            => ldpc_encoder.tlast);
 
-    -- FIXME: Removing for now as the file has different endianess, which requires us to
-    -- make the checking outside. Need to find a way to properly fix this
-    -- constellation_mapper_checker_u : entity fpga_cores_sim.axi_file_compare -- {{
-    --   generic map (
-    --     READER_NAME     => "constellation_mapper",
-    --     ERROR_CNT_WIDTH => 8,
-    --     REPORT_SEVERITY => Error,
-    --     DATA_WIDTH      => DATA_WIDTH)
-    --   port map (
-    --     -- Usual ports
-    --     clk                => clk,
-    --     rst                => rst,
-    --     -- Config and status
-    --     tdata_error_cnt    => constellation_mapper_info.tdata_error_cnt,
-    --     tlast_error_cnt    => constellation_mapper_info.tlast_error_cnt,
-    --     error_cnt          => constellation_mapper_info.error_cnt,
-    --     tready_probability => 1.0,
-    --     -- Debug stuff
-    --     expected_tdata     => constellation_mapper_info.expected_tdata,
-    --     expected_tlast     => constellation_mapper_info.expected_tlast,
-    --     -- Data input
-    --     s_tready           => open,
-    --     s_tdata            => constellation_mapper_info.axi.tdata,
-    --     s_tvalid           => constellation_mapper_info.axi.tvalid and constellation_mapper_info.axi.tready,
-    --     s_tlast            => constellation_mapper_info.axi.tlast); -- }}
+    physical_layer_checker_u : entity work.axi_file_compare_tolerance
+      generic map (
+        READER_NAME         => "pl_framer_checker",
+        DATA_WIDTH          => DATA_WIDTH,
+        TOLERANCE           => 4,
+        SWAP_BYTE_ENDIANESS => True,
+        ERROR_CNT_WIDTH     => 8,
+        REPORT_SEVERITY     => Error)
+      port map (
+        -- Usual ports
+        clk                => clk,
+        rst                => rst,
+        -- Config and status
+        tdata_error_cnt    => open,
+        tlast_error_cnt    => open,
+        error_cnt          => open,
+        -- Debug stuff
+        expected_tdata     => open,
+        expected_tlast     => open,
+        -- Data input
+        s_tready           => pl_frame.tready,
+        s_tdata            => pl_frame.tdata,
+        s_tvalid           => pl_frame.tvalid,
+        s_tlast            => pl_frame.tlast);
 
     process
       procedure mirror_signal ( constant source, dest : string) is
@@ -439,10 +427,10 @@ begin
       end procedure;
     begin
       mirror_signal("/dvbs2_tx_tb/dut/bb_scrambler", "/dvbs2_tx_tb/signal_spy_block/bb_scrambler");
-      mirror_signal("/dvbs2_tx_tb/dut/bch_encoder",  "/dvbs2_tx_tb/signal_spy_block/bch_encoder");
+      mirror_signal("/dvbs2_tx_tb/dut/bch_encoder", "/dvbs2_tx_tb/signal_spy_block/bch_encoder");
       mirror_signal("/dvbs2_tx_tb/dut/ldpc_encoder", "/dvbs2_tx_tb/signal_spy_block/ldpc_encoder");
-      -- mirror_signal("/dvbs2_tx_tb/dut/pl_frame",     "/dvbs2_tx_tb/signal_spy_block/pl_frame");
-      -- init_signal_spy("/dvbs2_tx_tb/dut/constellation_mapper",  "/dvbs2_tx_tb/signal_spy_block/constellation_mapper",  0);
+      mirror_signal("/dvbs2_tx_tb/dut/pl_frame", "/dvbs2_tx_tb/signal_spy_block/pl_frame");
+      mirror_signal("/dvbs2_tx_tb/dut/constellation_mapper", "/dvbs2_tx_tb/signal_spy_block/constellation_mapper");
       wait;
     end process;
   end block signal_spy_block; -- }} ----------------------------------------------------
@@ -460,6 +448,7 @@ begin
     variable bb_scrambler_checker : file_reader_t := new_file_reader("bb_scrambler");
     variable bch_encoder_checker  : file_reader_t := new_file_reader("bch_encoder");
     variable ldpc_encoder_checker : file_reader_t := new_file_reader("ldpc_encoder");
+    variable pl_framer_checker    : file_reader_t := new_file_reader("pl_framer_checker");
       -- ghdl translate_on
 
     variable prev_config          : config_t;
@@ -483,6 +472,7 @@ begin
       wait_all_read(net, bb_scrambler_checker);
       wait_all_read(net, bch_encoder_checker);
       wait_all_read(net, ldpc_encoder_checker);
+      wait_all_read(net, pl_framer_checker);
       -- ghdl translate_on
 
       wait until rising_edge(clk) and axi_slave.axi.tvalid = '0' for 1 ms;
@@ -637,6 +627,7 @@ begin
         read_file(net, bb_scrambler_checker, data_path & "/bb_scrambler_output_packed.bin");
         read_file(net, bch_encoder_checker, data_path & "/bch_encoder_output_packed.bin");
         read_file(net, ldpc_encoder_checker, data_path & "/ldpc_output_packed.bin");
+        read_file(net, pl_framer_checker, data_path & "/plframe_pilots_off_fixed_point.bin");
         -- ghdl translate_on
 
       end loop;

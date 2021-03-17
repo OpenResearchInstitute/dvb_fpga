@@ -656,9 +656,11 @@ def setupSources(vunit):
     library.add_source_files(p.join(ROOT, "rtl", "*.vhd"))
     library.add_source_files(p.join(ROOT, "rtl", "ldpc", "*.vhd"))
     library.add_source_files(p.join(ROOT, "rtl", "bch_generated", "*.vhd"))
-    library.add_source_files(p.join(ROOT, "rtl", "register_map", "*.vhd"))
     library.add_source_files(p.join(ROOT, "testbench", "*.vhd"))
-    library.add_source_files(p.join(ROOT, "third_party", "polyphase_filter", "*.v"))
+    library.add_source_files(p.join(ROOT, "third_party", "airhdl", "*.vhd"))
+
+    if vunit.get_simulator_name() != "ghdl":
+        library.add_source_files(p.join(ROOT, "third_party", "polyphase_filter", "*.v"))
 
     vunit.add_library("str_format").add_source_files(
         p.join(ROOT, "third_party", "hdl_string_format", "src", "*.vhd")
