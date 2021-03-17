@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_tx_wrapper_regmap' Register Definitions
-// Revision: 39
+// Revision: 41
 // -----------------------------------------------------------------------------
-// Generated on 2021-03-07 at 16:11 (UTC) by airhdl version 2021.02.1
+// Generated on 2021-03-16 at 19:31 (UTC) by airhdl version 2021.03.1
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -28,7 +28,7 @@ namespace dvbs2_tx_wrapper_regmap_regs {
     static const std::string name = "dvbs2_tx_wrapper_regmap";
 
     /* Revision number of the 'dvbs2_tx_wrapper_regmap' register map */
-    static const std::uint32_t REVISION = 39;
+    static const std::uint32_t REVISION = 41;
 
     /* Default base address of the 'dvbs2_tx_wrapper_regmap' register map */
     static const std::uint32_t BASE_ADDRESS = 0x00000000;
@@ -84,7 +84,7 @@ namespace dvbs2_tx_wrapper_regmap_regs {
 
     /* Register 'polyphase_filter_coefficients' */
     static const std::uint32_t POLYPHASE_FILTER_COEFFICIENTS_OFFSET = 0x000003CC; /* address offset of the 'polyphase_filter_coefficients' register */
-    static const int POLYPHASE_FILTER_COEFFICIENTS_DEPTH = 128; /* depth of the 'polyphase_filter_coefficients' memory, in elements */
+    static const int POLYPHASE_FILTER_COEFFICIENTS_DEPTH = 512; /* depth of the 'polyphase_filter_coefficients' memory, in elements */
 
     /* Field 'polyphase_filter_coefficients.value' */
     static const int POLYPHASE_FILTER_COEFFICIENTS_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */

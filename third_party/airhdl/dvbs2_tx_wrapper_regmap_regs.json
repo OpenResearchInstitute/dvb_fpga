@@ -104,7 +104,7 @@
       },
       {
         "type": "Memory",
-        "depth": 128,
+        "depth": 512,
         "readLatency": 1,
         "name": "polyphase_filter_coefficients",
         "description": "Depth needs to match polyphase_filter\u0027s NUMBER_TAPS",
@@ -124,7 +124,7 @@
         ]
       }
     ],
-    "revision": 39,
+    "revision": 41,
     "generateRecordPorts": true
   }
 }

@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_tx_wrapper_regmap' Register Definitions
-// Revision: 39
+// Revision: 41
 // -----------------------------------------------------------------------------
-// Generated on 2021-03-07 at 16:11 (UTC) by airhdl version 2021.02.1
+// Generated on 2021-03-16 at 19:31 (UTC) by airhdl version 2021.03.1
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -37,13 +37,13 @@ package dvbs2_tx_wrapper_regmap_regs_pkg;
         logic [7:0] bit_mapper_ram_addr; // read/write address for memory 'bit_mapper_ram'
         logic [31:0] bit_mapper_ram_wdata; // write data for memory 'bit_mapper_ram'         
         logic [3:0] bit_mapper_ram_wen; // byte-wide write-enable for memory 'bit_mapper_ram'
-        logic [6:0] polyphase_filter_coefficients_addr; // read/write address for memory 'polyphase_filter_coefficients'
+        logic [8:0] polyphase_filter_coefficients_addr; // read/write address for memory 'polyphase_filter_coefficients'
         logic [31:0] polyphase_filter_coefficients_wdata; // write data for memory 'polyphase_filter_coefficients'         
         logic [3:0] polyphase_filter_coefficients_wen; // byte-wide write-enable for memory 'polyphase_filter_coefficients'
     } regs2user_t;
 
     // Revision number of the 'dvbs2_tx_wrapper_regmap' register map
-    localparam DVBS2_TX_WRAPPER_REGMAP_REVISION = 39;
+    localparam DVBS2_TX_WRAPPER_REGMAP_REVISION = 41;
 
     // Default base address of the 'dvbs2_tx_wrapper_regmap' register map 
     localparam logic [31:0] DVBS2_TX_WRAPPER_REGMAP_DEFAULT_BASEADDR = 32'h00000000;
@@ -88,7 +88,7 @@ package dvbs2_tx_wrapper_regmap_regs_pkg;
     
     // Register 'polyphase_filter_coefficients'
     localparam logic [31:0] POLYPHASE_FILTER_COEFFICIENTS_OFFSET = 32'h000003CC; // address offset of the 'polyphase_filter_coefficients' register
-    localparam POLYPHASE_FILTER_COEFFICIENTS_DEPTH = 128; // depth of the 'polyphase_filter_coefficients' memory, in elements
+    localparam POLYPHASE_FILTER_COEFFICIENTS_DEPTH = 512; // depth of the 'polyphase_filter_coefficients' memory, in elements
     localparam POLYPHASE_FILTER_COEFFICIENTS_READ_LATENCY = 1; // read latency of the 'polyphase_filter_coefficients' memory, in clock cycles
     // Field 'polyphase_filter_coefficients.value'
     localparam POLYPHASE_FILTER_COEFFICIENTS_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field

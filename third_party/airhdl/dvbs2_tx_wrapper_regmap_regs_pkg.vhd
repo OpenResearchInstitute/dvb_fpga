@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
 -- 'dvbs2_tx_wrapper_regmap' Register Definitions
--- Revision: 39
+-- Revision: 41
 -- -----------------------------------------------------------------------------
--- Generated on 2021-03-07 at 16:11 (UTC) by airhdl version 2021.02.1
+-- Generated on 2021-03-16 at 19:31 (UTC) by airhdl version 2021.03.1
 -- -----------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -75,13 +75,13 @@ package dvbs2_tx_wrapper_regmap_regs_pkg is
         bit_mapper_ram_addr : std_logic_vector(7 downto 0); -- read/write address for memory 'bit_mapper_ram'
         bit_mapper_ram_wdata : std_logic_vector(31 downto 0); -- write data for memory 'bit_mapper_ram'         
         bit_mapper_ram_wen : std_logic_vector(3 downto 0); -- byte-wide write-enable for memory 'bit_mapper_ram'
-        polyphase_filter_coefficients_addr : std_logic_vector(6 downto 0); -- read/write address for memory 'polyphase_filter_coefficients'
+        polyphase_filter_coefficients_addr : std_logic_vector(8 downto 0); -- read/write address for memory 'polyphase_filter_coefficients'
         polyphase_filter_coefficients_wdata : std_logic_vector(31 downto 0); -- write data for memory 'polyphase_filter_coefficients'         
         polyphase_filter_coefficients_wen : std_logic_vector(3 downto 0); -- byte-wide write-enable for memory 'polyphase_filter_coefficients'
     end record;
 
     -- Revision number of the 'dvbs2_tx_wrapper_regmap' register map
-    constant DVBS2_TX_WRAPPER_REGMAP_REVISION : natural := 39;
+    constant DVBS2_TX_WRAPPER_REGMAP_REVISION : natural := 41;
 
     -- Default base address of the 'dvbs2_tx_wrapper_regmap' register map 
     constant DVBS2_TX_WRAPPER_REGMAP_DEFAULT_BASEADDR : unsigned(31 downto 0) := unsigned'(x"00000000");
@@ -126,7 +126,7 @@ package dvbs2_tx_wrapper_regmap_regs_pkg is
     
     -- Register 'polyphase_filter_coefficients'
     constant POLYPHASE_FILTER_COEFFICIENTS_OFFSET : unsigned(31 downto 0) := unsigned'(x"000003CC"); -- address offset of the 'polyphase_filter_coefficients' register
-    constant POLYPHASE_FILTER_COEFFICIENTS_DEPTH : natural := 128; -- depth of the 'polyphase_filter_coefficients' memory, in elements
+    constant POLYPHASE_FILTER_COEFFICIENTS_DEPTH : natural := 512; -- depth of the 'polyphase_filter_coefficients' memory, in elements
     constant POLYPHASE_FILTER_COEFFICIENTS_READ_LATENCY : natural := 1; -- read latency of the 'polyphase_filter_coefficients' memory, in clock cycles
     -- Field 'polyphase_filter_coefficients.value'
     constant POLYPHASE_FILTER_COEFFICIENTS_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field

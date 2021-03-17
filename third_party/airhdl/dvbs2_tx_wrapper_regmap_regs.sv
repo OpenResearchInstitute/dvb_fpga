@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_tx_wrapper_regmap' Register Component
-// Revision: 39
+// Revision: 41
 // -----------------------------------------------------------------------------
-// Generated on 2021-03-07 at 16:11 (UTC) by airhdl version 2021.02.1
+// Generated on 2021-03-16 at 19:31 (UTC) by airhdl version 2021.03.1
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -93,7 +93,7 @@ module dvbs2_tx_wrapper_regmap_regs #(
     logic [7:0] s_bit_mapper_ram_waddr_r;
     logic [3:0] s_bit_mapper_ram_wen_r;
     logic [31:0] s_bit_mapper_ram_wdata_r;        
-    logic [6:0] s_polyphase_filter_coefficients_waddr_r;
+    logic [8:0] s_polyphase_filter_coefficients_waddr_r;
     logic [3:0] s_polyphase_filter_coefficients_wen_r;
     logic [31:0] s_polyphase_filter_coefficients_wdata_r;        
 
@@ -370,7 +370,7 @@ module dvbs2_tx_wrapper_regmap_regs #(
                         s_axi_awaddr_reg_r < BASEADDR + dvbs2_tx_wrapper_regmap_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET + dvbs2_tx_wrapper_regmap_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_DEPTH * 4) begin
                         v_addr_hit = 1'b1;
                         v_mem_addr = s_axi_awaddr_reg_r - BASEADDR - dvbs2_tx_wrapper_regmap_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET;
-                        s_polyphase_filter_coefficients_waddr_r <= v_mem_addr[8:2]; // output address has 4-byte granularity
+                        s_polyphase_filter_coefficients_waddr_r <= v_mem_addr[10:2]; // output address has 4-byte granularity
                         s_polyphase_filter_coefficients_wen_r <= s_axi_wstrb_reg_r;
                         s_polyphase_filter_coefficients_wdata_r <= s_axi_wdata_reg_r;
                     end    
