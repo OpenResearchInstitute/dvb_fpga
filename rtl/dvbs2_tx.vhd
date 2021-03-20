@@ -86,7 +86,7 @@ end dvbs2_tx;
 
 architecture dvbs2_tx of dvbs2_tx is
 
-  constant POLYPHASE_FILTER_NUMBER_TAPS : positive := 128;
+  constant POLYPHASE_FILTER_NUMBER_TAPS : positive := 101;
   constant POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
 
   -- Need a component to make this work in Yosys

@@ -83,10 +83,11 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
     x"0014", x"FFED", x"FFFB", x"0015",  x"FFF8", x"FFF0", x"000E", x"0006",
     x"FFF1", x"0003", x"0009", x"FFF6",  x"FFFD", x"000A", x"FFFC", x"FFF7",
     x"0007", x"0003", x"FFF7", x"0001",  x"0005", x"FFFA", x"FFFE", x"0006",
-    x"FFFD", x"FFFB", x"0004", x"0001",  x"FFFA", x"0000", x"0000", x"0000",
-    x"0000", x"0000", x"0000", x"0000",  x"0000", x"0000", x"0000", x"0000",
-    x"0000", x"0000", x"0000", x"0000",  x"0000", x"0000", x"0000", x"0000",
-    x"0000", x"0000", x"0000", x"0000",  x"0000", x"0000", x"0000", x"0000");
+    x"FFFD", x"FFFB", x"0004", x"0001",  x"FFFA");
+    -- , x"0000", x"0000", x"0000",
+    -- x"0000", x"0000", x"0000", x"0000",  x"0000", x"0000", x"0000", x"0000",
+    -- x"0000", x"0000", x"0000", x"0000",  x"0000", x"0000", x"0000", x"0000",
+    -- x"0000", x"0000", x"0000", x"0000",  x"0000", x"0000", x"0000", x"0000");
 
   constant DATA_WIDTH : integer := 32;
 
@@ -155,21 +156,11 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
   signal m_data_valid       : std_logic;
 
   -- AXI output
+  signal axi_slave          : axi_stream_data_bus_t(tdata(DATA_WIDTH - 1 downto 0));
   signal s_data_valid       : std_logic;
 
-  signal axi_slave          : axi_checker_t(axi(tdata(DATA_WIDTH - 1 downto 0)), expected_tdata(DATA_WIDTH - 1 downto 0));
-  signal axi_slave_tdata    : std_logic_vector(DATA_WIDTH - 1 downto 0);
-
-
-  signal dbg_recv           : complex;
-  signal dbg_expected       : complex;
-
-  signal dbg_expected_i     : signed(15 downto 0);
-  signal dbg_expected_q     : signed(15 downto 0);
-  signal dbg_input_i        : signed(15 downto 0);
-  signal dbg_input_q        : signed(15 downto 0);
-  signal dbg_recv_i         : signed(15 downto 0);
-  signal dbg_recv_q         : signed(15 downto 0);
+  signal axi_slave_expected_tdata : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal axi_slave_expected_tlast : std_logic;
 
 begin
 
@@ -239,10 +230,10 @@ begin
       s_tlast           => axi_master.tlast,
       s_tready          => axi_master.tready,
       -- AXI output
-      m_tready          => axi_slave.axi.tready,
-      m_tvalid          => axi_slave.axi.tvalid,
-      m_tlast           => axi_slave.axi.tlast,
-      m_tdata           => axi_slave.axi.tdata);
+      m_tready          => axi_slave.tready,
+      m_tvalid          => axi_slave.tvalid,
+      m_tlast           => axi_slave.tlast,
+      m_tdata           => axi_slave.tdata);
 
   output_checker_u : entity work.axi_file_compare_tolerance
     generic map (
@@ -261,15 +252,15 @@ begin
       tlast_error_cnt    => open,
       error_cnt          => open,
       -- Debug stuff
-      expected_tdata     => open,
-      expected_tlast     => open,
+      expected_tdata     => axi_slave_expected_tdata,
+      expected_tlast     => axi_slave_expected_tlast,
       -- Data input
-      s_tready           => axi_slave.axi.tready,
-      s_tdata            => axi_slave.axi.tdata,
-      s_tvalid           => axi_slave.axi.tvalid,
-      s_tlast            => axi_slave.axi.tlast);
+      s_tready           => axi_slave.tready,
+      s_tdata            => axi_slave.tdata,
+      s_tvalid           => axi_slave.tvalid,
+      s_tlast            => axi_slave.tlast);
 
-  axi_slave.axi.tready <= '1';
+  axi_slave.tready <= '1';
 
   ------------------------------
   -- Asynchronous assignments --
@@ -279,9 +270,7 @@ begin
   test_runner_watchdog(runner, 300 ms);
 
   m_data_valid <= axi_master.tvalid and axi_master.tready;
-  s_data_valid <= axi_slave.axi.tvalid and axi_slave.axi.tready;
-
-  axi_slave_tdata <= axi_slave.axi.tdata(23 downto 16) & axi_slave.axi.tdata(31 downto 24) & axi_slave.axi.tdata(7 downto 0) & axi_slave.axi.tdata(15 downto 8);
+  s_data_valid <= axi_slave.tvalid and axi_slave.tready;
 
   cfg_constellation <= decode(axi_master.tuser).constellation;
   cfg_frame_type    <= decode(axi_master.tuser).frame_type;
@@ -309,15 +298,7 @@ begin
     signal pl_frame_expected         : axi_stream_data_bus_t(tdata(DATA_WIDTH - 1 downto 0));
     signal pl_frame                  : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
 
-    signal constellation_mapper      : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-    signal constellation_mapper_info : file_compare_info_t(expected_tdata(DATA_WIDTH  - 1 downto 0));
-
   begin
-
-    -- dbg_input_i   <= signed(pl_frame.tdata(23 downto 16)) & signed(pl_frame.tdata(31 downto 24));
-    -- dbg_input_q   <= signed(pl_frame.tdata(7 downto 0)) & signed(pl_frame.tdata(15 downto 8));
-    dbg_input_i   <= signed(pl_frame.tdata(31 downto 16));
-    dbg_input_q   <= signed(pl_frame.tdata(15 downto 0));
 
     bb_scrambler_checker_u : entity fpga_cores_sim.axi_file_compare
       generic map (
@@ -430,7 +411,6 @@ begin
       mirror_signal("/dvbs2_tx_tb/dut/bch_encoder", "/dvbs2_tx_tb/signal_spy_block/bch_encoder");
       mirror_signal("/dvbs2_tx_tb/dut/ldpc_encoder", "/dvbs2_tx_tb/signal_spy_block/ldpc_encoder");
       mirror_signal("/dvbs2_tx_tb/dut/pl_frame", "/dvbs2_tx_tb/signal_spy_block/pl_frame");
-      mirror_signal("/dvbs2_tx_tb/dut/constellation_mapper", "/dvbs2_tx_tb/signal_spy_block/constellation_mapper");
       wait;
     end process;
   end block signal_spy_block; -- }} ----------------------------------------------------
@@ -475,7 +455,7 @@ begin
       wait_all_read(net, pl_framer_checker);
       -- ghdl translate_on
 
-      wait until rising_edge(clk) and axi_slave.axi.tvalid = '0' for 1 ms;
+      wait until rising_edge(clk) and axi_slave.tvalid = '0' for 1 ms;
 
       walk(1);
     end procedure wait_for_completion; -- }} -------------------------------------------
@@ -672,7 +652,7 @@ begin
 
       wait_for_completion;
       info("All BFMs have now completed");
-      check_equal(axi_slave.axi.tvalid, '0', "axi_slave.axi.tvalid should be '0'");
+      check_equal(axi_slave.tvalid, '0', "axi_slave.tvalid should be '0'");
 
       walk(32);
 
@@ -682,92 +662,4 @@ begin
     wait;
   end process; -- }} -------------------------------------------------------------------
 
-  receiver_p : process -- {{ -----------------------------------------------------------
-    constant logger      : logger_t := get_logger("receiver");
-    variable word_cnt    : natural  := 0;
-    variable frame_cnt   : natural  := 0;
-
-    function to_real ( constant v : signed ) return real is
-      constant width : integer := v'length;
-    begin
-      return real(to_integer(v)) / real(2**(width - 1));
-    end;
-
-    function to_complex ( constant v : std_logic_vector ) return complex is
-      constant width : integer := v'length;
-    begin
-      return complex'(
-        re => to_real(signed(v(width - 1 downto width/2))),
-        im => to_real(signed(v(width/2 - 1 downto 0)))
-      );
-    end function;
-
-    constant TOLERANCE        : real := 0.10;
-    -- Recv/expected in rect coords
-    variable recv_rect        : complex;
-    variable expected_rect    : complex;
-    -- Recv/expected in polar coords
-    variable recv_pol         : complex_polar;
-    variable expected_pol     : complex_polar;
-
-    variable error_cnt        : integer := 0;
-    variable expected_lendian : std_logic_vector(DATA_WIDTH - 1 downto 0);
-
-  begin
-    wait until axi_slave.axi.tvalid = '1' and axi_slave.axi.tready = '1' and rising_edge(clk);
-    expected_lendian := axi_slave.expected_tdata(23 downto 16)
-                      & axi_slave.expected_tdata(31 downto 24)
-                      & axi_slave.expected_tdata(7 downto 0)
-                      & axi_slave.expected_tdata(15 downto 8);
-
-    recv_rect      := to_complex(axi_slave.axi.tdata);
-    expected_rect  := to_complex(expected_lendian);
-
-    dbg_recv       <= recv_rect;
-    dbg_expected   <= expected_rect;
-
-    dbg_expected_i <= signed(expected_lendian(31 downto 16));
-    dbg_expected_q <= signed(expected_lendian(15 downto 0));
-
-    dbg_recv_i     <= signed(axi_slave.axi.tdata(31 downto 16));
-    dbg_recv_q     <= signed(axi_slave.axi.tdata(15 downto 0));
-
-    recv_pol       := complex_to_polar(recv_rect);
-    expected_pol   := complex_to_polar(expected_rect);
-
-    -- if axi_slave.axi.tdata /= expected_lendian then
-    --   if    (recv_pol.mag >= 0.0 xor expected_pol.mag >= 0.0)
-    --      or (recv_pol.arg >= 0.0 xor expected_pol.arg >= 0.0)
-    --      or abs(recv_pol.mag) < abs(expected_pol.mag) * (1.0 - TOLERANCE)
-    --      or abs(recv_pol.mag) > abs(expected_pol.mag) * (1.0 + TOLERANCE)
-    --      or abs(recv_pol.arg) < abs(expected_pol.arg) * (1.0 - TOLERANCE)
-    --      or abs(recv_pol.arg) > abs(expected_pol.arg) * (1.0 + TOLERANCE) then
-    --     warning(
-    --       logger,
-    --       sformat(
-    --         "[%d, %d] Comparison failed. " & lf &
-    --         "Got      %r rect(%s, %s) / polar(%s, %s)" & lf &
-    --         "Expected %r rect(%s, %s) / polar(%s, %s)",
-    --         fo(frame_cnt),
-    --         fo(word_cnt),
-    --         fo(axi_slave.axi.tdata),
-    --         real'image(recv_rect.re), real'image(recv_rect.im),
-    --         real'image(recv_pol.mag), real'image(recv_pol.arg),
-    --         fo(expected_lendian),
-    --         real'image(expected_rect.re), real'image(expected_rect.im),
-    --         real'image(expected_pol.mag), real'image(expected_pol.arg)
-    --       ));
-    --     error_cnt := error_cnt + 1;
-    --   end if;
-    -- end if;
-
-    -- assert error_cnt < 256 report "Too many errors" severity Failure;
-
-    word_cnt := word_cnt + 1;
-    if axi_slave.axi.tlast = '1' then
-      info(logger, sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
-      word_cnt  := 0;
-      frame_cnt := frame_cnt + 1;
-    end if;
-  end process; -- }} -------------------------------------------------------------------
 end dvbs2_tx_tb;
