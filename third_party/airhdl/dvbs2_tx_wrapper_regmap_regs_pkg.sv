@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_tx_wrapper_regmap' Register Definitions
-// Revision: 41
+// Revision: 46
 // -----------------------------------------------------------------------------
-// Generated on 2021-03-16 at 19:31 (UTC) by airhdl version 2021.03.1
+// Generated on 2021-03-20 at 22:52 (UTC) by airhdl version 2021.03.1
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -31,6 +31,7 @@ package dvbs2_tx_wrapper_regmap_regs_pkg;
     // User-logic ports (from register file to user-logic)
     typedef struct {
         logic config_strobe; // Strobe logic for register 'config' (pulsed when the register is written from the bus)
+        logic [17:0] config_physical_layer_scrambler_shift_reg_init; // Value of register 'config', field 'physical_layer_scrambler_shift_reg_init'
         logic [0:0] config_enable_dummy_frames; // Value of register 'config', field 'enable_dummy_frames'
         logic ldpc_fifo_status_strobe; // Strobe logic for register 'ldpc_fifo_status' (pulsed when the register is read from the bus)
         logic frames_in_transit_strobe; // Strobe logic for register 'frames_in_transit' (pulsed when the register is read from the bus)
@@ -43,17 +44,21 @@ package dvbs2_tx_wrapper_regmap_regs_pkg;
     } regs2user_t;
 
     // Revision number of the 'dvbs2_tx_wrapper_regmap' register map
-    localparam DVBS2_TX_WRAPPER_REGMAP_REVISION = 41;
+    localparam DVBS2_TX_WRAPPER_REGMAP_REVISION = 46;
 
     // Default base address of the 'dvbs2_tx_wrapper_regmap' register map 
     localparam logic [31:0] DVBS2_TX_WRAPPER_REGMAP_DEFAULT_BASEADDR = 32'h00000000;
     
     // Register 'config'
     localparam logic [31:0] CONFIG_OFFSET = 32'h00000000; // address offset of the 'config' register
+    // Field 'config.physical_layer_scrambler_shift_reg_init'
+    localparam CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_BIT_OFFSET = 0; // bit offset of the 'physical_layer_scrambler_shift_reg_init' field
+    localparam CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_BIT_WIDTH = 18; // bit width of the 'physical_layer_scrambler_shift_reg_init' field
+    localparam logic [17:0] CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_RESET = 18'b000000000000000000; // reset value of the 'physical_layer_scrambler_shift_reg_init' field
     // Field 'config.enable_dummy_frames'
-    localparam CONFIG_ENABLE_DUMMY_FRAMES_BIT_OFFSET = 0; // bit offset of the 'enable_dummy_frames' field
+    localparam CONFIG_ENABLE_DUMMY_FRAMES_BIT_OFFSET = 18; // bit offset of the 'enable_dummy_frames' field
     localparam CONFIG_ENABLE_DUMMY_FRAMES_BIT_WIDTH = 1; // bit width of the 'enable_dummy_frames' field
-    localparam logic [0:0] CONFIG_ENABLE_DUMMY_FRAMES_RESET = 1'b0; // reset value of the 'enable_dummy_frames' field
+    localparam logic [18:18] CONFIG_ENABLE_DUMMY_FRAMES_RESET = 1'b0; // reset value of the 'enable_dummy_frames' field
     
     // Register 'ldpc_fifo_status'
     localparam logic [31:0] LDPC_FIFO_STATUS_OFFSET = 32'h00000004; // address offset of the 'ldpc_fifo_status' register

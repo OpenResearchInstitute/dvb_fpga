@@ -39,31 +39,30 @@ entity axi_ldpc_encoder_core is
   generic ( TID_WIDTH : integer := 0 );
   port (
     -- Usual ports
-    clk               : in  std_logic;
-    rst               : in  std_logic;
-    -- Config input
-    cfg_constellation : in  constellation_t;
-    cfg_frame_type    : in  frame_type_t;
-    cfg_code_rate     : in  code_rate_t;
+    clk             : in  std_logic;
+    rst             : in  std_logic;
     -- AXI LDPC table input
-    s_ldpc_tready     : out std_logic;
-    s_ldpc_tvalid     : in  std_logic;
-    s_ldpc_offset     : in  std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
-    s_ldpc_next       : in  std_logic;
-    s_ldpc_tuser      : in  std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
-    s_ldpc_tlast      : in  std_logic;
+    s_ldpc_tready   : out std_logic;
+    s_ldpc_tvalid   : in  std_logic;
+    s_ldpc_offset   : in  std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+    s_ldpc_next     : in  std_logic;
+    s_ldpc_tuser    : in  std_logic_vector(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+    s_ldpc_tlast    : in  std_logic;
     -- AXI data input
-    s_tready          : out std_logic;
-    s_tvalid          : in  std_logic;
-    s_tlast           : in  std_logic;
-    s_tdata           : in  std_logic_vector(7 downto 0);
-    s_tid             : in  std_logic_vector(TID_WIDTH - 1 downto 0);
+    s_constellation : in  constellation_t;
+    s_frame_type    : in  frame_type_t;
+    s_code_rate     : in  code_rate_t;
+    s_tready        : out std_logic;
+    s_tvalid        : in  std_logic;
+    s_tlast         : in  std_logic;
+    s_tdata         : in  std_logic_vector(7 downto 0);
+    s_tid           : in  std_logic_vector(TID_WIDTH - 1 downto 0);
     -- AXI output
-    m_tready          : in  std_logic;
-    m_tvalid          : out std_logic;
-    m_tlast           : out std_logic;
-    m_tdata           : out std_logic_vector(7 downto 0);
-    m_tid             : out std_logic_vector(TID_WIDTH - 1 downto 0));
+    m_tready        : in  std_logic;
+    m_tvalid        : out std_logic;
+    m_tlast         : out std_logic;
+    m_tdata         : out std_logic_vector(7 downto 0);
+    m_tid           : out std_logic_vector(TID_WIDTH - 1 downto 0));
 end axi_ldpc_encoder_core;
 
 architecture axi_ldpc_encoder_core of axi_ldpc_encoder_core is
@@ -194,9 +193,9 @@ begin
   begin
 
     s_tdata_agg <= s_tid &
-                   encode(cfg_code_rate) &
-                   encode(cfg_constellation) &
-                   encode(cfg_frame_type) &
+                   encode(s_code_rate) &
+                   encode(s_constellation) &
+                   encode(s_frame_type) &
                    s_tlast &
                    s_tdata;
 

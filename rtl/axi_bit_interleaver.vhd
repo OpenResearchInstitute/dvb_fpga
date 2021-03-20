@@ -40,26 +40,25 @@ entity axi_bit_interleaver is
   );
   port (
     -- Usual ports
-    clk               : in  std_logic;
-    rst               : in  std_logic;
-
-    cfg_constellation : in  constellation_t;
-    cfg_frame_type    : in  frame_type_t;
-    cfg_code_rate     : in  code_rate_t;
+    clk             : in  std_logic;
+    rst             : in  std_logic;
 
     -- AXI input
-    s_tvalid          : in  std_logic;
-    s_tlast           : in  std_logic;
-    s_tready          : out std_logic;
-    s_tdata           : in  std_logic_vector(TDATA_WIDTH - 1 downto 0);
-    s_tid             : in  std_logic_vector(TID_WIDTH - 1 downto 0);
+    s_constellation : in  constellation_t;
+    s_frame_type    : in  frame_type_t;
+    s_code_rate     : in  code_rate_t;
+    s_tvalid        : in  std_logic;
+    s_tlast         : in  std_logic;
+    s_tready        : out std_logic;
+    s_tdata         : in  std_logic_vector(TDATA_WIDTH - 1 downto 0);
+    s_tid           : in  std_logic_vector(TID_WIDTH - 1 downto 0);
 
     -- AXI output
-    m_tready          : in  std_logic;
-    m_tvalid          : out std_logic;
-    m_tlast           : out std_logic;
-    m_tdata           : out std_logic_vector(TDATA_WIDTH - 1 downto 0);
-    m_tid             : out std_logic_vector(TID_WIDTH - 1 downto 0));
+    m_tready        : in  std_logic;
+    m_tvalid        : out std_logic;
+    m_tlast         : out std_logic;
+    m_tdata         : out std_logic_vector(TDATA_WIDTH - 1 downto 0);
+    m_tid           : out std_logic_vector(TID_WIDTH - 1 downto 0));
 end axi_bit_interleaver;
 
 architecture axi_bit_interleaver of axi_bit_interleaver is
@@ -668,34 +667,34 @@ begin
           wr_first_word  <= s_tlast;
 
           if wr_first_word = '1' then
-            cfg_wr_constellation <= cfg_constellation;
-            cfg_wr_frame_type    <= cfg_frame_type;
-            cfg_wr_code_rate     <= cfg_code_rate;
+            cfg_wr_constellation <= s_constellation;
+            cfg_wr_frame_type    <= s_frame_type;
+            cfg_wr_code_rate     <= s_code_rate;
             cfg_wr_tid           <= s_tid;
 
-            if cfg_frame_type = fecframe_normal then
-              if cfg_constellation = mod_8psk then
+            if s_frame_type = fecframe_normal then
+              if s_constellation = mod_8psk then
                 rows := 21_600;
-              elsif cfg_constellation = mod_16apsk then
+              elsif s_constellation = mod_16apsk then
                 rows := 16_200;
-              elsif cfg_constellation = mod_32apsk then
+              elsif s_constellation = mod_32apsk then
                 rows := 12_960;
               end if;
-            elsif cfg_frame_type = fecframe_short then
-              if cfg_constellation = mod_8psk then
+            elsif s_frame_type = fecframe_short then
+              if s_constellation = mod_8psk then
                 rows := 5_400;
-              elsif cfg_constellation = mod_16apsk then
+              elsif s_constellation = mod_16apsk then
                 rows := 4_050;
-              elsif cfg_constellation = mod_32apsk then
+              elsif s_constellation = mod_32apsk then
                 rows := 3_240;
               end if;
             end if;
 
-            if cfg_constellation = mod_8psk then
+            if s_constellation = mod_8psk then
               columns := 3;
-            elsif cfg_constellation = mod_16apsk then
+            elsif s_constellation = mod_16apsk then
               columns := 4;
-            elsif cfg_constellation = mod_32apsk then
+            elsif s_constellation = mod_32apsk then
               columns := 5;
             end if;
 

@@ -46,27 +46,26 @@ entity axi_constellation_mapper is
   );
   port (
     -- Usual ports
-    clk               : in  std_logic;
-    rst               : in  std_logic;
+    clk             : in  std_logic;
+    rst             : in  std_logic;
     -- Mapping RAM config
-    ram_wren          : in  std_logic;
-    ram_addr          : in  std_logic_vector(5 downto 0);
-    ram_wdata         : in  std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
-    ram_rdata         : out std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
-    -- Config input
-    cfg_constellation : in  constellation_t;
+    ram_wren        : in  std_logic;
+    ram_addr        : in  std_logic_vector(5 downto 0);
+    ram_wdata       : in  std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+    ram_rdata       : out std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
     -- AXI data input
-    s_tready          : out std_logic;
-    s_tvalid          : in  std_logic;
-    s_tlast           : in  std_logic;
-    s_tdata           : in  std_logic_vector(INPUT_DATA_WIDTH - 1 downto 0);
-    s_tid             : in  std_logic_vector(TID_WIDTH - 1 downto 0);
+    s_constellation : in  constellation_t;
+    s_tready        : out std_logic;
+    s_tvalid        : in  std_logic;
+    s_tlast         : in  std_logic;
+    s_tdata         : in  std_logic_vector(INPUT_DATA_WIDTH - 1 downto 0);
+    s_tid           : in  std_logic_vector(TID_WIDTH - 1 downto 0);
     -- AXI output
-    m_tready          : in  std_logic;
-    m_tvalid          : out std_logic;
-    m_tlast           : out std_logic;
-    m_tdata           : out std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
-    m_tid             : out std_logic_vector(TID_WIDTH - 1 downto 0));
+    m_tready        : in  std_logic;
+    m_tvalid        : out std_logic;
+    m_tlast         : out std_logic;
+    m_tdata         : out std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+    m_tid           : out std_logic_vector(TID_WIDTH - 1 downto 0));
 end axi_constellation_mapper;
 
 architecture axi_constellation_mapper of axi_constellation_mapper is
@@ -281,7 +280,7 @@ begin
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  with cfg_constellation select
+  with s_constellation select
     mux_sel <= "0001" when mod_qpsk,
                "0010" when mod_8psk,
                "0100" when mod_16apsk,
@@ -315,7 +314,7 @@ begin
   axi_16apsk.tready    <= not adapter_full when egress_constellation = mod_16apsk else '0';
   axi_32apsk.tready    <= not adapter_full when egress_constellation = mod_32apsk else '0';
 
-  s_tid_internal    <= s_tid & encode(cfg_constellation);
+  s_tid_internal    <= s_tid & encode(s_constellation);
 
   ---------------
   -- Processes --

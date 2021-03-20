@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
 -- 'dvbs2_tx_wrapper_regmap' Register Component
--- Revision: 41
+-- Revision: 46
 -- -----------------------------------------------------------------------------
--- Generated on 2021-03-16 at 19:31 (UTC) by airhdl version 2021.03.1
+-- Generated on 2021-03-20 at 22:52 (UTC) by airhdl version 2021.03.1
 -- -----------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -84,6 +84,7 @@ architecture RTL of dvbs2_tx_wrapper_regmap_regs is
     
     -- User-defined registers
     signal s_config_strobe_r : std_logic;
+    signal s_reg_config_physical_layer_scrambler_shift_reg_init_r : std_logic_vector(17 downto 0);
     signal s_reg_config_enable_dummy_frames_r : std_logic_vector(0 downto 0);
     signal s_ldpc_fifo_status_strobe_r : std_logic;
     signal s_reg_ldpc_fifo_status_ldpc_fifo_entries : std_logic_vector(13 downto 0);
@@ -167,7 +168,8 @@ begin
                     -- register 'config' at address offset 0x0 
                     if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + CONFIG_OFFSET, AXI_ADDR_WIDTH) then
                         v_addr_hit := true;
-                        v_rdata_r(0 downto 0) := s_reg_config_enable_dummy_frames_r;
+                        v_rdata_r(17 downto 0) := s_reg_config_physical_layer_scrambler_shift_reg_init_r;
+                        v_rdata_r(18 downto 18) := s_reg_config_enable_dummy_frames_r;
                         v_state_r := READ_RESPONSE;
                     end if;
                     -- register 'ldpc_fifo_status' at address offset 0x4 
@@ -259,6 +261,7 @@ begin
             s_axi_bresp_r      <= (others => '0');
             --            
             s_config_strobe_r <= '0';
+            s_reg_config_physical_layer_scrambler_shift_reg_init_r <= CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_RESET;
             s_reg_config_enable_dummy_frames_r <= CONFIG_ENABLE_DUMMY_FRAMES_RESET;
             s_bit_mapper_ram_waddr_r <= (others => '0');
             s_bit_mapper_ram_wen_r <= (others => '0');
@@ -330,9 +333,64 @@ begin
                     if s_axi_awaddr_reg_r = resize(unsigned(BASEADDR) + CONFIG_OFFSET, AXI_ADDR_WIDTH) then
                         v_addr_hit := true;                        
                         s_config_strobe_r <= '1';
-                        -- field 'enable_dummy_frames':
+                        -- field 'physical_layer_scrambler_shift_reg_init':
                         if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_config_enable_dummy_frames_r(0) <= s_axi_wdata_reg_r(0); -- enable_dummy_frames(0)
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(0) <= s_axi_wdata_reg_r(0); -- physical_layer_scrambler_shift_reg_init(0)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(1) <= s_axi_wdata_reg_r(1); -- physical_layer_scrambler_shift_reg_init(1)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(2) <= s_axi_wdata_reg_r(2); -- physical_layer_scrambler_shift_reg_init(2)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(3) <= s_axi_wdata_reg_r(3); -- physical_layer_scrambler_shift_reg_init(3)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(4) <= s_axi_wdata_reg_r(4); -- physical_layer_scrambler_shift_reg_init(4)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(5) <= s_axi_wdata_reg_r(5); -- physical_layer_scrambler_shift_reg_init(5)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(6) <= s_axi_wdata_reg_r(6); -- physical_layer_scrambler_shift_reg_init(6)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(7) <= s_axi_wdata_reg_r(7); -- physical_layer_scrambler_shift_reg_init(7)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(8) <= s_axi_wdata_reg_r(8); -- physical_layer_scrambler_shift_reg_init(8)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(9) <= s_axi_wdata_reg_r(9); -- physical_layer_scrambler_shift_reg_init(9)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(10) <= s_axi_wdata_reg_r(10); -- physical_layer_scrambler_shift_reg_init(10)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(11) <= s_axi_wdata_reg_r(11); -- physical_layer_scrambler_shift_reg_init(11)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(12) <= s_axi_wdata_reg_r(12); -- physical_layer_scrambler_shift_reg_init(12)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(13) <= s_axi_wdata_reg_r(13); -- physical_layer_scrambler_shift_reg_init(13)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(14) <= s_axi_wdata_reg_r(14); -- physical_layer_scrambler_shift_reg_init(14)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(15) <= s_axi_wdata_reg_r(15); -- physical_layer_scrambler_shift_reg_init(15)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(16) <= s_axi_wdata_reg_r(16); -- physical_layer_scrambler_shift_reg_init(16)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_config_physical_layer_scrambler_shift_reg_init_r(17) <= s_axi_wdata_reg_r(17); -- physical_layer_scrambler_shift_reg_init(17)
+                        end if;
+                        -- field 'enable_dummy_frames':
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_config_enable_dummy_frames_r(0) <= s_axi_wdata_reg_r(18); -- enable_dummy_frames(0)
                         end if;
                     end if;
                     -- memory 'bit_mapper_ram' at address offset 0xC                    
@@ -389,6 +447,7 @@ begin
     s_axi_rdata   <= s_axi_rdata_r;
 
     regs2user.config_strobe <= s_config_strobe_r;
+    regs2user.config_physical_layer_scrambler_shift_reg_init <= s_reg_config_physical_layer_scrambler_shift_reg_init_r;
     regs2user.config_enable_dummy_frames <= s_reg_config_enable_dummy_frames_r;
     regs2user.ldpc_fifo_status_strobe <= s_ldpc_fifo_status_strobe_r;
     regs2user.frames_in_transit_strobe <= s_frames_in_transit_strobe_r;

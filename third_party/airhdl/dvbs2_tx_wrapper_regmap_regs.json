@@ -15,10 +15,19 @@
         "size": 32,
         "fields": [
           {
+            "name": "physical_layer_scrambler_shift_reg_init",
+            "description": "Initial value for the physical layer\u0027s scrambler X vector, used to set a device\u0027s gold code.",
+            "bitWidth": 18,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
             "name": "enable_dummy_frames",
             "description": "",
             "bitWidth": 1,
-            "bitOffset": 0,
+            "bitOffset": 18,
             "reset": 0,
             "selfClear": false,
             "enumValues": []
@@ -124,7 +133,7 @@
         ]
       }
     ],
-    "revision": 41,
+    "revision": 46,
     "generateRecordPorts": true
   }
 }

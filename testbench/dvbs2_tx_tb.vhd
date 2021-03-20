@@ -193,47 +193,47 @@ begin
     generic map ( DATA_WIDTH => DATA_WIDTH )
     port map (
       -- Usual ports
-      clk               => clk,
-      rst               => rst,
+      clk             => clk,
+      rst             => rst,
 
       -- AXI4 lite
       --write address channel
-      s_axi_awvalid     => axi_cfg.awvalid,
-      s_axi_awready     => axi_cfg.awready,
-      s_axi_awaddr      => axi_cfg.awaddr,
+      s_axi_awvalid   => axi_cfg.awvalid,
+      s_axi_awready   => axi_cfg.awready,
+      s_axi_awaddr    => axi_cfg.awaddr,
       -- write data channel
-      s_axi_wvalid      => axi_cfg.wvalid,
-      s_axi_wready      => axi_cfg.wready,
-      s_axi_wdata       => axi_cfg.wdata,
-      s_axi_wstrb       => axi_cfg.wstrb,
+      s_axi_wvalid    => axi_cfg.wvalid,
+      s_axi_wready    => axi_cfg.wready,
+      s_axi_wdata     => axi_cfg.wdata,
+      s_axi_wstrb     => axi_cfg.wstrb,
       --read address channel
-      s_axi_arvalid     => axi_cfg.arvalid,
-      s_axi_arready     => axi_cfg.arready,
-      s_axi_araddr      => axi_cfg.araddr,
+      s_axi_arvalid   => axi_cfg.arvalid,
+      s_axi_arready   => axi_cfg.arready,
+      s_axi_araddr    => axi_cfg.araddr,
       --read data channel
-      s_axi_rvalid      => axi_cfg.rvalid,
-      s_axi_rready      => axi_cfg.rready,
-      s_axi_rdata       => axi_cfg.rdata,
-      s_axi_rresp       => axi_cfg.rresp,
+      s_axi_rvalid    => axi_cfg.rvalid,
+      s_axi_rready    => axi_cfg.rready,
+      s_axi_rdata     => axi_cfg.rdata,
+      s_axi_rresp     => axi_cfg.rresp,
       --write response channel
-      s_axi_bvalid      => axi_cfg.bvalid,
-      s_axi_bready      => axi_cfg.bready,
-      s_axi_bresp       => axi_cfg.bresp,
+      s_axi_bvalid    => axi_cfg.bvalid,
+      s_axi_bready    => axi_cfg.bready,
+      s_axi_bresp     => axi_cfg.bresp,
 
       -- AXI input
-      cfg_constellation => encode(cfg_constellation),
-      cfg_frame_type    => encode(cfg_frame_type),
-      cfg_code_rate     => encode(cfg_code_rate),
-      s_tvalid          => axi_master.tvalid,
-      s_tdata           => axi_master.tdata,
-      s_tkeep           => axi_master.tkeep,
-      s_tlast           => axi_master.tlast,
-      s_tready          => axi_master.tready,
+      s_constellation => encode(cfg_constellation),
+      s_frame_type    => encode(cfg_frame_type),
+      s_code_rate     => encode(cfg_code_rate),
+      s_tvalid        => axi_master.tvalid,
+      s_tdata         => axi_master.tdata,
+      s_tkeep         => axi_master.tkeep,
+      s_tlast         => axi_master.tlast,
+      s_tready        => axi_master.tready,
       -- AXI output
-      m_tready          => axi_slave.tready,
-      m_tvalid          => axi_slave.tvalid,
-      m_tlast           => axi_slave.tlast,
-      m_tdata           => axi_slave.tdata);
+      m_tready        => axi_slave.tready,
+      m_tvalid        => axi_slave.tvalid,
+      m_tlast         => axi_slave.tlast,
+      m_tdata         => axi_slave.tdata);
 
   output_checker_u : entity work.axi_file_compare_tolerance
     generic map (

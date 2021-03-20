@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_tx_wrapper_regmap' Register Definitions
-// Revision: 41
+// Revision: 46
 // -----------------------------------------------------------------------------
-// Generated on 2021-03-16 at 19:31 (UTC) by airhdl version 2021.03.1
+// Generated on 2021-03-20 at 22:52 (UTC) by airhdl version 2021.03.1
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -28,7 +28,7 @@ namespace dvbs2_tx_wrapper_regmap_regs {
     static const std::string name = "dvbs2_tx_wrapper_regmap";
 
     /* Revision number of the 'dvbs2_tx_wrapper_regmap' register map */
-    static const std::uint32_t REVISION = 41;
+    static const std::uint32_t REVISION = 46;
 
     /* Default base address of the 'dvbs2_tx_wrapper_regmap' register map */
     static const std::uint32_t BASE_ADDRESS = 0x00000000;
@@ -36,10 +36,16 @@ namespace dvbs2_tx_wrapper_regmap_regs {
     /* Register 'config' */
     static const std::uint32_t CONFIG_OFFSET = 0x00000000; /* address offset of the 'config' register */
 
+    /* Field 'config.physical_layer_scrambler_shift_reg_init' */
+    static const int CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_BIT_OFFSET = 0; /* bit offset of the 'physical_layer_scrambler_shift_reg_init' field */
+    static const int CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_BIT_WIDTH = 18; /* bit width of the 'physical_layer_scrambler_shift_reg_init' field */
+    static const std::uint32_t CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_BIT_MASK = 0x0003FFFF; /* bit mask of the 'physical_layer_scrambler_shift_reg_init' field */
+    static const std::uint32_t CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_RESET = 0x0; /* reset value of the 'physical_layer_scrambler_shift_reg_init' field */
+
     /* Field 'config.enable_dummy_frames' */
-    static const int CONFIG_ENABLE_DUMMY_FRAMES_BIT_OFFSET = 0; /* bit offset of the 'enable_dummy_frames' field */
+    static const int CONFIG_ENABLE_DUMMY_FRAMES_BIT_OFFSET = 18; /* bit offset of the 'enable_dummy_frames' field */
     static const int CONFIG_ENABLE_DUMMY_FRAMES_BIT_WIDTH = 1; /* bit width of the 'enable_dummy_frames' field */
-    static const std::uint32_t CONFIG_ENABLE_DUMMY_FRAMES_BIT_MASK = 0x00000001; /* bit mask of the 'enable_dummy_frames' field */
+    static const std::uint32_t CONFIG_ENABLE_DUMMY_FRAMES_BIT_MASK = 0x00040000; /* bit mask of the 'enable_dummy_frames' field */
     static const std::uint32_t CONFIG_ENABLE_DUMMY_FRAMES_RESET = 0x0; /* reset value of the 'enable_dummy_frames' field */
 
     /* Register 'ldpc_fifo_status' */

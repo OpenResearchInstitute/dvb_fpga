@@ -132,29 +132,29 @@ begin
       TID_WIDTH         => ENCODED_CONFIG_WIDTH)
     port map (
       -- Usual ports
-      clk               => clk,
-      rst               => rst,
+      clk             => clk,
+      rst             => rst,
 
-      ram_wren          => ram_wren,
-      ram_addr          => ram_addr,
-      ram_wdata         => ram_wdata,
-      ram_rdata         => ram_rdata,
+      ram_wren        => ram_wren,
+      ram_addr        => ram_addr,
+      ram_wdata       => ram_wdata,
+      ram_rdata       => ram_rdata,
 
-      cfg_constellation => decode(axi_master.tuser).constellation,
+      s_constellation => decode(axi_master.tuser).constellation,
 
       -- AXI input
-      s_tvalid          => axi_master.tvalid,
-      s_tlast           => axi_master.tlast,
-      s_tready          => axi_master.tready,
-      s_tdata           => axi_master.tdata,
-      s_tid             => axi_master.tuser,
+      s_tvalid        => axi_master.tvalid,
+      s_tlast         => axi_master.tlast,
+      s_tready        => axi_master.tready,
+      s_tdata         => axi_master.tdata,
+      s_tid           => axi_master.tuser,
 
       -- AXI output
-      m_tready          => axi_slave.tready,
-      m_tvalid          => axi_slave.tvalid,
-      m_tlast           => axi_slave.tlast,
-      m_tdata           => axi_slave.tdata,
-      m_tid             => axi_slave.tuser);
+      m_tready        => axi_slave.tready,
+      m_tvalid        => axi_slave.tvalid,
+      m_tlast         => axi_slave.tlast,
+      m_tdata         => axi_slave.tdata,
+      m_tid           => axi_slave.tuser);
 
   ref_data_u : entity fpga_cores_sim.axi_file_reader
     generic map (

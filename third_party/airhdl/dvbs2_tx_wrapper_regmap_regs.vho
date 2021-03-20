@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
 -- 'dvbs2_tx_wrapper_regmap' Register Component
--- Revision: 41
+-- Revision: 46
 -- -----------------------------------------------------------------------------
--- Generated on 2021-03-16 at 19:31 (UTC) by airhdl version 2021.03.1
+-- Generated on 2021-03-20 at 22:52 (UTC) by airhdl version 2021.03.1
 -- -----------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 

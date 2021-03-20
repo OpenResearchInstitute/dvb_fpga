@@ -45,30 +45,29 @@ entity axi_physical_layer_framer is
     TID_WIDTH   : natural := 1);
   port (
     -- Usual ports
-    clk                      : in  std_logic;
-    rst                      : in  std_logic;
+    clk             : in  std_logic;
+    rst             : in  std_logic;
 
     -- This takes effect for the following frame
-    cfg_shift_reg_init       : in  std_logic_vector(17 downto 0) := (0 => '1', others => '0');
-    cfg_enable_dummy_frames  : in  std_logic;
-
-    cfg_constellation        : in  constellation_t;
-    cfg_frame_type           : in  frame_type_t;
-    cfg_code_rate            : in  code_rate_t;
+    cfg_shift_reg_init      : in  std_logic_vector(17 downto 0) := (0 => '1', others => '0');
+    cfg_enable_dummy_frames : in  std_logic;
 
     -- AXI input
-    s_tvalid                 : in  std_logic;
-    s_tready                 : out std_logic;
-    s_tlast                  : in  std_logic;
-    s_tdata                  : in  std_logic_vector(TDATA_WIDTH - 1 downto 0);
-    s_tid                    : in  std_logic_vector(TID_WIDTH - 1 downto 0);
+    s_constellation : in  constellation_t;
+    s_frame_type    : in  frame_type_t;
+    s_code_rate     : in  code_rate_t;
+    s_tvalid        : in  std_logic;
+    s_tready        : out std_logic;
+    s_tlast         : in  std_logic;
+    s_tdata         : in  std_logic_vector(TDATA_WIDTH - 1 downto 0);
+    s_tid           : in  std_logic_vector(TID_WIDTH - 1 downto 0);
 
     -- AXI output
-    m_tready                 : in  std_logic;
-    m_tvalid                 : out std_logic;
-    m_tlast                  : out std_logic;
-    m_tdata                  : out std_logic_vector(TDATA_WIDTH - 1 downto 0);
-    m_tid                    : out std_logic_vector(TID_WIDTH - 1 downto 0));
+    m_tready        : in  std_logic;
+    m_tvalid        : out std_logic;
+    m_tlast         : out std_logic;
+    m_tdata         : out std_logic_vector(TDATA_WIDTH - 1 downto 0);
+    m_tid           : out std_logic_vector(TID_WIDTH - 1 downto 0));
 end axi_physical_layer_framer;
 
 architecture axi_physical_layer_framer of axi_physical_layer_framer is
@@ -129,22 +128,19 @@ begin
     generic map ( DATA_WIDTH => TDATA_WIDTH)
     port map (
       -- Usual ports
-      clk               => clk,
-      rst               => rst,
-      -- Parameter input
-      cfg_constellation => cfg_constellation,
-      cfg_frame_type    => cfg_frame_type,
-      cfg_code_rate     => cfg_code_rate,
-
+      clk             => clk,
+      rst             => rst,
       -- AXI data input
-      s_tready          => s_tready_header,
-      s_tvalid          => s_tvalid_header,
-
+      s_constellation => s_constellation,
+      s_frame_type    => s_frame_type,
+      s_code_rate     => s_code_rate,
+      s_tready        => s_tready_header,
+      s_tvalid        => s_tvalid_header,
       -- AXI output
-      m_tready          => axi_header_out.tready,
-      m_tvalid          => axi_header_out.tvalid,
-      m_tlast           => axi_header_out.tlast,
-      m_tdata           => axi_header_out.tdata);
+      m_tready        => axi_header_out.tready,
+      m_tvalid        => axi_header_out.tvalid,
+      m_tlast         => axi_header_out.tlast,
+      m_tdata         => axi_header_out.tdata);
 
   physical_layer_scrambler : entity work.axi_physical_layer_scrambler
     generic map (

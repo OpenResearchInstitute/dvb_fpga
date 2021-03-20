@@ -52,20 +52,19 @@ entity axi_plframe_header is
   );
   port (
     -- Usual ports
-    clk               : in  std_logic;
-    rst               : in  std_logic;
-    -- Parameter input
-    cfg_constellation : in  constellation_t;
-    cfg_frame_type    : in  frame_type_t;
-    cfg_code_rate     : in  code_rate_t;
+    clk             : in  std_logic;
+    rst             : in  std_logic;
     -- AXI data input
-    s_tready          : out std_logic;
-    s_tvalid          : in  std_logic;
+    s_constellation : in  constellation_t;
+    s_frame_type    : in  frame_type_t;
+    s_code_rate     : in  code_rate_t;
+    s_tready        : out std_logic;
+    s_tvalid        : in  std_logic;
     -- AXI output
-    m_tready          : in  std_logic;
-    m_tvalid          : out std_logic;
-    m_tlast           : out std_logic;
-    m_tdata           : out std_logic_vector(DATA_WIDTH - 1 downto 0));
+    m_tready        : in  std_logic;
+    m_tvalid        : out std_logic;
+    m_tlast         : out std_logic;
+    m_tdata         : out std_logic_vector(DATA_WIDTH - 1 downto 0));
 end axi_plframe_header;
 
 architecture axi_plframe_header of axi_plframe_header is
@@ -115,8 +114,8 @@ begin
 
   m_tlast_i <= '1' when header_sr_cnt = 89 else '0';
 
-  pls_rom_addr    <= (others => 'U') when get_pls_rom_addr(cfg_constellation, cfg_frame_type, cfg_code_rate) = -1 else
-                     std_logic_vector(to_unsigned(get_pls_rom_addr(cfg_constellation, cfg_frame_type, cfg_code_rate), numbits(PLS_ROM_DEPTH)));
+  pls_rom_addr    <= (others => 'U') when get_pls_rom_addr(s_constellation, s_frame_type, s_code_rate) = -1 else
+                     std_logic_vector(to_unsigned(get_pls_rom_addr(s_constellation, s_frame_type, s_code_rate), numbits(PLS_ROM_DEPTH)));
 
   header          <= SOF & pls_code;
   modulation_addr <= '0' & modulation_index & header_sr(89);

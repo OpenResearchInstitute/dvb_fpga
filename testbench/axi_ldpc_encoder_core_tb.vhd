@@ -143,33 +143,32 @@ begin
     generic map ( TID_WIDTH => ENCODED_CONFIG_WIDTH )
     port map (
       -- Usual ports
-      clk               => clk,
-      rst               => rst,
+      clk             => clk,
+      rst             => rst,
 
-      cfg_constellation => decode(axi_master.tuser).constellation,
-      cfg_frame_type    => decode(axi_master.tuser).frame_type,
-      cfg_code_rate     => decode(axi_master.tuser).code_rate,
-
-      s_ldpc_offset     => std_logic_vector(axi_table.offset),
-      s_ldpc_tuser      => std_logic_vector(axi_table.bit_index),
-      s_ldpc_next       => axi_table.is_next,
-      s_ldpc_tvalid     => axi_table.tvalid,
-      s_ldpc_tlast      => axi_table.tlast,
-      s_ldpc_tready     => axi_table.tready,
+      s_ldpc_offset   => std_logic_vector(axi_table.offset),
+      s_ldpc_tuser    => std_logic_vector(axi_table.bit_index),
+      s_ldpc_next     => axi_table.is_next,
+      s_ldpc_tvalid   => axi_table.tvalid,
+      s_ldpc_tlast    => axi_table.tlast,
+      s_ldpc_tready   => axi_table.tready,
 
       -- AXI input
-      s_tvalid          => axi_master.tvalid,
-      s_tlast           => axi_master.tlast,
-      s_tready          => axi_master.tready,
-      s_tdata           => axi_master.tdata,
-      s_tid             => axi_master.tuser,
+      s_constellation => decode(axi_master.tuser).constellation,
+      s_frame_type    => decode(axi_master.tuser).frame_type,
+      s_code_rate     => decode(axi_master.tuser).code_rate,
+      s_tvalid        => axi_master.tvalid,
+      s_tlast         => axi_master.tlast,
+      s_tready        => axi_master.tready,
+      s_tdata         => axi_master.tdata,
+      s_tid           => axi_master.tuser,
 
       -- AXI output
-      m_tready          => axi_slave.tready,
-      m_tvalid          => axi_slave.tvalid,
-      m_tlast           => axi_slave.tlast,
-      m_tdata           => axi_slave.tdata,
-      m_tid             => axi_slave.tuser);
+      m_tready        => axi_slave.tready,
+      m_tvalid        => axi_slave.tvalid,
+      m_tlast         => axi_slave.tlast,
+      m_tdata         => axi_slave.tdata,
+      m_tid           => axi_slave.tuser);
 
   axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
     generic map (

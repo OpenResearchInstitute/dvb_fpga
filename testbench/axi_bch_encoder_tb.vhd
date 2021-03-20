@@ -68,9 +68,6 @@ architecture axi_bch_encoder_tb of axi_bch_encoder_tb is
   signal clk                : std_logic := '1';
   signal rst                : std_logic;
 
-  signal cfg_frame_type     : frame_type_t;
-  signal cfg_code_rate      : code_rate_t;
-
   -- AXI input
   signal axi_master         : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   signal axi_master_dv      : boolean;
@@ -114,23 +111,22 @@ begin
     generic map ( TID_WIDTH => ENCODED_CONFIG_WIDTH )
     port map (
       -- Usual ports
-      clk            => clk,
-      rst            => rst,
-      -- Config input
-      cfg_frame_type => decode(axi_master.tuser).frame_type,
-      cfg_code_rate  => decode(axi_master.tuser).code_rate,
+      clk          => clk,
+      rst          => rst,
       -- AXI input
-      s_tvalid       => axi_master.tvalid,
-      s_tlast        => axi_master.tlast,
-      s_tready       => axi_master.tready,
-      s_tdata        => axi_master.tdata,
-      s_tid          => axi_master.tuser,
+      s_frame_type => decode(axi_master.tuser).frame_type,
+      s_code_rate  => decode(axi_master.tuser).code_rate,
+      s_tvalid     => axi_master.tvalid,
+      s_tlast      => axi_master.tlast,
+      s_tready     => axi_master.tready,
+      s_tdata      => axi_master.tdata,
+      s_tid        => axi_master.tuser,
       -- AXI output
-      m_tready       => axi_slave.tready,
-      m_tvalid       => axi_slave.tvalid,
-      m_tlast        => axi_slave.tlast,
-      m_tdata        => axi_slave.tdata,
-      m_tid          => axi_slave.tuser);
+      m_tready     => axi_slave.tready,
+      m_tvalid     => axi_slave.tvalid,
+      m_tlast      => axi_slave.tlast,
+      m_tdata      => axi_slave.tdata,
+      m_tid        => axi_slave.tuser);
 
   axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
     generic map (

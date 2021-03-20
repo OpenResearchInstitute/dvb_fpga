@@ -73,10 +73,6 @@ architecture axi_plframe_header_tb of axi_plframe_header_tb is
   signal clk             : std_logic := '1';
   signal rst             : std_logic;
 
-  signal m_frame_type    : frame_type_t;
-  signal m_constellation : constellation_t;
-  signal m_code_rate     : code_rate_t;
-
   signal axi_master      : axi_stream_data_bus_t(tdata(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0));
   signal axi_slave       : axi_stream_data_bus_t(tdata(DATA_WIDTH - 1 downto 0));
   signal axi_slave_tdata : std_logic_vector(DATA_WIDTH - 1 downto 0);
@@ -113,29 +109,25 @@ begin
       m_tvalid => axi_master.tvalid,
       m_tlast  => open);
 
-  m_frame_type    <= decode(get_field(axi_master.tdata, 0, CONFIG_INPUT_WIDTHS));
-  m_constellation <= decode(get_field(axi_master.tdata, 1, CONFIG_INPUT_WIDTHS));
-  m_code_rate     <= decode(get_field(axi_master.tdata, 2, CONFIG_INPUT_WIDTHS));
-
   dut : entity work.axi_plframe_header
     generic map (DATA_WIDTH => DATA_WIDTH)
     port map (
       -- Usual ports
-      clk               => clk,
-      rst               => rst,
+      clk             => clk,
+      rst             => rst,
 
-      cfg_constellation => m_constellation,
-      cfg_frame_type    => m_frame_type,
-      cfg_code_rate     => m_code_rate,
+      s_constellation => decode(axi_master.tdata).constellation,
+      s_frame_type    => decode(axi_master.tdata).frame_type,
+      s_code_rate     => decode(axi_master.tdata).code_rate,
 
-      s_tready          => axi_master.tready,
-      s_tvalid          => axi_master.tvalid,
+      s_tready        => axi_master.tready,
+      s_tvalid        => axi_master.tvalid,
 
       -- AXI output
-      m_tready          => axi_slave.tready,
-      m_tvalid          => axi_slave.tvalid,
-      m_tdata           => axi_slave.tdata,
-      m_tlast           => axi_slave.tlast);
+      m_tready        => axi_slave.tready,
+      m_tvalid        => axi_slave.tvalid,
+      m_tdata         => axi_slave.tdata,
+      m_tlast         => axi_slave.tlast);
 
   axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
     generic map (
@@ -213,7 +205,7 @@ begin
 
       -- GHDL doens't play well with anonymous vectors, so let's be explicit
       subtype bfm_data_t is std_logic_array_t(0 to 0)(FRAME_TYPE_WIDTH + CONSTELLATION_WIDTH + CODE_RATE_WIDTH - 1 downto 0);
-      constant bfm_data : std_logic_vector := encode(config.code_rate) & encode(config.constellation) & encode(config.frame_type);
+      variable config_tuple : config_tuple_t;
     begin
 
       info("Running test with:");
@@ -222,12 +214,14 @@ begin
       info(" - code_rate      : " & code_rate_t'image(config.code_rate));
       info(" - data path      : " & data_path);
 
+      config_tuple := (code_rate => config.code_rate, constellation => config.constellation, frame_type => config.frame_type);
+
       for i in 0 to number_of_frames - 1 loop
         debug(logger, "Setting up frame #" & to_string(i));
 
         axi_bfm_write(net,
           bfm         => dut,
-          data        => bfm_data_t'(0 => bfm_data),
+          data        => bfm_data_t'(0 => encode(config_tuple)),
           probability => 1.0,
           blocking    => False);
 

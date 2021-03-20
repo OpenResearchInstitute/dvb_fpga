@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
 -- 'dvbs2_tx_wrapper_regmap' Register Definitions
--- Revision: 41
+-- Revision: 46
 -- -----------------------------------------------------------------------------
--- Generated on 2021-03-16 at 19:31 (UTC) by airhdl version 2021.03.1
+-- Generated on 2021-03-20 at 22:52 (UTC) by airhdl version 2021.03.1
 -- -----------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -69,6 +69,7 @@ package dvbs2_tx_wrapper_regmap_regs_pkg is
     -- User-logic ports (from register file to user-logic)
     type regs2user_t is record
         config_strobe : std_logic; -- Strobe signal for register 'config' (pulsed when the register is written from the bus}
+        config_physical_layer_scrambler_shift_reg_init : std_logic_vector(17 downto 0); -- Value of register 'config', field 'physical_layer_scrambler_shift_reg_init'
         config_enable_dummy_frames : std_logic_vector(0 downto 0); -- Value of register 'config', field 'enable_dummy_frames'
         ldpc_fifo_status_strobe : std_logic; -- Strobe signal for register 'ldpc_fifo_status' (pulsed when the register is read from the bus}
         frames_in_transit_strobe : std_logic; -- Strobe signal for register 'frames_in_transit' (pulsed when the register is read from the bus}
@@ -81,17 +82,21 @@ package dvbs2_tx_wrapper_regmap_regs_pkg is
     end record;
 
     -- Revision number of the 'dvbs2_tx_wrapper_regmap' register map
-    constant DVBS2_TX_WRAPPER_REGMAP_REVISION : natural := 41;
+    constant DVBS2_TX_WRAPPER_REGMAP_REVISION : natural := 46;
 
     -- Default base address of the 'dvbs2_tx_wrapper_regmap' register map 
     constant DVBS2_TX_WRAPPER_REGMAP_DEFAULT_BASEADDR : unsigned(31 downto 0) := unsigned'(x"00000000");
     
     -- Register 'config'
     constant CONFIG_OFFSET : unsigned(31 downto 0) := unsigned'(x"00000000"); -- address offset of the 'config' register
+    -- Field 'config.physical_layer_scrambler_shift_reg_init'
+    constant CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_BIT_OFFSET : natural := 0; -- bit offset of the 'physical_layer_scrambler_shift_reg_init' field
+    constant CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_BIT_WIDTH : natural := 18; -- bit width of the 'physical_layer_scrambler_shift_reg_init' field
+    constant CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_RESET : std_logic_vector(17 downto 0) := std_logic_vector'("000000000000000000"); -- reset value of the 'physical_layer_scrambler_shift_reg_init' field
     -- Field 'config.enable_dummy_frames'
-    constant CONFIG_ENABLE_DUMMY_FRAMES_BIT_OFFSET : natural := 0; -- bit offset of the 'enable_dummy_frames' field
+    constant CONFIG_ENABLE_DUMMY_FRAMES_BIT_OFFSET : natural := 18; -- bit offset of the 'enable_dummy_frames' field
     constant CONFIG_ENABLE_DUMMY_FRAMES_BIT_WIDTH : natural := 1; -- bit width of the 'enable_dummy_frames' field
-    constant CONFIG_ENABLE_DUMMY_FRAMES_RESET : std_logic_vector(0 downto 0) := std_logic_vector'("0"); -- reset value of the 'enable_dummy_frames' field
+    constant CONFIG_ENABLE_DUMMY_FRAMES_RESET : std_logic_vector(18 downto 18) := std_logic_vector'("0"); -- reset value of the 'enable_dummy_frames' field
     
     -- Register 'ldpc_fifo_status'
     constant LDPC_FIFO_STATUS_OFFSET : unsigned(31 downto 0) := unsigned'(x"00000004"); -- address offset of the 'ldpc_fifo_status' register

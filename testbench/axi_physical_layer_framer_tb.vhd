@@ -118,26 +118,25 @@ begin
       TID_WIDTH   => ENCODED_CONFIG_WIDTH)
     port map (
       -- Usual ports
-      clk                      => clk,
-      rst                      => rst,
+      clk             => clk,
+      rst             => rst,
       -- Static config
       cfg_enable_dummy_frames  => '0', -- Not supported by the TB yet
-      -- Per frame config
-      cfg_constellation        => decode(axi_master.tuser).constellation,
-      cfg_frame_type           => decode(axi_master.tuser).frame_type,
-      cfg_code_rate            => decode(axi_master.tuser).code_rate,
       -- AXI input
-      s_tvalid                 => axi_master.tvalid,
-      s_tlast                  => axi_master.tlast,
-      s_tready                 => axi_master.tready,
-      s_tdata                  => axi_master_tdata,
-      s_tid                    => axi_master.tuser,
+      s_constellation => decode(axi_master.tuser).constellation,
+      s_frame_type    => decode(axi_master.tuser).frame_type,
+      s_code_rate     => decode(axi_master.tuser).code_rate,
+      s_tvalid        => axi_master.tvalid,
+      s_tlast         => axi_master.tlast,
+      s_tready        => axi_master.tready,
+      s_tdata         => axi_master_tdata,
+      s_tid           => axi_master.tuser,
       -- AXI output
-      m_tready                 => axi_slave.tready,
-      m_tvalid                 => axi_slave.tvalid,
-      m_tlast                  => axi_slave.tlast,
-      m_tdata                  => axi_slave.tdata,
-      m_tid                    => axi_slave.tuser);
+      m_tready        => axi_slave.tready,
+      m_tvalid        => axi_slave.tvalid,
+      m_tlast         => axi_slave.tlast,
+      m_tdata         => axi_slave.tdata,
+      m_tid           => axi_slave.tuser);
 
   ref_data_u : entity fpga_cores_sim.axi_file_reader
     generic map (
