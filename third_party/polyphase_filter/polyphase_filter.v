@@ -78,9 +78,6 @@ module polyphase_filter #(
     wire [RATE_CHANGE-1:0]              data_out_tvalid_array;
     wire [RATE_CHANGE-1:0]              data_out_tlast_array;
 
-    wire [RATE_CHANGE-1:0]              samples_remaining_array;
-
-
     // select the highest frequency clock
     assign clock = DECIMATE_INTERPOLATE ? data_out_aclk : data_in_aclk;
 
@@ -229,7 +226,7 @@ module polyphase_filter #(
                 .data_out_tlast   (data_out_tlast_array[dsp_array]),
                 .data_out_tvalid  (data_out_tvalid_array[dsp_array]),
                 //
-                .samples_remaining(samples_remaining_array),
+                .samples_remaining(),
                 // Upper bits address the coefficient. Lower bits address FIR instance
                 .coeffs_wren      (selected_filter == dsp_array ? coeffs_wren : 1'b0),
                 .coeffs_addr      (addr_filter),

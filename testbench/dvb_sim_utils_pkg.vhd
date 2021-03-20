@@ -59,10 +59,6 @@ package dvb_sim_utils_pkg is
   function to_string( constant config : config_t ) return string;
   function to_string( constant config : file_pair_t ) return string;
 
-  -- Add double quotes around a string
-  function quote ( constant s : string ) return string;
-  function quote ( constant s : character ) return string;
-
   impure function get_test_cfg ( constant str : string) return config_array_t;
   impure function get_test_cfg ( constant str : string) return file_pair_array_t;
 
