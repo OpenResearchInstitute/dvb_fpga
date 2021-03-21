@@ -199,12 +199,11 @@ begin
         tdata_error_cnt_i <= tdata_error_cnt_i + 1;
 
         error_pct := max(
-          integer(100.0*(abs(ref_rect.re) - abs(v_rect.re) / abs(ref_rect.re))),
-          integer(100.0*(abs(ref_rect.im) - abs(v_rect.im) / abs(ref_rect.im)))
+          integer(100.0*((ref_rect.re - v_rect.re) / ref_rect.re)),
+          integer(100.0*((ref_rect.im - v_rect.im) / ref_rect.im))
         );
 
-        error(
-          logger,
+        notify(
           sformat(
             "[%d, %d] Comparison failed. " & lf &
             "Got:      %r %r (%d, %d), delta (%d, %d)" & lf &

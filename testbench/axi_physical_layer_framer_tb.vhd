@@ -138,22 +138,30 @@ begin
       m_tdata         => axi_slave.tdata,
       m_tid           => axi_slave.tuser);
 
-  ref_data_u : entity fpga_cores_sim.axi_file_reader
+  ref_data_u : entity work.axi_file_compare_tolerance
     generic map (
-      READER_NAME     => "ref_data_u",
-      DATA_WIDTH      => TDATA_WIDTH)
+      READER_NAME         => "ref_data_u",
+      DATA_WIDTH          => TDATA_WIDTH,
+      TOLERANCE           => 4,
+      SWAP_BYTE_ENDIANESS => True,
+      ERROR_CNT_WIDTH     => 8,
+      REPORT_SEVERITY     => Error)
     port map (
       -- Usual ports
       clk                => clk,
       rst                => rst,
-      -- Data output
-      m_tready           => axi_slave.tready and axi_slave.tvalid,
-      m_tdata(31 downto 24) => expected_tdata(23 downto 16),
-      m_tdata(23 downto 16) => expected_tdata(31 downto 24),
-      m_tdata(15 downto 8)  => expected_tdata(7 downto 0),
-      m_tdata(7 downto 0)   => expected_tdata(15 downto 8),
-      m_tvalid              => open,
-      m_tlast               => expected_tlast);
+      -- Config and status
+      tdata_error_cnt    => open,
+      tlast_error_cnt    => open,
+      error_cnt          => open,
+      -- Debug stuff
+      expected_tdata     => expected_tdata,
+      expected_tlast     => expected_tlast,
+      -- Data input
+      s_tready           => axi_slave.tready,
+      s_tdata            => axi_slave.tdata,
+      s_tvalid           => axi_slave.tvalid,
+      s_tlast            => axi_slave.tlast);
 
   ------------------------------
   -- Asynchronous assignments --
@@ -337,62 +345,6 @@ begin
         first_word := True;
       end if;
     end loop;
-  end process; -- }} -------------------------------------------------------------------
-
-  receiver_p : process -- {{ -----------------------------------------------------------
-    constant logger      : logger_t := get_logger("receiver");
-    variable word_cnt    : natural  := 0;
-    variable frame_cnt   : natural  := 0;
-
-    constant TOLERANCE   : real := 0.05;
-    variable recv_r      : complex;
-    variable expected_r  : complex;
-    variable recv_p      : complex_polar;
-    variable expected_p  : complex_polar;
-    variable expected_re : signed(TDATA_WIDTH/2 - 1 downto 0);
-    variable expected_im : signed(TDATA_WIDTH/2 - 1 downto 0);
-
-  begin
-    wait until axi_slave.tvalid = '1' and axi_slave.tready = '1' and rising_edge(clk);
-    recv_r           := to_complex(axi_slave.tdata);
-    expected_r       := to_complex(expected_tdata);
-
-    recv_p           := complex_to_polar(recv_r);
-    expected_p       := complex_to_polar(expected_r);
-
-    if (recv_p.mag >= 0.0 xor expected_p.mag >= 0.0)
-       or (recv_p.arg >= 0.0 xor expected_p.arg >= 0.0)
-       or abs(recv_p.mag) < abs(expected_p.mag) * (1.0 - TOLERANCE)
-       or abs(recv_p.mag) > abs(expected_p.mag) * (1.0 + TOLERANCE)
-       or abs(recv_p.arg) < abs(expected_p.arg) * (1.0 - TOLERANCE)
-       or abs(recv_p.arg) > abs(expected_p.arg) * (1.0 + TOLERANCE) then
-      error(
-        logger,
-        sformat(
-          "[%d, %d] Comparison failed. " & lf &
-          "Got      %r %r rect(%s, %s) / polar(%s, %s)" & lf &
-          "Expected %r %r rect(%s, %s) / polar(%s, %s)",
-          fo(frame_cnt),
-          fo(word_cnt),
-          fo(axi_slave.tdata(TDATA_WIDTH - 1 downto TDATA_WIDTH/2)),
-          fo(axi_slave.tdata(TDATA_WIDTH/2 - 1 downto 0)),
-          real'image(recv_r.re), real'image(recv_r.im),
-          real'image(recv_p.mag), real'image(recv_p.arg),
-          fo(expected_tdata(TDATA_WIDTH - 1 downto TDATA_WIDTH/2)),
-          fo(expected_tdata(TDATA_WIDTH/2 - 1 downto 0)),
-          real'image(expected_r.re), real'image(expected_r.im),
-          real'image(expected_p.mag), real'image(expected_p.arg)
-        ));
-   end if;
-
-    -- assert word_cnt < 16;
-
-    word_cnt := word_cnt + 1;
-    if axi_slave.tlast = '1' then
-      info(logger, sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
-      word_cnt  := 0;
-      frame_cnt := frame_cnt + 1;
-    end if;
   end process; -- }} -------------------------------------------------------------------
 
 end axi_physical_layer_framer_tb;
