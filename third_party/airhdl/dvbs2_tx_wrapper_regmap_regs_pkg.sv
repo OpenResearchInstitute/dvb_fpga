@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_tx_wrapper_regmap' Register Definitions
-// Revision: 46
+// Revision: 123
 // -----------------------------------------------------------------------------
-// Generated on 2021-03-20 at 22:52 (UTC) by airhdl version 2021.03.1
+// Generated on 2021-03-21 at 15:18 (UTC) by airhdl version 2021.03.1
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -26,6 +26,26 @@ package dvbs2_tx_wrapper_regmap_regs_pkg;
         logic [0:0] ldpc_fifo_status_ldpc_fifo_full; // Value of register 'ldpc_fifo_status', field 'ldpc_fifo_full'
         logic [7:0] frames_in_transit_value; // Value of register 'frames_in_transit', field 'value'
         logic [31:0] bit_mapper_ram_rdata; // read data for memory 'bit_mapper_ram'
+        logic [15:0] axi_debug_input_width_converter_frame_count_value; // Value of register 'axi_debug_input_width_converter_frame_count', field 'value'
+        logic [15:0] axi_debug_input_width_converter_last_frame_length_value; // Value of register 'axi_debug_input_width_converter_last_frame_length', field 'value'
+        logic [15:0] axi_debug_input_width_converter_min_max_frame_length_min_frame_length; // Value of register 'axi_debug_input_width_converter_min_max_frame_length', field 'min_frame_length'
+        logic [15:0] axi_debug_input_width_converter_min_max_frame_length_max_frame_length; // Value of register 'axi_debug_input_width_converter_min_max_frame_length', field 'max_frame_length'
+        logic [15:0] axi_debug_bb_scrambler_frame_count_value; // Value of register 'axi_debug_bb_scrambler_frame_count', field 'value'
+        logic [15:0] axi_debug_bb_scrambler_last_frame_length_value; // Value of register 'axi_debug_bb_scrambler_last_frame_length', field 'value'
+        logic [15:0] axi_debug_bb_scrambler_min_max_frame_length_min_frame_length; // Value of register 'axi_debug_bb_scrambler_min_max_frame_length', field 'min_frame_length'
+        logic [15:0] axi_debug_bb_scrambler_min_max_frame_length_max_frame_length; // Value of register 'axi_debug_bb_scrambler_min_max_frame_length', field 'max_frame_length'
+        logic [15:0] axi_debug_bch_encoder_frame_count_value; // Value of register 'axi_debug_bch_encoder_frame_count', field 'value'
+        logic [15:0] axi_debug_bch_encoder_last_frame_length_value; // Value of register 'axi_debug_bch_encoder_last_frame_length', field 'value'
+        logic [15:0] axi_debug_bch_encoder_min_max_frame_length_min_frame_length; // Value of register 'axi_debug_bch_encoder_min_max_frame_length', field 'min_frame_length'
+        logic [15:0] axi_debug_bch_encoder_min_max_frame_length_max_frame_length; // Value of register 'axi_debug_bch_encoder_min_max_frame_length', field 'max_frame_length'
+        logic [15:0] axi_debug_ldpc_encoder_frame_count_value; // Value of register 'axi_debug_ldpc_encoder_frame_count', field 'value'
+        logic [15:0] axi_debug_ldpc_encoder_last_frame_length_value; // Value of register 'axi_debug_ldpc_encoder_last_frame_length', field 'value'
+        logic [15:0] axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length; // Value of register 'axi_debug_ldpc_encoder_min_max_frame_length', field 'min_frame_length'
+        logic [15:0] axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length; // Value of register 'axi_debug_ldpc_encoder_min_max_frame_length', field 'max_frame_length'
+        logic [15:0] axi_debug_bit_interleaver_frame_count_value; // Value of register 'axi_debug_bit_interleaver_frame_count', field 'value'
+        logic [15:0] axi_debug_bit_interleaver_last_frame_length_value; // Value of register 'axi_debug_bit_interleaver_last_frame_length', field 'value'
+        logic [15:0] axi_debug_bit_interleaver_min_max_frame_length_min_frame_length; // Value of register 'axi_debug_bit_interleaver_min_max_frame_length', field 'min_frame_length'
+        logic [15:0] axi_debug_bit_interleaver_min_max_frame_length_max_frame_length; // Value of register 'axi_debug_bit_interleaver_min_max_frame_length', field 'max_frame_length'
     } user2regs_t;
     
     // User-logic ports (from register file to user-logic)
@@ -41,10 +61,50 @@ package dvbs2_tx_wrapper_regmap_regs_pkg;
         logic [8:0] polyphase_filter_coefficients_addr; // read/write address for memory 'polyphase_filter_coefficients'
         logic [31:0] polyphase_filter_coefficients_wdata; // write data for memory 'polyphase_filter_coefficients'         
         logic [3:0] polyphase_filter_coefficients_wen; // byte-wide write-enable for memory 'polyphase_filter_coefficients'
+        logic axi_debug_input_width_converter_cfg_strobe; // Strobe logic for register 'axi_debug_input_width_converter_cfg' (pulsed when the register is written from the bus)
+        logic [0:0] axi_debug_input_width_converter_cfg_block_data; // Value of register 'axi_debug_input_width_converter_cfg', field 'block_data'
+        logic [0:0] axi_debug_input_width_converter_cfg_allow_word; // Value of register 'axi_debug_input_width_converter_cfg', field 'allow_word'
+        logic [0:0] axi_debug_input_width_converter_cfg_allow_frame; // Value of register 'axi_debug_input_width_converter_cfg', field 'allow_frame'
+        logic [0:0] axi_debug_input_width_converter_cfg_reset_min_max; // Value of register 'axi_debug_input_width_converter_cfg', field 'reset_min_max'
+        logic axi_debug_input_width_converter_frame_count_strobe; // Strobe logic for register 'axi_debug_input_width_converter_frame_count' (pulsed when the register is read from the bus)
+        logic axi_debug_input_width_converter_last_frame_length_strobe; // Strobe logic for register 'axi_debug_input_width_converter_last_frame_length' (pulsed when the register is read from the bus)
+        logic axi_debug_input_width_converter_min_max_frame_length_strobe; // Strobe logic for register 'axi_debug_input_width_converter_min_max_frame_length' (pulsed when the register is read from the bus)
+        logic axi_debug_bb_scrambler_cfg_strobe; // Strobe logic for register 'axi_debug_bb_scrambler_cfg' (pulsed when the register is written from the bus)
+        logic [0:0] axi_debug_bb_scrambler_cfg_block_data; // Value of register 'axi_debug_bb_scrambler_cfg', field 'block_data'
+        logic [0:0] axi_debug_bb_scrambler_cfg_allow_word; // Value of register 'axi_debug_bb_scrambler_cfg', field 'allow_word'
+        logic [0:0] axi_debug_bb_scrambler_cfg_allow_frame; // Value of register 'axi_debug_bb_scrambler_cfg', field 'allow_frame'
+        logic [0:0] axi_debug_bb_scrambler_cfg_reset_min_max; // Value of register 'axi_debug_bb_scrambler_cfg', field 'reset_min_max'
+        logic axi_debug_bb_scrambler_frame_count_strobe; // Strobe logic for register 'axi_debug_bb_scrambler_frame_count' (pulsed when the register is read from the bus)
+        logic axi_debug_bb_scrambler_last_frame_length_strobe; // Strobe logic for register 'axi_debug_bb_scrambler_last_frame_length' (pulsed when the register is read from the bus)
+        logic axi_debug_bb_scrambler_min_max_frame_length_strobe; // Strobe logic for register 'axi_debug_bb_scrambler_min_max_frame_length' (pulsed when the register is read from the bus)
+        logic axi_debug_bch_encoder_cfg_strobe; // Strobe logic for register 'axi_debug_bch_encoder_cfg' (pulsed when the register is written from the bus)
+        logic [0:0] axi_debug_bch_encoder_cfg_block_data; // Value of register 'axi_debug_bch_encoder_cfg', field 'block_data'
+        logic [0:0] axi_debug_bch_encoder_cfg_allow_word; // Value of register 'axi_debug_bch_encoder_cfg', field 'allow_word'
+        logic [0:0] axi_debug_bch_encoder_cfg_allow_frame; // Value of register 'axi_debug_bch_encoder_cfg', field 'allow_frame'
+        logic [0:0] axi_debug_bch_encoder_cfg_reset_min_max; // Value of register 'axi_debug_bch_encoder_cfg', field 'reset_min_max'
+        logic axi_debug_bch_encoder_frame_count_strobe; // Strobe logic for register 'axi_debug_bch_encoder_frame_count' (pulsed when the register is read from the bus)
+        logic axi_debug_bch_encoder_last_frame_length_strobe; // Strobe logic for register 'axi_debug_bch_encoder_last_frame_length' (pulsed when the register is read from the bus)
+        logic axi_debug_bch_encoder_min_max_frame_length_strobe; // Strobe logic for register 'axi_debug_bch_encoder_min_max_frame_length' (pulsed when the register is read from the bus)
+        logic axi_debug_ldpc_encoder_cfg_strobe; // Strobe logic for register 'axi_debug_ldpc_encoder_cfg' (pulsed when the register is written from the bus)
+        logic [0:0] axi_debug_ldpc_encoder_cfg_block_data; // Value of register 'axi_debug_ldpc_encoder_cfg', field 'block_data'
+        logic [0:0] axi_debug_ldpc_encoder_cfg_allow_word; // Value of register 'axi_debug_ldpc_encoder_cfg', field 'allow_word'
+        logic [0:0] axi_debug_ldpc_encoder_cfg_allow_frame; // Value of register 'axi_debug_ldpc_encoder_cfg', field 'allow_frame'
+        logic [0:0] axi_debug_ldpc_encoder_cfg_reset_min_max; // Value of register 'axi_debug_ldpc_encoder_cfg', field 'reset_min_max'
+        logic axi_debug_ldpc_encoder_frame_count_strobe; // Strobe logic for register 'axi_debug_ldpc_encoder_frame_count' (pulsed when the register is read from the bus)
+        logic axi_debug_ldpc_encoder_last_frame_length_strobe; // Strobe logic for register 'axi_debug_ldpc_encoder_last_frame_length' (pulsed when the register is read from the bus)
+        logic axi_debug_ldpc_encoder_min_max_frame_length_strobe; // Strobe logic for register 'axi_debug_ldpc_encoder_min_max_frame_length' (pulsed when the register is read from the bus)
+        logic axi_debug_bit_interleaver_cfg_strobe; // Strobe logic for register 'axi_debug_bit_interleaver_cfg' (pulsed when the register is written from the bus)
+        logic [0:0] axi_debug_bit_interleaver_cfg_block_data; // Value of register 'axi_debug_bit_interleaver_cfg', field 'block_data'
+        logic [0:0] axi_debug_bit_interleaver_cfg_allow_word; // Value of register 'axi_debug_bit_interleaver_cfg', field 'allow_word'
+        logic [0:0] axi_debug_bit_interleaver_cfg_allow_frame; // Value of register 'axi_debug_bit_interleaver_cfg', field 'allow_frame'
+        logic [0:0] axi_debug_bit_interleaver_cfg_reset_min_max; // Value of register 'axi_debug_bit_interleaver_cfg', field 'reset_min_max'
+        logic axi_debug_bit_interleaver_frame_count_strobe; // Strobe logic for register 'axi_debug_bit_interleaver_frame_count' (pulsed when the register is read from the bus)
+        logic axi_debug_bit_interleaver_last_frame_length_strobe; // Strobe logic for register 'axi_debug_bit_interleaver_last_frame_length' (pulsed when the register is read from the bus)
+        logic axi_debug_bit_interleaver_min_max_frame_length_strobe; // Strobe logic for register 'axi_debug_bit_interleaver_min_max_frame_length' (pulsed when the register is read from the bus)
     } regs2user_t;
 
     // Revision number of the 'dvbs2_tx_wrapper_regmap' register map
-    localparam DVBS2_TX_WRAPPER_REGMAP_REVISION = 46;
+    localparam DVBS2_TX_WRAPPER_REGMAP_REVISION = 123;
 
     // Default base address of the 'dvbs2_tx_wrapper_regmap' register map 
     localparam logic [31:0] DVBS2_TX_WRAPPER_REGMAP_DEFAULT_BASEADDR = 32'h00000000;
@@ -54,7 +114,7 @@ package dvbs2_tx_wrapper_regmap_regs_pkg;
     // Field 'config.physical_layer_scrambler_shift_reg_init'
     localparam CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_BIT_OFFSET = 0; // bit offset of the 'physical_layer_scrambler_shift_reg_init' field
     localparam CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_BIT_WIDTH = 18; // bit width of the 'physical_layer_scrambler_shift_reg_init' field
-    localparam logic [17:0] CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_RESET = 18'b000000000000000000; // reset value of the 'physical_layer_scrambler_shift_reg_init' field
+    localparam logic [17:0] CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_RESET = 18'b000000000000000001; // reset value of the 'physical_layer_scrambler_shift_reg_init' field
     // Field 'config.enable_dummy_frames'
     localparam CONFIG_ENABLE_DUMMY_FRAMES_BIT_OFFSET = 18; // bit offset of the 'enable_dummy_frames' field
     localparam CONFIG_ENABLE_DUMMY_FRAMES_BIT_WIDTH = 1; // bit width of the 'enable_dummy_frames' field
@@ -99,5 +159,225 @@ package dvbs2_tx_wrapper_regmap_regs_pkg;
     localparam POLYPHASE_FILTER_COEFFICIENTS_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
     localparam POLYPHASE_FILTER_COEFFICIENTS_VALUE_BIT_WIDTH = 32; // bit width of the 'value' field
     localparam logic [31:0] POLYPHASE_FILTER_COEFFICIENTS_VALUE_RESET = 32'b00000000000000000000000000000000; // reset value of the 'value' field
+    
+    // Register 'axi_debug_input_width_converter_cfg'
+    localparam logic [31:0] AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET = 32'h00000BCC; // address offset of the 'axi_debug_input_width_converter_cfg' register
+    // Field 'axi_debug_input_width_converter_cfg.block_data'
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_BLOCK_DATA_BIT_OFFSET = 0; // bit offset of the 'block_data' field
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_BLOCK_DATA_BIT_WIDTH = 1; // bit width of the 'block_data' field
+    localparam logic [0:0] AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_BLOCK_DATA_RESET = 1'b0; // reset value of the 'block_data' field
+    // Field 'axi_debug_input_width_converter_cfg.allow_word'
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_ALLOW_WORD_BIT_OFFSET = 1; // bit offset of the 'allow_word' field
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_ALLOW_WORD_BIT_WIDTH = 1; // bit width of the 'allow_word' field
+    localparam logic [1:1] AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_ALLOW_WORD_RESET = 1'b0; // reset value of the 'allow_word' field
+    // Field 'axi_debug_input_width_converter_cfg.allow_frame'
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_ALLOW_FRAME_BIT_OFFSET = 2; // bit offset of the 'allow_frame' field
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_ALLOW_FRAME_BIT_WIDTH = 1; // bit width of the 'allow_frame' field
+    localparam logic [2:2] AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_ALLOW_FRAME_RESET = 1'b0; // reset value of the 'allow_frame' field
+    // Field 'axi_debug_input_width_converter_cfg.reset_min_max'
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_RESET_MIN_MAX_BIT_OFFSET = 3; // bit offset of the 'reset_min_max' field
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_RESET_MIN_MAX_BIT_WIDTH = 1; // bit width of the 'reset_min_max' field
+    localparam logic [3:3] AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_RESET_MIN_MAX_RESET = 1'b0; // reset value of the 'reset_min_max' field
+    
+    // Register 'axi_debug_input_width_converter_frame_count'
+    localparam logic [31:0] AXI_DEBUG_INPUT_WIDTH_CONVERTER_FRAME_COUNT_OFFSET = 32'h00000BD0; // address offset of the 'axi_debug_input_width_converter_frame_count' register
+    // Field 'axi_debug_input_width_converter_frame_count.value'
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_FRAME_COUNT_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_FRAME_COUNT_VALUE_BIT_WIDTH = 16; // bit width of the 'value' field
+    localparam logic [15:0] AXI_DEBUG_INPUT_WIDTH_CONVERTER_FRAME_COUNT_VALUE_RESET = 16'b0000000000000000; // reset value of the 'value' field
+    
+    // Register 'axi_debug_input_width_converter_last_frame_length'
+    localparam logic [31:0] AXI_DEBUG_INPUT_WIDTH_CONVERTER_LAST_FRAME_LENGTH_OFFSET = 32'h00000BD4; // address offset of the 'axi_debug_input_width_converter_last_frame_length' register
+    // Field 'axi_debug_input_width_converter_last_frame_length.value'
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_LAST_FRAME_LENGTH_VALUE_BIT_WIDTH = 16; // bit width of the 'value' field
+    localparam logic [15:0] AXI_DEBUG_INPUT_WIDTH_CONVERTER_LAST_FRAME_LENGTH_VALUE_RESET = 16'b0000000000000000; // reset value of the 'value' field
+    
+    // Register 'axi_debug_input_width_converter_min_max_frame_length'
+    localparam logic [31:0] AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_OFFSET = 32'h00000BD8; // address offset of the 'axi_debug_input_width_converter_min_max_frame_length' register
+    // Field 'axi_debug_input_width_converter_min_max_frame_length.min_frame_length'
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET = 0; // bit offset of the 'min_frame_length' field
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_WIDTH = 16; // bit width of the 'min_frame_length' field
+    localparam logic [15:0] AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_RESET = 16'b0000000000000000; // reset value of the 'min_frame_length' field
+    // Field 'axi_debug_input_width_converter_min_max_frame_length.max_frame_length'
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_OFFSET = 16; // bit offset of the 'max_frame_length' field
+    localparam AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_WIDTH = 16; // bit width of the 'max_frame_length' field
+    localparam logic [31:16] AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET = 16'b0000000000000000; // reset value of the 'max_frame_length' field
+    
+    // Register 'axi_debug_bb_scrambler_cfg'
+    localparam logic [31:0] AXI_DEBUG_BB_SCRAMBLER_CFG_OFFSET = 32'h00000BDC; // address offset of the 'axi_debug_bb_scrambler_cfg' register
+    // Field 'axi_debug_bb_scrambler_cfg.block_data'
+    localparam AXI_DEBUG_BB_SCRAMBLER_CFG_BLOCK_DATA_BIT_OFFSET = 0; // bit offset of the 'block_data' field
+    localparam AXI_DEBUG_BB_SCRAMBLER_CFG_BLOCK_DATA_BIT_WIDTH = 1; // bit width of the 'block_data' field
+    localparam logic [0:0] AXI_DEBUG_BB_SCRAMBLER_CFG_BLOCK_DATA_RESET = 1'b0; // reset value of the 'block_data' field
+    // Field 'axi_debug_bb_scrambler_cfg.allow_word'
+    localparam AXI_DEBUG_BB_SCRAMBLER_CFG_ALLOW_WORD_BIT_OFFSET = 1; // bit offset of the 'allow_word' field
+    localparam AXI_DEBUG_BB_SCRAMBLER_CFG_ALLOW_WORD_BIT_WIDTH = 1; // bit width of the 'allow_word' field
+    localparam logic [1:1] AXI_DEBUG_BB_SCRAMBLER_CFG_ALLOW_WORD_RESET = 1'b0; // reset value of the 'allow_word' field
+    // Field 'axi_debug_bb_scrambler_cfg.allow_frame'
+    localparam AXI_DEBUG_BB_SCRAMBLER_CFG_ALLOW_FRAME_BIT_OFFSET = 2; // bit offset of the 'allow_frame' field
+    localparam AXI_DEBUG_BB_SCRAMBLER_CFG_ALLOW_FRAME_BIT_WIDTH = 1; // bit width of the 'allow_frame' field
+    localparam logic [2:2] AXI_DEBUG_BB_SCRAMBLER_CFG_ALLOW_FRAME_RESET = 1'b0; // reset value of the 'allow_frame' field
+    // Field 'axi_debug_bb_scrambler_cfg.reset_min_max'
+    localparam AXI_DEBUG_BB_SCRAMBLER_CFG_RESET_MIN_MAX_BIT_OFFSET = 3; // bit offset of the 'reset_min_max' field
+    localparam AXI_DEBUG_BB_SCRAMBLER_CFG_RESET_MIN_MAX_BIT_WIDTH = 1; // bit width of the 'reset_min_max' field
+    localparam logic [3:3] AXI_DEBUG_BB_SCRAMBLER_CFG_RESET_MIN_MAX_RESET = 1'b0; // reset value of the 'reset_min_max' field
+    
+    // Register 'axi_debug_bb_scrambler_frame_count'
+    localparam logic [31:0] AXI_DEBUG_BB_SCRAMBLER_FRAME_COUNT_OFFSET = 32'h00000BE0; // address offset of the 'axi_debug_bb_scrambler_frame_count' register
+    // Field 'axi_debug_bb_scrambler_frame_count.value'
+    localparam AXI_DEBUG_BB_SCRAMBLER_FRAME_COUNT_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
+    localparam AXI_DEBUG_BB_SCRAMBLER_FRAME_COUNT_VALUE_BIT_WIDTH = 16; // bit width of the 'value' field
+    localparam logic [15:0] AXI_DEBUG_BB_SCRAMBLER_FRAME_COUNT_VALUE_RESET = 16'b0000000000000000; // reset value of the 'value' field
+    
+    // Register 'axi_debug_bb_scrambler_last_frame_length'
+    localparam logic [31:0] AXI_DEBUG_BB_SCRAMBLER_LAST_FRAME_LENGTH_OFFSET = 32'h00000BE4; // address offset of the 'axi_debug_bb_scrambler_last_frame_length' register
+    // Field 'axi_debug_bb_scrambler_last_frame_length.value'
+    localparam AXI_DEBUG_BB_SCRAMBLER_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
+    localparam AXI_DEBUG_BB_SCRAMBLER_LAST_FRAME_LENGTH_VALUE_BIT_WIDTH = 16; // bit width of the 'value' field
+    localparam logic [15:0] AXI_DEBUG_BB_SCRAMBLER_LAST_FRAME_LENGTH_VALUE_RESET = 16'b0000000000000000; // reset value of the 'value' field
+    
+    // Register 'axi_debug_bb_scrambler_min_max_frame_length'
+    localparam logic [31:0] AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_OFFSET = 32'h00000BE8; // address offset of the 'axi_debug_bb_scrambler_min_max_frame_length' register
+    // Field 'axi_debug_bb_scrambler_min_max_frame_length.min_frame_length'
+    localparam AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET = 0; // bit offset of the 'min_frame_length' field
+    localparam AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_WIDTH = 16; // bit width of the 'min_frame_length' field
+    localparam logic [15:0] AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_RESET = 16'b0000000000000000; // reset value of the 'min_frame_length' field
+    // Field 'axi_debug_bb_scrambler_min_max_frame_length.max_frame_length'
+    localparam AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_OFFSET = 16; // bit offset of the 'max_frame_length' field
+    localparam AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_WIDTH = 16; // bit width of the 'max_frame_length' field
+    localparam logic [31:16] AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET = 16'b0000000000000000; // reset value of the 'max_frame_length' field
+    
+    // Register 'axi_debug_bch_encoder_cfg'
+    localparam logic [31:0] AXI_DEBUG_BCH_ENCODER_CFG_OFFSET = 32'h00000BEC; // address offset of the 'axi_debug_bch_encoder_cfg' register
+    // Field 'axi_debug_bch_encoder_cfg.block_data'
+    localparam AXI_DEBUG_BCH_ENCODER_CFG_BLOCK_DATA_BIT_OFFSET = 0; // bit offset of the 'block_data' field
+    localparam AXI_DEBUG_BCH_ENCODER_CFG_BLOCK_DATA_BIT_WIDTH = 1; // bit width of the 'block_data' field
+    localparam logic [0:0] AXI_DEBUG_BCH_ENCODER_CFG_BLOCK_DATA_RESET = 1'b0; // reset value of the 'block_data' field
+    // Field 'axi_debug_bch_encoder_cfg.allow_word'
+    localparam AXI_DEBUG_BCH_ENCODER_CFG_ALLOW_WORD_BIT_OFFSET = 1; // bit offset of the 'allow_word' field
+    localparam AXI_DEBUG_BCH_ENCODER_CFG_ALLOW_WORD_BIT_WIDTH = 1; // bit width of the 'allow_word' field
+    localparam logic [1:1] AXI_DEBUG_BCH_ENCODER_CFG_ALLOW_WORD_RESET = 1'b0; // reset value of the 'allow_word' field
+    // Field 'axi_debug_bch_encoder_cfg.allow_frame'
+    localparam AXI_DEBUG_BCH_ENCODER_CFG_ALLOW_FRAME_BIT_OFFSET = 2; // bit offset of the 'allow_frame' field
+    localparam AXI_DEBUG_BCH_ENCODER_CFG_ALLOW_FRAME_BIT_WIDTH = 1; // bit width of the 'allow_frame' field
+    localparam logic [2:2] AXI_DEBUG_BCH_ENCODER_CFG_ALLOW_FRAME_RESET = 1'b0; // reset value of the 'allow_frame' field
+    // Field 'axi_debug_bch_encoder_cfg.reset_min_max'
+    localparam AXI_DEBUG_BCH_ENCODER_CFG_RESET_MIN_MAX_BIT_OFFSET = 3; // bit offset of the 'reset_min_max' field
+    localparam AXI_DEBUG_BCH_ENCODER_CFG_RESET_MIN_MAX_BIT_WIDTH = 1; // bit width of the 'reset_min_max' field
+    localparam logic [3:3] AXI_DEBUG_BCH_ENCODER_CFG_RESET_MIN_MAX_RESET = 1'b0; // reset value of the 'reset_min_max' field
+    
+    // Register 'axi_debug_bch_encoder_frame_count'
+    localparam logic [31:0] AXI_DEBUG_BCH_ENCODER_FRAME_COUNT_OFFSET = 32'h00000BF0; // address offset of the 'axi_debug_bch_encoder_frame_count' register
+    // Field 'axi_debug_bch_encoder_frame_count.value'
+    localparam AXI_DEBUG_BCH_ENCODER_FRAME_COUNT_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
+    localparam AXI_DEBUG_BCH_ENCODER_FRAME_COUNT_VALUE_BIT_WIDTH = 16; // bit width of the 'value' field
+    localparam logic [15:0] AXI_DEBUG_BCH_ENCODER_FRAME_COUNT_VALUE_RESET = 16'b0000000000000000; // reset value of the 'value' field
+    
+    // Register 'axi_debug_bch_encoder_last_frame_length'
+    localparam logic [31:0] AXI_DEBUG_BCH_ENCODER_LAST_FRAME_LENGTH_OFFSET = 32'h00000BF4; // address offset of the 'axi_debug_bch_encoder_last_frame_length' register
+    // Field 'axi_debug_bch_encoder_last_frame_length.value'
+    localparam AXI_DEBUG_BCH_ENCODER_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
+    localparam AXI_DEBUG_BCH_ENCODER_LAST_FRAME_LENGTH_VALUE_BIT_WIDTH = 16; // bit width of the 'value' field
+    localparam logic [15:0] AXI_DEBUG_BCH_ENCODER_LAST_FRAME_LENGTH_VALUE_RESET = 16'b0000000000000000; // reset value of the 'value' field
+    
+    // Register 'axi_debug_bch_encoder_min_max_frame_length'
+    localparam logic [31:0] AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_OFFSET = 32'h00000BF8; // address offset of the 'axi_debug_bch_encoder_min_max_frame_length' register
+    // Field 'axi_debug_bch_encoder_min_max_frame_length.min_frame_length'
+    localparam AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET = 0; // bit offset of the 'min_frame_length' field
+    localparam AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_WIDTH = 16; // bit width of the 'min_frame_length' field
+    localparam logic [15:0] AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_RESET = 16'b0000000000000000; // reset value of the 'min_frame_length' field
+    // Field 'axi_debug_bch_encoder_min_max_frame_length.max_frame_length'
+    localparam AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_OFFSET = 16; // bit offset of the 'max_frame_length' field
+    localparam AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_WIDTH = 16; // bit width of the 'max_frame_length' field
+    localparam logic [31:16] AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET = 16'b0000000000000000; // reset value of the 'max_frame_length' field
+    
+    // Register 'axi_debug_ldpc_encoder_cfg'
+    localparam logic [31:0] AXI_DEBUG_LDPC_ENCODER_CFG_OFFSET = 32'h00000BFC; // address offset of the 'axi_debug_ldpc_encoder_cfg' register
+    // Field 'axi_debug_ldpc_encoder_cfg.block_data'
+    localparam AXI_DEBUG_LDPC_ENCODER_CFG_BLOCK_DATA_BIT_OFFSET = 0; // bit offset of the 'block_data' field
+    localparam AXI_DEBUG_LDPC_ENCODER_CFG_BLOCK_DATA_BIT_WIDTH = 1; // bit width of the 'block_data' field
+    localparam logic [0:0] AXI_DEBUG_LDPC_ENCODER_CFG_BLOCK_DATA_RESET = 1'b0; // reset value of the 'block_data' field
+    // Field 'axi_debug_ldpc_encoder_cfg.allow_word'
+    localparam AXI_DEBUG_LDPC_ENCODER_CFG_ALLOW_WORD_BIT_OFFSET = 1; // bit offset of the 'allow_word' field
+    localparam AXI_DEBUG_LDPC_ENCODER_CFG_ALLOW_WORD_BIT_WIDTH = 1; // bit width of the 'allow_word' field
+    localparam logic [1:1] AXI_DEBUG_LDPC_ENCODER_CFG_ALLOW_WORD_RESET = 1'b0; // reset value of the 'allow_word' field
+    // Field 'axi_debug_ldpc_encoder_cfg.allow_frame'
+    localparam AXI_DEBUG_LDPC_ENCODER_CFG_ALLOW_FRAME_BIT_OFFSET = 2; // bit offset of the 'allow_frame' field
+    localparam AXI_DEBUG_LDPC_ENCODER_CFG_ALLOW_FRAME_BIT_WIDTH = 1; // bit width of the 'allow_frame' field
+    localparam logic [2:2] AXI_DEBUG_LDPC_ENCODER_CFG_ALLOW_FRAME_RESET = 1'b0; // reset value of the 'allow_frame' field
+    // Field 'axi_debug_ldpc_encoder_cfg.reset_min_max'
+    localparam AXI_DEBUG_LDPC_ENCODER_CFG_RESET_MIN_MAX_BIT_OFFSET = 3; // bit offset of the 'reset_min_max' field
+    localparam AXI_DEBUG_LDPC_ENCODER_CFG_RESET_MIN_MAX_BIT_WIDTH = 1; // bit width of the 'reset_min_max' field
+    localparam logic [3:3] AXI_DEBUG_LDPC_ENCODER_CFG_RESET_MIN_MAX_RESET = 1'b0; // reset value of the 'reset_min_max' field
+    
+    // Register 'axi_debug_ldpc_encoder_frame_count'
+    localparam logic [31:0] AXI_DEBUG_LDPC_ENCODER_FRAME_COUNT_OFFSET = 32'h00000C00; // address offset of the 'axi_debug_ldpc_encoder_frame_count' register
+    // Field 'axi_debug_ldpc_encoder_frame_count.value'
+    localparam AXI_DEBUG_LDPC_ENCODER_FRAME_COUNT_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
+    localparam AXI_DEBUG_LDPC_ENCODER_FRAME_COUNT_VALUE_BIT_WIDTH = 16; // bit width of the 'value' field
+    localparam logic [15:0] AXI_DEBUG_LDPC_ENCODER_FRAME_COUNT_VALUE_RESET = 16'b0000000000000000; // reset value of the 'value' field
+    
+    // Register 'axi_debug_ldpc_encoder_last_frame_length'
+    localparam logic [31:0] AXI_DEBUG_LDPC_ENCODER_LAST_FRAME_LENGTH_OFFSET = 32'h00000C04; // address offset of the 'axi_debug_ldpc_encoder_last_frame_length' register
+    // Field 'axi_debug_ldpc_encoder_last_frame_length.value'
+    localparam AXI_DEBUG_LDPC_ENCODER_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
+    localparam AXI_DEBUG_LDPC_ENCODER_LAST_FRAME_LENGTH_VALUE_BIT_WIDTH = 16; // bit width of the 'value' field
+    localparam logic [15:0] AXI_DEBUG_LDPC_ENCODER_LAST_FRAME_LENGTH_VALUE_RESET = 16'b0000000000000000; // reset value of the 'value' field
+    
+    // Register 'axi_debug_ldpc_encoder_min_max_frame_length'
+    localparam logic [31:0] AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_OFFSET = 32'h00000C08; // address offset of the 'axi_debug_ldpc_encoder_min_max_frame_length' register
+    // Field 'axi_debug_ldpc_encoder_min_max_frame_length.min_frame_length'
+    localparam AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET = 0; // bit offset of the 'min_frame_length' field
+    localparam AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_WIDTH = 16; // bit width of the 'min_frame_length' field
+    localparam logic [15:0] AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_RESET = 16'b0000000000000000; // reset value of the 'min_frame_length' field
+    // Field 'axi_debug_ldpc_encoder_min_max_frame_length.max_frame_length'
+    localparam AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_OFFSET = 16; // bit offset of the 'max_frame_length' field
+    localparam AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_WIDTH = 16; // bit width of the 'max_frame_length' field
+    localparam logic [31:16] AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET = 16'b0000000000000000; // reset value of the 'max_frame_length' field
+    
+    // Register 'axi_debug_bit_interleaver_cfg'
+    localparam logic [31:0] AXI_DEBUG_BIT_INTERLEAVER_CFG_OFFSET = 32'h00000C0C; // address offset of the 'axi_debug_bit_interleaver_cfg' register
+    // Field 'axi_debug_bit_interleaver_cfg.block_data'
+    localparam AXI_DEBUG_BIT_INTERLEAVER_CFG_BLOCK_DATA_BIT_OFFSET = 0; // bit offset of the 'block_data' field
+    localparam AXI_DEBUG_BIT_INTERLEAVER_CFG_BLOCK_DATA_BIT_WIDTH = 1; // bit width of the 'block_data' field
+    localparam logic [0:0] AXI_DEBUG_BIT_INTERLEAVER_CFG_BLOCK_DATA_RESET = 1'b0; // reset value of the 'block_data' field
+    // Field 'axi_debug_bit_interleaver_cfg.allow_word'
+    localparam AXI_DEBUG_BIT_INTERLEAVER_CFG_ALLOW_WORD_BIT_OFFSET = 1; // bit offset of the 'allow_word' field
+    localparam AXI_DEBUG_BIT_INTERLEAVER_CFG_ALLOW_WORD_BIT_WIDTH = 1; // bit width of the 'allow_word' field
+    localparam logic [1:1] AXI_DEBUG_BIT_INTERLEAVER_CFG_ALLOW_WORD_RESET = 1'b0; // reset value of the 'allow_word' field
+    // Field 'axi_debug_bit_interleaver_cfg.allow_frame'
+    localparam AXI_DEBUG_BIT_INTERLEAVER_CFG_ALLOW_FRAME_BIT_OFFSET = 2; // bit offset of the 'allow_frame' field
+    localparam AXI_DEBUG_BIT_INTERLEAVER_CFG_ALLOW_FRAME_BIT_WIDTH = 1; // bit width of the 'allow_frame' field
+    localparam logic [2:2] AXI_DEBUG_BIT_INTERLEAVER_CFG_ALLOW_FRAME_RESET = 1'b0; // reset value of the 'allow_frame' field
+    // Field 'axi_debug_bit_interleaver_cfg.reset_min_max'
+    localparam AXI_DEBUG_BIT_INTERLEAVER_CFG_RESET_MIN_MAX_BIT_OFFSET = 3; // bit offset of the 'reset_min_max' field
+    localparam AXI_DEBUG_BIT_INTERLEAVER_CFG_RESET_MIN_MAX_BIT_WIDTH = 1; // bit width of the 'reset_min_max' field
+    localparam logic [3:3] AXI_DEBUG_BIT_INTERLEAVER_CFG_RESET_MIN_MAX_RESET = 1'b0; // reset value of the 'reset_min_max' field
+    
+    // Register 'axi_debug_bit_interleaver_frame_count'
+    localparam logic [31:0] AXI_DEBUG_BIT_INTERLEAVER_FRAME_COUNT_OFFSET = 32'h00000C10; // address offset of the 'axi_debug_bit_interleaver_frame_count' register
+    // Field 'axi_debug_bit_interleaver_frame_count.value'
+    localparam AXI_DEBUG_BIT_INTERLEAVER_FRAME_COUNT_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
+    localparam AXI_DEBUG_BIT_INTERLEAVER_FRAME_COUNT_VALUE_BIT_WIDTH = 16; // bit width of the 'value' field
+    localparam logic [15:0] AXI_DEBUG_BIT_INTERLEAVER_FRAME_COUNT_VALUE_RESET = 16'b0000000000000000; // reset value of the 'value' field
+    
+    // Register 'axi_debug_bit_interleaver_last_frame_length'
+    localparam logic [31:0] AXI_DEBUG_BIT_INTERLEAVER_LAST_FRAME_LENGTH_OFFSET = 32'h00000C14; // address offset of the 'axi_debug_bit_interleaver_last_frame_length' register
+    // Field 'axi_debug_bit_interleaver_last_frame_length.value'
+    localparam AXI_DEBUG_BIT_INTERLEAVER_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
+    localparam AXI_DEBUG_BIT_INTERLEAVER_LAST_FRAME_LENGTH_VALUE_BIT_WIDTH = 16; // bit width of the 'value' field
+    localparam logic [15:0] AXI_DEBUG_BIT_INTERLEAVER_LAST_FRAME_LENGTH_VALUE_RESET = 16'b0000000000000000; // reset value of the 'value' field
+    
+    // Register 'axi_debug_bit_interleaver_min_max_frame_length'
+    localparam logic [31:0] AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_OFFSET = 32'h00000C18; // address offset of the 'axi_debug_bit_interleaver_min_max_frame_length' register
+    // Field 'axi_debug_bit_interleaver_min_max_frame_length.min_frame_length'
+    localparam AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET = 0; // bit offset of the 'min_frame_length' field
+    localparam AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_WIDTH = 16; // bit width of the 'min_frame_length' field
+    localparam logic [15:0] AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_RESET = 16'b0000000000000000; // reset value of the 'min_frame_length' field
+    // Field 'axi_debug_bit_interleaver_min_max_frame_length.max_frame_length'
+    localparam AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_OFFSET = 16; // bit offset of the 'max_frame_length' field
+    localparam AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_WIDTH = 16; // bit width of the 'max_frame_length' field
+    localparam logic [31:16] AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET = 16'b0000000000000000; // reset value of the 'max_frame_length' field
 
 endpackage: dvbs2_tx_wrapper_regmap_regs_pkg

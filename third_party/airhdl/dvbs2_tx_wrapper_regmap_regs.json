@@ -19,7 +19,7 @@
             "description": "Initial value for the physical layer\u0027s scrambler X vector, used to set a device\u0027s gold code.",
             "bitWidth": 18,
             "bitOffset": 0,
-            "reset": 0,
+            "reset": 1,
             "selfClear": false,
             "enumValues": []
           },
@@ -131,9 +131,569 @@
             "enumValues": []
           }
         ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_input_width_converter_cfg",
+        "description": "",
+        "access": "READ_WRITE",
+        "addressOffset": 3020,
+        "size": 32,
+        "fields": [
+          {
+            "name": "block_data",
+            "description": "Disables data from passing through",
+            "bitWidth": 1,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "allow_word",
+            "description": "Allows a single word to pass through. Needs `block_data` to be set before setting this.",
+            "bitWidth": 1,
+            "bitOffset": 1,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          },
+          {
+            "name": "allow_frame",
+            "description": "Allow a single frame to complete. Needs `block_data` to be set before setting this.",
+            "bitWidth": 1,
+            "bitOffset": 2,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          },
+          {
+            "name": "reset_min_max",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 3,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_input_width_converter_frame_count",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3024,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_input_width_converter_last_frame_length",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3028,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_input_width_converter_min_max_frame_length",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3032,
+        "size": 32,
+        "fields": [
+          {
+            "name": "min_frame_length",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "max_frame_length",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 16,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_bb_scrambler_cfg",
+        "description": "",
+        "access": "READ_WRITE",
+        "addressOffset": 3036,
+        "size": 32,
+        "fields": [
+          {
+            "name": "block_data",
+            "description": "Disables data from passing through",
+            "bitWidth": 1,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "allow_word",
+            "description": "Allows a single word to pass through. Needs `block_data` to be set before setting this.",
+            "bitWidth": 1,
+            "bitOffset": 1,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          },
+          {
+            "name": "allow_frame",
+            "description": "Allow a single frame to complete. Needs `block_data` to be set before setting this.",
+            "bitWidth": 1,
+            "bitOffset": 2,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          },
+          {
+            "name": "reset_min_max",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 3,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_bb_scrambler_frame_count",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3040,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_bb_scrambler_last_frame_length",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3044,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_bb_scrambler_min_max_frame_length",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3048,
+        "size": 32,
+        "fields": [
+          {
+            "name": "min_frame_length",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "max_frame_length",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 16,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_bch_encoder_cfg",
+        "description": "",
+        "access": "READ_WRITE",
+        "addressOffset": 3052,
+        "size": 32,
+        "fields": [
+          {
+            "name": "block_data",
+            "description": "Disables data from passing through",
+            "bitWidth": 1,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "allow_word",
+            "description": "Allows a single word to pass through. Needs `block_data` to be set before setting this.",
+            "bitWidth": 1,
+            "bitOffset": 1,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          },
+          {
+            "name": "allow_frame",
+            "description": "Allow a single frame to complete. Needs `block_data` to be set before setting this.",
+            "bitWidth": 1,
+            "bitOffset": 2,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          },
+          {
+            "name": "reset_min_max",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 3,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_bch_encoder_frame_count",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3056,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_bch_encoder_last_frame_length",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3060,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_bch_encoder_min_max_frame_length",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3064,
+        "size": 32,
+        "fields": [
+          {
+            "name": "min_frame_length",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "max_frame_length",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 16,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_ldpc_encoder_cfg",
+        "description": "",
+        "access": "READ_WRITE",
+        "addressOffset": 3068,
+        "size": 32,
+        "fields": [
+          {
+            "name": "block_data",
+            "description": "Disables data from passing through",
+            "bitWidth": 1,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "allow_word",
+            "description": "Allows a single word to pass through. Needs `block_data` to be set before setting this.",
+            "bitWidth": 1,
+            "bitOffset": 1,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          },
+          {
+            "name": "allow_frame",
+            "description": "Allow a single frame to complete. Needs `block_data` to be set before setting this.",
+            "bitWidth": 1,
+            "bitOffset": 2,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          },
+          {
+            "name": "reset_min_max",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 3,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_ldpc_encoder_frame_count",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3072,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_ldpc_encoder_last_frame_length",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3076,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_ldpc_encoder_min_max_frame_length",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3080,
+        "size": 32,
+        "fields": [
+          {
+            "name": "min_frame_length",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "max_frame_length",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 16,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_bit_interleaver_cfg",
+        "description": "",
+        "access": "READ_WRITE",
+        "addressOffset": 3084,
+        "size": 32,
+        "fields": [
+          {
+            "name": "block_data",
+            "description": "Disables data from passing through",
+            "bitWidth": 1,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "allow_word",
+            "description": "Allows a single word to pass through. Needs `block_data` to be set before setting this.",
+            "bitWidth": 1,
+            "bitOffset": 1,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          },
+          {
+            "name": "allow_frame",
+            "description": "Allow a single frame to complete. Needs `block_data` to be set before setting this.",
+            "bitWidth": 1,
+            "bitOffset": 2,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          },
+          {
+            "name": "reset_min_max",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 3,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_bit_interleaver_frame_count",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3088,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_bit_interleaver_last_frame_length",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3092,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_bit_interleaver_min_max_frame_length",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3096,
+        "size": 32,
+        "fields": [
+          {
+            "name": "min_frame_length",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "max_frame_length",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 16,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
       }
     ],
-    "revision": 46,
+    "revision": 123,
     "generateRecordPorts": true
   }
 }

@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
 -- 'dvbs2_tx_wrapper_regmap' Register Component
--- Revision: 46
+-- Revision: 123
 -- -----------------------------------------------------------------------------
--- Generated on 2021-03-20 at 22:52 (UTC) by airhdl version 2021.03.1
+-- Generated on 2021-03-21 at 15:18 (UTC) by airhdl version 2021.03.1
 -- -----------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -100,6 +100,66 @@ architecture RTL of dvbs2_tx_wrapper_regmap_regs is
     signal s_polyphase_filter_coefficients_waddr_r : std_logic_vector(8 downto 0);
     signal s_polyphase_filter_coefficients_wen_r : std_logic_vector(3 downto 0);
     signal s_polyphase_filter_coefficients_wdata_r : std_logic_vector(31 downto 0);        
+    signal s_axi_debug_input_width_converter_cfg_strobe_r : std_logic;
+    signal s_reg_axi_debug_input_width_converter_cfg_block_data_r : std_logic_vector(0 downto 0);
+    signal s_reg_axi_debug_input_width_converter_cfg_allow_word_r : std_logic_vector(0 downto 0);
+    signal s_reg_axi_debug_input_width_converter_cfg_allow_frame_r : std_logic_vector(0 downto 0);
+    signal s_reg_axi_debug_input_width_converter_cfg_reset_min_max_r : std_logic_vector(0 downto 0);
+    signal s_axi_debug_input_width_converter_frame_count_strobe_r : std_logic;
+    signal s_reg_axi_debug_input_width_converter_frame_count_value : std_logic_vector(15 downto 0);
+    signal s_axi_debug_input_width_converter_last_frame_length_strobe_r : std_logic;
+    signal s_reg_axi_debug_input_width_converter_last_frame_length_value : std_logic_vector(15 downto 0);
+    signal s_axi_debug_input_width_converter_min_max_frame_length_strobe_r : std_logic;
+    signal s_reg_axi_debug_input_width_converter_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0);
+    signal s_reg_axi_debug_input_width_converter_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0);
+    signal s_axi_debug_bb_scrambler_cfg_strobe_r : std_logic;
+    signal s_reg_axi_debug_bb_scrambler_cfg_block_data_r : std_logic_vector(0 downto 0);
+    signal s_reg_axi_debug_bb_scrambler_cfg_allow_word_r : std_logic_vector(0 downto 0);
+    signal s_reg_axi_debug_bb_scrambler_cfg_allow_frame_r : std_logic_vector(0 downto 0);
+    signal s_reg_axi_debug_bb_scrambler_cfg_reset_min_max_r : std_logic_vector(0 downto 0);
+    signal s_axi_debug_bb_scrambler_frame_count_strobe_r : std_logic;
+    signal s_reg_axi_debug_bb_scrambler_frame_count_value : std_logic_vector(15 downto 0);
+    signal s_axi_debug_bb_scrambler_last_frame_length_strobe_r : std_logic;
+    signal s_reg_axi_debug_bb_scrambler_last_frame_length_value : std_logic_vector(15 downto 0);
+    signal s_axi_debug_bb_scrambler_min_max_frame_length_strobe_r : std_logic;
+    signal s_reg_axi_debug_bb_scrambler_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0);
+    signal s_reg_axi_debug_bb_scrambler_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0);
+    signal s_axi_debug_bch_encoder_cfg_strobe_r : std_logic;
+    signal s_reg_axi_debug_bch_encoder_cfg_block_data_r : std_logic_vector(0 downto 0);
+    signal s_reg_axi_debug_bch_encoder_cfg_allow_word_r : std_logic_vector(0 downto 0);
+    signal s_reg_axi_debug_bch_encoder_cfg_allow_frame_r : std_logic_vector(0 downto 0);
+    signal s_reg_axi_debug_bch_encoder_cfg_reset_min_max_r : std_logic_vector(0 downto 0);
+    signal s_axi_debug_bch_encoder_frame_count_strobe_r : std_logic;
+    signal s_reg_axi_debug_bch_encoder_frame_count_value : std_logic_vector(15 downto 0);
+    signal s_axi_debug_bch_encoder_last_frame_length_strobe_r : std_logic;
+    signal s_reg_axi_debug_bch_encoder_last_frame_length_value : std_logic_vector(15 downto 0);
+    signal s_axi_debug_bch_encoder_min_max_frame_length_strobe_r : std_logic;
+    signal s_reg_axi_debug_bch_encoder_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0);
+    signal s_reg_axi_debug_bch_encoder_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0);
+    signal s_axi_debug_ldpc_encoder_cfg_strobe_r : std_logic;
+    signal s_reg_axi_debug_ldpc_encoder_cfg_block_data_r : std_logic_vector(0 downto 0);
+    signal s_reg_axi_debug_ldpc_encoder_cfg_allow_word_r : std_logic_vector(0 downto 0);
+    signal s_reg_axi_debug_ldpc_encoder_cfg_allow_frame_r : std_logic_vector(0 downto 0);
+    signal s_reg_axi_debug_ldpc_encoder_cfg_reset_min_max_r : std_logic_vector(0 downto 0);
+    signal s_axi_debug_ldpc_encoder_frame_count_strobe_r : std_logic;
+    signal s_reg_axi_debug_ldpc_encoder_frame_count_value : std_logic_vector(15 downto 0);
+    signal s_axi_debug_ldpc_encoder_last_frame_length_strobe_r : std_logic;
+    signal s_reg_axi_debug_ldpc_encoder_last_frame_length_value : std_logic_vector(15 downto 0);
+    signal s_axi_debug_ldpc_encoder_min_max_frame_length_strobe_r : std_logic;
+    signal s_reg_axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0);
+    signal s_reg_axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0);
+    signal s_axi_debug_bit_interleaver_cfg_strobe_r : std_logic;
+    signal s_reg_axi_debug_bit_interleaver_cfg_block_data_r : std_logic_vector(0 downto 0);
+    signal s_reg_axi_debug_bit_interleaver_cfg_allow_word_r : std_logic_vector(0 downto 0);
+    signal s_reg_axi_debug_bit_interleaver_cfg_allow_frame_r : std_logic_vector(0 downto 0);
+    signal s_reg_axi_debug_bit_interleaver_cfg_reset_min_max_r : std_logic_vector(0 downto 0);
+    signal s_axi_debug_bit_interleaver_frame_count_strobe_r : std_logic;
+    signal s_reg_axi_debug_bit_interleaver_frame_count_value : std_logic_vector(15 downto 0);
+    signal s_axi_debug_bit_interleaver_last_frame_length_strobe_r : std_logic;
+    signal s_reg_axi_debug_bit_interleaver_last_frame_length_value : std_logic_vector(15 downto 0);
+    signal s_axi_debug_bit_interleaver_min_max_frame_length_strobe_r : std_logic;
+    signal s_reg_axi_debug_bit_interleaver_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0);
+    signal s_reg_axi_debug_bit_interleaver_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0);
 
 begin
 
@@ -111,6 +171,26 @@ begin
     s_reg_ldpc_fifo_status_ldpc_fifo_full <= user2regs.ldpc_fifo_status_ldpc_fifo_full;
     s_reg_frames_in_transit_value <= user2regs.frames_in_transit_value;
     s_bit_mapper_ram_rdata <= user2regs.bit_mapper_ram_rdata; 
+    s_reg_axi_debug_input_width_converter_frame_count_value <= user2regs.axi_debug_input_width_converter_frame_count_value;
+    s_reg_axi_debug_input_width_converter_last_frame_length_value <= user2regs.axi_debug_input_width_converter_last_frame_length_value;
+    s_reg_axi_debug_input_width_converter_min_max_frame_length_min_frame_length <= user2regs.axi_debug_input_width_converter_min_max_frame_length_min_frame_length;
+    s_reg_axi_debug_input_width_converter_min_max_frame_length_max_frame_length <= user2regs.axi_debug_input_width_converter_min_max_frame_length_max_frame_length;
+    s_reg_axi_debug_bb_scrambler_frame_count_value <= user2regs.axi_debug_bb_scrambler_frame_count_value;
+    s_reg_axi_debug_bb_scrambler_last_frame_length_value <= user2regs.axi_debug_bb_scrambler_last_frame_length_value;
+    s_reg_axi_debug_bb_scrambler_min_max_frame_length_min_frame_length <= user2regs.axi_debug_bb_scrambler_min_max_frame_length_min_frame_length;
+    s_reg_axi_debug_bb_scrambler_min_max_frame_length_max_frame_length <= user2regs.axi_debug_bb_scrambler_min_max_frame_length_max_frame_length;
+    s_reg_axi_debug_bch_encoder_frame_count_value <= user2regs.axi_debug_bch_encoder_frame_count_value;
+    s_reg_axi_debug_bch_encoder_last_frame_length_value <= user2regs.axi_debug_bch_encoder_last_frame_length_value;
+    s_reg_axi_debug_bch_encoder_min_max_frame_length_min_frame_length <= user2regs.axi_debug_bch_encoder_min_max_frame_length_min_frame_length;
+    s_reg_axi_debug_bch_encoder_min_max_frame_length_max_frame_length <= user2regs.axi_debug_bch_encoder_min_max_frame_length_max_frame_length;
+    s_reg_axi_debug_ldpc_encoder_frame_count_value <= user2regs.axi_debug_ldpc_encoder_frame_count_value;
+    s_reg_axi_debug_ldpc_encoder_last_frame_length_value <= user2regs.axi_debug_ldpc_encoder_last_frame_length_value;
+    s_reg_axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length <= user2regs.axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length;
+    s_reg_axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length <= user2regs.axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length;
+    s_reg_axi_debug_bit_interleaver_frame_count_value <= user2regs.axi_debug_bit_interleaver_frame_count_value;
+    s_reg_axi_debug_bit_interleaver_last_frame_length_value <= user2regs.axi_debug_bit_interleaver_last_frame_length_value;
+    s_reg_axi_debug_bit_interleaver_min_max_frame_length_min_frame_length <= user2regs.axi_debug_bit_interleaver_min_max_frame_length_min_frame_length;
+    s_reg_axi_debug_bit_interleaver_min_max_frame_length_max_frame_length <= user2regs.axi_debug_bit_interleaver_min_max_frame_length_max_frame_length;
 
     ----------------------------------------------------------------------------
     -- Read-transaction FSM
@@ -140,6 +220,21 @@ begin
             s_ldpc_fifo_status_strobe_r <= '0';
             s_frames_in_transit_strobe_r <= '0';
             s_bit_mapper_ram_raddr_r <= (others => '0');
+            s_axi_debug_input_width_converter_frame_count_strobe_r <= '0';
+            s_axi_debug_input_width_converter_last_frame_length_strobe_r <= '0';
+            s_axi_debug_input_width_converter_min_max_frame_length_strobe_r <= '0';
+            s_axi_debug_bb_scrambler_frame_count_strobe_r <= '0';
+            s_axi_debug_bb_scrambler_last_frame_length_strobe_r <= '0';
+            s_axi_debug_bb_scrambler_min_max_frame_length_strobe_r <= '0';
+            s_axi_debug_bch_encoder_frame_count_strobe_r <= '0';
+            s_axi_debug_bch_encoder_last_frame_length_strobe_r <= '0';
+            s_axi_debug_bch_encoder_min_max_frame_length_strobe_r <= '0';
+            s_axi_debug_ldpc_encoder_frame_count_strobe_r <= '0';
+            s_axi_debug_ldpc_encoder_last_frame_length_strobe_r <= '0';
+            s_axi_debug_ldpc_encoder_min_max_frame_length_strobe_r <= '0';
+            s_axi_debug_bit_interleaver_frame_count_strobe_r <= '0';
+            s_axi_debug_bit_interleaver_last_frame_length_strobe_r <= '0';
+            s_axi_debug_bit_interleaver_min_max_frame_length_strobe_r <= '0';
  
         elsif rising_edge(axi_aclk) then
             -- Default values:
@@ -147,6 +242,21 @@ begin
             s_ldpc_fifo_status_strobe_r <= '0';
             s_frames_in_transit_strobe_r <= '0';
             s_bit_mapper_ram_raddr_r <= (others => '0');
+            s_axi_debug_input_width_converter_frame_count_strobe_r <= '0';
+            s_axi_debug_input_width_converter_last_frame_length_strobe_r <= '0';
+            s_axi_debug_input_width_converter_min_max_frame_length_strobe_r <= '0';
+            s_axi_debug_bb_scrambler_frame_count_strobe_r <= '0';
+            s_axi_debug_bb_scrambler_last_frame_length_strobe_r <= '0';
+            s_axi_debug_bb_scrambler_min_max_frame_length_strobe_r <= '0';
+            s_axi_debug_bch_encoder_frame_count_strobe_r <= '0';
+            s_axi_debug_bch_encoder_last_frame_length_strobe_r <= '0';
+            s_axi_debug_bch_encoder_min_max_frame_length_strobe_r <= '0';
+            s_axi_debug_ldpc_encoder_frame_count_strobe_r <= '0';
+            s_axi_debug_ldpc_encoder_last_frame_length_strobe_r <= '0';
+            s_axi_debug_ldpc_encoder_min_max_frame_length_strobe_r <= '0';
+            s_axi_debug_bit_interleaver_frame_count_strobe_r <= '0';
+            s_axi_debug_bit_interleaver_last_frame_length_strobe_r <= '0';
+            s_axi_debug_bit_interleaver_min_max_frame_length_strobe_r <= '0';
 
             case v_state_r is
 
@@ -197,6 +307,161 @@ begin
                         s_bit_mapper_ram_raddr_r <= std_logic_vector(v_mem_addr(9 downto 2)); -- output address has 4-byte granularity
                         v_mem_wait_count_r := BIT_MAPPER_RAM_READ_LATENCY;
                         v_state_r := WAIT_MEMORY_RDATA;
+                    end if;
+                    -- register 'axi_debug_input_width_converter_cfg' at address offset 0xBCC 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(0 downto 0) := s_reg_axi_debug_input_width_converter_cfg_block_data_r;
+                        v_rdata_r(1 downto 1) := s_reg_axi_debug_input_width_converter_cfg_allow_word_r;
+                        v_rdata_r(2 downto 2) := s_reg_axi_debug_input_width_converter_cfg_allow_frame_r;
+                        v_rdata_r(3 downto 3) := s_reg_axi_debug_input_width_converter_cfg_reset_min_max_r;
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_input_width_converter_frame_count' at address offset 0xBD0 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_INPUT_WIDTH_CONVERTER_FRAME_COUNT_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(15 downto 0) := s_reg_axi_debug_input_width_converter_frame_count_value;
+                        s_axi_debug_input_width_converter_frame_count_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_input_width_converter_last_frame_length' at address offset 0xBD4 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_INPUT_WIDTH_CONVERTER_LAST_FRAME_LENGTH_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(15 downto 0) := s_reg_axi_debug_input_width_converter_last_frame_length_value;
+                        s_axi_debug_input_width_converter_last_frame_length_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_input_width_converter_min_max_frame_length' at address offset 0xBD8 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(15 downto 0) := s_reg_axi_debug_input_width_converter_min_max_frame_length_min_frame_length;
+                        v_rdata_r(31 downto 16) := s_reg_axi_debug_input_width_converter_min_max_frame_length_max_frame_length;
+                        s_axi_debug_input_width_converter_min_max_frame_length_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_bb_scrambler_cfg' at address offset 0xBDC 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_BB_SCRAMBLER_CFG_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(0 downto 0) := s_reg_axi_debug_bb_scrambler_cfg_block_data_r;
+                        v_rdata_r(1 downto 1) := s_reg_axi_debug_bb_scrambler_cfg_allow_word_r;
+                        v_rdata_r(2 downto 2) := s_reg_axi_debug_bb_scrambler_cfg_allow_frame_r;
+                        v_rdata_r(3 downto 3) := s_reg_axi_debug_bb_scrambler_cfg_reset_min_max_r;
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_bb_scrambler_frame_count' at address offset 0xBE0 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_BB_SCRAMBLER_FRAME_COUNT_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(15 downto 0) := s_reg_axi_debug_bb_scrambler_frame_count_value;
+                        s_axi_debug_bb_scrambler_frame_count_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_bb_scrambler_last_frame_length' at address offset 0xBE4 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_BB_SCRAMBLER_LAST_FRAME_LENGTH_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(15 downto 0) := s_reg_axi_debug_bb_scrambler_last_frame_length_value;
+                        s_axi_debug_bb_scrambler_last_frame_length_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_bb_scrambler_min_max_frame_length' at address offset 0xBE8 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(15 downto 0) := s_reg_axi_debug_bb_scrambler_min_max_frame_length_min_frame_length;
+                        v_rdata_r(31 downto 16) := s_reg_axi_debug_bb_scrambler_min_max_frame_length_max_frame_length;
+                        s_axi_debug_bb_scrambler_min_max_frame_length_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_bch_encoder_cfg' at address offset 0xBEC 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_BCH_ENCODER_CFG_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(0 downto 0) := s_reg_axi_debug_bch_encoder_cfg_block_data_r;
+                        v_rdata_r(1 downto 1) := s_reg_axi_debug_bch_encoder_cfg_allow_word_r;
+                        v_rdata_r(2 downto 2) := s_reg_axi_debug_bch_encoder_cfg_allow_frame_r;
+                        v_rdata_r(3 downto 3) := s_reg_axi_debug_bch_encoder_cfg_reset_min_max_r;
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_bch_encoder_frame_count' at address offset 0xBF0 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_BCH_ENCODER_FRAME_COUNT_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(15 downto 0) := s_reg_axi_debug_bch_encoder_frame_count_value;
+                        s_axi_debug_bch_encoder_frame_count_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_bch_encoder_last_frame_length' at address offset 0xBF4 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_BCH_ENCODER_LAST_FRAME_LENGTH_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(15 downto 0) := s_reg_axi_debug_bch_encoder_last_frame_length_value;
+                        s_axi_debug_bch_encoder_last_frame_length_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_bch_encoder_min_max_frame_length' at address offset 0xBF8 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(15 downto 0) := s_reg_axi_debug_bch_encoder_min_max_frame_length_min_frame_length;
+                        v_rdata_r(31 downto 16) := s_reg_axi_debug_bch_encoder_min_max_frame_length_max_frame_length;
+                        s_axi_debug_bch_encoder_min_max_frame_length_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_ldpc_encoder_cfg' at address offset 0xBFC 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_LDPC_ENCODER_CFG_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(0 downto 0) := s_reg_axi_debug_ldpc_encoder_cfg_block_data_r;
+                        v_rdata_r(1 downto 1) := s_reg_axi_debug_ldpc_encoder_cfg_allow_word_r;
+                        v_rdata_r(2 downto 2) := s_reg_axi_debug_ldpc_encoder_cfg_allow_frame_r;
+                        v_rdata_r(3 downto 3) := s_reg_axi_debug_ldpc_encoder_cfg_reset_min_max_r;
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_ldpc_encoder_frame_count' at address offset 0xC00 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_LDPC_ENCODER_FRAME_COUNT_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(15 downto 0) := s_reg_axi_debug_ldpc_encoder_frame_count_value;
+                        s_axi_debug_ldpc_encoder_frame_count_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_ldpc_encoder_last_frame_length' at address offset 0xC04 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_LDPC_ENCODER_LAST_FRAME_LENGTH_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(15 downto 0) := s_reg_axi_debug_ldpc_encoder_last_frame_length_value;
+                        s_axi_debug_ldpc_encoder_last_frame_length_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_ldpc_encoder_min_max_frame_length' at address offset 0xC08 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(15 downto 0) := s_reg_axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length;
+                        v_rdata_r(31 downto 16) := s_reg_axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length;
+                        s_axi_debug_ldpc_encoder_min_max_frame_length_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_bit_interleaver_cfg' at address offset 0xC0C 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_BIT_INTERLEAVER_CFG_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(0 downto 0) := s_reg_axi_debug_bit_interleaver_cfg_block_data_r;
+                        v_rdata_r(1 downto 1) := s_reg_axi_debug_bit_interleaver_cfg_allow_word_r;
+                        v_rdata_r(2 downto 2) := s_reg_axi_debug_bit_interleaver_cfg_allow_frame_r;
+                        v_rdata_r(3 downto 3) := s_reg_axi_debug_bit_interleaver_cfg_reset_min_max_r;
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_bit_interleaver_frame_count' at address offset 0xC10 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_BIT_INTERLEAVER_FRAME_COUNT_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(15 downto 0) := s_reg_axi_debug_bit_interleaver_frame_count_value;
+                        s_axi_debug_bit_interleaver_frame_count_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_bit_interleaver_last_frame_length' at address offset 0xC14 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_BIT_INTERLEAVER_LAST_FRAME_LENGTH_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(15 downto 0) := s_reg_axi_debug_bit_interleaver_last_frame_length_value;
+                        s_axi_debug_bit_interleaver_last_frame_length_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'axi_debug_bit_interleaver_min_max_frame_length' at address offset 0xC18 
+                    if s_axi_araddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        v_rdata_r(15 downto 0) := s_reg_axi_debug_bit_interleaver_min_max_frame_length_min_frame_length;
+                        v_rdata_r(31 downto 16) := s_reg_axi_debug_bit_interleaver_min_max_frame_length_max_frame_length;
+                        s_axi_debug_bit_interleaver_min_max_frame_length_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
                     end if;
                     --
                     if v_addr_hit then
@@ -269,6 +534,31 @@ begin
             s_polyphase_filter_coefficients_waddr_r <= (others => '0');
             s_polyphase_filter_coefficients_wen_r <= (others => '0');
             s_polyphase_filter_coefficients_wdata_r <= (others => '0');
+            s_axi_debug_input_width_converter_cfg_strobe_r <= '0';
+            s_reg_axi_debug_input_width_converter_cfg_block_data_r <= AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_BLOCK_DATA_RESET;
+            s_reg_axi_debug_input_width_converter_cfg_allow_word_r <= AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_ALLOW_WORD_RESET;
+            s_reg_axi_debug_input_width_converter_cfg_allow_frame_r <= AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_ALLOW_FRAME_RESET;
+            s_reg_axi_debug_input_width_converter_cfg_reset_min_max_r <= AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_RESET_MIN_MAX_RESET;
+            s_axi_debug_bb_scrambler_cfg_strobe_r <= '0';
+            s_reg_axi_debug_bb_scrambler_cfg_block_data_r <= AXI_DEBUG_BB_SCRAMBLER_CFG_BLOCK_DATA_RESET;
+            s_reg_axi_debug_bb_scrambler_cfg_allow_word_r <= AXI_DEBUG_BB_SCRAMBLER_CFG_ALLOW_WORD_RESET;
+            s_reg_axi_debug_bb_scrambler_cfg_allow_frame_r <= AXI_DEBUG_BB_SCRAMBLER_CFG_ALLOW_FRAME_RESET;
+            s_reg_axi_debug_bb_scrambler_cfg_reset_min_max_r <= AXI_DEBUG_BB_SCRAMBLER_CFG_RESET_MIN_MAX_RESET;
+            s_axi_debug_bch_encoder_cfg_strobe_r <= '0';
+            s_reg_axi_debug_bch_encoder_cfg_block_data_r <= AXI_DEBUG_BCH_ENCODER_CFG_BLOCK_DATA_RESET;
+            s_reg_axi_debug_bch_encoder_cfg_allow_word_r <= AXI_DEBUG_BCH_ENCODER_CFG_ALLOW_WORD_RESET;
+            s_reg_axi_debug_bch_encoder_cfg_allow_frame_r <= AXI_DEBUG_BCH_ENCODER_CFG_ALLOW_FRAME_RESET;
+            s_reg_axi_debug_bch_encoder_cfg_reset_min_max_r <= AXI_DEBUG_BCH_ENCODER_CFG_RESET_MIN_MAX_RESET;
+            s_axi_debug_ldpc_encoder_cfg_strobe_r <= '0';
+            s_reg_axi_debug_ldpc_encoder_cfg_block_data_r <= AXI_DEBUG_LDPC_ENCODER_CFG_BLOCK_DATA_RESET;
+            s_reg_axi_debug_ldpc_encoder_cfg_allow_word_r <= AXI_DEBUG_LDPC_ENCODER_CFG_ALLOW_WORD_RESET;
+            s_reg_axi_debug_ldpc_encoder_cfg_allow_frame_r <= AXI_DEBUG_LDPC_ENCODER_CFG_ALLOW_FRAME_RESET;
+            s_reg_axi_debug_ldpc_encoder_cfg_reset_min_max_r <= AXI_DEBUG_LDPC_ENCODER_CFG_RESET_MIN_MAX_RESET;
+            s_axi_debug_bit_interleaver_cfg_strobe_r <= '0';
+            s_reg_axi_debug_bit_interleaver_cfg_block_data_r <= AXI_DEBUG_BIT_INTERLEAVER_CFG_BLOCK_DATA_RESET;
+            s_reg_axi_debug_bit_interleaver_cfg_allow_word_r <= AXI_DEBUG_BIT_INTERLEAVER_CFG_ALLOW_WORD_RESET;
+            s_reg_axi_debug_bit_interleaver_cfg_allow_frame_r <= AXI_DEBUG_BIT_INTERLEAVER_CFG_ALLOW_FRAME_RESET;
+            s_reg_axi_debug_bit_interleaver_cfg_reset_min_max_r <= AXI_DEBUG_BIT_INTERLEAVER_CFG_RESET_MIN_MAX_RESET;
 
         elsif rising_edge(axi_aclk) then
             -- Default values:
@@ -279,6 +569,28 @@ begin
             s_bit_mapper_ram_wen_r <= (others => '0');
             s_polyphase_filter_coefficients_waddr_r <= (others => '0'); -- always reset to zero because of wired OR
             s_polyphase_filter_coefficients_wen_r <= (others => '0');
+            s_axi_debug_input_width_converter_cfg_strobe_r <= '0';
+            s_axi_debug_bb_scrambler_cfg_strobe_r <= '0';
+            s_axi_debug_bch_encoder_cfg_strobe_r <= '0';
+            s_axi_debug_ldpc_encoder_cfg_strobe_r <= '0';
+            s_axi_debug_bit_interleaver_cfg_strobe_r <= '0';
+
+            -- Self-clearing fields:
+            s_reg_axi_debug_input_width_converter_cfg_allow_word_r <= (others => '0');
+            s_reg_axi_debug_input_width_converter_cfg_allow_frame_r <= (others => '0');
+            s_reg_axi_debug_input_width_converter_cfg_reset_min_max_r <= (others => '0');
+            s_reg_axi_debug_bb_scrambler_cfg_allow_word_r <= (others => '0');
+            s_reg_axi_debug_bb_scrambler_cfg_allow_frame_r <= (others => '0');
+            s_reg_axi_debug_bb_scrambler_cfg_reset_min_max_r <= (others => '0');
+            s_reg_axi_debug_bch_encoder_cfg_allow_word_r <= (others => '0');
+            s_reg_axi_debug_bch_encoder_cfg_allow_frame_r <= (others => '0');
+            s_reg_axi_debug_bch_encoder_cfg_reset_min_max_r <= (others => '0');
+            s_reg_axi_debug_ldpc_encoder_cfg_allow_word_r <= (others => '0');
+            s_reg_axi_debug_ldpc_encoder_cfg_allow_frame_r <= (others => '0');
+            s_reg_axi_debug_ldpc_encoder_cfg_reset_min_max_r <= (others => '0');
+            s_reg_axi_debug_bit_interleaver_cfg_allow_word_r <= (others => '0');
+            s_reg_axi_debug_bit_interleaver_cfg_allow_frame_r <= (others => '0');
+            s_reg_axi_debug_bit_interleaver_cfg_reset_min_max_r <= (others => '0');
 
             case v_state_r is
 
@@ -411,6 +723,111 @@ begin
                         s_polyphase_filter_coefficients_wen_r <= s_axi_wstrb_reg_r;
                         s_polyphase_filter_coefficients_wdata_r <= s_axi_wdata_reg_r;
                     end if;    
+                    -- register 'axi_debug_input_width_converter_cfg' at address offset 0xBCC
+                    if s_axi_awaddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;                        
+                        s_axi_debug_input_width_converter_cfg_strobe_r <= '1';
+                        -- field 'block_data':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_input_width_converter_cfg_block_data_r(0) <= s_axi_wdata_reg_r(0); -- block_data(0)
+                        end if;
+                        -- field 'allow_word':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_input_width_converter_cfg_allow_word_r(0) <= s_axi_wdata_reg_r(1); -- allow_word(0)
+                        end if;
+                        -- field 'allow_frame':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_input_width_converter_cfg_allow_frame_r(0) <= s_axi_wdata_reg_r(2); -- allow_frame(0)
+                        end if;
+                        -- field 'reset_min_max':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_input_width_converter_cfg_reset_min_max_r(0) <= s_axi_wdata_reg_r(3); -- reset_min_max(0)
+                        end if;
+                    end if;
+                    -- register 'axi_debug_bb_scrambler_cfg' at address offset 0xBDC
+                    if s_axi_awaddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_BB_SCRAMBLER_CFG_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;                        
+                        s_axi_debug_bb_scrambler_cfg_strobe_r <= '1';
+                        -- field 'block_data':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_bb_scrambler_cfg_block_data_r(0) <= s_axi_wdata_reg_r(0); -- block_data(0)
+                        end if;
+                        -- field 'allow_word':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_bb_scrambler_cfg_allow_word_r(0) <= s_axi_wdata_reg_r(1); -- allow_word(0)
+                        end if;
+                        -- field 'allow_frame':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_bb_scrambler_cfg_allow_frame_r(0) <= s_axi_wdata_reg_r(2); -- allow_frame(0)
+                        end if;
+                        -- field 'reset_min_max':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_bb_scrambler_cfg_reset_min_max_r(0) <= s_axi_wdata_reg_r(3); -- reset_min_max(0)
+                        end if;
+                    end if;
+                    -- register 'axi_debug_bch_encoder_cfg' at address offset 0xBEC
+                    if s_axi_awaddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_BCH_ENCODER_CFG_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;                        
+                        s_axi_debug_bch_encoder_cfg_strobe_r <= '1';
+                        -- field 'block_data':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_bch_encoder_cfg_block_data_r(0) <= s_axi_wdata_reg_r(0); -- block_data(0)
+                        end if;
+                        -- field 'allow_word':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_bch_encoder_cfg_allow_word_r(0) <= s_axi_wdata_reg_r(1); -- allow_word(0)
+                        end if;
+                        -- field 'allow_frame':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_bch_encoder_cfg_allow_frame_r(0) <= s_axi_wdata_reg_r(2); -- allow_frame(0)
+                        end if;
+                        -- field 'reset_min_max':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_bch_encoder_cfg_reset_min_max_r(0) <= s_axi_wdata_reg_r(3); -- reset_min_max(0)
+                        end if;
+                    end if;
+                    -- register 'axi_debug_ldpc_encoder_cfg' at address offset 0xBFC
+                    if s_axi_awaddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_LDPC_ENCODER_CFG_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;                        
+                        s_axi_debug_ldpc_encoder_cfg_strobe_r <= '1';
+                        -- field 'block_data':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_ldpc_encoder_cfg_block_data_r(0) <= s_axi_wdata_reg_r(0); -- block_data(0)
+                        end if;
+                        -- field 'allow_word':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_ldpc_encoder_cfg_allow_word_r(0) <= s_axi_wdata_reg_r(1); -- allow_word(0)
+                        end if;
+                        -- field 'allow_frame':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_ldpc_encoder_cfg_allow_frame_r(0) <= s_axi_wdata_reg_r(2); -- allow_frame(0)
+                        end if;
+                        -- field 'reset_min_max':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_ldpc_encoder_cfg_reset_min_max_r(0) <= s_axi_wdata_reg_r(3); -- reset_min_max(0)
+                        end if;
+                    end if;
+                    -- register 'axi_debug_bit_interleaver_cfg' at address offset 0xC0C
+                    if s_axi_awaddr_reg_r = resize(unsigned(BASEADDR) + AXI_DEBUG_BIT_INTERLEAVER_CFG_OFFSET, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;                        
+                        s_axi_debug_bit_interleaver_cfg_strobe_r <= '1';
+                        -- field 'block_data':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_bit_interleaver_cfg_block_data_r(0) <= s_axi_wdata_reg_r(0); -- block_data(0)
+                        end if;
+                        -- field 'allow_word':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_bit_interleaver_cfg_allow_word_r(0) <= s_axi_wdata_reg_r(1); -- allow_word(0)
+                        end if;
+                        -- field 'allow_frame':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_bit_interleaver_cfg_allow_frame_r(0) <= s_axi_wdata_reg_r(2); -- allow_frame(0)
+                        end if;
+                        -- field 'reset_min_max':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_axi_debug_bit_interleaver_cfg_reset_min_max_r(0) <= s_axi_wdata_reg_r(3); -- reset_min_max(0)
+                        end if;
+                    end if;
                     --
                     if not v_addr_hit then
                         s_axi_bresp_r <= AXI_DECERR;
@@ -457,5 +874,45 @@ begin
     regs2user.polyphase_filter_coefficients_addr <= s_polyphase_filter_coefficients_waddr_r; -- write-only memory     
     regs2user.polyphase_filter_coefficients_wen <= s_polyphase_filter_coefficients_wen_r;   
     regs2user.polyphase_filter_coefficients_wdata <= s_polyphase_filter_coefficients_wdata_r;
+    regs2user.axi_debug_input_width_converter_cfg_strobe <= s_axi_debug_input_width_converter_cfg_strobe_r;
+    regs2user.axi_debug_input_width_converter_cfg_block_data <= s_reg_axi_debug_input_width_converter_cfg_block_data_r;
+    regs2user.axi_debug_input_width_converter_cfg_allow_word <= s_reg_axi_debug_input_width_converter_cfg_allow_word_r;
+    regs2user.axi_debug_input_width_converter_cfg_allow_frame <= s_reg_axi_debug_input_width_converter_cfg_allow_frame_r;
+    regs2user.axi_debug_input_width_converter_cfg_reset_min_max <= s_reg_axi_debug_input_width_converter_cfg_reset_min_max_r;
+    regs2user.axi_debug_input_width_converter_frame_count_strobe <= s_axi_debug_input_width_converter_frame_count_strobe_r;
+    regs2user.axi_debug_input_width_converter_last_frame_length_strobe <= s_axi_debug_input_width_converter_last_frame_length_strobe_r;
+    regs2user.axi_debug_input_width_converter_min_max_frame_length_strobe <= s_axi_debug_input_width_converter_min_max_frame_length_strobe_r;
+    regs2user.axi_debug_bb_scrambler_cfg_strobe <= s_axi_debug_bb_scrambler_cfg_strobe_r;
+    regs2user.axi_debug_bb_scrambler_cfg_block_data <= s_reg_axi_debug_bb_scrambler_cfg_block_data_r;
+    regs2user.axi_debug_bb_scrambler_cfg_allow_word <= s_reg_axi_debug_bb_scrambler_cfg_allow_word_r;
+    regs2user.axi_debug_bb_scrambler_cfg_allow_frame <= s_reg_axi_debug_bb_scrambler_cfg_allow_frame_r;
+    regs2user.axi_debug_bb_scrambler_cfg_reset_min_max <= s_reg_axi_debug_bb_scrambler_cfg_reset_min_max_r;
+    regs2user.axi_debug_bb_scrambler_frame_count_strobe <= s_axi_debug_bb_scrambler_frame_count_strobe_r;
+    regs2user.axi_debug_bb_scrambler_last_frame_length_strobe <= s_axi_debug_bb_scrambler_last_frame_length_strobe_r;
+    regs2user.axi_debug_bb_scrambler_min_max_frame_length_strobe <= s_axi_debug_bb_scrambler_min_max_frame_length_strobe_r;
+    regs2user.axi_debug_bch_encoder_cfg_strobe <= s_axi_debug_bch_encoder_cfg_strobe_r;
+    regs2user.axi_debug_bch_encoder_cfg_block_data <= s_reg_axi_debug_bch_encoder_cfg_block_data_r;
+    regs2user.axi_debug_bch_encoder_cfg_allow_word <= s_reg_axi_debug_bch_encoder_cfg_allow_word_r;
+    regs2user.axi_debug_bch_encoder_cfg_allow_frame <= s_reg_axi_debug_bch_encoder_cfg_allow_frame_r;
+    regs2user.axi_debug_bch_encoder_cfg_reset_min_max <= s_reg_axi_debug_bch_encoder_cfg_reset_min_max_r;
+    regs2user.axi_debug_bch_encoder_frame_count_strobe <= s_axi_debug_bch_encoder_frame_count_strobe_r;
+    regs2user.axi_debug_bch_encoder_last_frame_length_strobe <= s_axi_debug_bch_encoder_last_frame_length_strobe_r;
+    regs2user.axi_debug_bch_encoder_min_max_frame_length_strobe <= s_axi_debug_bch_encoder_min_max_frame_length_strobe_r;
+    regs2user.axi_debug_ldpc_encoder_cfg_strobe <= s_axi_debug_ldpc_encoder_cfg_strobe_r;
+    regs2user.axi_debug_ldpc_encoder_cfg_block_data <= s_reg_axi_debug_ldpc_encoder_cfg_block_data_r;
+    regs2user.axi_debug_ldpc_encoder_cfg_allow_word <= s_reg_axi_debug_ldpc_encoder_cfg_allow_word_r;
+    regs2user.axi_debug_ldpc_encoder_cfg_allow_frame <= s_reg_axi_debug_ldpc_encoder_cfg_allow_frame_r;
+    regs2user.axi_debug_ldpc_encoder_cfg_reset_min_max <= s_reg_axi_debug_ldpc_encoder_cfg_reset_min_max_r;
+    regs2user.axi_debug_ldpc_encoder_frame_count_strobe <= s_axi_debug_ldpc_encoder_frame_count_strobe_r;
+    regs2user.axi_debug_ldpc_encoder_last_frame_length_strobe <= s_axi_debug_ldpc_encoder_last_frame_length_strobe_r;
+    regs2user.axi_debug_ldpc_encoder_min_max_frame_length_strobe <= s_axi_debug_ldpc_encoder_min_max_frame_length_strobe_r;
+    regs2user.axi_debug_bit_interleaver_cfg_strobe <= s_axi_debug_bit_interleaver_cfg_strobe_r;
+    regs2user.axi_debug_bit_interleaver_cfg_block_data <= s_reg_axi_debug_bit_interleaver_cfg_block_data_r;
+    regs2user.axi_debug_bit_interleaver_cfg_allow_word <= s_reg_axi_debug_bit_interleaver_cfg_allow_word_r;
+    regs2user.axi_debug_bit_interleaver_cfg_allow_frame <= s_reg_axi_debug_bit_interleaver_cfg_allow_frame_r;
+    regs2user.axi_debug_bit_interleaver_cfg_reset_min_max <= s_reg_axi_debug_bit_interleaver_cfg_reset_min_max_r;
+    regs2user.axi_debug_bit_interleaver_frame_count_strobe <= s_axi_debug_bit_interleaver_frame_count_strobe_r;
+    regs2user.axi_debug_bit_interleaver_last_frame_length_strobe <= s_axi_debug_bit_interleaver_last_frame_length_strobe_r;
+    regs2user.axi_debug_bit_interleaver_min_max_frame_length_strobe <= s_axi_debug_bit_interleaver_min_max_frame_length_strobe_r;
 
 end architecture RTL;

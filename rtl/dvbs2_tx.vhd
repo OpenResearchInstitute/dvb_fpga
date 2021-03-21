@@ -146,13 +146,18 @@ architecture dvbs2_tx of dvbs2_tx is
   signal mux_sel              : std_logic_vector(1 downto 0);
 
   signal width_conv           : data_and_config_t(tdata(7 downto 0));
+  signal width_conv_dbg       : data_and_config_t(tdata(7 downto 0));
   signal bb_scrambler         : data_and_config_t(tdata(7 downto 0));
+  signal bb_scrambler_dbg     : data_and_config_t(tdata(7 downto 0));
   signal bch_encoder          : data_and_config_t(tdata(7 downto 0));
+  signal bch_encoder_dbg      : data_and_config_t(tdata(7 downto 0));
   signal ldpc_encoder         : data_and_config_t(tdata(7 downto 0));
+  signal ldpc_encoder_dbg     : data_and_config_t(tdata(7 downto 0));
   signal ldpc_fifo            : data_and_config_t(tdata(7 downto 0));
   signal fork_bit_interleaver : axi_stream_ctrl_t;
   signal fork_ldpc_fifo       : axi_stream_ctrl_t;
   signal bit_interleaver      : data_and_config_t(tdata(7 downto 0));
+  signal bit_interleaver_dbg  : data_and_config_t(tdata(7 downto 0));
   signal arbiter_out          : data_and_config_t(tdata(7 downto 0));
   signal constellation_mapper : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
   signal pl_frame             : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
@@ -193,6 +198,38 @@ begin
       m_tvalid => width_conv.tvalid,
       m_tlast  => width_conv.tlast);
 
+  width_conv_dbg_u : entity fpga_cores.axi_stream_debug
+    generic map (
+      TDATA_WIDTH        => 8,
+      TID_WIDTH          => ENCODED_CONFIG_WIDTH,
+      FRAME_COUNT_WIDTH  => 16,
+      FRAME_LENGTH_WIDTH => 16)
+    port map (
+      -- Usual ports
+      clk                   => clk,
+      rst                   => rst,
+      -- Control and status
+      cfg_reset_min_max     => regs2user.axi_debug_input_width_converter_cfg_reset_min_max(0),
+      cfg_block_data        => regs2user.axi_debug_input_width_converter_cfg_block_data(0),
+      cfg_allow_word        => regs2user.axi_debug_input_width_converter_cfg_allow_word(0),
+      cfg_allow_frame       => regs2user.axi_debug_input_width_converter_cfg_allow_frame(0),
+      sts_frame_count       => user2regs.axi_debug_input_width_converter_frame_count_value,
+      sts_last_frame_length => user2regs.axi_debug_input_width_converter_last_frame_length_value,
+      sts_min_frame_length  => user2regs.axi_debug_input_width_converter_min_max_frame_length_min_frame_length,
+      sts_max_frame_length  => user2regs.axi_debug_input_width_converter_min_max_frame_length_max_frame_length,
+      -- AXI input
+      s_tready              => width_conv.tready,
+      s_tvalid              => width_conv.tvalid,
+      s_tlast               => width_conv.tlast,
+      s_tdata               => width_conv.tdata,
+      s_tid                 => width_conv.tid,
+      -- AXI output
+      m_tready              => width_conv_dbg.tready,
+      m_tvalid              => width_conv_dbg.tvalid,
+      m_tlast               => width_conv_dbg.tlast,
+      m_tdata               => width_conv_dbg.tdata,
+      m_tid                 => width_conv_dbg.tid);
+
   bb_scrambler_u : entity work.axi_baseband_scrambler
     generic map (
       TDATA_WIDTH => 8,
@@ -202,17 +239,49 @@ begin
       clk      => clk,
       rst      => rst,
       -- AXI input
-      s_tvalid => width_conv.tvalid,
-      s_tdata  => width_conv.tdata,
-      s_tlast  => width_conv.tlast,
-      s_tready => width_conv.tready,
-      s_tid    => width_conv.tid,
+      s_tvalid => width_conv_dbg.tvalid,
+      s_tdata  => width_conv_dbg.tdata,
+      s_tlast  => width_conv_dbg.tlast,
+      s_tready => width_conv_dbg.tready,
+      s_tid    => width_conv_dbg.tid,
       -- AXI output
       m_tready => bb_scrambler.tready,
       m_tvalid => bb_scrambler.tvalid,
       m_tlast  => bb_scrambler.tlast,
       m_tdata  => bb_scrambler.tdata,
       m_tid    => bb_scrambler.tid);
+
+  bb_scrambler_dbg_u : entity fpga_cores.axi_stream_debug
+    generic map (
+      TDATA_WIDTH        => 8,
+      TID_WIDTH          => ENCODED_CONFIG_WIDTH,
+      FRAME_COUNT_WIDTH  => 16,
+      FRAME_LENGTH_WIDTH => 16)
+    port map (
+      -- Usual ports
+      clk                   => clk,
+      rst                   => rst,
+      -- Control and status
+      cfg_reset_min_max     => regs2user.axi_debug_bb_scrambler_cfg_reset_min_max(0),
+      cfg_block_data        => regs2user.axi_debug_bb_scrambler_cfg_block_data(0),
+      cfg_allow_word        => regs2user.axi_debug_bb_scrambler_cfg_allow_word(0),
+      cfg_allow_frame       => regs2user.axi_debug_bb_scrambler_cfg_allow_frame(0),
+      sts_frame_count       => user2regs.axi_debug_bb_scrambler_frame_count_value,
+      sts_last_frame_length => user2regs.axi_debug_bb_scrambler_last_frame_length_value,
+      sts_min_frame_length  => user2regs.axi_debug_bb_scrambler_min_max_frame_length_min_frame_length,
+      sts_max_frame_length  => user2regs.axi_debug_bb_scrambler_min_max_frame_length_max_frame_length,
+      -- AXI input
+      s_tready              => bb_scrambler.tready,
+      s_tvalid              => bb_scrambler.tvalid,
+      s_tlast               => bb_scrambler.tlast,
+      s_tdata               => bb_scrambler.tdata,
+      s_tid                 => bb_scrambler.tid,
+      -- AXI output
+      m_tready              => bb_scrambler_dbg.tready,
+      m_tvalid              => bb_scrambler_dbg.tvalid,
+      m_tlast               => bb_scrambler_dbg.tlast,
+      m_tdata               => bb_scrambler_dbg.tdata,
+      m_tid                 => bb_scrambler_dbg.tid);
 
   bch_encoder_u : entity work.axi_bch_encoder
     generic map (
@@ -223,19 +292,51 @@ begin
       clk          => clk,
       rst          => rst,
       -- AXI input
-      s_frame_type => decode(bb_scrambler.tid).frame_type,
-      s_code_rate  => decode(bb_scrambler.tid).code_rate,
-      s_tvalid     => bb_scrambler.tvalid,
-      s_tlast      => bb_scrambler.tlast,
-      s_tready     => bb_scrambler.tready,
-      s_tdata      => bb_scrambler.tdata,
-      s_tid        => bb_scrambler.tid,
+      s_frame_type => decode(bb_scrambler_dbg.tid).frame_type,
+      s_code_rate  => decode(bb_scrambler_dbg.tid).code_rate,
+      s_tvalid     => bb_scrambler_dbg.tvalid,
+      s_tlast      => bb_scrambler_dbg.tlast,
+      s_tready     => bb_scrambler_dbg.tready,
+      s_tdata      => bb_scrambler_dbg.tdata,
+      s_tid        => bb_scrambler_dbg.tid,
       -- AXI output
       m_tready     => bch_encoder.tready,
       m_tvalid     => bch_encoder.tvalid,
       m_tlast      => bch_encoder.tlast,
       m_tdata      => bch_encoder.tdata,
       m_tid        => bch_encoder.tid);
+
+  bch_encoder_dbg_u : entity fpga_cores.axi_stream_debug
+    generic map (
+      TDATA_WIDTH        => 8,
+      TID_WIDTH          => ENCODED_CONFIG_WIDTH,
+      FRAME_COUNT_WIDTH  => 16,
+      FRAME_LENGTH_WIDTH => 16)
+    port map (
+      -- Usual ports
+      clk                   => clk,
+      rst                   => rst,
+      -- Control and status
+      cfg_reset_min_max     => regs2user.axi_debug_bch_encoder_cfg_reset_min_max(0),
+      cfg_block_data        => regs2user.axi_debug_bch_encoder_cfg_block_data(0),
+      cfg_allow_word        => regs2user.axi_debug_bch_encoder_cfg_allow_word(0),
+      cfg_allow_frame       => regs2user.axi_debug_bch_encoder_cfg_allow_frame(0),
+      sts_frame_count       => user2regs.axi_debug_bch_encoder_frame_count_value,
+      sts_last_frame_length => user2regs.axi_debug_bch_encoder_last_frame_length_value,
+      sts_min_frame_length  => user2regs.axi_debug_bch_encoder_min_max_frame_length_min_frame_length,
+      sts_max_frame_length  => user2regs.axi_debug_bch_encoder_min_max_frame_length_max_frame_length,
+      -- AXI input
+      s_tready              => bch_encoder.tready,
+      s_tvalid              => bch_encoder.tvalid,
+      s_tlast               => bch_encoder.tlast,
+      s_tdata               => bch_encoder.tdata,
+      s_tid                 => bch_encoder.tid,
+      -- AXI output
+      m_tready              => bch_encoder_dbg.tready,
+      m_tvalid              => bch_encoder_dbg.tvalid,
+      m_tlast               => bch_encoder_dbg.tlast,
+      m_tdata               => bch_encoder_dbg.tdata,
+      m_tid                 => bch_encoder_dbg.tid);
 
   ldpc_encoder_u : entity work.axi_ldpc_encoder
     generic map ( TID_WIDTH   => ENCODED_CONFIG_WIDTH )
@@ -245,14 +346,14 @@ begin
       rst             => rst,
       -- Per frame config input
       -- AXI input
-      s_frame_type    => decode(bch_encoder.tid).frame_type,
-      s_code_rate     => decode(bch_encoder.tid).code_rate,
-      s_constellation => decode(bch_encoder.tid).constellation,
-      s_tready        => bch_encoder.tready,
-      s_tvalid        => bch_encoder.tvalid,
-      s_tlast         => bch_encoder.tlast,
-      s_tdata         => bch_encoder.tdata,
-      s_tid           => bch_encoder.tid,
+      s_frame_type    => decode(bch_encoder_dbg.tid).frame_type,
+      s_code_rate     => decode(bch_encoder_dbg.tid).code_rate,
+      s_constellation => decode(bch_encoder_dbg.tid).constellation,
+      s_tready        => bch_encoder_dbg.tready,
+      s_tvalid        => bch_encoder_dbg.tvalid,
+      s_tlast         => bch_encoder_dbg.tlast,
+      s_tdata         => bch_encoder_dbg.tdata,
+      s_tid           => bch_encoder_dbg.tid,
       -- AXI output
       m_tready        => ldpc_encoder.tready,
       m_tvalid        => ldpc_encoder.tvalid,
@@ -260,7 +361,39 @@ begin
       m_tdata         => ldpc_encoder.tdata,
       m_tid           => ldpc_encoder.tid);
 
-  mux_sel <= "10" when decode(ldpc_encoder.tid).constellation = mod_qpsk else "01";
+  ldpc_encoder_dbg_u : entity fpga_cores.axi_stream_debug
+    generic map (
+      TDATA_WIDTH        => 8,
+      TID_WIDTH          => ENCODED_CONFIG_WIDTH,
+      FRAME_COUNT_WIDTH  => 16,
+      FRAME_LENGTH_WIDTH => 16)
+    port map (
+      -- Usual ports
+      clk                   => clk,
+      rst                   => rst,
+      -- Control and status
+      cfg_reset_min_max     => regs2user.axi_debug_ldpc_encoder_cfg_reset_min_max(0),
+      cfg_block_data        => regs2user.axi_debug_ldpc_encoder_cfg_block_data(0),
+      cfg_allow_word        => regs2user.axi_debug_ldpc_encoder_cfg_allow_word(0),
+      cfg_allow_frame       => regs2user.axi_debug_ldpc_encoder_cfg_allow_frame(0),
+      sts_frame_count       => user2regs.axi_debug_ldpc_encoder_frame_count_value,
+      sts_last_frame_length => user2regs.axi_debug_ldpc_encoder_last_frame_length_value,
+      sts_min_frame_length  => user2regs.axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length,
+      sts_max_frame_length  => user2regs.axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length,
+      -- AXI input
+      s_tready              => ldpc_encoder.tready,
+      s_tvalid              => ldpc_encoder.tvalid,
+      s_tlast               => ldpc_encoder.tlast,
+      s_tdata               => ldpc_encoder.tdata,
+      s_tid                 => ldpc_encoder.tid,
+      -- AXI output
+      m_tready              => ldpc_encoder_dbg.tready,
+      m_tvalid              => ldpc_encoder_dbg.tvalid,
+      m_tlast               => ldpc_encoder_dbg.tlast,
+      m_tdata               => ldpc_encoder_dbg.tdata,
+      m_tid                 => ldpc_encoder_dbg.tid);
+
+  mux_sel <= "10" when decode(ldpc_encoder_dbg.tid).constellation = mod_qpsk else "01";
 
   -- Bit interleaver is not needed for QPSK
   bit_interleaver_demux_u : entity fpga_cores.axi_stream_demux
@@ -270,9 +403,9 @@ begin
     port map (
       selection_mask => mux_sel,
 
-      s_tvalid       => ldpc_encoder.tvalid,
-      s_tready       => ldpc_encoder.tready,
-      s_tdata        => ldpc_encoder.tdata,
+      s_tvalid       => ldpc_encoder_dbg.tvalid,
+      s_tready       => ldpc_encoder_dbg.tready,
+      s_tdata        => ldpc_encoder_dbg.tdata,
 
       m_tvalid(0)    => fork_bit_interleaver.tvalid,
       m_tvalid(1)    => fork_ldpc_fifo.tvalid,
@@ -292,20 +425,53 @@ begin
       clk             => clk,
       rst             => rst,
       -- AXI input
-      s_frame_type    => decode(ldpc_encoder.tid).frame_type,
-      s_constellation => decode(ldpc_encoder.tid).constellation,
-      s_code_rate     => decode(ldpc_encoder.tid).code_rate,
+      s_frame_type    => decode(ldpc_encoder_dbg.tid).frame_type,
+      s_constellation => decode(ldpc_encoder_dbg.tid).constellation,
+      s_code_rate     => decode(ldpc_encoder_dbg.tid).code_rate,
       s_tready        => fork_bit_interleaver.tready,
       s_tvalid        => fork_bit_interleaver.tvalid,
-      s_tlast         => ldpc_encoder.tlast,
-      s_tdata         => ldpc_encoder.tdata,
-      s_tid           => ldpc_encoder.tid,
+      s_tlast         => ldpc_encoder_dbg.tlast,
+      s_tdata         => ldpc_encoder_dbg.tdata,
+      s_tid           => ldpc_encoder_dbg.tid,
       -- AXI output
       m_tready        => bit_interleaver.tready,
       m_tvalid        => bit_interleaver.tvalid,
       m_tlast         => bit_interleaver.tlast,
       m_tdata         => bit_interleaver.tdata,
       m_tid           => bit_interleaver.tid);
+
+  bit_interleaver_dbg_u : entity fpga_cores.axi_stream_debug
+    generic map (
+      TDATA_WIDTH        => 8,
+      TID_WIDTH          => ENCODED_CONFIG_WIDTH,
+      FRAME_COUNT_WIDTH  => 16,
+      FRAME_LENGTH_WIDTH => 16)
+    port map (
+      -- Usual ports
+      clk                   => clk,
+      rst                   => rst,
+      -- Control and status
+      cfg_reset_min_max     => regs2user.axi_debug_bit_interleaver_cfg_reset_min_max(0),
+      cfg_block_data        => regs2user.axi_debug_bit_interleaver_cfg_block_data(0),
+      cfg_allow_word        => regs2user.axi_debug_bit_interleaver_cfg_allow_word(0),
+      cfg_allow_frame       => regs2user.axi_debug_bit_interleaver_cfg_allow_frame(0),
+      sts_frame_count       => user2regs.axi_debug_bit_interleaver_frame_count_value,
+      sts_last_frame_length => user2regs.axi_debug_bit_interleaver_last_frame_length_value,
+      sts_min_frame_length  => user2regs.axi_debug_bit_interleaver_min_max_frame_length_min_frame_length,
+      sts_max_frame_length  => user2regs.axi_debug_bit_interleaver_min_max_frame_length_max_frame_length,
+      -- AXI input
+      s_tready              => bit_interleaver.tready,
+      s_tvalid              => bit_interleaver.tvalid,
+      s_tlast               => bit_interleaver.tlast,
+      s_tdata               => bit_interleaver.tdata,
+      s_tid                 => bit_interleaver.tid,
+      -- AXI output
+      m_tready              => bit_interleaver_dbg.tready,
+      m_tvalid              => bit_interleaver_dbg.tvalid,
+      m_tlast               => bit_interleaver_dbg.tlast,
+      m_tdata               => bit_interleaver_dbg.tdata,
+      m_tid                 => bit_interleaver_dbg.tid);
+
 
   ldpc_fifo_block : block
     signal tdata_agg_in  : std_logic_vector(ENCODED_CONFIG_WIDTH + 7 downto 0);
@@ -328,14 +494,14 @@ begin
         s_tvalid => fork_ldpc_fifo.tvalid,
         s_tready => fork_ldpc_fifo.tready,
         s_tdata  => tdata_agg_in,
-        s_tlast  => ldpc_encoder.tlast,
+        s_tlast  => ldpc_encoder_dbg.tlast,
         -- Read side
         m_tvalid => ldpc_fifo.tvalid,
         m_tready => ldpc_fifo.tready,
         m_tdata  => tdata_agg_out,
         m_tlast  => ldpc_fifo.tlast);
 
-    tdata_agg_in    <= ldpc_encoder.tid & ldpc_encoder.tdata;
+    tdata_agg_in    <= ldpc_encoder_dbg.tid & ldpc_encoder_dbg.tdata;
     ldpc_fifo.tdata <= tdata_agg_out(7 downto 0);
     ldpc_fifo.tid <= tdata_agg_out(ENCODED_CONFIG_WIDTH + 7 downto 8);
   end block;
@@ -347,7 +513,7 @@ begin
   begin
 
     tdata_in0 <= ldpc_fifo.tid & ldpc_fifo.tdata;
-    tdata_in1 <= bit_interleaver.tid & bit_interleaver.tdata;
+    tdata_in1 <= bit_interleaver_dbg.tid & bit_interleaver_dbg.tdata;
 
     arbiter_out.tdata <= tdata_out(8 - 1 downto 0);
     arbiter_out.tid <= tdata_out(ENCODED_CONFIG_WIDTH + 8 - 1 downto 8);
@@ -369,13 +535,13 @@ begin
 
         -- AXI slave input
         s_tvalid(0)      => ldpc_fifo.tvalid,
-        s_tvalid(1)      => bit_interleaver.tvalid,
+        s_tvalid(1)      => bit_interleaver_dbg.tvalid,
 
         s_tready(0)      => ldpc_fifo.tready,
-        s_tready(1)      => bit_interleaver.tready,
+        s_tready(1)      => bit_interleaver_dbg.tready,
 
         s_tlast(0)       => ldpc_fifo.tlast,
-        s_tlast(1)       => bit_interleaver.tlast,
+        s_tlast(1)       => bit_interleaver_dbg.tlast,
 
         s_tdata(0)       => tdata_in0,
         s_tdata(1)       => tdata_in1,
