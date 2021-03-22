@@ -157,10 +157,15 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
 
   -- AXI output
   signal axi_slave          : axi_stream_data_bus_t(tdata(DATA_WIDTH - 1 downto 0));
+  signal axi_slave_tvalid   : std_logic; -- Frame sizes don't match, mask off extra samples from RTL
+  signal is_trailing_data   : std_logic := '0';
   signal s_data_valid       : std_logic;
 
   signal axi_slave_expected_tdata : std_logic_vector(DATA_WIDTH - 1 downto 0);
   signal axi_slave_expected_tlast : std_logic;
+
+  signal recv_r      : complex;
+  signal expected_r  : complex;
 
 begin
 
@@ -257,10 +262,36 @@ begin
       -- Data input
       s_tready           => axi_slave.tready,
       s_tdata            => axi_slave.tdata,
-      s_tvalid           => axi_slave.tvalid,
-      s_tlast            => axi_slave.tlast);
+      s_tvalid           => axi_slave_tvalid,
+      s_tlast            => axi_slave_expected_tlast);
 
+  -- DUT AXI tready is always set to high in this sim
   axi_slave.tready <= '1';
+  -- GNU Radio's tlast will come in before, we'll ignore data after that until dvbs2_tx's
+  -- tlast
+  axi_slave_tvalid <= axi_slave.tvalid and not is_trailing_data;
+  process(clk)
+    variable words : integer;
+  begin
+    if rising_edge(clk) then
+      if axi_slave.tvalid and axi_slave.tready then
+        if is_trailing_data then
+          words := words + 1;
+        end if;
+
+        if (axi_slave.tlast xor axi_slave_expected_tlast) then
+          if axi_slave.tlast then
+            is_trailing_data <= '0';
+            warning(sformat("tlast mismatch, ignored %d samples", fo(words)));
+          end if;
+          if axi_slave_expected_tlast then
+            is_trailing_data <= '1';
+            words            := 0;
+          end if;
+        end if;
+      end if;
+    end if;
+  end process;
 
   ------------------------------
   -- Asynchronous assignments --
@@ -275,6 +306,11 @@ begin
   cfg_constellation <= decode(axi_master.tuser).constellation;
   cfg_frame_type    <= decode(axi_master.tuser).frame_type;
   cfg_code_rate     <= decode(axi_master.tuser).code_rate;
+
+  recv_r     <= to_complex(axi_slave.tdata) when axi_slave_tvalid = '1';
+  expected_r <= to_complex(axi_slave_expected_tdata);
+
+
 
   -- Inspect inner buses if running on ModelSim
   -- ghdl translate_off
