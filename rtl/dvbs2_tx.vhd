@@ -161,7 +161,9 @@ architecture dvbs2_tx of dvbs2_tx is
   signal arbiter_out          : data_and_config_t(tdata(7 downto 0));
   signal constellation_mapper : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
   signal pl_frame             : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
+  signal pl_frame_dbg         : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
   signal polyphase_filter_in  : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
+  signal polyphase_filter_out : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
 
   -- User signals  :
   signal user2regs : user2regs_t;
@@ -472,7 +474,6 @@ begin
       m_tdata               => bit_interleaver_dbg.tdata,
       m_tid                 => bit_interleaver_dbg.tid);
 
-
   ldpc_fifo_block : block
     signal tdata_agg_in  : std_logic_vector(ENCODED_CONFIG_WIDTH + 7 downto 0);
     signal tdata_agg_out : std_logic_vector(ENCODED_CONFIG_WIDTH + 7 downto 0);
@@ -610,6 +611,39 @@ begin
       m_tdata           => pl_frame.tdata,
       m_tid             => pl_frame.tid);
 
+  plframe_dbg_u : entity fpga_cores.axi_stream_debug
+    generic map (
+      TDATA_WIDTH        => 8,
+      TID_WIDTH          => ENCODED_CONFIG_WIDTH,
+      FRAME_COUNT_WIDTH  => 16,
+      FRAME_LENGTH_WIDTH => 16)
+    port map (
+      -- Usual ports
+      clk                   => clk,
+      rst                   => rst,
+      -- Control and status
+      cfg_reset_min_max     => regs2user.axi_debug_plframe_cfg_reset_min_max(0),
+      cfg_block_data        => regs2user.axi_debug_plframe_cfg_block_data(0),
+      cfg_allow_word        => regs2user.axi_debug_plframe_cfg_allow_word(0),
+      cfg_allow_frame       => regs2user.axi_debug_plframe_cfg_allow_frame(0),
+      sts_frame_count       => user2regs.axi_debug_plframe_frame_count_value,
+      sts_last_frame_length => user2regs.axi_debug_plframe_last_frame_length_value,
+      sts_min_frame_length  => user2regs.axi_debug_plframe_min_max_frame_length_min_frame_length,
+      sts_max_frame_length  => user2regs.axi_debug_plframe_min_max_frame_length_max_frame_length,
+      -- AXI input
+      s_tready              => pl_frame.tready,
+      s_tvalid              => pl_frame.tvalid,
+      s_tlast               => pl_frame.tlast,
+      s_tdata               => pl_frame.tdata,
+      s_tid                 => pl_frame.tid,
+      -- AXI output
+      m_tready              => pl_frame_dbg.tready,
+      m_tvalid              => pl_frame_dbg.tvalid,
+      m_tlast               => pl_frame_dbg.tlast,
+      m_tdata               => pl_frame_dbg.tdata,
+      m_tid                 => pl_frame_dbg.tid);
+
+
   plframe_delay_block : block
     signal tdata_agg_in  : std_logic_vector(ENCODED_CONFIG_WIDTH + DATA_WIDTH downto 0);
     signal tdata_agg_out : std_logic_vector(ENCODED_CONFIG_WIDTH + DATA_WIDTH downto 0);
@@ -624,8 +658,8 @@ begin
         rst     => rst,
 
         -- AXI slave input
-        s_tvalid => pl_frame.tvalid,
-        s_tready => pl_frame.tready,
+        s_tvalid => pl_frame_dbg.tvalid,
+        s_tready => pl_frame_dbg.tready,
         s_tdata  => tdata_agg_in,
 
         -- AXI master output
@@ -633,7 +667,7 @@ begin
         m_tready => polyphase_filter_in.tready,
         m_tdata  => tdata_agg_out);
 
-      tdata_agg_in              <= pl_frame.tlast & pl_frame.tid & pl_frame.tdata;
+      tdata_agg_in              <= pl_frame_dbg.tlast & pl_frame_dbg.tid & pl_frame_dbg.tdata;
       polyphase_filter_in.tdata <= tdata_agg_out(DATA_WIDTH - 1 downto 0);
       polyphase_filter_in.tid   <= tdata_agg_out(ENCODED_CONFIG_WIDTH + DATA_WIDTH - 1 downto DATA_WIDTH);
       polyphase_filter_in.tlast <= tdata_agg_out(ENCODED_CONFIG_WIDTH + DATA_WIDTH);
@@ -658,10 +692,10 @@ begin
       -- output data interface
       data_out_aclk           => clk,
       data_out_aresetn        => rst_n,
-      data_out_tready         => m_tready,
-      data_out_tdata          => m_tdata(DATA_WIDTH/2 - 1 downto 0),
-      data_out_tlast          => m_tlast_i,
-      data_out_tvalid         => m_tvalid_i,
+      data_out_tready         => polyphase_filter_out.tready,
+      data_out_tdata          => polyphase_filter_out.tdata(DATA_WIDTH/2 - 1 downto 0),
+      data_out_tlast          => polyphase_filter_out.tlast,
+      data_out_tvalid         => polyphase_filter_out.tvalid,
       -- coefficients input interface
       coeffs_wren             => or(regs2user.polyphase_filter_coefficients_wen),
       coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(6 downto 0),
@@ -686,14 +720,46 @@ begin
       -- output data interface
       data_out_aclk           => clk,
       data_out_aresetn        => rst_n,
-      data_out_tready         => m_tready,
-      data_out_tdata          => m_tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2),
+      data_out_tready         => polyphase_filter_out.tready,
+      data_out_tdata          => polyphase_filter_out.tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2),
       data_out_tlast          => open,
       data_out_tvalid         => open,
       -- coefficients input interface
       coeffs_wren             => or(regs2user.polyphase_filter_coefficients_wen),
       coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(6 downto 0),
       coeffs_wdata            => regs2user.polyphase_filter_coefficients_wdata(DATA_WIDTH - 1 downto DATA_WIDTH/2));
+
+  output_dbg_u : entity fpga_cores.axi_stream_debug
+    generic map (
+      TDATA_WIDTH        => 8,
+      TID_WIDTH          => ENCODED_CONFIG_WIDTH,
+      FRAME_COUNT_WIDTH  => 16,
+      FRAME_LENGTH_WIDTH => 16)
+    port map (
+      -- Usual ports
+      clk                   => clk,
+      rst                   => rst,
+      -- Control and status
+      cfg_reset_min_max     => regs2user.axi_debug_output_cfg_reset_min_max(0),
+      cfg_block_data        => regs2user.axi_debug_output_cfg_block_data(0),
+      cfg_allow_word        => regs2user.axi_debug_output_cfg_allow_word(0),
+      cfg_allow_frame       => regs2user.axi_debug_output_cfg_allow_frame(0),
+      sts_frame_count       => user2regs.axi_debug_output_frame_count_value,
+      sts_last_frame_length => user2regs.axi_debug_output_last_frame_length_value,
+      sts_min_frame_length  => user2regs.axi_debug_output_min_max_frame_length_min_frame_length,
+      sts_max_frame_length  => user2regs.axi_debug_output_min_max_frame_length_max_frame_length,
+      -- AXI input
+      s_tready              => polyphase_filter_out.tready,
+      s_tvalid              => polyphase_filter_out.tvalid,
+      s_tlast               => polyphase_filter_out.tlast,
+      s_tdata               => polyphase_filter_out.tdata,
+      s_tid                 => polyphase_filter_out.tid,
+      -- AXI output
+      m_tready              => m_tready,
+      m_tvalid              => m_tvalid_i,
+      m_tlast               => m_tlast_i,
+      m_tdata               => m_tdata,
+      m_tid                 => open);
 
   -- Register map decoder
   regmap_u : entity work.dvbs2_tx_wrapper_regmap_regs

@@ -28,11 +28,11 @@
                     <dt><strong>Description</strong></dt><dd>n/a</dd>
                     <dt><strong>Default base address</strong></dt><dd style="font-family:monospace;">0x0</dd>
                     <dt><strong>Register Width</strong></dt><dd>32 bits</dd>
-                    <dt><strong>Register Count</strong></dt><dd>25</dd>
+                    <dt><strong>Register Count</strong></dt><dd>33</dd>
                     <dt>Range</dt>
-                    <dd>3100 bytes 
+                    <dd>3132 bytes 
                     </dd>                    
-                    <dt><strong>Revision</strong></dt><dd>123</dd>
+                    <dt><strong>Revision</strong></dt><dd>141</dd>
                 </dl>
 <a id="OVERVIEW"></a>
                 <h3 class="page-header">Overview</h3>
@@ -200,6 +200,54 @@
                         <tr onclick="window.location='#REG@axi_debug_bit_interleaver_min_max_frame_length';">                        
                             <td style="font-family: monospace; padding-left: 2em;">0xC18</td>
                             <td>axi_debug_bit_interleaver_min_max_frame_length</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_plframe_cfg';">                        
+                            <td style="font-family: monospace; padding-left: 2em;">0xC1C</td>
+                            <td>axi_debug_plframe_cfg</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_plframe_frame_count';">                        
+                            <td style="font-family: monospace; padding-left: 2em;">0xC20</td>
+                            <td>axi_debug_plframe_frame_count</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_plframe_last_frame_length';">                        
+                            <td style="font-family: monospace; padding-left: 2em;">0xC24</td>
+                            <td>axi_debug_plframe_last_frame_length</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_plframe_min_max_frame_length';">                        
+                            <td style="font-family: monospace; padding-left: 2em;">0xC28</td>
+                            <td>axi_debug_plframe_min_max_frame_length</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_output_cfg';">                        
+                            <td style="font-family: monospace; padding-left: 2em;">0xC2C</td>
+                            <td>axi_debug_output_cfg</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_output_frame_count';">                        
+                            <td style="font-family: monospace; padding-left: 2em;">0xC30</td>
+                            <td>axi_debug_output_frame_count</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_output_last_frame_length';">                        
+                            <td style="font-family: monospace; padding-left: 2em;">0xC34</td>
+                            <td>axi_debug_output_last_frame_length</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_output_min_max_frame_length';">                        
+                            <td style="font-family: monospace; padding-left: 2em;">0xC38</td>
+                            <td>axi_debug_output_min_max_frame_length</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
@@ -1104,11 +1152,303 @@
                     </tr>
                 </table>
 </div>
+<a id="REG@axi_debug_plframe_cfg"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_plframe_cfg&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0xC1C
+                            <br/>Access: READ_WRITE
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[0]</td>
+                        <td><strong>block_data</strong><br/>
+                        <p>Disables data from passing through</p>
+
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[1]</td>
+                        <td><strong>allow_word</strong><br/>
+                        <p>Allows a single word to pass through. Needs <code>block_data</code> to be set before setting this.</p>
+
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                                <br/><span class="badge">Self-clearing</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[2]</td>
+                        <td><strong>allow_frame</strong><br/>
+                        <p>Allow a single frame to complete. Needs <code>block_data</code> to be set before setting this.</p>
+
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                                <br/><span class="badge">Self-clearing</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
+                        <td><strong>reset_min_max</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                                <br/><span class="badge">Self-clearing</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_plframe_frame_count"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_plframe_frame_count&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0xC20
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[15:0]</td>
+                        <td><strong>value</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_plframe_last_frame_length"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_plframe_last_frame_length&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0xC24
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[15:0]</td>
+                        <td><strong>value</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_plframe_min_max_frame_length"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_plframe_min_max_frame_length&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0xC28
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[15:0]</td>
+                        <td><strong>min_frame_length</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[31:16]</td>
+                        <td><strong>max_frame_length</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_output_cfg"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_output_cfg&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0xC2C
+                            <br/>Access: READ_WRITE
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[0]</td>
+                        <td><strong>block_data</strong><br/>
+                        <p>Disables data from passing through</p>
+
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[1]</td>
+                        <td><strong>allow_word</strong><br/>
+                        <p>Allows a single word to pass through. Needs <code>block_data</code> to be set before setting this.</p>
+
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                                <br/><span class="badge">Self-clearing</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[2]</td>
+                        <td><strong>allow_frame</strong><br/>
+                        <p>Allow a single frame to complete. Needs <code>block_data</code> to be set before setting this.</p>
+
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                                <br/><span class="badge">Self-clearing</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
+                        <td><strong>reset_min_max</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                                <br/><span class="badge">Self-clearing</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_output_frame_count"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_output_frame_count&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0xC30
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[15:0]</td>
+                        <td><strong>value</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_output_last_frame_length"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_output_last_frame_length&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0xC34
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[15:0]</td>
+                        <td><strong>value</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_output_min_max_frame_length"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_output_min_max_frame_length&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0xC38
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[15:0]</td>
+                        <td><strong>min_frame_length</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[31:16]</td>
+                        <td><strong>max_frame_length</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;                            
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
             </div>
         </div>        
         <div class="row">
             <div class="col-md-offset-3 col-md-6">
-                <p class="text-center" style="padding-top:1em; color:#888;">Generated on 2021-03-21 at 15:18 (UTC) by airhdl version 2021.03.1</p>
+                <p class="text-center" style="padding-top:1em; color:#888;">Generated on 2021-03-21 at 23:12 (UTC) by airhdl version 2021.03.1</p>
             </div>
         </div>
     </body>

@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_tx_wrapper_regmap' Register Definitions
-// Revision: 123
+// Revision: 141
 // -----------------------------------------------------------------------------
-// Generated on 2021-03-21 at 15:18 (UTC) by airhdl version 2021.03.1
+// Generated on 2021-03-21 at 23:12 (UTC) by airhdl version 2021.03.1
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -28,7 +28,7 @@ namespace dvbs2_tx_wrapper_regmap_regs {
     static const std::string name = "dvbs2_tx_wrapper_regmap";
 
     /* Revision number of the 'dvbs2_tx_wrapper_regmap' register map */
-    static const std::uint32_t REVISION = 123;
+    static const std::uint32_t REVISION = 141;
 
     /* Default base address of the 'dvbs2_tx_wrapper_regmap' register map */
     static const std::uint32_t BASE_ADDRESS = 0x00000000;
@@ -397,6 +397,126 @@ namespace dvbs2_tx_wrapper_regmap_regs {
     static const int AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_WIDTH = 16; /* bit width of the 'max_frame_length' field */
     static const std::uint32_t AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_MASK = 0xFFFF0000; /* bit mask of the 'max_frame_length' field */
     static const std::uint32_t AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET = 0x0; /* reset value of the 'max_frame_length' field */
+
+    /* Register 'axi_debug_plframe_cfg' */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_CFG_OFFSET = 0x00000C1C; /* address offset of the 'axi_debug_plframe_cfg' register */
+
+    /* Field 'axi_debug_plframe_cfg.block_data' */
+    static const int AXI_DEBUG_PLFRAME_CFG_BLOCK_DATA_BIT_OFFSET = 0; /* bit offset of the 'block_data' field */
+    static const int AXI_DEBUG_PLFRAME_CFG_BLOCK_DATA_BIT_WIDTH = 1; /* bit width of the 'block_data' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_CFG_BLOCK_DATA_BIT_MASK = 0x00000001; /* bit mask of the 'block_data' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_CFG_BLOCK_DATA_RESET = 0x0; /* reset value of the 'block_data' field */
+
+    /* Field 'axi_debug_plframe_cfg.allow_word' */
+    static const int AXI_DEBUG_PLFRAME_CFG_ALLOW_WORD_BIT_OFFSET = 1; /* bit offset of the 'allow_word' field */
+    static const int AXI_DEBUG_PLFRAME_CFG_ALLOW_WORD_BIT_WIDTH = 1; /* bit width of the 'allow_word' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_CFG_ALLOW_WORD_BIT_MASK = 0x00000002; /* bit mask of the 'allow_word' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_CFG_ALLOW_WORD_RESET = 0x0; /* reset value of the 'allow_word' field */
+
+    /* Field 'axi_debug_plframe_cfg.allow_frame' */
+    static const int AXI_DEBUG_PLFRAME_CFG_ALLOW_FRAME_BIT_OFFSET = 2; /* bit offset of the 'allow_frame' field */
+    static const int AXI_DEBUG_PLFRAME_CFG_ALLOW_FRAME_BIT_WIDTH = 1; /* bit width of the 'allow_frame' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_CFG_ALLOW_FRAME_BIT_MASK = 0x00000004; /* bit mask of the 'allow_frame' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_CFG_ALLOW_FRAME_RESET = 0x0; /* reset value of the 'allow_frame' field */
+
+    /* Field 'axi_debug_plframe_cfg.reset_min_max' */
+    static const int AXI_DEBUG_PLFRAME_CFG_RESET_MIN_MAX_BIT_OFFSET = 3; /* bit offset of the 'reset_min_max' field */
+    static const int AXI_DEBUG_PLFRAME_CFG_RESET_MIN_MAX_BIT_WIDTH = 1; /* bit width of the 'reset_min_max' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_CFG_RESET_MIN_MAX_BIT_MASK = 0x00000008; /* bit mask of the 'reset_min_max' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_CFG_RESET_MIN_MAX_RESET = 0x0; /* reset value of the 'reset_min_max' field */
+
+    /* Register 'axi_debug_plframe_frame_count' */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_FRAME_COUNT_OFFSET = 0x00000C20; /* address offset of the 'axi_debug_plframe_frame_count' register */
+
+    /* Field 'axi_debug_plframe_frame_count.value' */
+    static const int AXI_DEBUG_PLFRAME_FRAME_COUNT_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
+    static const int AXI_DEBUG_PLFRAME_FRAME_COUNT_VALUE_BIT_WIDTH = 16; /* bit width of the 'value' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_FRAME_COUNT_VALUE_BIT_MASK = 0x0000FFFF; /* bit mask of the 'value' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_FRAME_COUNT_VALUE_RESET = 0x0; /* reset value of the 'value' field */
+
+    /* Register 'axi_debug_plframe_last_frame_length' */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_OFFSET = 0x00000C24; /* address offset of the 'axi_debug_plframe_last_frame_length' register */
+
+    /* Field 'axi_debug_plframe_last_frame_length.value' */
+    static const int AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
+    static const int AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_VALUE_BIT_WIDTH = 16; /* bit width of the 'value' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_VALUE_BIT_MASK = 0x0000FFFF; /* bit mask of the 'value' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_VALUE_RESET = 0x0; /* reset value of the 'value' field */
+
+    /* Register 'axi_debug_plframe_min_max_frame_length' */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_OFFSET = 0x00000C28; /* address offset of the 'axi_debug_plframe_min_max_frame_length' register */
+
+    /* Field 'axi_debug_plframe_min_max_frame_length.min_frame_length' */
+    static const int AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET = 0; /* bit offset of the 'min_frame_length' field */
+    static const int AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_WIDTH = 16; /* bit width of the 'min_frame_length' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_MASK = 0x0000FFFF; /* bit mask of the 'min_frame_length' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_RESET = 0x0; /* reset value of the 'min_frame_length' field */
+
+    /* Field 'axi_debug_plframe_min_max_frame_length.max_frame_length' */
+    static const int AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_OFFSET = 16; /* bit offset of the 'max_frame_length' field */
+    static const int AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_WIDTH = 16; /* bit width of the 'max_frame_length' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_MASK = 0xFFFF0000; /* bit mask of the 'max_frame_length' field */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET = 0x0; /* reset value of the 'max_frame_length' field */
+
+    /* Register 'axi_debug_output_cfg' */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_OFFSET = 0x00000C2C; /* address offset of the 'axi_debug_output_cfg' register */
+
+    /* Field 'axi_debug_output_cfg.block_data' */
+    static const int AXI_DEBUG_OUTPUT_CFG_BLOCK_DATA_BIT_OFFSET = 0; /* bit offset of the 'block_data' field */
+    static const int AXI_DEBUG_OUTPUT_CFG_BLOCK_DATA_BIT_WIDTH = 1; /* bit width of the 'block_data' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_BLOCK_DATA_BIT_MASK = 0x00000001; /* bit mask of the 'block_data' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_BLOCK_DATA_RESET = 0x0; /* reset value of the 'block_data' field */
+
+    /* Field 'axi_debug_output_cfg.allow_word' */
+    static const int AXI_DEBUG_OUTPUT_CFG_ALLOW_WORD_BIT_OFFSET = 1; /* bit offset of the 'allow_word' field */
+    static const int AXI_DEBUG_OUTPUT_CFG_ALLOW_WORD_BIT_WIDTH = 1; /* bit width of the 'allow_word' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_ALLOW_WORD_BIT_MASK = 0x00000002; /* bit mask of the 'allow_word' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_ALLOW_WORD_RESET = 0x0; /* reset value of the 'allow_word' field */
+
+    /* Field 'axi_debug_output_cfg.allow_frame' */
+    static const int AXI_DEBUG_OUTPUT_CFG_ALLOW_FRAME_BIT_OFFSET = 2; /* bit offset of the 'allow_frame' field */
+    static const int AXI_DEBUG_OUTPUT_CFG_ALLOW_FRAME_BIT_WIDTH = 1; /* bit width of the 'allow_frame' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_ALLOW_FRAME_BIT_MASK = 0x00000004; /* bit mask of the 'allow_frame' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_ALLOW_FRAME_RESET = 0x0; /* reset value of the 'allow_frame' field */
+
+    /* Field 'axi_debug_output_cfg.reset_min_max' */
+    static const int AXI_DEBUG_OUTPUT_CFG_RESET_MIN_MAX_BIT_OFFSET = 3; /* bit offset of the 'reset_min_max' field */
+    static const int AXI_DEBUG_OUTPUT_CFG_RESET_MIN_MAX_BIT_WIDTH = 1; /* bit width of the 'reset_min_max' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_RESET_MIN_MAX_BIT_MASK = 0x00000008; /* bit mask of the 'reset_min_max' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_RESET_MIN_MAX_RESET = 0x0; /* reset value of the 'reset_min_max' field */
+
+    /* Register 'axi_debug_output_frame_count' */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_FRAME_COUNT_OFFSET = 0x00000C30; /* address offset of the 'axi_debug_output_frame_count' register */
+
+    /* Field 'axi_debug_output_frame_count.value' */
+    static const int AXI_DEBUG_OUTPUT_FRAME_COUNT_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
+    static const int AXI_DEBUG_OUTPUT_FRAME_COUNT_VALUE_BIT_WIDTH = 16; /* bit width of the 'value' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_FRAME_COUNT_VALUE_BIT_MASK = 0x0000FFFF; /* bit mask of the 'value' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_FRAME_COUNT_VALUE_RESET = 0x0; /* reset value of the 'value' field */
+
+    /* Register 'axi_debug_output_last_frame_length' */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_OFFSET = 0x00000C34; /* address offset of the 'axi_debug_output_last_frame_length' register */
+
+    /* Field 'axi_debug_output_last_frame_length.value' */
+    static const int AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
+    static const int AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_VALUE_BIT_WIDTH = 16; /* bit width of the 'value' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_VALUE_BIT_MASK = 0x0000FFFF; /* bit mask of the 'value' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_VALUE_RESET = 0x0; /* reset value of the 'value' field */
+
+    /* Register 'axi_debug_output_min_max_frame_length' */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_OFFSET = 0x00000C38; /* address offset of the 'axi_debug_output_min_max_frame_length' register */
+
+    /* Field 'axi_debug_output_min_max_frame_length.min_frame_length' */
+    static const int AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET = 0; /* bit offset of the 'min_frame_length' field */
+    static const int AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_WIDTH = 16; /* bit width of the 'min_frame_length' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_MASK = 0x0000FFFF; /* bit mask of the 'min_frame_length' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_RESET = 0x0; /* reset value of the 'min_frame_length' field */
+
+    /* Field 'axi_debug_output_min_max_frame_length.max_frame_length' */
+    static const int AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_OFFSET = 16; /* bit offset of the 'max_frame_length' field */
+    static const int AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_WIDTH = 16; /* bit width of the 'max_frame_length' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_MASK = 0xFFFF0000; /* bit mask of the 'max_frame_length' field */
+    static const std::uint32_t AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET = 0x0; /* reset value of the 'max_frame_length' field */
 
 }
 

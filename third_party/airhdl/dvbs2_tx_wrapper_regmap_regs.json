@@ -691,9 +691,233 @@
             "enumValues": []
           }
         ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_plframe_cfg",
+        "description": "",
+        "access": "READ_WRITE",
+        "addressOffset": 3100,
+        "size": 32,
+        "fields": [
+          {
+            "name": "block_data",
+            "description": "Disables data from passing through",
+            "bitWidth": 1,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "allow_word",
+            "description": "Allows a single word to pass through. Needs `block_data` to be set before setting this.",
+            "bitWidth": 1,
+            "bitOffset": 1,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          },
+          {
+            "name": "allow_frame",
+            "description": "Allow a single frame to complete. Needs `block_data` to be set before setting this.",
+            "bitWidth": 1,
+            "bitOffset": 2,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          },
+          {
+            "name": "reset_min_max",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 3,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_plframe_frame_count",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3104,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_plframe_last_frame_length",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3108,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_plframe_min_max_frame_length",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3112,
+        "size": 32,
+        "fields": [
+          {
+            "name": "min_frame_length",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "max_frame_length",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 16,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_output_cfg",
+        "description": "",
+        "access": "READ_WRITE",
+        "addressOffset": 3116,
+        "size": 32,
+        "fields": [
+          {
+            "name": "block_data",
+            "description": "Disables data from passing through",
+            "bitWidth": 1,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "allow_word",
+            "description": "Allows a single word to pass through. Needs `block_data` to be set before setting this.",
+            "bitWidth": 1,
+            "bitOffset": 1,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          },
+          {
+            "name": "allow_frame",
+            "description": "Allow a single frame to complete. Needs `block_data` to be set before setting this.",
+            "bitWidth": 1,
+            "bitOffset": 2,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          },
+          {
+            "name": "reset_min_max",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 3,
+            "reset": 0,
+            "selfClear": true,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_output_frame_count",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3120,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_output_last_frame_length",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3124,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_output_min_max_frame_length",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3128,
+        "size": 32,
+        "fields": [
+          {
+            "name": "min_frame_length",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "max_frame_length",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 16,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
       }
     ],
-    "revision": 123,
+    "revision": 141,
     "generateRecordPorts": true
   }
 }
