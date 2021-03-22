@@ -467,7 +467,7 @@ begin
     variable pl_framer_checker    : file_reader_t := new_file_reader("pl_framer_checker");
       -- ghdl translate_on
 
-    variable prev_config          : config_t;
+    variable prev_initial_addr    : integer := -1;
 
     procedure walk(constant steps : natural) is -- {{ ----------------------------------
     begin
@@ -618,17 +618,17 @@ begin
       info(" - data path      : " & data_path);
 
       -- Only update the mapping RAM if the config actually requires that
-      if config /= prev_config then
+      case config.constellation is
+        when mod_qpsk => initial_addr := 0;
+        when mod_8psk => initial_addr := 4;
+        when mod_16apsk => initial_addr := 12;
+        when mod_32apsk => initial_addr := 28;
+        when others => null;
+      end case;
+      if initial_addr /= prev_initial_addr then
         wait_for_completion;
-        case config.constellation is
-          when mod_qpsk => initial_addr := 0;
-          when mod_8psk => initial_addr := 4;
-          when mod_16apsk => initial_addr := 12;
-          when mod_32apsk => initial_addr := 28;
-          when others => null;
-        end case;
         update_mapping_ram(initial_addr, data_path & "/modulation_table.bin");
-        prev_config := config;
+        prev_initial_addr := initial_addr;
       end if;
 
       for i in 0 to number_of_frames - 1 loop
