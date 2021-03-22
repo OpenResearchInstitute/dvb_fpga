@@ -22,6 +22,8 @@
 ---------------
 -- Libraries --
 ---------------
+use std.textio.all;
+
 library ieee;
 use ieee.math_complex.all;
 use ieee.math_real.all;
@@ -53,7 +55,8 @@ entity axi_file_compare_tolerance is
     TOLERANCE           : natural := 0;
     SWAP_BYTE_ENDIANESS : boolean := False;
     ERROR_CNT_WIDTH     : natural := 8;
-    REPORT_SEVERITY     : severity_level := Error);
+    REPORT_SEVERITY     : severity_level := Error;
+    DUMP_FILENAME       : string := "");  -- Leave empty to disable
   port (
     -- Usual ports
     clk                : in  std_logic;
@@ -140,13 +143,6 @@ begin
     variable word_cnt    : natural  := 0;
     variable frame_cnt   : natural  := 0;
 
-    variable recv_r      : complex;
-    variable expected_r  : complex;
-    variable recv_p      : complex_polar;
-    variable expected_p  : complex_polar;
-    variable expected_re : signed(DATA_WIDTH/2 - 1 downto 0);
-    variable expected_im : signed(DATA_WIDTH/2 - 1 downto 0);
-
     procedure notify ( constant s : string ) is
     begin
       case REPORT_SEVERITY is
@@ -167,6 +163,20 @@ begin
         return "(" & real'image(v.mag) & ", " & real'image(v.arg) & ")";
     end function;
 
+    file file_handler : text;
+
+    procedure write_to_dump_file ( constant v : complex ) is
+      variable L : line;
+    begin
+      if DUMP_FILENAME = "" then
+        return;
+      end if;
+      write(L, real'image(v.re) & ",");
+      write(L, real'image(v.im));
+      writeline(file_handler, L);
+      deallocate(L);
+    end procedure;
+
     procedure check_within_tolerance (
       constant v            : std_logic_vector;
       constant ref          : std_logic_vector) is
@@ -185,6 +195,8 @@ begin
       ref_im       := to_integer(signed(ref(DATA_WIDTH/2 - 1 downto 0)));
       ref_re_range := ( ref_re - TOLERANCE, ref_re + TOLERANCE);
       ref_im_range := ( ref_im - TOLERANCE, ref_im + TOLERANCE);
+
+      write_to_dump_file(v_rect);
 
       -- Now we know signs match, so we can check if v is within the set tolerance
       if v_re /= ref_re and (v_re < minimum(ref_re_range) or v_re > max(ref_re_range)) then
@@ -232,6 +244,10 @@ begin
     tdata_error_cnt_i <= (others => '0');
     tlast_error_cnt_i <= (others => '0');
 
+    if DUMP_FILENAME /= "" then
+      file_open(file_handler, DUMP_FILENAME, write_mode);
+    end if;
+
     wait until rst = '0';
     while True loop
       wait until axi_data_valid = '1' and rising_edge(clk);
@@ -252,6 +268,9 @@ begin
 
       word_cnt := word_cnt + 1;
       if s_tlast = '1' then
+        if DUMP_FILENAME /= "" then
+          file_close(file_handler);
+        end if;
         info(logger, sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
         word_cnt  := 0;
         frame_cnt := frame_cnt + 1;
