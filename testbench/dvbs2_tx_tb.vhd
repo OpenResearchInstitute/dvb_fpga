@@ -244,7 +244,7 @@ begin
     generic map (
       READER_NAME         => "output_ref",
       DATA_WIDTH          => DATA_WIDTH,
-      TOLERANCE           => 32,
+      TOLERANCE           => 1200,
       SWAP_BYTE_ENDIANESS => True,
       ERROR_CNT_WIDTH     => 8,
       REPORT_SEVERITY     => Error)
@@ -412,7 +412,7 @@ begin
       generic map (
         READER_NAME         => "pl_framer_checker",
         DATA_WIDTH          => DATA_WIDTH,
-        TOLERANCE           => 4,
+        TOLERANCE           => 1200,
         SWAP_BYTE_ENDIANESS => True,
         ERROR_CNT_WIDTH     => 8,
         REPORT_SEVERITY     => Error)
