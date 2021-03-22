@@ -613,7 +613,7 @@ begin
 
   plframe_dbg_u : entity fpga_cores.axi_stream_debug
     generic map (
-      TDATA_WIDTH        => 8,
+      TDATA_WIDTH        => DATA_WIDTH,
       TID_WIDTH          => ENCODED_CONFIG_WIDTH,
       FRAME_COUNT_WIDTH  => 16,
       FRAME_LENGTH_WIDTH => 16)
@@ -731,7 +731,7 @@ begin
 
   output_dbg_u : entity fpga_cores.axi_stream_debug
     generic map (
-      TDATA_WIDTH        => 8,
+      TDATA_WIDTH        => DATA_WIDTH,
       TID_WIDTH          => ENCODED_CONFIG_WIDTH,
       FRAME_COUNT_WIDTH  => 16,
       FRAME_LENGTH_WIDTH => 16)
