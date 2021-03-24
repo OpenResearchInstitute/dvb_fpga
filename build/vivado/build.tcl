@@ -26,6 +26,7 @@ set_property library fpga_cores [ add_files [ glob third_party/fpga_cores/src/*.
 add_files [ glob rtl/bch_generated/*.vhd ]
 add_files [ glob rtl/ldpc/*.vhd ]
 add_files [ glob rtl/*.vhd ]
+add_files [ glob third_party/airhdl/*.vhd ]
 read_verilog -sv [ glob third_party/polyphase_filter/*.v ]
 
 set_property FILE_TYPE {VHDL 2008} [get_files *.vhd]

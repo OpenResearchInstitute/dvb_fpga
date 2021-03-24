@@ -4,6 +4,7 @@ ghdl --std=08                                                                  \
   --work=fpga_cores third_party/fpga_cores/src/common_pkg.vhd                  \
                     third_party/fpga_cores/src/synchronizer.vhd                \
                     third_party/fpga_cores/src/axi_pkg.vhd                     \
+                    third_party/fpga_cores/src/axi_stream_debug.vhd            \
                     third_party/fpga_cores/src/sr_delay.vhd                    \
                     third_party/fpga_cores/src/skidbuffer.vhd                  \
                     third_party/fpga_cores/src/ram_inference_dport.vhd         \
@@ -23,7 +24,9 @@ ghdl --std=08                                                                  \
                     third_party/fpga_cores/src/axi_stream_mux.vhd              \
                     third_party/fpga_cores/src/axi_stream_demux.vhd            \
                     third_party/fpga_cores/src/axi_stream_arbiter.vhd          \
-  --work=work       rtl/axi_baseband_scrambler.vhd                             \
+  --work=work       third_party/airhdl/dvbs2_tx_wrapper_regmap_regs_pkg.vhd    \
+                    third_party/airhdl/dvbs2_tx_wrapper_regmap_regs.vhd        \
+                    rtl/axi_baseband_scrambler.vhd                             \
                     rtl/axi_bit_interleaver.vhd                                \
                     rtl/axi_constellation_mapper.vhd                           \
                     rtl/axi_physical_layer_framer.vhd                          \
