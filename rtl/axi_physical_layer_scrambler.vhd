@@ -93,7 +93,7 @@ begin
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  s_tready_i <= m_tready;
+  s_tready_i <= m_tready or not m_tvalid_i;
   s_tready   <= s_tready_i;
   m_tvalid   <= m_tvalid_i;
 
@@ -125,7 +125,7 @@ begin
   ---------------
   -- Processes --
   ---------------
-  process(clk, rst, cfg_shift_reg_init)
+  process(clk, rst)
     -- Round the negative end of the scale so it has a positive counterpart
     function round_if_needed ( constant v : signed(TDATA_WIDTH/2 - 1 downto 0) ) return signed is
     begin
@@ -136,13 +136,14 @@ begin
     end function;
   begin
     if rst = '1' then
-      x          <= cfg_shift_reg_init;
       y          <= (others => '1');
       m_tvalid_i <= '0';
       m_tlast    <= '0';
-      m_tdata_re  <= (others => 'U');
-      m_tdata_im  <= (others => 'U');
-    elsif clk'event and clk = '1' then
+      m_tdata_re <= (others => 'U');
+      m_tdata_im <= (others => 'U');
+      -- Initialize X with SR for gold code = 1 by default
+      x          <= (0 => '1', others => '0');
+    elsif rising_edge(clk) then
       if m_tready = '1' then
         m_tvalid_i <= '0';
         m_tlast    <= '0';
