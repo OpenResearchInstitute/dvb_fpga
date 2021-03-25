@@ -455,6 +455,7 @@ begin
   ---------------
   main : process -- {{ -----------------------------------------------------------------
     constant self                 : actor_t       := new_actor("main");
+    constant logger               : logger_t      := get_logger("main");
     variable input_stream         : file_reader_t := new_file_reader("input_stream");
     variable output_ref           : file_reader_t := new_file_reader("output_ref");
 
@@ -464,8 +465,6 @@ begin
     variable ldpc_encoder_checker : file_reader_t := new_file_reader("ldpc_encoder");
     variable pl_framer_checker    : file_reader_t := new_file_reader("pl_framer_checker");
       -- ghdl translate_on
-
-    variable prev_initial_addr    : integer := -1;
 
     procedure walk(constant steps : natural) is -- {{ ----------------------------------
     begin
@@ -479,7 +478,7 @@ begin
     procedure wait_for_completion is -- {{ ---------------------------------------------
       variable msg : msg_t;
     begin
-      info("Waiting for test completion");
+      info(logger, "Waiting for test completion");
       wait_all_read(net, input_stream);
       wait_all_read(net, output_ref);
       -- ghdl translate_off
@@ -488,10 +487,9 @@ begin
       wait_all_read(net, ldpc_encoder_checker);
       wait_all_read(net, pl_framer_checker);
       -- ghdl translate_on
-
       wait until rising_edge(clk) and axi_slave.tvalid = '0' for 1 ms;
-
       walk(1);
+      info(logger, "All BFMs have now completed");
     end procedure wait_for_completion; -- }} -------------------------------------------
 
     procedure axi_cfg_write (
@@ -501,7 +499,7 @@ begin
       variable data_ack  : boolean := False;
       variable resp_recv : boolean := False;
     begin
-      info(sformat("axi_cfg_write: %r, %r", fo(addr), fo(data)));
+      info(logger, sformat("axi_cfg_write: %r, %r", fo(addr), fo(data)));
       axi_cfg.awvalid <= '1';
       axi_cfg.awaddr  <= std_logic_vector(addr);
 
@@ -549,49 +547,68 @@ begin
 
     -- Write the exact value so we know data was picked up correctly without having to
     -- convert into IQ
-    procedure update_mapping_ram ( -- {{ -----------------------------------------------
-      constant initial_addr : integer;
-      constant path         : string) is
-      file file_handler     : text;
-      variable L            : line;
-      variable r0, r1       : real;
-      variable addr         : integer := initial_addr;
-      variable index        : unsigned(5 downto 0) := (others => '0');
+    variable current_mapping_ram : std_logic_array_t(0 to 63)(DATA_WIDTH - 1 downto 0);
+    procedure update_mapping_ram_if_needed ( -- {{ -----------------------------------------------
+      constant initial_addr        : integer;
+      constant path                : string) is
+      file file_handler            : text;
+      variable L                   : line;
+      variable map_i, map_q        : real;
+      variable addr                : integer := initial_addr;
+      variable index               : unsigned(5 downto 0) := (others => '0');
+      variable updated_mapping_ram : std_logic_array_t(0 to 63)(DATA_WIDTH - 1 downto 0) := current_mapping_ram;
     begin
-      info(sformat("Updating mapping RAM from '%s' (initial address is %d)", fo(path), fo(initial_addr)));
+      info(logger, sformat("Updating mapping RAM from '%s' (initial address is %d)", fo(path), fo(initial_addr)));
 
       file_open(file_handler, path, read_mode);
       while not endfile(file_handler) loop
         readline(file_handler, L);
-        read(L, r0);
+        read(L, map_i);
         readline(file_handler, L);
-        read(L, r1);
-        info(
+        read(L, map_q);
+        debug(
+          logger,
           sformat(
-            "[%b] Writing RAM: %2d => %13s (%r) / %13s (%r)",
+            "[%b] Writing RAM: %2d => (%13s, %13s) => %13s (%r) / %13s (%r)",
             fo(index),
             fo(addr),
-            real'image(r0),
-            fo(to_fixed_point(r0, DATA_WIDTH/2)),
-            real'image(r1),
-            fo(to_fixed_point(r1, DATA_WIDTH/2))
+            real'image(map_i),
+            real'image(map_q),
+            real'image(map_i),
+            fo(to_fixed_point(map_i, DATA_WIDTH/2)),
+            real'image(map_q),
+            fo(to_fixed_point(map_q, DATA_WIDTH/2))
           )
         );
 
-        write_ram(
-          addr,
-          std_logic_vector(to_fixed_point(r0, DATA_WIDTH/2)) &
-          std_logic_vector(to_fixed_point(r1, DATA_WIDTH/2))
-        );
+        updated_mapping_ram(addr) := std_logic_vector(to_fixed_point(map_i, DATA_WIDTH/2)) &
+                                     std_logic_vector(to_fixed_point(map_q, DATA_WIDTH/2));
+
         addr := addr + 1;
         index := index + 1;
       end loop;
       file_close(file_handler);
+      if index = 0 then
+        failure(logger, "Failed to update RAM from file");
+      end if;
+
+      -- Only update if the tables are different
+      if current_mapping_ram /= updated_mapping_ram then
+        wait_for_completion;
+        for i in updated_mapping_ram'range loop
+          -- Only update entries that changed
+          if current_mapping_ram(i) /= updated_mapping_ram(i) then
+            write_ram(i, updated_mapping_ram(i));
+          end if;
+        end loop;
+      end if;
+
     end procedure; -- }} ---------------------------------------------------------------
+
 
     procedure update_coefficients ( constant c : std_logic_array_t ) is
     begin
-      info("Updating polyphase filter coefficients with " & to_string(c));
+      info(logger, "Updating polyphase filter coefficients with " & to_string(c));
 
       for i in c'range loop
         axi_cfg_write(POLYPHASE_FILTER_COEFFICIENTS_OFFSET + 4*i, c(i) & c(i));
@@ -609,11 +626,11 @@ begin
                                                      frame_type => config.frame_type);
     begin
 
-      info("Running test with:");
-      info(" - constellation  : " & constellation_t'image(config.constellation));
-      info(" - frame_type     : " & frame_type_t'image(config.frame_type));
-      info(" - code_rate      : " & code_rate_t'image(config.code_rate));
-      info(" - data path      : " & data_path);
+      info(logger, "Running test with:");
+      info(logger, " - constellation  : " & constellation_t'image(config.constellation));
+      info(logger, " - frame_type     : " & frame_type_t'image(config.frame_type));
+      info(logger, " - code_rate      : " & code_rate_t'image(config.code_rate));
+      info(logger, " - data path      : " & data_path);
 
       -- Only update the mapping RAM if the config actually requires that
       case config.constellation is
@@ -623,11 +640,7 @@ begin
         when mod_32apsk => initial_addr := 28;
         when others => null;
       end case;
-      if initial_addr /= prev_initial_addr then
-        wait_for_completion;
-        update_mapping_ram(initial_addr, data_path & "/modulation_table.bin");
-        prev_initial_addr := initial_addr;
-      end if;
+      update_mapping_ram_if_needed(initial_addr, data_path & "/modulation_table.bin");
 
       for i in 0 to number_of_frames - 1 loop
         file_reader_msg        := new_msg;
@@ -643,9 +656,8 @@ begin
         read_file(net, ldpc_encoder_checker, data_path & "/ldpc_output_packed.bin");
         read_file(net, pl_framer_checker, data_path & "/plframe_pilots_off_fixed_point.bin");
         -- ghdl translate_on
-
       end loop;
-
+      wait_for_completion;
     end procedure run_test; -- }} ------------------------------------------------------
 
   begin
@@ -681,15 +693,9 @@ begin
         for i in configs'range loop
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
-
       end if;
 
-      wait_for_completion;
-      info("All BFMs have now completed");
-      check_equal(axi_slave.tvalid, '0', "axi_slave.tvalid should be '0'");
-
       walk(32);
-
     end loop;
 
     test_runner_cleanup(runner);
