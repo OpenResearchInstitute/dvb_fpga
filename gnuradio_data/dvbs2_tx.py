@@ -159,7 +159,7 @@ class dvbs2_tx(gr.top_block):
         self.frame_type = frame_type
         self.constellation = constellation
         self.symbol_rate = symbol_rate = 5000000
-        self.taps = taps = 100
+        self.taps = taps = 32
         self.samp_rate = samp_rate = symbol_rate * 2
         self.rolloff = rolloff = 0.2
         self.noise = noise = 0

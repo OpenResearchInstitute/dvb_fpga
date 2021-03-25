@@ -70,24 +70,30 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
   constant configs    : config_array_t := get_test_cfg(TEST_CFG);
   constant CLK_PERIOD : time := 5 ns;
 
+  -- -- Values for 101 taps
+  -- constant COEFFS : std_logic_array_t  := (
+  --   x"FFFA", x"0001", x"0004", x"FFFB",  x"FFFD", x"0006", x"FFFE", x"FFFA",
+  --   x"0005", x"0001", x"FFF7", x"0003",  x"0007", x"FFF7", x"FFFC", x"000A",
+  --   x"FFFD", x"FFF6", x"0009", x"0003",  x"FFF1", x"0006", x"000E", x"FFF0",
+  --   x"FFF8", x"0015", x"FFFB", x"FFED",  x"0014", x"0005", x"FFDE", x"000F",
+  --   x"0024", x"FFD6", x"FFE8", x"003B",  x"FFF6", x"FFC8", x"0041", x"000A",
+  --   x"FF74", x"0064", x"00E0", x"FEC9",  x"FECA", x"02B7", x"017D", x"FA16",
+  --   x"FE51", x"1412", x"21C2", x"1412",  x"FE51", x"FA16", x"017D", x"02B7",
+  --   x"FECA", x"FEC9", x"00E0", x"0064",  x"FF74", x"000A", x"0041", x"FFC8",
+  --   x"FFF6", x"003B", x"FFE8", x"FFD6",  x"0024", x"000F", x"FFDE", x"0005",
+  --   x"0014", x"FFED", x"FFFB", x"0015",  x"FFF8", x"FFF0", x"000E", x"0006",
+  --   x"FFF1", x"0003", x"0009", x"FFF6",  x"FFFD", x"000A", x"FFFC", x"FFF7",
+  --   x"0007", x"0003", x"FFF7", x"0001",  x"0005", x"FFFA", x"FFFE", x"0006",
+  --   x"FFFD", x"FFFB", x"0004", x"0001",  x"FFFA");
+
+  -- Values for 33 taps
   constant COEFFS : std_logic_array_t  := (
-    x"FFFA", x"0001", x"0004", x"FFFB",  x"FFFD", x"0006", x"FFFE", x"FFFA",
-    x"0005", x"0001", x"FFF7", x"0003",  x"0007", x"FFF7", x"FFFC", x"000A",
-    x"FFFD", x"FFF6", x"0009", x"0003",  x"FFF1", x"0006", x"000E", x"FFF0",
-    x"FFF8", x"0015", x"FFFB", x"FFED",  x"0014", x"0005", x"FFDE", x"000F",
-    x"0024", x"FFD6", x"FFE8", x"003B",  x"FFF6", x"FFC8", x"0041", x"000A",
-    x"FF74", x"0064", x"00E0", x"FEC9",  x"FECA", x"02B7", x"017D", x"FA16",
-    x"FE51", x"1412", x"21C2", x"1412",  x"FE51", x"FA16", x"017D", x"02B7",
-    x"FECA", x"FEC9", x"00E0", x"0064",  x"FF74", x"000A", x"0041", x"FFC8",
-    x"FFF6", x"003B", x"FFE8", x"FFD6",  x"0024", x"000F", x"FFDE", x"0005",
-    x"0014", x"FFED", x"FFFB", x"0015",  x"FFF8", x"FFF0", x"000E", x"0006",
-    x"FFF1", x"0003", x"0009", x"FFF6",  x"FFFD", x"000A", x"FFFC", x"FFF7",
-    x"0007", x"0003", x"FFF7", x"0001",  x"0005", x"FFFA", x"FFFE", x"0006",
-    x"FFFD", x"FFFB", x"0004", x"0001",  x"FFFA");
-    -- , x"0000", x"0000", x"0000",
-    -- x"0000", x"0000", x"0000", x"0000",  x"0000", x"0000", x"0000", x"0000",
-    -- x"0000", x"0000", x"0000", x"0000",  x"0000", x"0000", x"0000", x"0000",
-    -- x"0000", x"0000", x"0000", x"0000",  x"0000", x"0000", x"0000", x"0000");
+    x"FFE8", x"003B", x"FFF6", x"FFC8",  x"0040", x"000A", x"FF75", x"0063",
+    x"00DF", x"FEC9", x"FECB", x"02B6",  x"017D", x"FA18", x"FE52", x"140B",
+    x"21B5", x"140B", x"FE52", x"FA18",  x"017D", x"02B6", x"FECB", x"FEC9",
+    x"00DF", x"0063", x"FF75", x"000A",  x"0040", x"FFC8", x"FFF6", x"003B",
+    x"FFE8");
+
 
   constant DATA_WIDTH : integer := 32;
 
@@ -195,7 +201,10 @@ begin
       m_tlast            => axi_master.tlast);
 
   dut : entity work.dvbs2_tx
-    generic map ( DATA_WIDTH => DATA_WIDTH )
+    generic map (
+      DATA_WIDTH                   => DATA_WIDTH,
+      POLYPHASE_FILTER_NUMBER_TAPS => 33,
+      POLYPHASE_FILTER_RATE_CHANGE => 2)
     port map (
       -- Usual ports
       clk             => clk,
@@ -647,7 +656,6 @@ begin
         file_reader_msg.sender := self;
 
         read_file(net, input_stream, data_path & "/bb_header_output_packed.bin", encode(config_tuple));
-        -- read_file(net, output_checker, data_path & "/plframe_pilots_off_fixed_point.bin");
         read_file(net, output_checker, data_path & "/modulated_pilots_off_fixed_point.bin");
 
         -- ghdl translate_off
@@ -664,10 +672,6 @@ begin
 
     test_runner_setup(runner, RUNNER_CFG);
     show(display_handler, debug);
-    -- hide(get_logger("file_reader_t(input_stream)"), display_handler, debug, True);
-    -- hide(get_logger("file_reader_t(output_ref_data)"), display_handler, debug, True);
-
-    -- show(get_logger("input_stream"), display_handler, (trace, debug), True);
 
     axi_cfg.awvalid <= '0';
     axi_cfg.arvalid <= '0';

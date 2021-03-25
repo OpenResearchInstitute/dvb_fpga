@@ -36,7 +36,9 @@ use work.dvbs2_tx_wrapper_regmap_regs_pkg.all;
 ------------------------
 entity dvbs2_tx is
   generic (
-    DATA_WIDTH : positive := 32
+    POLYPHASE_FILTER_NUMBER_TAPS : positive := 33;
+    POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
+    DATA_WIDTH                   : positive := 32
   );
   port (
     -- Usual ports
@@ -84,9 +86,6 @@ entity dvbs2_tx is
 end dvbs2_tx;
 
 architecture dvbs2_tx of dvbs2_tx is
-
-  constant POLYPHASE_FILTER_NUMBER_TAPS : positive := 101;
-  constant POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
 
   -- Need a component to make this work in Yosys
   component polyphase_filter is
@@ -667,7 +666,7 @@ begin
       data_out_tvalid         => polyphase_filter_out.tvalid,
       -- coefficients input interface
       coeffs_wren             => or(regs2user.polyphase_filter_coefficients_wen),
-      coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(6 downto 0),
+      coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(numbits(POLYPHASE_FILTER_NUMBER_TAPS) - 1 downto 0),
       coeffs_wdata            => regs2user.polyphase_filter_coefficients_wdata(DATA_WIDTH/2 - 1 downto 0));
 
   polyphase_filter_i : polyphase_filter
@@ -695,7 +694,7 @@ begin
       data_out_tvalid         => open,
       -- coefficients input interface
       coeffs_wren             => or(regs2user.polyphase_filter_coefficients_wen),
-      coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(6 downto 0),
+      coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(numbits(POLYPHASE_FILTER_NUMBER_TAPS) - 1 downto 0),
       coeffs_wdata            => regs2user.polyphase_filter_coefficients_wdata(DATA_WIDTH - 1 downto DATA_WIDTH/2));
 
   output_dbg_u : entity fpga_cores.axi_stream_debug
