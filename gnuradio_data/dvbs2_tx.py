@@ -265,26 +265,23 @@ class dvbs2_tx(gr.top_block):
         self.analog_random_source_x_0 = blocks.vector_source_b(
             map(int, numpy.random.randint(0, 255, self.frame_length)), False
         )
+        # Create filter coefficients and apply to the FIR filters. We'll also
+        # dump that into a file so the VHDL sim picks it up
+        filter_coefficients = list(
+            gnuradio.filter.firdes.root_raised_cosine(
+                1.0, samp_rate, samp_rate / 2, rolloff, taps
+            )
+        )
         self.fft_filter_pilots_on = gnuradio.filter.fft_filter_ccc(
-            1,
-            (
-                gnuradio.filter.firdes.root_raised_cosine(
-                    1.0, samp_rate, samp_rate / 2, rolloff, taps
-                )
-            ),
-            1,
+            1, filter_coefficients, 1,
         )
         self.fft_filter_pilots_on.declare_sample_delay(0)
         self.fft_filter_pilots_off = gnuradio.filter.fft_filter_ccc(
-            1,
-            (
-                gnuradio.filter.firdes.root_raised_cosine(
-                    1.0, samp_rate, samp_rate / 2, rolloff, taps
-                )
-            ),
-            1,
+            1, filter_coefficients, 1,
         )
         self.fft_filter_pilots_off.declare_sample_delay(0)
+
+        writeCoefficientsToFile(filter_coefficients)
 
         ##################################################
         # Connections
@@ -533,6 +530,12 @@ def argument_parser():
     args.code_rate = getattr(dtv, args.code_rate)
 
     return args
+
+
+def writeCoefficientsToFile(data):
+    with open("polyphase_coefficients.bin", "w") as fd:
+        for coeff in data:
+            fd.write(str(coeff/2) + "\n")
 
 
 def main(top_block_cls=dvbs2_tx, options=None):

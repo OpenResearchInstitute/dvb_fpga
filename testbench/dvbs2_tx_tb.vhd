@@ -70,32 +70,9 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
   constant configs    : config_array_t := get_test_cfg(TEST_CFG);
   constant CLK_PERIOD : time := 5 ns;
 
-  -- -- Values for 101 taps
-  -- constant COEFFS : std_logic_array_t  := (
-  --   x"FFFA", x"0001", x"0004", x"FFFB",  x"FFFD", x"0006", x"FFFE", x"FFFA",
-  --   x"0005", x"0001", x"FFF7", x"0003",  x"0007", x"FFF7", x"FFFC", x"000A",
-  --   x"FFFD", x"FFF6", x"0009", x"0003",  x"FFF1", x"0006", x"000E", x"FFF0",
-  --   x"FFF8", x"0015", x"FFFB", x"FFED",  x"0014", x"0005", x"FFDE", x"000F",
-  --   x"0024", x"FFD6", x"FFE8", x"003B",  x"FFF6", x"FFC8", x"0041", x"000A",
-  --   x"FF74", x"0064", x"00E0", x"FEC9",  x"FECA", x"02B7", x"017D", x"FA16",
-  --   x"FE51", x"1412", x"21C2", x"1412",  x"FE51", x"FA16", x"017D", x"02B7",
-  --   x"FECA", x"FEC9", x"00E0", x"0064",  x"FF74", x"000A", x"0041", x"FFC8",
-  --   x"FFF6", x"003B", x"FFE8", x"FFD6",  x"0024", x"000F", x"FFDE", x"0005",
-  --   x"0014", x"FFED", x"FFFB", x"0015",  x"FFF8", x"FFF0", x"000E", x"0006",
-  --   x"FFF1", x"0003", x"0009", x"FFF6",  x"FFFD", x"000A", x"FFFC", x"FFF7",
-  --   x"0007", x"0003", x"FFF7", x"0001",  x"0005", x"FFFA", x"FFFE", x"0006",
-  --   x"FFFD", x"FFFB", x"0004", x"0001",  x"FFFA");
-
-  -- Values for 33 taps
-  constant COEFFS : std_logic_array_t  := (
-    x"FFE8", x"003B", x"FFF6", x"FFC8",  x"0040", x"000A", x"FF75", x"0063",
-    x"00DF", x"FEC9", x"FECB", x"02B6",  x"017D", x"FA18", x"FE52", x"140B",
-    x"21B5", x"140B", x"FE52", x"FA18",  x"017D", x"02B6", x"FECB", x"FEC9",
-    x"00DF", x"0063", x"FF75", x"000A",  x"0040", x"FFC8", x"FFF6", x"003B",
-    x"FFE8");
-
-
-  constant DATA_WIDTH : integer := 32;
+  constant DATA_WIDTH                   : integer  := 32;
+  constant POLYPHASE_FILTER_NUMBER_TAPS : positive := 33;
+  constant POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
 
   type axi_checker_t is record
     axi             : axi_stream_data_bus_t;
@@ -203,8 +180,8 @@ begin
   dut : entity work.dvbs2_tx
     generic map (
       DATA_WIDTH                   => DATA_WIDTH,
-      POLYPHASE_FILTER_NUMBER_TAPS => 33,
-      POLYPHASE_FILTER_RATE_CHANGE => 2)
+      POLYPHASE_FILTER_NUMBER_TAPS => POLYPHASE_FILTER_NUMBER_TAPS,
+      POLYPHASE_FILTER_RATE_CHANGE => POLYPHASE_FILTER_RATE_CHANGE)
     port map (
       -- Usual ports
       clk             => clk,
@@ -330,16 +307,16 @@ begin
       expected_tlast  : std_logic;
     end record;
 
-    signal bb_scrambler              : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-    signal bch_encoder               : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-    signal ldpc_encoder              : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal bb_scrambler      : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal bch_encoder       : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal ldpc_encoder      : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
 
-    signal bb_scrambler_info         : file_compare_info_t(expected_tdata(7 downto 0));
-    signal bch_encoder_info          : file_compare_info_t(expected_tdata(7 downto 0));
-    signal ldpc_encoder_info         : file_compare_info_t(expected_tdata(7 downto 0));
+    signal bb_scrambler_info : file_compare_info_t(expected_tdata(7 downto 0));
+    signal bch_encoder_info  : file_compare_info_t(expected_tdata(7 downto 0));
+    signal ldpc_encoder_info : file_compare_info_t(expected_tdata(7 downto 0));
 
-    signal pl_frame_expected         : axi_stream_data_bus_t(tdata(DATA_WIDTH - 1 downto 0));
-    signal pl_frame                  : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal pl_frame_expected : axi_stream_data_bus_t(tdata(DATA_WIDTH - 1 downto 0));
+    signal pl_frame          : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
 
   begin
 
@@ -558,24 +535,22 @@ begin
     -- convert into IQ
     variable current_mapping_ram : std_logic_array_t(0 to 63)(DATA_WIDTH - 1 downto 0);
     procedure update_mapping_ram_if_needed ( -- {{ -----------------------------------------------
-      constant initial_addr        : integer;
-      constant path                : string) is
-      file file_handler            : text;
-      variable L                   : line;
-      variable map_i, map_q        : real;
-      variable addr                : integer := initial_addr;
-      variable index               : unsigned(5 downto 0) := (others => '0');
-      variable updated_mapping_ram : std_logic_array_t(0 to 63)(DATA_WIDTH - 1 downto 0) := current_mapping_ram;
+      constant initial_addr : integer;
+      constant path         : string) is
+      file file_handler     : text;
+      variable L            : line;
+      variable map_i, map_q : real;
+      variable addr         : integer := initial_addr;
+      variable index        : unsigned(5 downto 0) := (others => '0');
+      variable mapping_ram  : std_logic_array_t(0 to 63)(DATA_WIDTH - 1 downto 0) := current_mapping_ram;
     begin
-      info(logger, sformat("Updating mapping RAM from '%s' (initial address is %d)", fo(path), fo(initial_addr)));
-
       file_open(file_handler, path, read_mode);
       while not endfile(file_handler) loop
         readline(file_handler, L);
         read(L, map_i);
         readline(file_handler, L);
         read(L, map_q);
-        debug(
+        trace(
           logger,
           sformat(
             "[%b] Writing RAM: %2d => (%13s, %13s) => %13s (%r) / %13s (%r)",
@@ -590,8 +565,8 @@ begin
           )
         );
 
-        updated_mapping_ram(addr) := std_logic_vector(to_fixed_point(map_i, DATA_WIDTH/2)) &
-                                     std_logic_vector(to_fixed_point(map_q, DATA_WIDTH/2));
+        mapping_ram(addr) := std_logic_vector(to_fixed_point(map_i, DATA_WIDTH/2)) &
+                             std_logic_vector(to_fixed_point(map_q, DATA_WIDTH/2));
 
         addr := addr + 1;
         index := index + 1;
@@ -602,26 +577,57 @@ begin
       end if;
 
       -- Only update if the tables are different
-      if current_mapping_ram /= updated_mapping_ram then
-        wait_for_completion;
-        for i in updated_mapping_ram'range loop
-          -- Only update entries that changed
-          if current_mapping_ram(i) /= updated_mapping_ram(i) then
-            write_ram(i, updated_mapping_ram(i));
-          end if;
-        end loop;
+      if current_mapping_ram = mapping_ram then
+        return;
       end if;
 
+      wait_for_completion;
+      info(logger, sformat("Updating mapping RAM from '%s' (initial address is %d)", fo(path), fo(initial_addr)));
+
+      for i in mapping_ram'range loop
+        -- Only update entries that changed
+        if current_mapping_ram(i) /= mapping_ram(i) then
+          write_ram(i, mapping_ram(i));
+        end if;
+      end loop;
+
+      current_mapping_ram := mapping_ram;
     end procedure; -- }} ---------------------------------------------------------------
 
-
-    procedure update_coefficients ( constant c : std_logic_array_t ) is
+    variable current_coefficients : real_vector(0 to POLYPHASE_FILTER_NUMBER_TAPS - 1);
+    procedure update_coefficients ( constant path : string ) is
+      file file_handler     : text;
+      variable L            : line;
+      variable addr         : integer := 0;
+      variable value        : real;
+      variable coefficients : real_vector(0 to POLYPHASE_FILTER_NUMBER_TAPS - 1) := current_coefficients;
     begin
-      info(logger, "Updating polyphase filter coefficients with " & to_string(c));
-
-      for i in c'range loop
-        axi_cfg_write(POLYPHASE_FILTER_COEFFICIENTS_OFFSET + 4*i, c(i) & c(i));
+      file_open(file_handler, path, read_mode);
+      while not endfile(file_handler) loop
+        readline(file_handler, L);
+        read(L, value);
+        trace(logger, sformat("Coefficient %3d: %r => %r", fo(addr), real'image(value), fo(to_fixed_point(value, DATA_WIDTH/2))));
+        coefficients(addr) := value;
+        addr := addr + 1;
       end loop;
+
+      if current_coefficients = coefficients then
+        return;
+      end if;
+
+      wait_for_completion;
+      info(logger, sformat("Updating polyphase coefficients from '%s'", fo(path)));
+
+      for i in coefficients'range loop
+        if current_coefficients(i) /= coefficients(i) then
+          axi_cfg_write(
+            POLYPHASE_FILTER_COEFFICIENTS_OFFSET + 4*i, 
+            std_logic_vector(to_fixed_point(coefficients(i), DATA_WIDTH/2)) &
+            std_logic_vector(to_fixed_point(coefficients(i), DATA_WIDTH/2))
+          );
+        end if;
+      end loop;
+      current_coefficients := coefficients;
     end procedure;
 
     procedure run_test ( -- {{ ---------------------------------------------------------
@@ -640,6 +646,8 @@ begin
       info(logger, " - frame_type     : " & frame_type_t'image(config.frame_type));
       info(logger, " - code_rate      : " & code_rate_t'image(config.code_rate));
       info(logger, " - data path      : " & data_path);
+
+      update_coefficients(data_path & "/polyphase_coefficients.bin");
 
       -- Only update the mapping RAM if the config actually requires that
       case config.constellation is
@@ -687,8 +695,6 @@ begin
 
       data_probability <= 1.0;
       tready_probability <= 1.0;
-
-      update_coefficients(COEFFS);
 
       if run("back_to_back") then
         data_probability <= 1.0;
