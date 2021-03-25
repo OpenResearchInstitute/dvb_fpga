@@ -104,7 +104,7 @@ begin
   -------------------
   input_data_u : entity fpga_cores_sim.axi_file_reader
     generic map (
-      READER_NAME => "input_data_u",
+      READER_NAME => "input_data",
       DATA_WIDTH  => INPUT_DATA_WIDTH,
       TID_WIDTH   => ENCODED_CONFIG_WIDTH)
     port map (
@@ -153,9 +153,9 @@ begin
       m_tdata         => axi_slave.tdata,
       m_tid           => axi_slave.tuser);
 
-  ref_data_u : entity work.axi_file_compare_complex
+  output_checker_u : entity work.axi_file_compare_complex
     generic map (
-      READER_NAME         => "ref_data_u",
+      READER_NAME         => "output_checker",
       DATA_WIDTH          => OUTPUT_DATA_WIDTH,
       TOLERANCE           => 0,
       SWAP_BYTE_ENDIANESS => True,
@@ -192,10 +192,10 @@ begin
   -- Processes --
   ---------------
   main : process -- {{
-    constant self        : actor_t       := new_actor("main");
-    constant logger      : logger_t      := get_logger("main");
-    variable input_data  : file_reader_t := new_file_reader("input_data_u");
-    variable ref_data    : file_reader_t := new_file_reader("ref_data_u");
+    constant self           : actor_t       := new_actor("main");
+    constant logger         : logger_t      := get_logger("main");
+    variable input_data     : file_reader_t := new_file_reader("input_data");
+    variable output_checker : file_reader_t := new_file_reader("output_checker");
 
     procedure walk(constant steps : natural) is -- {{ ----------------------------------
     begin
@@ -211,7 +211,7 @@ begin
     begin
       info(logger, "Waiting for all frames to be read");
       wait_all_read(net, input_data);
-      wait_all_read(net, ref_data);
+      wait_all_read(net, output_checker);
       info(logger, "All data has now been read");
       walk(8);
       wait until rising_edge(clk) and axi_slave.tvalid = '0' for 100 us;
@@ -327,7 +327,7 @@ begin
         -- Setup file reader
         read_file(net, input_data, data_path & "/bit_interleaver_output_packed.bin", encode(config_tuple));
         -- Setup file checker
-        read_file(net, ref_data, data_path & "/bit_mapper_output_fixed_point.bin");
+        read_file(net, output_checker, data_path & "/bit_mapper_output_fixed_point.bin");
 
       end loop;
 
@@ -339,10 +339,10 @@ begin
 
     test_runner_setup(runner, RUNNER_CFG);
     show(display_handler, debug);
-    hide(get_logger("file_reader_t(input_data_u)"), display_handler, debug, True);
-    hide(get_logger("file_reader_t(ref_data_u)"), display_handler, debug, True);
-    hide(get_logger("file_reader_t(input_data_u)"), display_handler, info, True);
-    hide(get_logger("file_reader_t(ref_data_u)"), display_handler, info, True);
+    hide(get_logger("file_reader_t(input_data)"), display_handler, debug, True);
+    hide(get_logger("file_reader_t(output_checker)"), display_handler, debug, True);
+    hide(get_logger("file_reader_t(input_data)"), display_handler, info, True);
+    hide(get_logger("file_reader_t(output_checker)"), display_handler, info, True);
 
     while test_suite loop
       rst                <= '1';

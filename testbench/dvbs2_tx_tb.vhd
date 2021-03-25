@@ -242,9 +242,9 @@ begin
 
   output_checker_u : entity work.axi_file_compare_complex
     generic map (
-      READER_NAME         => "output_ref",
+      READER_NAME         => "output_checker",
       DATA_WIDTH          => DATA_WIDTH,
-      TOLERANCE           => 1200,
+      TOLERANCE           => 64,
       SWAP_BYTE_ENDIANESS => True,
       ERROR_CNT_WIDTH     => 8,
       REPORT_SEVERITY     => Error)
@@ -457,7 +457,7 @@ begin
     constant self                 : actor_t       := new_actor("main");
     constant logger               : logger_t      := get_logger("main");
     variable input_stream         : file_reader_t := new_file_reader("input_stream");
-    variable output_ref           : file_reader_t := new_file_reader("output_ref");
+    variable output_checker       : file_reader_t := new_file_reader("output_checker");
 
       -- ghdl translate_off
     variable bb_scrambler_checker : file_reader_t := new_file_reader("bb_scrambler");
@@ -480,7 +480,7 @@ begin
     begin
       info(logger, "Waiting for test completion");
       wait_all_read(net, input_stream);
-      wait_all_read(net, output_ref);
+      wait_all_read(net, output_checker);
       -- ghdl translate_off
       wait_all_read(net, bb_scrambler_checker);
       wait_all_read(net, bch_encoder_checker);
@@ -647,8 +647,8 @@ begin
         file_reader_msg.sender := self;
 
         read_file(net, input_stream, data_path & "/bb_header_output_packed.bin", encode(config_tuple));
-        -- read_file(net, output_ref, data_path & "/plframe_pilots_off_fixed_point.bin");
-        read_file(net, output_ref, data_path & "/modulated_pilots_off_fixed_point.bin");
+        -- read_file(net, output_checker, data_path & "/plframe_pilots_off_fixed_point.bin");
+        read_file(net, output_checker, data_path & "/modulated_pilots_off_fixed_point.bin");
 
         -- ghdl translate_off
         read_file(net, bb_scrambler_checker, data_path & "/bb_scrambler_output_packed.bin");
