@@ -90,12 +90,19 @@ architecture axi_file_compare_complex of axi_file_compare_complex is
   signal tdata_error_cnt_i : unsigned(ERROR_CNT_WIDTH - 1 downto 0);
   signal tlast_error_cnt_i : unsigned(ERROR_CNT_WIDTH - 1 downto 0);
 
-  signal dbg_error        : complex;
-  signal dbg_error_re     : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
-  signal dbg_error_im     : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
-  signal dbg_error_re_max : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
-  signal dbg_error_im_max : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
-  signal dbg_acc_error    : complex := (re => 0.0, im => 0.0);
+  signal dbg_error         : complex;
+
+  signal dbg_recv_re       : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
+  signal dbg_recv_im       : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
+
+  signal dbg_expected_re   : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
+  signal dbg_expected_im   : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
+
+  signal dbg_error_re      : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
+  signal dbg_error_im      : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
+  signal dbg_error_re_max  : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
+  signal dbg_error_im_max  : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
+  signal dbg_acc_error     : complex := (re => 0.0, im => 0.0);
 
 begin
 
@@ -272,6 +279,16 @@ begin
     wait until rst = '0';
     while True loop
       wait until axi_data_valid = '1' and rising_edge(clk);
+
+      if has_undefined(s_tdata) then
+        failure(sformat("Input data has undefined values: %r (%b)", fo(s_tdata), fo(s_tdata)));
+      end if;
+
+      dbg_recv_re     <= signed(s_tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2));
+      dbg_recv_im     <= signed(s_tdata(DATA_WIDTH/2 - 1 downto 0));
+      dbg_expected_re <= signed(expected_tdata_i(DATA_WIDTH - 1 downto DATA_WIDTH/2));
+      dbg_expected_im <= signed(expected_tdata_i(DATA_WIDTH/2 - 1 downto 0));
+
       check_within_tolerance(s_tdata, expected_tdata_i);
 
       if s_tlast = '1' then
