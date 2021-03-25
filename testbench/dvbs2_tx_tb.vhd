@@ -161,11 +161,11 @@ architecture dvbs2_tx_tb of dvbs2_tx_tb is
   signal is_trailing_data   : std_logic := '0';
   signal s_data_valid       : std_logic;
 
-  signal axi_slave_expected_tdata : std_logic_vector(DATA_WIDTH - 1 downto 0);
-  signal axi_slave_expected_tlast : std_logic;
+  signal expected_tdata     : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal expected_tlast     : std_logic;
 
-  signal recv_r      : complex;
-  signal expected_r  : complex;
+  signal recv_r             : complex;
+  signal expected_r         : complex;
 
 begin
 
@@ -226,9 +226,9 @@ begin
       s_axi_bresp     => axi_cfg.bresp,
 
       -- AXI input
-      s_constellation => encode(cfg_constellation),
-      s_frame_type    => encode(cfg_frame_type),
-      s_code_rate     => encode(cfg_code_rate),
+      s_constellation => decode(axi_master.tuser).constellation,
+      s_frame_type    => decode(axi_master.tuser).frame_type,
+      s_code_rate     => decode(axi_master.tuser).code_rate,
       s_tvalid        => axi_master.tvalid,
       s_tdata         => axi_master.tdata,
       s_tkeep         => axi_master.tkeep,
@@ -257,13 +257,13 @@ begin
       tlast_error_cnt    => open,
       error_cnt          => open,
       -- Debug stuff
-      expected_tdata     => axi_slave_expected_tdata,
-      expected_tlast     => axi_slave_expected_tlast,
+      expected_tdata     => expected_tdata,
+      expected_tlast     => expected_tlast,
       -- Data input
       s_tready           => axi_slave.tready,
       s_tdata            => axi_slave.tdata,
       s_tvalid           => axi_slave_tvalid,
-      s_tlast            => axi_slave_expected_tlast);
+      s_tlast            => expected_tlast);
 
   -- DUT AXI tready is always set to high in this sim
   axi_slave.tready <= '1';
@@ -279,12 +279,12 @@ begin
           words := words + 1;
         end if;
 
-        if (axi_slave.tlast xor axi_slave_expected_tlast) then
+        if (axi_slave.tlast xor expected_tlast) then
           if axi_slave.tlast then
             is_trailing_data <= '0';
             warning(sformat("tlast mismatch, ignored %d samples", fo(words)));
           end if;
-          if axi_slave_expected_tlast then
+          if expected_tlast then
             is_trailing_data <= '1';
             words            := 0;
           end if;
@@ -308,9 +308,7 @@ begin
   cfg_code_rate     <= decode(axi_master.tuser).code_rate;
 
   recv_r     <= to_complex(axi_slave.tdata) when axi_slave_tvalid = '1';
-  expected_r <= to_complex(axi_slave_expected_tdata);
-
-
+  expected_r <= to_complex(expected_tdata);
 
   -- Inspect inner buses if running on ModelSim
   -- ghdl translate_off

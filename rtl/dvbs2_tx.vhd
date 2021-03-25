@@ -68,9 +68,9 @@ entity dvbs2_tx is
     s_axi_bresp     : out std_logic_vector(1 downto 0);
 
     -- AXI input
-    s_constellation : in  std_logic_vector(CONSTELLATION_WIDTH - 1 downto 0);
-    s_frame_type    : in  std_logic_vector(FRAME_TYPE_WIDTH - 1 downto 0);
-    s_code_rate     : in  std_logic_vector(CODE_RATE_WIDTH - 1 downto 0);
+    s_constellation : in  constellation_t;
+    s_frame_type    : in  frame_type_t;
+    s_code_rate     : in  code_rate_t;
     s_tvalid        : in  std_logic;
     s_tdata         : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
     s_tkeep         : in  std_logic_vector(DATA_WIDTH/8 - 1 downto 0);
@@ -773,9 +773,9 @@ begin
   ------------------------------
   rst_n <= not rst;
 
-  s_tid <= encode((frame_type    => decode(s_frame_type),
-                   constellation => decode(s_constellation),
-                   code_rate     => decode(s_code_rate)));
+  s_tid <= encode((frame_type    => s_frame_type,
+                   constellation => s_constellation,
+                   code_rate     => s_code_rate));
 
   m_tvalid <= m_tvalid_i;
   m_tlast  <= m_tlast_i;
