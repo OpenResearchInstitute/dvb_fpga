@@ -138,7 +138,7 @@ begin
       m_tdata         => axi_slave.tdata,
       m_tid           => axi_slave.tuser);
 
-  ref_data_u : entity work.axi_file_compare_tolerance
+  ref_data_u : entity work.axi_file_compare_complex
     generic map (
       READER_NAME         => "ref_data_u",
       DATA_WIDTH          => TDATA_WIDTH,

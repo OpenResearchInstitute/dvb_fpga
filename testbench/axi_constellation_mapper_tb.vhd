@@ -88,9 +88,6 @@ architecture axi_constellation_mapper_tb of axi_constellation_mapper_tb is
   signal data_probability       : real range 0.0 to 1.0 := 1.0;
   signal tready_probability     : real range 0.0 to 1.0 := 1.0;
 
-  signal expected_tvalid        : std_logic;
-  signal expected_tdata         : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
-
   signal m_data_valid           : boolean;
   signal s_data_valid           : boolean;
 
@@ -98,6 +95,7 @@ architecture axi_constellation_mapper_tb of axi_constellation_mapper_tb is
   signal axi_master             : axi_stream_bus_t(tdata(INPUT_DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   -- AXI output
   signal axi_slave              : axi_stream_bus_t(tdata(OUTPUT_DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+  signal expected_tdata         : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
 
 begin
 
@@ -155,7 +153,7 @@ begin
       m_tdata         => axi_slave.tdata,
       m_tid           => axi_slave.tuser);
 
-  ref_data_u : entity work.axi_file_compare_tolerance
+  ref_data_u : entity work.axi_file_compare_complex
     generic map (
       READER_NAME         => "ref_data_u",
       DATA_WIDTH          => OUTPUT_DATA_WIDTH,

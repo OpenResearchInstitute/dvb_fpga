@@ -240,7 +240,7 @@ begin
       m_tlast         => axi_slave.tlast,
       m_tdata         => axi_slave.tdata);
 
-  output_checker_u : entity work.axi_file_compare_tolerance
+  output_checker_u : entity work.axi_file_compare_complex
     generic map (
       READER_NAME         => "output_ref",
       DATA_WIDTH          => DATA_WIDTH,
@@ -406,7 +406,7 @@ begin
         s_tvalid           => ldpc_encoder.tvalid and ldpc_encoder.tready,
         s_tlast            => ldpc_encoder.tlast);
 
-    physical_layer_checker_u : entity work.axi_file_compare_tolerance
+    physical_layer_checker_u : entity work.axi_file_compare_complex
       generic map (
         READER_NAME         => "pl_framer_checker",
         DATA_WIDTH          => DATA_WIDTH,

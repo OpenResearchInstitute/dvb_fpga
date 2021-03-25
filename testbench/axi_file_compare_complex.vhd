@@ -48,7 +48,7 @@ use work.dvb_sim_utils_pkg.all;
 ------------------------
 -- Entity declaration --
 ------------------------
-entity axi_file_compare_tolerance is
+entity axi_file_compare_complex is
   generic (
     READER_NAME         : string;
     DATA_WIDTH          : integer := 1;
@@ -73,9 +73,9 @@ entity axi_file_compare_tolerance is
     s_tdata            : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
     s_tvalid           : in  std_logic;
     s_tlast            : in  std_logic);
-end axi_file_compare_tolerance;
+end axi_file_compare_complex;
 
-architecture axi_file_compare_tolerance of axi_file_compare_tolerance is
+architecture axi_file_compare_complex of axi_file_compare_complex is
 
   -------------
   -- Signals --
@@ -89,6 +89,13 @@ architecture axi_file_compare_tolerance of axi_file_compare_tolerance is
 
   signal tdata_error_cnt_i : unsigned(ERROR_CNT_WIDTH - 1 downto 0);
   signal tlast_error_cnt_i : unsigned(ERROR_CNT_WIDTH - 1 downto 0);
+
+  signal dbg_error        : complex;
+  signal dbg_error_re     : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
+  signal dbg_error_im     : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
+  signal dbg_error_re_max : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
+  signal dbg_error_im_max : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
+  signal dbg_acc_error    : complex := (re => 0.0, im => 0.0);
 
 begin
 
@@ -207,6 +214,20 @@ begin
         failed := True;
       end if;
 
+      dbg_error     <= v_rect - ref_rect;
+      dbg_error_re  <= v_re - ref_re;
+      dbg_error_im  <= v_im - ref_im;
+
+      if abs(v_re - ref_re) > dbg_error_re_max then
+        dbg_error_re_max <= abs(v_re - ref_re);
+      end if;
+
+      if abs(v_im - ref_im) > dbg_error_im_max then
+        dbg_error_im_max <= abs(v_im - ref_im);
+      end if;
+
+      dbg_acc_error <= dbg_acc_error + v_rect - ref_rect;
+
       if failed then
         tdata_error_cnt_i <= tdata_error_cnt_i + 1;
 
@@ -253,6 +274,12 @@ begin
       wait until axi_data_valid = '1' and rising_edge(clk);
       check_within_tolerance(s_tdata, expected_tdata_i);
 
+      if s_tlast = '1' then
+        if DUMP_FILENAME /= "" then
+          file_close(file_handler);
+        end if;
+      end if;
+
       if s_tlast /= m_tlast then
         notify(
           sformat(
@@ -263,19 +290,20 @@ begin
             fo(to_boolean(s_tlast))
           )
         );
-      tlast_error_cnt_i <= tlast_error_cnt_i + 1;
+        tlast_error_cnt_i <= tlast_error_cnt_i + 1;
       end if;
 
-      word_cnt := word_cnt + 1;
       if s_tlast = '1' then
-        if DUMP_FILENAME /= "" then
-          file_close(file_handler);
-        end if;
+        dbg_acc_error <= (re => 0.0, im => 0.0);
+        dbg_error_re_max <= (others => '0');
+        dbg_error_im_max <= (others => '0');
         info(logger, sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
         word_cnt  := 0;
         frame_cnt := frame_cnt + 1;
       end if;
+
+      word_cnt := word_cnt + 1;
     end loop;
   end process; -- }} -------------------------------------------------------------------
 
-end axi_file_compare_tolerance;
+end axi_file_compare_complex;
