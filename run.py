@@ -422,7 +422,10 @@ def _getModulationTable(
     frame_type: FrameType, constellation: ConstellationType, code_rate: CodeRate
 ):
     """
-    Returns the modulation table for a given config
+    Returns the modulation table for a given config. Please note we're scaling the
+    constellation radius according to the old implementation of GNU Radio.  Once the CI's
+    GNU Radio version is updated to include
+    https://github.com/gnuradio/gnuradio/commit/efe3e6c1 we'll need to change here as well
     """
     # pylint: disable=invalid-name
     if constellation == ConstellationType.MOD_QPSK:
@@ -469,9 +472,11 @@ def _getModulationTable(
                 CodeRate.C3_5: r2 / 3.70,
             }.get(code_rate, 0.0)
 
-        r0 = math.sqrt(4.0 / ((r1 * r1) + 3.0 * (r2 * r2)))
-        r1 = r0 * r1
-        r2 = r0 * r2
+        # TODO: Include this when changing CI's GNU Radio version to a version
+        # that includes https://github.com/gnuradio/gnuradio/commit/efe3e6c1
+        #  r0 = math.sqrt(4.0 / ((r1 * r1) + 3.0 * (r2 * r2)))
+        #  r1 = r0 * r1
+        #  r2 = r0 * r2
 
         return (
             (r2 * math.cos(math.pi / 4.0), r2 * math.sin(math.pi / 4.0)),
@@ -512,10 +517,12 @@ def _getModulationTable(
             CodeRate.C9_10: r1 * 2.53,
         }.get(code_rate, 0.0)
 
-        r0 = math.sqrt(8.0 / ((r1 * r1) + 3.0 * (r2 * r2) + 4.0 * (r3 * r3)))
-        r1 *= r0
-        r2 *= r0
-        r3 *= r0
+        # TODO: Include this when changing CI's GNU Radio version to a version
+        # that includes https://github.com/gnuradio/gnuradio/commit/efe3e6c1
+        #  r0 = math.sqrt(8.0 / ((r1 * r1) + 3.0 * (r2 * r2) + 4.0 * (r3 * r3)))
+        #  r1 *= r0
+        #  r2 *= r0
+        #  r3 *= r0
         return (
             (r2 * math.cos(math.pi / 4.0), r2 * math.sin(math.pi / 4.0)),
             (r2 * math.cos(5 * math.pi / 12.0), r2 * math.sin(5 * math.pi / 12.0)),
@@ -585,13 +592,10 @@ def _createModulationTable(config: TestDefinition):
     )
 
     with open(target, "wb") as fd:
-        # Values dumped from GNU Radio are adjusted for some reason. Adjust so
-        # the max value is 1.0 for now
-        max_value = max(1.0, max([max(abs(x[0]), abs(x[1])) for x in table]))
         for cos, sin in table:
-            fd.write(bytes(str(cos / max_value), encoding="utf8"))
+            fd.write(bytes(str(cos), encoding="utf8"))
             fd.write(b"\n")
-            fd.write(bytes(str(sin / max_value), encoding="utf8"))
+            fd.write(bytes(str(sin), encoding="utf8"))
             fd.write(b"\n")
 
 
