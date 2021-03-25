@@ -280,19 +280,17 @@ begin
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  with s_constellation select
-    mux_sel <= "0001" when mod_qpsk,
-               "0010" when mod_8psk,
-               "0100" when mod_16apsk,
-               "1000" when mod_32apsk,
-               (others => 'U') when others;
+  mux_sel(0) <= '1' when s_constellation = mod_qpsk or s_constellation = not_set else '0';
+  mux_sel(1) <= '1' when s_constellation = mod_8psk or s_constellation = not_set else '0';
+  mux_sel(2) <= '1' when s_constellation = mod_16apsk or s_constellation = not_set else '0';
+  mux_sel(3) <= '1' when s_constellation = mod_32apsk or s_constellation = not_set else '0';
 
   -- Addr CONSTELLATION_ROM offsets to the width converter output. Each table starts
   -- immediatelly after the previous
   addr_qpsk   <= "0000" & axi_qpsk.tdata;
-  addr_8psk   <= std_logic_vector("000" & unsigned(axi_8psk.tdata) + 4);          -- 8 PSK starts after QPSK
-  addr_16apsk <= std_logic_vector("00" & unsigned(axi_16apsk.tdata) + 4 + 8);     -- 16 APSK starts after QPSK + 8 PSK
-  addr_32apsk <= std_logic_vector("0" & unsigned(axi_32apsk.tdata) + 4 + 8 + 16); -- 32 APSK starts after QPSK + 8 PSK + 16 APSK
+  addr_8psk   <= std_logic_vector("000" & unsigned(axi_8psk.tdata) + 4);            -- 8 PSK starts after QPSK
+  addr_16apsk <= std_logic_vector( "00" & unsigned(axi_16apsk.tdata) + 4 + 8);      -- 16 APSK starts after QPSK + 8 PSK
+  addr_32apsk <= std_logic_vector(  "0" & unsigned(axi_32apsk.tdata) + 4 + 8 + 16); -- 32 APSK starts after QPSK + 8 PSK + 16 APSK
 
   -- Only one will be active at a time
   map_addr <= (addr_qpsk   and (5 downto 0 => axi_qpsk.tvalid)) or
@@ -326,9 +324,11 @@ begin
       adapter_wr_last <= '0';
       egress_tid_reg  <= egress_tid;
       if not adapter_full then
-        adapter_wr_en   <= axi_qpsk.tvalid or axi_8psk.tvalid or axi_16apsk.tvalid or axi_32apsk.tvalid;
+        adapter_wr_en   <= (axi_qpsk.tvalid or axi_8psk.tvalid or axi_16apsk.tvalid or axi_32apsk.tvalid)
+                       and (axi_qpsk.tready or axi_8psk.tready or axi_16apsk.tready or axi_32apsk.tready);
         adapter_wr_last <= axi_qpsk.tlast or axi_8psk.tlast or axi_16apsk.tlast or axi_32apsk.tlast;
       end if;
+
     end if;
   end process;
 
