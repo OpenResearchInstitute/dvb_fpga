@@ -98,7 +98,6 @@ architecture axi_constellation_mapper_tb of axi_constellation_mapper_tb is
   signal axi_master             : axi_stream_bus_t(tdata(INPUT_DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   -- AXI output
   signal axi_slave              : axi_stream_bus_t(tdata(OUTPUT_DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-  signal receiver_busy          : boolean := False;
 
 begin
 
@@ -156,23 +155,30 @@ begin
       m_tdata         => axi_slave.tdata,
       m_tid           => axi_slave.tuser);
 
-  ref_data_u : entity fpga_cores_sim.axi_file_reader
+  ref_data_u : entity work.axi_file_compare_tolerance
     generic map (
-      READER_NAME => "ref_data_u",
-      DATA_WIDTH  => OUTPUT_DATA_WIDTH)
+      READER_NAME         => "ref_data_u",
+      DATA_WIDTH          => OUTPUT_DATA_WIDTH,
+      TOLERANCE           => 0,
+      SWAP_BYTE_ENDIANESS => True,
+      ERROR_CNT_WIDTH     => 8,
+      REPORT_SEVERITY     => Error)
     port map (
       -- Usual ports
       clk                => clk,
       rst                => rst,
       -- Config and status
-      completed          => open,
-      tvalid_probability => 1.0,
-
-      -- Data output
-      m_tready           => axi_slave.tready and axi_slave.tvalid,
-      m_tdata            => expected_tdata,
-      m_tvalid           => expected_tvalid,
-      m_tlast            => open);
+      tdata_error_cnt    => open,
+      tlast_error_cnt    => open,
+      error_cnt          => open,
+      -- Debug stuff
+      expected_tdata     => expected_tdata,
+      expected_tlast     => open,
+      -- Data input
+      s_tready           => axi_slave.tready,
+      s_tdata            => axi_slave.tdata,
+      s_tvalid           => axi_slave.tvalid,
+      s_tlast            => axi_slave.tlast);
 
   ------------------------------
   -- Asynchronous assignments --
@@ -192,7 +198,6 @@ begin
     constant logger      : logger_t      := get_logger("main");
     variable input_data  : file_reader_t := new_file_reader("input_data_u");
     variable ref_data    : file_reader_t := new_file_reader("ref_data_u");
-    variable prev_config : config_t;
 
     procedure walk(constant steps : natural) is -- {{ ----------------------------------
     begin
@@ -209,13 +214,8 @@ begin
       info(logger, "Waiting for all frames to be read");
       wait_all_read(net, input_data);
       wait_all_read(net, ref_data);
-      if receiver_busy then
-        wait until not receiver_busy for 100 us;
-        assert not receiver_busy
-          report "Timeout waiting for receiver"
-          severity Error;
-      end if;
       info(logger, "All data has now been read");
+      walk(8);
       wait until rising_edge(clk) and axi_slave.tvalid = '0' for 100 us;
       walk(1);
     end procedure wait_for_completion; -- }} -------------------------------------------
@@ -235,14 +235,16 @@ begin
 
     -- Write the exact value so we know data was picked up correctly without having to
     -- convert into IQ
-    procedure update_mapping_ram ( -- {{ -----------------------------------------------
-      constant initial_addr : integer;
-      constant path         : string) is
-      file file_handler     : text;
-      variable L            : line;
-      variable map_i, map_q : real;
-      variable addr         : integer := initial_addr;
-      variable index        : unsigned(5 downto 0) := (others => '0');
+    variable current_mapping_ram : std_logic_array_t(0 to 63)(OUTPUT_DATA_WIDTH - 1 downto 0);
+    procedure update_mapping_ram_if_needed ( -- {{ -----------------------------------------------
+      constant initial_addr        : integer;
+      constant path                : string) is
+      file file_handler            : text;
+      variable L                   : line;
+      variable map_i, map_q        : real;
+      variable addr                : integer := initial_addr;
+      variable index               : unsigned(5 downto 0) := (others => '0');
+      variable updated_mapping_ram : std_logic_array_t(0 to 63)(OUTPUT_DATA_WIDTH - 1 downto 0) := current_mapping_ram;
     begin
       info(logger, sformat("Updating mapping RAM from '%s' (initial address is %d)", fo(path), fo(initial_addr)));
 
@@ -267,18 +269,28 @@ begin
           )
         );
 
-        write_ram(
-          addr,
-          std_logic_vector(to_fixed_point(map_i, OUTPUT_DATA_WIDTH/2)) &
-          std_logic_vector(to_fixed_point(map_q, OUTPUT_DATA_WIDTH/2))
-        );
+        updated_mapping_ram(addr) := std_logic_vector(to_fixed_point(map_i, OUTPUT_DATA_WIDTH/2)) &
+                                     std_logic_vector(to_fixed_point(map_q, OUTPUT_DATA_WIDTH/2));
+
         addr := addr + 1;
         index := index + 1;
       end loop;
       file_close(file_handler);
       if index = 0 then
-        failure("Failed to update RAM from file");
+        failure(logger, "Failed to update RAM from file");
       end if;
+
+      -- Only update if the tables are different
+      if current_mapping_ram /= updated_mapping_ram then
+        wait_for_completion;
+        for i in updated_mapping_ram'range loop
+          -- Only update entries that changed
+          if current_mapping_ram(i) /= updated_mapping_ram(i) then
+            write_ram(i, updated_mapping_ram(i));
+          end if;
+        end loop;
+      end if;
+
     end procedure; -- }} ---------------------------------------------------------------
 
     procedure run_test ( -- {{ ---------------------------------------------------------
@@ -298,18 +310,14 @@ begin
       config_tuple := (code_rate => config.code_rate, constellation => config.constellation, frame_type => config.frame_type);
 
       -- Only update the mapping RAM if the config actually requires that
-      if config /= prev_config then
-        wait_for_completion;
-        case config.constellation is
-          when mod_qpsk => initial_addr := 0;
-          when mod_8psk => initial_addr := 4;
-          when mod_16apsk => initial_addr := 12;
-          when mod_32apsk => initial_addr := 28;
-          when others => null;
-        end case;
-        update_mapping_ram(initial_addr, data_path & "/modulation_table.bin");
-        prev_config := config;
-      end if;
+      case config.constellation is
+        when mod_qpsk => initial_addr := 0;
+        when mod_8psk => initial_addr := 4;
+        when mod_16apsk => initial_addr := 12;
+        when mod_32apsk => initial_addr := 28;
+        when others => null;
+      end case;
+      update_mapping_ram_if_needed(initial_addr, data_path & "/modulation_table.bin");
 
       for i in 0 to number_of_frames - 1 loop
         debug(logger, "Setting up frame #" & to_string(i));
@@ -395,65 +403,6 @@ begin
     test_runner_cleanup(runner);
     wait;
   end process; -- }}
-
-  receiver_p : process -- {{ -----------------------------------------------------------
-    constant logger      : logger_t := get_logger("receiver");
-    variable word_cnt    : natural  := 0;
-    variable frame_cnt   : natural  := 0;
-
-    constant TOLERANCE        : real := 0.05;
-    variable recv_r           : complex;
-    variable expected_r       : complex;
-    variable recv_p           : complex_polar;
-    variable expected_p       : complex_polar;
-    variable expected_lendian : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
-    variable expected_i       : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0);
-    variable expected_q       : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0);
-
-  begin
-    wait until axi_slave.tvalid = '1' and axi_slave.tready = '1' and rising_edge(clk);
-    receiver_busy    <= True;
-    expected_lendian := expected_tdata(23 downto 16) & expected_tdata(31 downto 24) & expected_tdata(7 downto 0) & expected_tdata(15 downto 8);
-
-    recv_r           := to_complex(axi_slave.tdata);
-    expected_r       := to_complex(expected_lendian);
-
-    recv_p           := complex_to_polar(recv_r);
-    expected_p       := complex_to_polar(expected_r);
-
-    if axi_slave.tdata /= expected_lendian then
-      if    (recv_p.mag >= 0.0 xor expected_p.mag >= 0.0)
-         or (recv_p.arg >= 0.0 xor expected_p.arg >= 0.0)
-         or abs(recv_p.mag) < abs(expected_p.mag) * (1.0 - TOLERANCE)
-         or abs(recv_p.mag) > abs(expected_p.mag) * (1.0 + TOLERANCE)
-         or abs(recv_p.arg) < abs(expected_p.arg) * (1.0 - TOLERANCE)
-         or abs(recv_p.arg) > abs(expected_p.arg) * (1.0 + TOLERANCE) then
-        error(
-          logger,
-          sformat(
-            "[%d, %d] Comparison failed. " & lf &
-            "Got      %r rect(%s, %s) / polar(%s, %s)" & lf &
-            "Expected %r rect(%s, %s) / polar(%s, %s)",
-            fo(frame_cnt),
-            fo(word_cnt),
-            fo(axi_slave.tdata),
-            real'image(recv_r.re), real'image(recv_r.im),
-            real'image(recv_p.mag), real'image(recv_p.arg),
-            fo(expected_lendian),
-            real'image(expected_r.re), real'image(expected_r.im),
-            real'image(expected_p.mag), real'image(expected_p.arg)
-          ));
-      end if;
-    end if;
-
-    word_cnt := word_cnt + 1;
-    if axi_slave.tlast = '1' then
-      receiver_busy <= False;
-      info(logger, sformat("Received frame %d with %d words", fo(frame_cnt), fo(word_cnt)));
-      word_cnt  := 0;
-      frame_cnt := frame_cnt + 1;
-    end if;
-  end process; -- }} -------------------------------------------------------------------
 
   axi_slave_tready_gen : process(clk)
     variable tready_rand : RandomPType;
