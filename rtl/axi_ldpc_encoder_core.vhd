@@ -312,8 +312,7 @@ begin
         m_tready => axi_encoded.tready,
         m_tdata  => tdata_out,
         m_tlast  => axi_encoded.tlast);
-
-    end block; -- }} -------------------------------------------------------------------
+  end block; -- }} -------------------------------------------------------------------
 
   -- Convert from FRAME_RAM_DATA_WIDTH to the specified data width
   output_width_conversion_u : entity fpga_cores.axi_stream_width_converter
@@ -329,14 +328,11 @@ begin
       s_tready   => axi_encoded.tready,
       s_tdata    => axi_encoded.tdata,
       s_tkeep    => axi_encoded.tuser,
-      s_tid      => (others => '0'),
       s_tvalid   => axi_encoded.tvalid,
       s_tlast    => axi_encoded.tlast,
       -- AXI stream output
       m_tready   => axi_out.tready,
       m_tdata    => axi_out.tdata,
-      m_tkeep    => open,
-      m_tid      => open,
       m_tvalid   => axi_out.tvalid,
       m_tlast    => axi_out.tlast);
 

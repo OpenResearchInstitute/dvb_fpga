@@ -61,15 +61,30 @@ the transmission side.
 
 The [dvb_fpga/rtl/dvbs2_tx.vhd](https://github.com/phase4ground/dvb_fpga/blob/master/rtl/dvbs2_tx.vhd)
 top level has been run through Vivado targeting a `xczu4cg-sfvc784-1LV-i` and
-with a clock frequency of 333 MHz (both arbitrary). No timing issues were
-reported and the resource usage post implementation is as follows:
+with a clock frequency of 300 MHz (both arbitrary). No timing issues were
+reported and the resource usage post implementation is show below. Table below
+assumes default values for generics, i.e., `POLYPHASE_FILTER_NUMBER_TAPS` =
+`33`, `POLYPHASE_FILTER_RATE_CHANGE` = `2` and `DATA_WIDTH` = `32`.
 
-| Resource | Usage |
-| :---     | :--:  |
-| LUT      | ~4,6k |
-| LUTRAM   | 242   |
-| FF       | ~3k   |
-| BRAM     | 20    |
+| Component                      | LUTs      | FFs       | RAMB   | DSPs   |
+| :---                           | --:       | --:       | --:    | --:    |
+| axi_baseband_scrambler         | 277       | 46        | 0      | 0      |
+| axi_bch_encoder                | 1397      | 1380      | 0      | 0      |
+| axi_ldpc_encoder               | 1017      | 558       | 6      | 0      |
+| axi_bit_interleaver            | 339       | 262       | 10     | 0      |
+| axi_constellation_mapper       | 599       | 253       | 0      | 0      |
+| axi_physical_layer_framer      | 280       | 268       | 0      | 0      |
+| + axi_plframe_header           | 13        | 100       | 0      | 0      |
+| + axi_physical_layer_scrambler | 39        | 70        | 0      | 0      |
+| + dummy_frame_generator        | 48        | 21        | 0      | 0      |
+| polyphase_filter_i/q           | 162       | 2168      | 0      | 64     |
+| Register map                   | 586       | 318       | 0      | 0      |
+| Debug infrastructure           | 374       | 581       | 0      | 0      |
+| Others                         | 1470      | 283       | 4      | 0      |
+| **TOTAL**                      | **~6.5k** | **~6.1k** | **20** | **64** |
+
+For details on what the "Others" row includes, see the [DVB-S2 Tx top level block
+diagram][wiki] in the wiki.
 
 ## Running tests
 
@@ -160,4 +175,4 @@ vivado -source ./build/vivado/build.tcl
 ```
 
 [vunit]: https://vunit.github.io/
-[issue_1]: https://github.com/phase4ground/dvb_fpga/issues/1
+[wiki]: https://github.com/phase4ground/dvb_fpga/wiki#dvb-s2-tx

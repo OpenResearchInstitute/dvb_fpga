@@ -87,7 +87,8 @@ end dvbs2_tx;
 
 architecture dvbs2_tx of dvbs2_tx is
 
-  -- Need a component to make this work in Yosys
+  -- Need a component to make it work w Yosys (polyphase filter is Verilog, the rest is
+  -- VHDL)
   component polyphase_filter is
     generic (
       NUMBER_TAPS          : integer := 32;
@@ -115,6 +116,12 @@ architecture dvbs2_tx of dvbs2_tx is
       coeffs_addr      : in std_logic_vector(numbits(NUMBER_TAPS) - 1 downto 0);
       coeffs_wdata     : in std_logic_vector(COEFFICIENT_WIDTH - 1 downto 0));
     end component;
+
+  ---------------
+  -- Constants --
+  ---------------
+  constant FRAME_COUNT_WIDTH  : integer := 16;
+  constant FRAME_LENGTH_WIDTH : integer := 16;
 
   -----------
   -- Types --
@@ -202,8 +209,8 @@ begin
     generic map (
       TDATA_WIDTH        => 8,
       TID_WIDTH          => ENCODED_CONFIG_WIDTH,
-      FRAME_COUNT_WIDTH  => 16,
-      FRAME_LENGTH_WIDTH => 16)
+      FRAME_COUNT_WIDTH  => FRAME_COUNT_WIDTH,
+      FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
     port map (
       -- Usual ports
       clk                   => clk,
@@ -255,8 +262,8 @@ begin
     generic map (
       TDATA_WIDTH        => 8,
       TID_WIDTH          => ENCODED_CONFIG_WIDTH,
-      FRAME_COUNT_WIDTH  => 16,
-      FRAME_LENGTH_WIDTH => 16)
+      FRAME_COUNT_WIDTH  => FRAME_COUNT_WIDTH,
+      FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
     port map (
       -- Usual ports
       clk                   => clk,
@@ -310,8 +317,8 @@ begin
     generic map (
       TDATA_WIDTH        => 8,
       TID_WIDTH          => ENCODED_CONFIG_WIDTH,
-      FRAME_COUNT_WIDTH  => 16,
-      FRAME_LENGTH_WIDTH => 16)
+      FRAME_COUNT_WIDTH  => FRAME_COUNT_WIDTH,
+      FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
     port map (
       -- Usual ports
       clk                   => clk,
@@ -365,8 +372,8 @@ begin
     generic map (
       TDATA_WIDTH        => 8,
       TID_WIDTH          => ENCODED_CONFIG_WIDTH,
-      FRAME_COUNT_WIDTH  => 16,
-      FRAME_LENGTH_WIDTH => 16)
+      FRAME_COUNT_WIDTH  => FRAME_COUNT_WIDTH,
+      FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
     port map (
       -- Usual ports
       clk                   => clk,
@@ -444,8 +451,8 @@ begin
     generic map (
       TDATA_WIDTH        => 8,
       TID_WIDTH          => ENCODED_CONFIG_WIDTH,
-      FRAME_COUNT_WIDTH  => 16,
-      FRAME_LENGTH_WIDTH => 16)
+      FRAME_COUNT_WIDTH  => FRAME_COUNT_WIDTH,
+      FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
     port map (
       -- Usual ports
       clk                   => clk,
@@ -565,8 +572,8 @@ begin
       -- Mapping RAM config
       ram_wren        => or(regs2user.bit_mapper_ram_wen),
       ram_addr        => regs2user.bit_mapper_ram_addr(5 downto 0), -- register map addresses bytes
-      ram_wdata       => regs2user.bit_mapper_ram_wdata,
-      ram_rdata       => user2regs.bit_mapper_ram_rdata,
+      ram_wdata       => regs2user.bit_mapper_ram_wdata(DATA_WIDTH - 1 downto 0),
+      ram_rdata       => user2regs.bit_mapper_ram_rdata(DATA_WIDTH - 1 downto 0),
       -- Per frame config input
       -- AXI input
       s_constellation => decode(arbiter_out.tid).constellation,
@@ -613,8 +620,8 @@ begin
     generic map (
       TDATA_WIDTH        => DATA_WIDTH,
       TID_WIDTH          => ENCODED_CONFIG_WIDTH,
-      FRAME_COUNT_WIDTH  => 16,
-      FRAME_LENGTH_WIDTH => 16)
+      FRAME_COUNT_WIDTH  => FRAME_COUNT_WIDTH,
+      FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
     port map (
       -- Usual ports
       clk                   => clk,
@@ -701,8 +708,8 @@ begin
     generic map (
       TDATA_WIDTH        => DATA_WIDTH,
       TID_WIDTH          => ENCODED_CONFIG_WIDTH,
-      FRAME_COUNT_WIDTH  => 16,
-      FRAME_LENGTH_WIDTH => 16)
+      FRAME_COUNT_WIDTH  => FRAME_COUNT_WIDTH,
+      FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
     port map (
       -- Usual ports
       clk                   => clk,
