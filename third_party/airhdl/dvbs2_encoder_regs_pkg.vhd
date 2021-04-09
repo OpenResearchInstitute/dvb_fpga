@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
--- 'dvbs2_tx_wrapper_regmap' Register Definitions
--- Revision: 141
+-- 'dvbs2_encoder' Register Definitions
+-- Revision: 144
 -- -----------------------------------------------------------------------------
--- Generated on 2021-03-21 at 23:12 (UTC) by airhdl version 2021.03.1
+-- Generated on 2021-04-09 at 07:38 (UTC) by airhdl version 2021.03.1
 -- -----------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -21,7 +21,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-package dvbs2_tx_wrapper_regmap_regs_pkg is
+package dvbs2_encoder_regs_pkg is
 
     -- Type definitions
     type slv1_array_t is array(natural range <>) of std_logic_vector(0 downto 0);
@@ -64,6 +64,7 @@ package dvbs2_tx_wrapper_regmap_regs_pkg is
         ldpc_fifo_status_ldpc_fifo_full : std_logic_vector(0 downto 0); -- value of register 'ldpc_fifo_status', field 'ldpc_fifo_full'
         frames_in_transit_value : std_logic_vector(7 downto 0); -- value of register 'frames_in_transit', field 'value'
         bit_mapper_ram_rdata : std_logic_vector(31 downto 0); -- read data for memory 'bit_mapper_ram'
+        polyphase_filter_coefficients_rdata : std_logic_vector(31 downto 0); -- read data for memory 'polyphase_filter_coefficients'
         axi_debug_input_width_converter_frame_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_input_width_converter_frame_count', field 'value'
         axi_debug_input_width_converter_last_frame_length_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_input_width_converter_last_frame_length', field 'value'
         axi_debug_input_width_converter_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_input_width_converter_min_max_frame_length', field 'min_frame_length'
@@ -165,11 +166,11 @@ package dvbs2_tx_wrapper_regmap_regs_pkg is
         axi_debug_output_min_max_frame_length_strobe : std_logic; -- Strobe signal for register 'axi_debug_output_min_max_frame_length' (pulsed when the register is read from the bus}
     end record;
 
-    -- Revision number of the 'dvbs2_tx_wrapper_regmap' register map
-    constant DVBS2_TX_WRAPPER_REGMAP_REVISION : natural := 141;
+    -- Revision number of the 'dvbs2_encoder' register map
+    constant DVBS2_ENCODER_REVISION : natural := 144;
 
-    -- Default base address of the 'dvbs2_tx_wrapper_regmap' register map 
-    constant DVBS2_TX_WRAPPER_REGMAP_DEFAULT_BASEADDR : unsigned(31 downto 0) := unsigned'(x"00000000");
+    -- Default base address of the 'dvbs2_encoder' register map 
+    constant DVBS2_ENCODER_DEFAULT_BASEADDR : unsigned(31 downto 0) := unsigned'(x"00000000");
     
     -- Register 'config'
     constant CONFIG_OFFSET : unsigned(31 downto 0) := unsigned'(x"00000000"); -- address offset of the 'config' register
@@ -530,4 +531,4 @@ package dvbs2_tx_wrapper_regmap_regs_pkg is
     constant AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_WIDTH : natural := 16; -- bit width of the 'max_frame_length' field
     constant AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET : std_logic_vector(31 downto 16) := std_logic_vector'("0000000000000000"); -- reset value of the 'max_frame_length' field
 
-end dvbs2_tx_wrapper_regmap_regs_pkg;
+end dvbs2_encoder_regs_pkg;

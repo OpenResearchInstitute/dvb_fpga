@@ -169,14 +169,14 @@ TEST_CONFIGS = set(_getConfigs())
 
 def _runGnuRadio(config):
     """
-    Runs gnuradio_data/dvbs2_tx.py script via shell. Reason for not importing
-    and running locally is to allow GNI Radio's Python environment to be
-    independent of VUnit's Python env.
+    Runs gnuradio_data/dvbs2_encoder_flow_diagram.py script via shell. Reason
+    for not importing and running locally is to allow GNI Radio's Python
+    environment to be independent of VUnit's Python env.
     """
     print("Generating data for %s" % config.name)
 
     command = [
-        p.join(ROOT, "gnuradio_data", "dvbs2_tx.py"),
+        p.join(ROOT, "gnuradio_data", "dvbs2_encoder_flow_diagram.py"),
         "--frame-type",
         config.frame_type.name,
         "--constellation",
@@ -668,7 +668,7 @@ def setupSources(vunit):
         library.add_source_files(p.join(ROOT, "third_party", "polyphase_filter", "*.v"))
     else:
         library.add_source_files(
-            [x for x in testbench_files if p.basename(x) != "dvbs2_tx_tb.vhd"]
+            [x for x in testbench_files if p.basename(x) != "dvbs2_encoder_tb.vhd"]
         )
 
     vunit.add_library("str_format").add_source_files(
@@ -744,7 +744,7 @@ def setupTests(vunit, args):
         # --individual-config-runs is passed, all configs are added
         if vunit.get_simulator_name() != "ghdl":
             addAllConfigsTest(
-                entity=vunit.library("lib").entity("dvbs2_tx_tb"),
+                entity=vunit.library("lib").entity("dvbs2_encoder_tb"),
                 configs=PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS,
             )
 
@@ -770,7 +770,7 @@ def setupTests(vunit, args):
             )
         if vunit.get_simulator_name() != "ghdl":
             for config in PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS:
-                vunit.library("lib").entity("dvbs2_tx_tb").add_config(
+                vunit.library("lib").entity("dvbs2_encoder_tb").add_config(
                     name=config.name,
                     generics=dict(
                         test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=2,

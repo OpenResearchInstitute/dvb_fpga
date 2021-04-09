@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
-// 'dvbs2_tx_wrapper_regmap' Register Definitions
-// Revision: 141
+// 'dvbs2_encoder' Register Definitions
+// Revision: 144
 // -----------------------------------------------------------------------------
-// Generated on 2021-03-21 at 23:12 (UTC) by airhdl version 2021.03.1
+// Generated on 2021-04-09 at 07:38 (UTC) by airhdl version 2021.03.1
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -17,7 +17,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 // -----------------------------------------------------------------------------
 
-package dvbs2_tx_wrapper_regmap_regs_pkg;
+package dvbs2_encoder_regs_pkg;
 
     // User-logic ports (from user-logic to register file)
     typedef struct {
@@ -26,6 +26,7 @@ package dvbs2_tx_wrapper_regmap_regs_pkg;
         logic [0:0] ldpc_fifo_status_ldpc_fifo_full; // Value of register 'ldpc_fifo_status', field 'ldpc_fifo_full'
         logic [7:0] frames_in_transit_value; // Value of register 'frames_in_transit', field 'value'
         logic [31:0] bit_mapper_ram_rdata; // read data for memory 'bit_mapper_ram'
+        logic [31:0] polyphase_filter_coefficients_rdata; // read data for memory 'polyphase_filter_coefficients'
         logic [15:0] axi_debug_input_width_converter_frame_count_value; // Value of register 'axi_debug_input_width_converter_frame_count', field 'value'
         logic [15:0] axi_debug_input_width_converter_last_frame_length_value; // Value of register 'axi_debug_input_width_converter_last_frame_length', field 'value'
         logic [15:0] axi_debug_input_width_converter_min_max_frame_length_min_frame_length; // Value of register 'axi_debug_input_width_converter_min_max_frame_length', field 'min_frame_length'
@@ -127,11 +128,11 @@ package dvbs2_tx_wrapper_regmap_regs_pkg;
         logic axi_debug_output_min_max_frame_length_strobe; // Strobe logic for register 'axi_debug_output_min_max_frame_length' (pulsed when the register is read from the bus)
     } regs2user_t;
 
-    // Revision number of the 'dvbs2_tx_wrapper_regmap' register map
-    localparam DVBS2_TX_WRAPPER_REGMAP_REVISION = 141;
+    // Revision number of the 'dvbs2_encoder' register map
+    localparam DVBS2_ENCODER_REVISION = 144;
 
-    // Default base address of the 'dvbs2_tx_wrapper_regmap' register map 
-    localparam logic [31:0] DVBS2_TX_WRAPPER_REGMAP_DEFAULT_BASEADDR = 32'h00000000;
+    // Default base address of the 'dvbs2_encoder' register map 
+    localparam logic [31:0] DVBS2_ENCODER_DEFAULT_BASEADDR = 32'h00000000;
     
     // Register 'config'
     localparam logic [31:0] CONFIG_OFFSET = 32'h00000000; // address offset of the 'config' register
@@ -492,4 +493,4 @@ package dvbs2_tx_wrapper_regmap_regs_pkg;
     localparam AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_WIDTH = 16; // bit width of the 'max_frame_length' field
     localparam logic [31:16] AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET = 16'b0000000000000000; // reset value of the 'max_frame_length' field
 
-endpackage: dvbs2_tx_wrapper_regmap_regs_pkg
+endpackage: dvbs2_encoder_regs_pkg

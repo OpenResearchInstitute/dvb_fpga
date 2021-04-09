@@ -127,7 +127,7 @@ class UnknownFrameLength(Exception):
         )
 
 
-class dvbs2_tx(gr.top_block):
+class dvbs2_encoder(gr.top_block):
     def __init__(self, constellation, frame_type, code_rate):
         gr.top_block.__init__(self, "Dvbs2 Tx")
 
@@ -535,10 +535,10 @@ def argument_parser():
 def writeCoefficientsToFile(data):
     with open("polyphase_coefficients.bin", "w") as fd:
         for coeff in data:
-            fd.write(str(coeff/2) + "\n")
+            fd.write(str(coeff / 2) + "\n")
 
 
-def main(top_block_cls=dvbs2_tx, options=None):
+def main(top_block_cls=dvbs2_encoder, options=None):
     args = argument_parser()
 
     #  def __init__(self, constellation, frame_type, code_rate):

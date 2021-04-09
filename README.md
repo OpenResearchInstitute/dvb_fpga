@@ -59,7 +59,7 @@ the transmission side.
 
 ### Performance and resource usage (WIP)
 
-The [dvb_fpga/rtl/dvbs2_tx.vhd](https://github.com/phase4ground/dvb_fpga/blob/master/rtl/dvbs2_tx.vhd)
+The [dvb_fpga/rtl/dvbs2_encoder.vhd](https://github.com/phase4ground/dvb_fpga/blob/master/rtl/dvbs2_encoder.vhd)
 top level has been run through Vivado targeting a `xczu4cg-sfvc784-1LV-i` and
 with a clock frequency of 300 MHz (both arbitrary). No timing issues were
 reported and the resource usage post implementation is show below. Table below
@@ -142,7 +142,7 @@ lib.axi_bch_encoder_tb.test_all_configs.back_to_back
 lib.axi_bch_encoder_tb.test_all_configs.slow_master
 lib.axi_bch_encoder_tb.test_all_configs.slow_slave
 lib.axi_bch_encoder_tb.test_all_configs.both_slow
-lib.dvbs2_tx_tb.test_all_configs.back_to_back
+lib.dvbs2_encoder_tb.test_all_configs.back_to_back
 lib.axi_ldpc_encoder_core_tb.test_all_configs.back_to_back
 lib.axi_ldpc_encoder_core_tb.test_all_configs.data=0.5,table=1.0,slave=1.0
 lib.axi_ldpc_encoder_core_tb.test_all_configs.data=1.0,table=1.0,slave=0.5

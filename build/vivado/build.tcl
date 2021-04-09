@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with DVB FPGA.  If not, see <http://www.gnu.org/licenses/>.
 
-create_project dvbs2_tx build/vivado/dvbs2_tx -part xczu4cg-sfvc784-1LV-i -force
+create_project dvbs2_encoder build/vivado/dvbs2_encoder -part xczu4cg-sfvc784-1LV-i -force
 
 set_property library str_format [ add_files [ glob third_party/hdl_string_format/src/str_format_pkg.vhd ] ]
 set_property library fpga_cores [ add_files [ glob third_party/fpga_cores/src/*.vhd ] ]
@@ -46,7 +46,7 @@ set_msg_config -id "Synth 8-507" -new_severity WARNING
 # additional output register may help in improving timing.
 # set_msg_config -id "Synth 8-7053" -new_severity ERROR
 
-set_property TOP dvbs2_tx [ current_fileset ]
+set_property TOP dvbs2_encoder [ current_fileset ]
 set_property STEPS.SYNTH_DESIGN.ARGS.ASSERT true [ get_runs synth_1 ]
 set_property -name {STEPS.SYNTH_DESIGN.ARGS.MORE OPTIONS} -value {-mode out_of_context} -object [get_runs synth_1]
 

@@ -29,12 +29,12 @@ library fpga_cores;
 use fpga_cores.common_pkg.all;
 
 use work.dvb_utils_pkg.all;
-use work.dvbs2_tx_wrapper_regmap_regs_pkg.all;
+use work.dvbs2_encoder_regs_pkg.all;
 
 ------------------------
 -- Entity declaration --
 ------------------------
-entity dvbs2_tx is
+entity dvbs2_encoder is
   generic (
     POLYPHASE_FILTER_NUMBER_TAPS : positive := 33;
     POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
@@ -83,9 +83,9 @@ entity dvbs2_tx is
     m_tvalid        : out std_logic;
     m_tlast         : out std_logic;
     m_tdata         : out std_logic_vector(DATA_WIDTH - 1 downto 0));
-end dvbs2_tx;
+end dvbs2_encoder;
 
-architecture dvbs2_tx of dvbs2_tx is
+architecture dvbs2_encoder of dvbs2_encoder is
 
   -- Need a component to make it work w Yosys (polyphase filter is Verilog, the rest is
   -- VHDL)
@@ -737,7 +737,7 @@ begin
       m_tid                 => open);
 
   -- Register map decoder
-  regmap_u : entity work.dvbs2_tx_wrapper_regmap_regs
+  regmap_u : entity work.dvbs2_encoder_regs
     generic map (
       AXI_ADDR_WIDTH => 32,
       BASEADDR       => (others => '0'))
@@ -819,4 +819,4 @@ begin
     end process;
   end block;
 
-end dvbs2_tx;
+end dvbs2_encoder;

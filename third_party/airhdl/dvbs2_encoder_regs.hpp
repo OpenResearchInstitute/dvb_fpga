@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
-// 'dvbs2_tx_wrapper_regmap' Register Definitions
-// Revision: 141
+// 'dvbs2_encoder' Register Definitions
+// Revision: 144
 // -----------------------------------------------------------------------------
-// Generated on 2021-03-21 at 23:12 (UTC) by airhdl version 2021.03.1
+// Generated on 2021-04-09 at 07:38 (UTC) by airhdl version 2021.03.1
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -17,20 +17,20 @@
 // POSSIBILITY OF SUCH DAMAGE.
 // -----------------------------------------------------------------------------
 
-#ifndef DVBS2_TX_WRAPPER_REGMAP_REGS_H
-#define DVBS2_TX_WRAPPER_REGMAP_REGS_H
+#ifndef DVBS2_ENCODER_REGS_H
+#define DVBS2_ENCODER_REGS_H
 
 #include <string>
 #include <cstdint>
 
-namespace dvbs2_tx_wrapper_regmap_regs {
+namespace dvbs2_encoder_regs {
 
-    static const std::string name = "dvbs2_tx_wrapper_regmap";
+    static const std::string name = "dvbs2_encoder";
 
-    /* Revision number of the 'dvbs2_tx_wrapper_regmap' register map */
-    static const std::uint32_t REVISION = 141;
+    /* Revision number of the 'dvbs2_encoder' register map */
+    static const std::uint32_t REVISION = 144;
 
-    /* Default base address of the 'dvbs2_tx_wrapper_regmap' register map */
+    /* Default base address of the 'dvbs2_encoder' register map */
     static const std::uint32_t BASE_ADDRESS = 0x00000000;
 
     /* Register 'config' */
@@ -520,4 +520,4 @@ namespace dvbs2_tx_wrapper_regmap_regs {
 
 }
 
-#endif  /* DVBS2_TX_WRAPPER_REGMAP_REGS_H */
+#endif  /* DVBS2_ENCODER_REGS_H */

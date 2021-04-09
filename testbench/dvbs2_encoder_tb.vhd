@@ -48,21 +48,21 @@ context fpga_cores_sim.sim_context;
 
 use work.dvb_utils_pkg.all;
 use work.dvb_sim_utils_pkg.all;
-use work.dvbs2_tx_wrapper_regmap_regs_pkg.all;
+use work.dvbs2_encoder_regs_pkg.all;
 
 -- ghdl translate_off
 library modelsim_lib;
 use modelsim_lib.util.all;
 -- ghdl translate_on
 
-entity dvbs2_tx_tb is
+entity dvbs2_encoder_tb is
   generic (
     RUNNER_CFG            : string;
     TEST_CFG              : string := "";
     NUMBER_OF_TEST_FRAMES : integer := 1);
-end dvbs2_tx_tb;
+end dvbs2_encoder_tb;
 
-architecture dvbs2_tx_tb of dvbs2_tx_tb is
+architecture dvbs2_encoder_tb of dvbs2_encoder_tb is
 
   ---------------
   -- Constants --
@@ -177,7 +177,7 @@ begin
       m_tvalid           => axi_master.tvalid,
       m_tlast            => axi_master.tlast);
 
-  dut : entity work.dvbs2_tx
+  dut : entity work.dvbs2_encoder
     generic map (
       DATA_WIDTH                   => DATA_WIDTH,
       POLYPHASE_FILTER_NUMBER_TAPS => POLYPHASE_FILTER_NUMBER_TAPS,
@@ -253,7 +253,7 @@ begin
 
   -- DUT AXI tready is always set to high in this sim
   axi_slave.tready <= '1';
-  -- GNU Radio's tlast will come in before, we'll ignore data after that until dvbs2_tx's
+  -- GNU Radio's tlast will come in before, we'll ignore data after that until dvbs2_encoder's
   -- tlast
   axi_slave_tvalid <= axi_slave.tvalid and not is_trailing_data;
   process(clk)
@@ -427,10 +427,10 @@ begin
         init_signal_spy(source & ".tready", dest & ".tready",  0);
       end procedure;
     begin
-      mirror_signal("/dvbs2_tx_tb/dut/bb_scrambler", "/dvbs2_tx_tb/signal_spy_block/bb_scrambler");
-      mirror_signal("/dvbs2_tx_tb/dut/bch_encoder", "/dvbs2_tx_tb/signal_spy_block/bch_encoder");
-      mirror_signal("/dvbs2_tx_tb/dut/ldpc_encoder", "/dvbs2_tx_tb/signal_spy_block/ldpc_encoder");
-      mirror_signal("/dvbs2_tx_tb/dut/pl_frame", "/dvbs2_tx_tb/signal_spy_block/pl_frame");
+      mirror_signal("/dvbs2_encoder_tb/dut/bb_scrambler", "/dvbs2_encoder_tb/signal_spy_block/bb_scrambler");
+      mirror_signal("/dvbs2_encoder_tb/dut/bch_encoder", "/dvbs2_encoder_tb/signal_spy_block/bch_encoder");
+      mirror_signal("/dvbs2_encoder_tb/dut/ldpc_encoder", "/dvbs2_encoder_tb/signal_spy_block/ldpc_encoder");
+      mirror_signal("/dvbs2_encoder_tb/dut/pl_frame", "/dvbs2_encoder_tb/signal_spy_block/pl_frame");
       wait;
     end process;
   end block signal_spy_block; -- }} ----------------------------------------------------
@@ -712,4 +712,4 @@ begin
     wait;
   end process; -- }} -------------------------------------------------------------------
 
-end dvbs2_tx_tb;
+end dvbs2_encoder_tb;
