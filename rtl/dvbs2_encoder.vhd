@@ -38,7 +38,7 @@ entity dvbs2_encoder is
   generic (
     POLYPHASE_FILTER_NUMBER_TAPS : positive := 33;
     POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
-    DATA_WIDTH                   : positive := 32
+    DATA_WIDTH                   : positive := 8
   );
   port (
     -- Usual ports
