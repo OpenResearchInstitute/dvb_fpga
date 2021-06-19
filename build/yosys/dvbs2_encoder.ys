@@ -1,3 +1,22 @@
+#
+# DVB IP
+#
+# Copyright 2019 by Andre Souto (suoto)
+#
+# This source describes Open Hardware and is licensed under the CERN-OHL-W v2.
+#
+# You may redistribute and modify this source and make products using it under
+# the terms of the CERN-OHL-W v2 (https://ohwr.org/cern_ohl_w_v2.txt).
+#
+# This source is distributed WITHOUT ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING
+# OF MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A PARTICULAR PURPOSE.
+# Please see the CERN-OHL-W v2 for applicable conditions.
+#
+# Source location: https://github.com/phase4ground/dvb_fpga
+#
+# As per CERN-OHL-W v2 section 4.1, should You produce hardware based on this
+# source, You must maintain the Source Location visible on the external case of
+# the DVB Encoder or other products you make using this source.
 read_verilog third_party/polyphase_filter/*.v
 
 ghdl --std=08                                                                  \
@@ -26,6 +45,19 @@ ghdl --std=08                                                                  \
                     third_party/fpga_cores/src/axi_stream_arbiter.vhd          \
   --work=work       third_party/airhdl/dvbs2_encoder_regs_pkg.vhd              \
                     third_party/airhdl/dvbs2_encoder_regs.vhd                  \
+                    third_party/bch_generated/bch_128x64.vhd                   \
+                    third_party/bch_generated/bch_192x64.vhd                   \
+                    third_party/bch_generated/bch_128x32.vhd                   \
+                    third_party/bch_generated/bch_160x16.vhd                   \
+                    third_party/bch_generated/bch_128x16.vhd                   \
+                    third_party/bch_generated/bch_168x8.vhd                    \
+                    third_party/bch_generated/bch_192x32.vhd                   \
+                    third_party/bch_generated/bch_192x8.vhd                    \
+                    third_party/bch_generated/bch_128x8.vhd                    \
+                    third_party/bch_generated/bch_160x32.vhd                   \
+                    third_party/bch_generated/bch_160x64.vhd                   \
+                    third_party/bch_generated/bch_192x16.vhd                   \
+                    third_party/bch_generated/bch_160x8.vhd                    \
                     rtl/axi_baseband_scrambler.vhd                             \
                     rtl/axi_bit_interleaver.vhd                                \
                     rtl/axi_constellation_mapper.vhd                           \
@@ -42,19 +74,6 @@ ghdl --std=08                                                                  \
                     rtl/ldpc/ldpc_pkg.vhd                                      \
                     rtl/ldpc/ldpc_tables_pkg.vhd                               \
                     rtl/dvbs2_encoder.vhd                                      \
-                    rtl/bch_generated/bch_128x64.vhd                           \
-                    rtl/bch_generated/bch_192x64.vhd                           \
-                    rtl/bch_generated/bch_128x32.vhd                           \
-                    rtl/bch_generated/bch_160x16.vhd                           \
-                    rtl/bch_generated/bch_128x16.vhd                           \
-                    rtl/bch_generated/bch_168x8.vhd                            \
-                    rtl/bch_generated/bch_192x32.vhd                           \
-                    rtl/bch_generated/bch_192x8.vhd                            \
-                    rtl/bch_generated/bch_128x8.vhd                            \
-                    rtl/bch_generated/bch_160x32.vhd                           \
-                    rtl/bch_generated/bch_160x64.vhd                           \
-                    rtl/bch_generated/bch_192x16.vhd                           \
-                    rtl/bch_generated/bch_160x8.vhd                            \
                     rtl/axi_bch_encoder.vhd                                    \
   -e dvbs2_encoder
 
