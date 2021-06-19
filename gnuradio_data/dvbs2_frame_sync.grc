@@ -46,7 +46,7 @@
     </param>
     <param>
       <key>id</key>
-      <value>dvbs2_tx</value>
+      <value>dvbs2_encoder</value>
     </param>
     <param>
       <key>max_nouts</key>

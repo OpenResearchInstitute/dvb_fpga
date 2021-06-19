@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
--- 'dvbs2_tx_wrapper_regmap' Register Component
--- Revision: 141
+-- 'dvbs2_encoder' Register Component
+-- Revision: 144
 -- -----------------------------------------------------------------------------
--- Generated on 2021-03-21 at 23:12 (UTC) by airhdl version 2021.03.1
+-- Generated on 2021-04-09 at 07:38 (UTC) by airhdl version 2021.03.1
 -- -----------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -18,7 +18,7 @@
 -- -----------------------------------------------------------------------------
 
 ------------- Begin Cut here for COMPONENT Declaration -------------------------
-component dvbs2_tx_wrapper_regmap_regs
+component dvbs2_encoder_regs
     generic(
         AXI_ADDR_WIDTH : integer := 32;  -- width of the AXI address bus
         BASEADDR : std_logic_vector(31 downto 0) := x"00000000" -- the register file's system base address
@@ -92,7 +92,7 @@ signal regs2user     : regs2user_t;
 ------------- End CONSTANT and SIGNAL Declarations -----------------------------
 
 ------------- Begin Cut here for INSTANTIATION Template ------------------------
-your_instance_name : dvbs2_tx_wrapper_regmap_regs
+your_instance_name : dvbs2_encoder_regs
     generic map (
         AXI_ADDR_WIDTH => AXI_ADDR_WIDTH,
         BASEADDR => BASEADDR

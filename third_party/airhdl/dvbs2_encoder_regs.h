@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
-// 'dvbs2_tx_wrapper_regmap' Register Definitions
-// Revision: 141
+// 'dvbs2_encoder' Register Definitions
+// Revision: 144
 // -----------------------------------------------------------------------------
-// Generated on 2021-03-21 at 23:12 (UTC) by airhdl version 2021.03.1
+// Generated on 2021-04-09 at 07:38 (UTC) by airhdl version 2021.03.1
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -17,14 +17,14 @@
 // POSSIBILITY OF SUCH DAMAGE.
 // -----------------------------------------------------------------------------
 
-#ifndef DVBS2_TX_WRAPPER_REGMAP_REGS_H
-#define DVBS2_TX_WRAPPER_REGMAP_REGS_H
+#ifndef DVBS2_ENCODER_REGS_H
+#define DVBS2_ENCODER_REGS_H
 
-/* Revision number of the 'dvbs2_tx_wrapper_regmap' register map */
-#define DVBS2_TX_WRAPPER_REGMAP_REVISION 141
+/* Revision number of the 'dvbs2_encoder' register map */
+#define DVBS2_ENCODER_REVISION 144
 
-/* Default base address of the 'dvbs2_tx_wrapper_regmap' register map */
-#define DVBS2_TX_WRAPPER_REGMAP_DEFAULT_BASEADDR 0x00000000
+/* Default base address of the 'dvbs2_encoder' register map */
+#define DVBS2_ENCODER_DEFAULT_BASEADDR 0x00000000
 
 /* Register 'config' */
 #define CONFIG_OFFSET 0x00000000 /* address offset of the 'config' register */
@@ -511,4 +511,4 @@
 #define AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_MASK 0xFFFF0000 /* bit mask of the 'max_frame_length' field */
 #define AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET 0x0 /* reset value of the 'max_frame_length' field */
 
-#endif  /* DVBS2_TX_WRAPPER_REGMAP_REGS_H */
+#endif  /* DVBS2_ENCODER_REGS_H */

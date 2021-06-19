@@ -2,23 +2,22 @@
 #
 # DVB FPGA
 #
-# Copyright 2019 by Suoto <andre820@gmail.com>
+# Copyright 2019 by suoto <andre820@gmail.com>
 #
-# This file is part of DVB FPGA.
+# This source describes Open Hardware and is licensed under the CERN-OHL-W v2.
 #
-# DVB FPGA is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# You may redistribute and modify this source and make products using it under
+# the terms of the CERN-OHL-W v2 (https://ohwr.org/cern_ohl_w_v2.txt).
 #
-# DVB FPGA is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This source is distributed WITHOUT ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING
+# OF MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A PARTICULAR PURPOSE.
+# Please see the CERN-OHL-W v2 for applicable conditions.
 #
-# You should have received a copy of the GNU General Public License
-# along with DVB FPGA.  If not, see <http://www.gnu.org/licenses/>.
-
+# Source location: https://github.com/phase4ground/dvb_fpga
+#
+# As per CERN-OHL-W v2 section 4.1, should You produce hardware based on this
+# source, You must maintain the Source Location visible on the external case of
+# the DVB Encoder or other products you make using this source.
 set -e
 
 PATH_TO_REPO=$(git rev-parse --show-toplevel)
@@ -40,10 +39,10 @@ adduser --disabled-password \
   --home /home/$USER $USER > /dev/null 2>&1
 
 # Run test with GHDL
-su -l $USER -c \"                                            \
-  cd /project                                             && \
-  echo \\\"$ yosys -m ghdl build/yosys/dvbs2_tx.ys $*\\\" &&
-  yosys -m ghdl build/yosys/dvbs2_tx.ys $*\"
+su -l $USER -c \"                                                 \
+  cd /project                                                  && \
+  echo \\\"$ yosys -m ghdl build/yosys/dvbs2_encoder.ys $*\\\" && \
+  yosys -m ghdl build/yosys/dvbs2_encoder.ys $*\"
 "
 
 # Need to add some variables so that uploading coverage from witihin the

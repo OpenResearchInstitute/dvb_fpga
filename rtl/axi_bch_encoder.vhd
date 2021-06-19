@@ -1,23 +1,22 @@
 --
--- DVB IP
+-- DVB FPGA
 --
 -- Copyright 2019 by Suoto <andre820@gmail.com>
 --
--- This file is part of DVB IP.
+-- This source describes Open Hardware and is licensed under the CERN-OHL-W v2.
 --
--- DVB IP is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
+-- You may redistribute and modify this source and make products using it under
+-- the terms of the CERN-OHL-W v2 (https://ohwr.org/cern_ohl_w_v2.txt).
 --
--- DVB IP is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
+-- This source is distributed WITHOUT ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING
+-- OF MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A PARTICULAR PURPOSE.
+-- Please see the CERN-OHL-W v2 for applicable conditions.
 --
--- You should have received a copy of the GNU General Public License
--- along with DVB IP.  If not, see <http://www.gnu.org/licenses/>.
-
+-- Source location: https://github.com/phase4ground/dvb_fpga
+--
+-- As per CERN-OHL-W v2 section 4.1, should You produce hardware based on this
+-- source, You must maintain the Source Location visible on the external case of
+-- the DVB Encoder or other products you make using this source.
 ---------------
 -- Libraries --
 ---------------

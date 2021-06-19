@@ -1,7 +1,7 @@
 {
   "jsonVersion": 2,
   "registerMap": {
-    "name": "dvbs2_tx_wrapper_regmap",
+    "name": "dvbs2_encoder",
     "description": "",
     "width": 32,
     "baseAddress": 0,
@@ -117,7 +117,7 @@
         "readLatency": 1,
         "name": "polyphase_filter_coefficients",
         "description": "Depth needs to match polyphase_filter\u0027s NUMBER_TAPS",
-        "access": "WRITE_ONLY",
+        "access": "READ_WRITE",
         "addressOffset": 972,
         "size": 32,
         "fields": [
@@ -917,7 +917,7 @@
         ]
       }
     ],
-    "revision": 141,
+    "revision": 144,
     "generateRecordPorts": true
   }
 }

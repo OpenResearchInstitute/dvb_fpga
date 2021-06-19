@@ -1,23 +1,22 @@
 --
--- DVB IP
+-- DVB FPGA
 --
--- Copyright 2019 by Andre Souto (suoto)
+-- Copyright 2019 by suoto <andre820@gmail.com>
 --
--- This file is part of DVB IP.
+-- This source describes Open Hardware and is licensed under the CERN-OHL-W v2.
 --
--- DVB IP is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
+-- You may redistribute and modify this source and make products using it under
+-- the terms of the CERN-OHL-W v2 (https://ohwr.org/cern_ohl_w_v2.txt).
 --
--- DVB IP is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
+-- This source is distributed WITHOUT ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING
+-- OF MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A PARTICULAR PURPOSE.
+-- Please see the CERN-OHL-W v2 for applicable conditions.
 --
--- You should have received a copy of the GNU General Public License
--- along with DVB IP.  If not, see <http://www.gnu.org/licenses/>.
-
+-- Source location: https://github.com/phase4ground/dvb_fpga
+--
+-- As per CERN-OHL-W v2 section 4.1, should You produce hardware based on this
+-- source, You must maintain the Source Location visible on the external case of
+-- the DVB Encoder or other products you make using this source.
 ---------------
 -- Libraries --
 ---------------
@@ -29,16 +28,16 @@ library fpga_cores;
 use fpga_cores.common_pkg.all;
 
 use work.dvb_utils_pkg.all;
-use work.dvbs2_tx_wrapper_regmap_regs_pkg.all;
+use work.dvbs2_encoder_regs_pkg.all;
 
 ------------------------
 -- Entity declaration --
 ------------------------
-entity dvbs2_tx is
+entity dvbs2_encoder is
   generic (
     POLYPHASE_FILTER_NUMBER_TAPS : positive := 33;
     POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
-    DATA_WIDTH                   : positive := 32
+    DATA_WIDTH                   : positive := 8
   );
   port (
     -- Usual ports
@@ -83,9 +82,9 @@ entity dvbs2_tx is
     m_tvalid        : out std_logic;
     m_tlast         : out std_logic;
     m_tdata         : out std_logic_vector(DATA_WIDTH - 1 downto 0));
-end dvbs2_tx;
+end dvbs2_encoder;
 
-architecture dvbs2_tx of dvbs2_tx is
+architecture dvbs2_encoder of dvbs2_encoder is
 
   -- Need a component to make it work w Yosys (polyphase filter is Verilog, the rest is
   -- VHDL)
@@ -737,7 +736,7 @@ begin
       m_tid                 => open);
 
   -- Register map decoder
-  regmap_u : entity work.dvbs2_tx_wrapper_regmap_regs
+  regmap_u : entity work.dvbs2_encoder_regs
     generic map (
       AXI_ADDR_WIDTH => 32,
       BASEADDR       => (others => '0'))
@@ -819,4 +818,4 @@ begin
     end process;
   end block;
 
-end dvbs2_tx;
+end dvbs2_encoder;

@@ -2,23 +2,22 @@
 #
 # DVB FPGA
 #
-# Copyright 2019 by Suoto <andre820@gmail.com>
+# Copyright 2019 by suoto <andre820@gmail.com>
 #
-# This file is part of DVB FPGA.
+# This source describes Open Hardware and is licensed under the CERN-OHL-W v2.
 #
-# DVB FPGA is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# You may redistribute and modify this source and make products using it under
+# the terms of the CERN-OHL-W v2 (https://ohwr.org/cern_ohl_w_v2.txt).
 #
-# DVB FPGA is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This source is distributed WITHOUT ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING
+# OF MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A PARTICULAR PURPOSE.
+# Please see the CERN-OHL-W v2 for applicable conditions.
 #
-# You should have received a copy of the GNU General Public License
-# along with DVB FPGA.  If not, see <http://www.gnu.org/licenses/>.
-"VUnit test runner for DVB FPGA"
+# Source location: https://github.com/phase4ground/dvb_fpga
+#
+# As per CERN-OHL-W v2 section 4.1, should You produce hardware based on this
+# source, You must maintain the Source Location visible on the external case of
+# the DVB Encoder or other products you make using this source."VUnit test runner for DVB FPGA"
 
 # pylint: disable=bad-continuation
 
@@ -169,14 +168,14 @@ TEST_CONFIGS = set(_getConfigs())
 
 def _runGnuRadio(config):
     """
-    Runs gnuradio_data/dvbs2_tx.py script via shell. Reason for not importing
-    and running locally is to allow GNI Radio's Python environment to be
-    independent of VUnit's Python env.
+    Runs gnuradio_data/dvbs2_encoder_flow_diagram.py script via shell. Reason
+    for not importing and running locally is to allow GNI Radio's Python
+    environment to be independent of VUnit's Python env.
     """
     print("Generating data for %s" % config.name)
 
     command = [
-        p.join(ROOT, "gnuradio_data", "dvbs2_tx.py"),
+        p.join(ROOT, "gnuradio_data", "dvbs2_encoder_flow_diagram.py"),
         "--frame-type",
         config.frame_type.name,
         "--constellation",
@@ -659,7 +658,7 @@ def setupSources(vunit):
     library = vunit.add_library("lib")
     library.add_source_files(p.join(ROOT, "rtl", "*.vhd"))
     library.add_source_files(p.join(ROOT, "rtl", "ldpc", "*.vhd"))
-    library.add_source_files(p.join(ROOT, "rtl", "bch_generated", "*.vhd"))
+    library.add_source_files(p.join(ROOT, "third_party", "bch_generated", "*.vhd"))
     library.add_source_files(p.join(ROOT, "third_party", "airhdl", "*.vhd"))
     testbench_files = glob(p.join(ROOT, "testbench", "*.vhd"))
 
@@ -668,7 +667,7 @@ def setupSources(vunit):
         library.add_source_files(p.join(ROOT, "third_party", "polyphase_filter", "*.v"))
     else:
         library.add_source_files(
-            [x for x in testbench_files if p.basename(x) != "dvbs2_tx_tb.vhd"]
+            [x for x in testbench_files if p.basename(x) != "dvbs2_encoder_tb.vhd"]
         )
 
     vunit.add_library("str_format").add_source_files(
@@ -744,7 +743,7 @@ def setupTests(vunit, args):
         # --individual-config-runs is passed, all configs are added
         if vunit.get_simulator_name() != "ghdl":
             addAllConfigsTest(
-                entity=vunit.library("lib").entity("dvbs2_tx_tb"),
+                entity=vunit.library("lib").entity("dvbs2_encoder_tb"),
                 configs=PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS,
             )
 
@@ -770,7 +769,7 @@ def setupTests(vunit, args):
             )
         if vunit.get_simulator_name() != "ghdl":
             for config in PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS:
-                vunit.library("lib").entity("dvbs2_tx_tb").add_config(
+                vunit.library("lib").entity("dvbs2_encoder_tb").add_config(
                     name=config.name,
                     generics=dict(
                         test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=2,

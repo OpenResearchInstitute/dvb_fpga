@@ -2,23 +2,22 @@
 --
 -- DVB FPGA
 --
--- Copyright 2019 by Suoto <andre820@gmail.com>
+-- Copyright 2019 by suoto <andre820@gmail.com>
 --
--- This file is part of DVB FPGA.
+-- This source describes Open Hardware and is licensed under the CERN-OHL-W v2.
 --
--- DVB FPGA is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
+-- You may redistribute and modify this source and make products using it under
+-- the terms of the CERN-OHL-W v2 (https://ohwr.org/cern_ohl_w_v2.txt).
 --
--- DVB FPGA is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
+-- This source is distributed WITHOUT ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING
+-- OF MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A PARTICULAR PURPOSE.
+-- Please see the CERN-OHL-W v2 for applicable conditions.
 --
--- You should have received a copy of the GNU General Public License
--- along with DVB FPGA.  If not, see <http://www.gnu.org/licenses/>.
-
+-- Source location: https://github.com/phase4ground/dvb_fpga
+--
+-- As per CERN-OHL-W v2 section 4.1, should You produce hardware based on this
+-- source, You must maintain the Source Location visible on the external case of
+-- the DVB Encoder or other products you make using this source.
 -- vunit: run_all_in_same_sim
 
 use std.textio.all;
@@ -48,21 +47,21 @@ context fpga_cores_sim.sim_context;
 
 use work.dvb_utils_pkg.all;
 use work.dvb_sim_utils_pkg.all;
-use work.dvbs2_tx_wrapper_regmap_regs_pkg.all;
+use work.dvbs2_encoder_regs_pkg.all;
 
 -- ghdl translate_off
 library modelsim_lib;
 use modelsim_lib.util.all;
 -- ghdl translate_on
 
-entity dvbs2_tx_tb is
+entity dvbs2_encoder_tb is
   generic (
     RUNNER_CFG            : string;
     TEST_CFG              : string := "";
     NUMBER_OF_TEST_FRAMES : integer := 1);
-end dvbs2_tx_tb;
+end dvbs2_encoder_tb;
 
-architecture dvbs2_tx_tb of dvbs2_tx_tb is
+architecture dvbs2_encoder_tb of dvbs2_encoder_tb is
 
   ---------------
   -- Constants --
@@ -177,7 +176,7 @@ begin
       m_tvalid           => axi_master.tvalid,
       m_tlast            => axi_master.tlast);
 
-  dut : entity work.dvbs2_tx
+  dut : entity work.dvbs2_encoder
     generic map (
       DATA_WIDTH                   => DATA_WIDTH,
       POLYPHASE_FILTER_NUMBER_TAPS => POLYPHASE_FILTER_NUMBER_TAPS,
@@ -253,7 +252,7 @@ begin
 
   -- DUT AXI tready is always set to high in this sim
   axi_slave.tready <= '1';
-  -- GNU Radio's tlast will come in before, we'll ignore data after that until dvbs2_tx's
+  -- GNU Radio's tlast will come in before, we'll ignore data after that until dvbs2_encoder's
   -- tlast
   axi_slave_tvalid <= axi_slave.tvalid and not is_trailing_data;
   process(clk)
@@ -427,10 +426,10 @@ begin
         init_signal_spy(source & ".tready", dest & ".tready",  0);
       end procedure;
     begin
-      mirror_signal("/dvbs2_tx_tb/dut/bb_scrambler", "/dvbs2_tx_tb/signal_spy_block/bb_scrambler");
-      mirror_signal("/dvbs2_tx_tb/dut/bch_encoder", "/dvbs2_tx_tb/signal_spy_block/bch_encoder");
-      mirror_signal("/dvbs2_tx_tb/dut/ldpc_encoder", "/dvbs2_tx_tb/signal_spy_block/ldpc_encoder");
-      mirror_signal("/dvbs2_tx_tb/dut/pl_frame", "/dvbs2_tx_tb/signal_spy_block/pl_frame");
+      mirror_signal("/dvbs2_encoder_tb/dut/bb_scrambler", "/dvbs2_encoder_tb/signal_spy_block/bb_scrambler");
+      mirror_signal("/dvbs2_encoder_tb/dut/bch_encoder", "/dvbs2_encoder_tb/signal_spy_block/bch_encoder");
+      mirror_signal("/dvbs2_encoder_tb/dut/ldpc_encoder", "/dvbs2_encoder_tb/signal_spy_block/ldpc_encoder");
+      mirror_signal("/dvbs2_encoder_tb/dut/pl_frame", "/dvbs2_encoder_tb/signal_spy_block/pl_frame");
       wait;
     end process;
   end block signal_spy_block; -- }} ----------------------------------------------------
@@ -712,4 +711,4 @@ begin
     wait;
   end process; -- }} -------------------------------------------------------------------
 
-end dvbs2_tx_tb;
+end dvbs2_encoder_tb;

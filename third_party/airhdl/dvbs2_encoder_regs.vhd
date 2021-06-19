@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
--- 'dvbs2_tx_wrapper_regmap' Register Component
--- Revision: 141
+-- 'dvbs2_encoder' Register Component
+-- Revision: 144
 -- -----------------------------------------------------------------------------
--- Generated on 2021-03-21 at 23:12 (UTC) by airhdl version 2021.03.1
+-- Generated on 2021-04-09 at 07:38 (UTC) by airhdl version 2021.03.1
 -- -----------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
@@ -21,9 +21,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-use work.dvbs2_tx_wrapper_regmap_regs_pkg.all;
+use work.dvbs2_encoder_regs_pkg.all;
 
-entity dvbs2_tx_wrapper_regmap_regs is
+entity dvbs2_encoder_regs is
     generic(
         AXI_ADDR_WIDTH : integer := 32;  -- width of the AXI address bus
         BASEADDR : std_logic_vector(31 downto 0) := x"00000000" -- the register file's system base address		
@@ -60,9 +60,9 @@ entity dvbs2_tx_wrapper_regmap_regs is
         user2regs     : in user2regs_t;
         regs2user     : out regs2user_t
     );
-end entity dvbs2_tx_wrapper_regmap_regs;
+end entity dvbs2_encoder_regs;
 
-architecture RTL of dvbs2_tx_wrapper_regmap_regs is
+architecture RTL of dvbs2_encoder_regs is
 
     -- Constants
     constant AXI_OKAY           : std_logic_vector(1 downto 0) := "00";
@@ -97,6 +97,8 @@ architecture RTL of dvbs2_tx_wrapper_regmap_regs is
     signal s_bit_mapper_ram_waddr_r : std_logic_vector(7 downto 0);
     signal s_bit_mapper_ram_wen_r : std_logic_vector(3 downto 0);
     signal s_bit_mapper_ram_wdata_r : std_logic_vector(31 downto 0);        
+    signal s_polyphase_filter_coefficients_raddr_r : std_logic_vector(8 downto 0);
+    signal s_polyphase_filter_coefficients_rdata : std_logic_vector(31 downto 0);
     signal s_polyphase_filter_coefficients_waddr_r : std_logic_vector(8 downto 0);
     signal s_polyphase_filter_coefficients_wen_r : std_logic_vector(3 downto 0);
     signal s_polyphase_filter_coefficients_wdata_r : std_logic_vector(31 downto 0);        
@@ -195,6 +197,7 @@ begin
     s_reg_ldpc_fifo_status_ldpc_fifo_full <= user2regs.ldpc_fifo_status_ldpc_fifo_full;
     s_reg_frames_in_transit_value <= user2regs.frames_in_transit_value;
     s_bit_mapper_ram_rdata <= user2regs.bit_mapper_ram_rdata; 
+    s_polyphase_filter_coefficients_rdata <= user2regs.polyphase_filter_coefficients_rdata; 
     s_reg_axi_debug_input_width_converter_frame_count_value <= user2regs.axi_debug_input_width_converter_frame_count_value;
     s_reg_axi_debug_input_width_converter_last_frame_length_value <= user2regs.axi_debug_input_width_converter_last_frame_length_value;
     s_reg_axi_debug_input_width_converter_min_max_frame_length_min_frame_length <= user2regs.axi_debug_input_width_converter_min_max_frame_length_min_frame_length;
@@ -252,6 +255,7 @@ begin
             s_ldpc_fifo_status_strobe_r <= '0';
             s_frames_in_transit_strobe_r <= '0';
             s_bit_mapper_ram_raddr_r <= (others => '0');
+            s_polyphase_filter_coefficients_raddr_r <= (others => '0');
             s_axi_debug_input_width_converter_frame_count_strobe_r <= '0';
             s_axi_debug_input_width_converter_last_frame_length_strobe_r <= '0';
             s_axi_debug_input_width_converter_min_max_frame_length_strobe_r <= '0';
@@ -280,6 +284,7 @@ begin
             s_ldpc_fifo_status_strobe_r <= '0';
             s_frames_in_transit_strobe_r <= '0';
             s_bit_mapper_ram_raddr_r <= (others => '0');
+            s_polyphase_filter_coefficients_raddr_r <= (others => '0');
             s_axi_debug_input_width_converter_frame_count_strobe_r <= '0';
             s_axi_debug_input_width_converter_last_frame_length_strobe_r <= '0';
             s_axi_debug_input_width_converter_min_max_frame_length_strobe_r <= '0';
@@ -350,6 +355,16 @@ begin
                         v_mem_addr := s_axi_araddr_reg_r - unsigned(BASEADDR) - BIT_MAPPER_RAM_OFFSET;
                         s_bit_mapper_ram_raddr_r <= std_logic_vector(v_mem_addr(9 downto 2)); -- output address has 4-byte granularity
                         v_mem_wait_count_r := BIT_MAPPER_RAM_READ_LATENCY;
+                        v_state_r := WAIT_MEMORY_RDATA;
+                    end if;
+                    -- memory 'polyphase_filter_coefficients' at address offset 0x3CC
+                    if s_axi_araddr_reg_r >= resize(unsigned(BASEADDR) + POLYPHASE_FILTER_COEFFICIENTS_OFFSET, AXI_ADDR_WIDTH) and 
+                        s_axi_araddr_reg_r < resize(unsigned(BASEADDR) + POLYPHASE_FILTER_COEFFICIENTS_OFFSET + POLYPHASE_FILTER_COEFFICIENTS_DEPTH * 4, AXI_ADDR_WIDTH) then
+                        v_addr_hit := true;
+                        -- generate memory read address:
+                        v_mem_addr := s_axi_araddr_reg_r - unsigned(BASEADDR) - POLYPHASE_FILTER_COEFFICIENTS_OFFSET;
+                        s_polyphase_filter_coefficients_raddr_r <= std_logic_vector(v_mem_addr(10 downto 2)); -- output address has 4-byte granularity
+                        v_mem_wait_count_r := POLYPHASE_FILTER_COEFFICIENTS_READ_LATENCY;
                         v_state_r := WAIT_MEMORY_RDATA;
                     end if;
                     -- register 'axi_debug_input_width_converter_cfg' at address offset 0xBCC 
@@ -587,6 +602,11 @@ begin
                         if s_axi_araddr_reg_r >= resize(unsigned(BASEADDR) + BIT_MAPPER_RAM_OFFSET, AXI_ADDR_WIDTH) and 
                             s_axi_araddr_reg_r < resize(unsigned(BASEADDR) + BIT_MAPPER_RAM_OFFSET + BIT_MAPPER_RAM_DEPTH * 4, AXI_ADDR_WIDTH) then
                             v_rdata_r(31 downto 0) := s_bit_mapper_ram_rdata(31 downto 0);
+                        end if;
+                        -- memory 'polyphase_filter_coefficients' at address offset 0x3CC
+                        if s_axi_araddr_reg_r >= resize(unsigned(BASEADDR) + POLYPHASE_FILTER_COEFFICIENTS_OFFSET, AXI_ADDR_WIDTH) and 
+                            s_axi_araddr_reg_r < resize(unsigned(BASEADDR) + POLYPHASE_FILTER_COEFFICIENTS_OFFSET + POLYPHASE_FILTER_COEFFICIENTS_DEPTH * 4, AXI_ADDR_WIDTH) then
+                            v_rdata_r(31 downto 0) := s_polyphase_filter_coefficients_rdata(31 downto 0);
                         end if;
                         v_state_r      := READ_RESPONSE;
                     else
@@ -1037,7 +1057,7 @@ begin
     regs2user.bit_mapper_ram_addr <= s_bit_mapper_ram_waddr_r or s_bit_mapper_ram_raddr_r; -- using wired OR as read/write address multiplexer
     regs2user.bit_mapper_ram_wen <= s_bit_mapper_ram_wen_r;   
     regs2user.bit_mapper_ram_wdata <= s_bit_mapper_ram_wdata_r;
-    regs2user.polyphase_filter_coefficients_addr <= s_polyphase_filter_coefficients_waddr_r; -- write-only memory     
+    regs2user.polyphase_filter_coefficients_addr <= s_polyphase_filter_coefficients_waddr_r or s_polyphase_filter_coefficients_raddr_r; -- using wired OR as read/write address multiplexer
     regs2user.polyphase_filter_coefficients_wen <= s_polyphase_filter_coefficients_wen_r;   
     regs2user.polyphase_filter_coefficients_wdata <= s_polyphase_filter_coefficients_wdata_r;
     regs2user.axi_debug_input_width_converter_cfg_strobe <= s_axi_debug_input_width_converter_cfg_strobe_r;
