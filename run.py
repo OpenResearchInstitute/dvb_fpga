@@ -18,11 +18,9 @@
 # As per CERN-OHL-W v2 section 4.1, should You produce hardware based on this
 # source, You must maintain the Source Location visible on the external case of
 # the DVB Encoder or other products you make using this source."VUnit test runner for DVB FPGA"
-
-# pylint: disable=bad-continuation
+"Testing setup"
 
 import logging
-import math
 import os
 import os.path as p
 import random
@@ -32,6 +30,7 @@ import sys
 import time
 from enum import Enum
 from glob import glob
+from math import cos, pi, sin
 from multiprocessing import Pool
 from typing import NamedTuple
 
@@ -207,10 +206,8 @@ def _generateGnuRadioData():
 
     #  list(map(_runGnuRadio, configs))
     # Generate needed data on a process pool to speed up things
-    pool = Pool()
-    pool.map(_runGnuRadio, configs)
-    pool.close()
-    pool.join()
+    with Pool() as pool:
+        pool.map(_runGnuRadio, configs)
 
 
 LDPC_Q = {
@@ -387,34 +384,42 @@ def _populateLdpcTable(config: TestDefinition):  # pylint: disable=too-many-loca
     table_length = LDPC_LENGTH[(config.frame_type, config.code_rate)]
     word_cnt = 0
 
-    bin_fd = open(bin_table, "wb")
-    bin_fd.write(b"# Offset, next, bit index\n")
-    text_fd = open(text_table, "w")
+    bin_file_data = []
+    text_file_data = ""
 
-    try:
-        # Each offset is 16 bits (to represent 64,800 bits of FECFRAME_NORMAL),
-        # but we'll also embed the s_ldpc_next values into the file as well on a
-        # byte, so data width will 24: data[16] is s_ldpc_next while data[15:0] is
-        # the actual offset
-        bit_index = 0
+    # Each offset is 16 bits (to represent 64,800 bits of FECFRAME_NORMAL),
+    # but we'll also embed the s_ldpc_next values into the file as well on a
+    # byte, so data width will 24: data[16] is s_ldpc_next while data[15:0] is
+    # the actual offset
+    bit_index = 0
 
-        for line in table:
-            for _ in range(360):
-                text_fd.write(f"{bit_index:5d} || ")
-                for i, coefficient in enumerate(tuple(int(x) for x in line)):
-                    offset = (coefficient + (bit_index % 360) * table_q) % table_length
-                    bin_fd.write(bytes(f"{offset},", encoding="utf8"))
-                    bin_fd.write(bytes(f"{int(i == len(line) - 1)},", encoding="utf8"))
-                    bin_fd.write(bytes(f"{bit_index}\n", encoding="utf8"))
+    for line in table:
+        for _ in range(360):
+            text_file_data += f"{bit_index:5d} || "
+            for i, coefficient in enumerate(tuple(int(x) for x in line)):
+                offset = (coefficient + (bit_index % 360) * table_q) % table_length
+                bin_file_data += [
+                    b",".join(
+                        [
+                            bytes(f"{offset}", encoding="utf8"),
+                            bytes(f"{int(i == len(line) - 1)}", encoding="utf8"),
+                            bytes(f"{bit_index}\n", encoding="utf8"),
+                        ]
+                    )
+                ]
 
-                    text_fd.write(f" {word_cnt:5d}, {offset:5d}  |")
-                    word_cnt += 1
+                text_file_data += f" {word_cnt:5d}, {offset:5d}  |"
+                word_cnt += 1
 
-                text_fd.write("\n")
-                bit_index += 1
-    finally:
-        bin_fd.close()
-        text_fd.close()
+            text_file_data += "\n"
+            bit_index += 1
+
+    with open(bin_table, "wb") as bin_table_fd:
+        bin_table_fd.write(b"# Offset, next, bit index\n")
+        bin_table_fd.write(b"\n".join(bin_file_data))
+
+    with open(text_table, "w") as text_table_fd:
+        text_table_fd.write(text_file_data)
 
 
 def _getModulationTable(
@@ -430,22 +435,22 @@ def _getModulationTable(
     if constellation == ConstellationType.MOD_QPSK:
         return (
             # QPSK
-            (math.cos(math.pi / 4.0), math.sin(math.pi / 4.0)),
-            (math.cos(7 * math.pi / 4.0), math.sin(7 * math.pi / 4.0)),
-            (math.cos(3 * math.pi / 4.0), math.sin(3 * math.pi / 4.0)),
-            (math.cos(5 * math.pi / 4.0), math.sin(5 * math.pi / 4.0)),
+            (cos(pi / 4), sin(pi / 4)),
+            (cos(7 * pi / 4), sin(7 * pi / 4)),
+            (cos(3 * pi / 4), sin(3 * pi / 4)),
+            (cos(5 * pi / 4), sin(5 * pi / 4)),
         )
 
     if constellation == ConstellationType.MOD_8PSK:
         return (
-            (math.cos(math.pi / 4.0), math.sin(math.pi / 4.0)),
-            (math.cos(0.0), math.sin(0.0)),
-            (math.cos(4 * math.pi / 4.0), math.sin(4 * math.pi / 4.0)),
-            (math.cos(5 * math.pi / 4.0), math.sin(5 * math.pi / 4.0)),
-            (math.cos(2 * math.pi / 4.0), math.sin(2 * math.pi / 4.0)),
-            (math.cos(7 * math.pi / 4.0), math.sin(7 * math.pi / 4.0)),
-            (math.cos(3 * math.pi / 4.0), math.sin(3 * math.pi / 4.0)),
-            (math.cos(6 * math.pi / 4.0), math.sin(6 * math.pi / 4.0)),
+            (cos(pi / 4), sin(pi / 4)),
+            (cos(0.0), sin(0.0)),
+            (cos(4 * pi / 4), sin(4 * pi / 4)),
+            (cos(5 * pi / 4), sin(5 * pi / 4)),
+            (cos(2 * pi / 4), sin(2 * pi / 4)),
+            (cos(7 * pi / 4), sin(7 * pi / 4)),
+            (cos(3 * pi / 4), sin(3 * pi / 4)),
+            (cos(6 * pi / 4), sin(6 * pi / 4)),
         )
 
     if constellation == ConstellationType.MOD_16APSK:
@@ -473,27 +478,27 @@ def _getModulationTable(
 
         # TODO: Include this when changing CI's GNU Radio version to a version
         # that includes https://github.com/gnuradio/gnuradio/commit/efe3e6c1
-        #  r0 = math.sqrt(4.0 / ((r1 * r1) + 3.0 * (r2 * r2)))
+        #  r0 = sqrt(4.0 / ((r1 * r1) + 3.0 * (r2 * r2)))
         #  r1 = r0 * r1
         #  r2 = r0 * r2
 
         return (
-            (r2 * math.cos(math.pi / 4.0), r2 * math.sin(math.pi / 4.0)),
-            (r2 * math.cos(-math.pi / 4.0), r2 * math.sin(-math.pi / 4.0)),
-            (r2 * math.cos(3 * math.pi / 4.0), r2 * math.sin(3 * math.pi / 4.0)),
-            (r2 * math.cos(-3 * math.pi / 4.0), r2 * math.sin(-3 * math.pi / 4.0)),
-            (r2 * math.cos(math.pi / 12.0), r2 * math.sin(math.pi / 12.0)),
-            (r2 * math.cos(-math.pi / 12.0), r2 * math.sin(-math.pi / 12.0)),
-            (r2 * math.cos(11 * math.pi / 12.0), r2 * math.sin(11 * math.pi / 12.0)),
-            (r2 * math.cos(-11 * math.pi / 12.0), r2 * math.sin(-11 * math.pi / 12.0)),
-            (r2 * math.cos(5 * math.pi / 12.0), r2 * math.sin(5 * math.pi / 12.0)),
-            (r2 * math.cos(-5 * math.pi / 12.0), r2 * math.sin(-5 * math.pi / 12.0)),
-            (r2 * math.cos(7 * math.pi / 12.0), r2 * math.sin(7 * math.pi / 12.0)),
-            (r2 * math.cos(-7 * math.pi / 12.0), r2 * math.sin(-7 * math.pi / 12.0)),
-            (r1 * math.cos(math.pi / 4.0), r1 * math.sin(math.pi / 4.0)),
-            (r1 * math.cos(-math.pi / 4.0), r1 * math.sin(-math.pi / 4.0)),
-            (r1 * math.cos(3 * math.pi / 4.0), r1 * math.sin(3 * math.pi / 4.0)),
-            (r1 * math.cos(-3 * math.pi / 4.0), r1 * math.sin(-3 * math.pi / 4.0)),
+            (r2 * cos(pi / 4), r2 * sin(pi / 4)),
+            (r2 * cos(-pi / 4), r2 * sin(-pi / 4)),
+            (r2 * cos(3 * pi / 4), r2 * sin(3 * pi / 4)),
+            (r2 * cos(-3 * pi / 4), r2 * sin(-3 * pi / 4)),
+            (r2 * cos(pi / 12), r2 * sin(pi / 12)),
+            (r2 * cos(-pi / 12), r2 * sin(-pi / 12)),
+            (r2 * cos(11 * pi / 12), r2 * sin(11 * pi / 12)),
+            (r2 * cos(-11 * pi / 12), r2 * sin(-11 * pi / 12)),
+            (r2 * cos(5 * pi / 12), r2 * sin(5 * pi / 12)),
+            (r2 * cos(-5 * pi / 12), r2 * sin(-5 * pi / 12)),
+            (r2 * cos(7 * pi / 12), r2 * sin(7 * pi / 12)),
+            (r2 * cos(-7 * pi / 12), r2 * sin(-7 * pi / 12)),
+            (r1 * cos(pi / 4), r1 * sin(pi / 4)),
+            (r1 * cos(-pi / 4), r1 * sin(-pi / 4)),
+            (r1 * cos(3 * pi / 4), r1 * sin(3 * pi / 4)),
+            (r1 * cos(-3 * pi / 4), r1 * sin(-3 * pi / 4)),
         )
 
     if constellation == ConstellationType.MOD_32APSK:
@@ -518,43 +523,43 @@ def _getModulationTable(
 
         # TODO: Include this when changing CI's GNU Radio version to a version
         # that includes https://github.com/gnuradio/gnuradio/commit/efe3e6c1
-        #  r0 = math.sqrt(8.0 / ((r1 * r1) + 3.0 * (r2 * r2) + 4.0 * (r3 * r3)))
+        #  r0 = sqrt(8.0 / ((r1 * r1) + 3.0 * (r2 * r2) + 4.0 * (r3 * r3)))
         #  r1 *= r0
         #  r2 *= r0
         #  r3 *= r0
         return (
-            (r2 * math.cos(math.pi / 4.0), r2 * math.sin(math.pi / 4.0)),
-            (r2 * math.cos(5 * math.pi / 12.0), r2 * math.sin(5 * math.pi / 12.0)),
-            (r2 * math.cos(-math.pi / 4.0), r2 * math.sin(-math.pi / 4.0)),
-            (r2 * math.cos(-5 * math.pi / 12.0), r2 * math.sin(-5 * math.pi / 12.0),),
-            (r2 * math.cos(3 * math.pi / 4.0), r2 * math.sin(3 * math.pi / 4.0)),
-            (r2 * math.cos(7 * math.pi / 12.0), r2 * math.sin(7 * math.pi / 12.0)),
-            (r2 * math.cos(-3 * math.pi / 4.0), r2 * math.sin(-3 * math.pi / 4.0)),
-            (r2 * math.cos(-7 * math.pi / 12.0), r2 * math.sin(-7 * math.pi / 12.0),),
-            (r3 * math.cos(math.pi / 8.0), r3 * math.sin(math.pi / 8.0)),
-            (r3 * math.cos(3 * math.pi / 8.0), r3 * math.sin(3 * math.pi / 8.0)),
-            (r3 * math.cos(-math.pi / 4.0), r3 * math.sin(-math.pi / 4.0)),
-            (r3 * math.cos(-math.pi / 2.0), r3 * math.sin(-math.pi / 2.0)),
-            (r3 * math.cos(3 * math.pi / 4.0), r3 * math.sin(3 * math.pi / 4.0)),
-            (r3 * math.cos(math.pi / 2.0), r3 * math.sin(math.pi / 2.0)),
-            (r3 * math.cos(-7 * math.pi / 8.0), r3 * math.sin(-7 * math.pi / 8.0)),
-            (r3 * math.cos(-5 * math.pi / 8.0), r3 * math.sin(-5 * math.pi / 8.0)),
-            (r2 * math.cos(math.pi / 12.0), r2 * math.sin(math.pi / 12.0)),
-            (r1 * math.cos(math.pi / 4.0), r1 * math.sin(math.pi / 4.0)),
-            (r2 * math.cos(-math.pi / 12.0), r2 * math.sin(-math.pi / 12.0)),
-            (r1 * math.cos(-math.pi / 4.0), r1 * math.sin(-math.pi / 4.0)),
-            (r2 * math.cos(11 * math.pi / 12.0), r2 * math.sin(11 * math.pi / 12.0),),
-            (r1 * math.cos(3 * math.pi / 4.0), r1 * math.sin(3 * math.pi / 4.0)),
-            (r2 * math.cos(-11 * math.pi / 12.0), r2 * math.sin(-11 * math.pi / 12.0),),
-            (r1 * math.cos(-3 * math.pi / 4.0), r1 * math.sin(-3 * math.pi / 4.0)),
-            (r3 * math.cos(0.0), r3 * math.sin(0.0)),
-            (r3 * math.cos(math.pi / 4.0), r3 * math.sin(math.pi / 4.0)),
-            (r3 * math.cos(-math.pi / 8.0), r3 * math.sin(-math.pi / 8.0)),
-            (r3 * math.cos(-3 * math.pi / 8.0), r3 * math.sin(-3 * math.pi / 8.0)),
-            (r3 * math.cos(7 * math.pi / 8.0), r3 * math.sin(7 * math.pi / 8.0)),
-            (r3 * math.cos(5 * math.pi / 8.0), r3 * math.sin(5 * math.pi / 8.0)),
-            (r3 * math.cos(math.pi), r3 * math.sin(math.pi)),
-            (r3 * math.cos(-3 * math.pi / 4.0), r3 * math.sin(-3 * math.pi / 4.0)),
+            (r2 * cos(pi / 4), r2 * sin(pi / 4)),
+            (r2 * cos(5 * pi / 12), r2 * sin(5 * pi / 12)),
+            (r2 * cos(-pi / 4), r2 * sin(-pi / 4)),
+            (r2 * cos(-5 * pi / 12), r2 * sin(-5 * pi / 12)),
+            (r2 * cos(3 * pi / 4), r2 * sin(3 * pi / 4)),
+            (r2 * cos(7 * pi / 12), r2 * sin(7 * pi / 12)),
+            (r2 * cos(-3 * pi / 4), r2 * sin(-3 * pi / 4)),
+            (r2 * cos(-7 * pi / 12), r2 * sin(-7 * pi / 12)),
+            (r3 * cos(pi / 8), r3 * sin(pi / 8)),
+            (r3 * cos(3 * pi / 8), r3 * sin(3 * pi / 8)),
+            (r3 * cos(-pi / 4), r3 * sin(-pi / 4)),
+            (r3 * cos(-pi / 2), r3 * sin(-pi / 2)),
+            (r3 * cos(3 * pi / 4), r3 * sin(3 * pi / 4)),
+            (r3 * cos(pi / 2), r3 * sin(pi / 2)),
+            (r3 * cos(-7 * pi / 8), r3 * sin(-7 * pi / 8)),
+            (r3 * cos(-5 * pi / 8), r3 * sin(-5 * pi / 8)),
+            (r2 * cos(pi / 12), r2 * sin(pi / 12)),
+            (r1 * cos(pi / 4), r1 * sin(pi / 4)),
+            (r2 * cos(-pi / 12), r2 * sin(-pi / 12)),
+            (r1 * cos(-pi / 4), r1 * sin(-pi / 4)),
+            (r2 * cos(11 * pi / 12), r2 * sin(11 * pi / 12)),
+            (r1 * cos(3 * pi / 4), r1 * sin(3 * pi / 4)),
+            (r2 * cos(-11 * pi / 12), r2 * sin(-11 * pi / 12)),
+            (r1 * cos(-3 * pi / 4), r1 * sin(-3 * pi / 4)),
+            (r3 * cos(0.0), r3 * sin(0.0)),
+            (r3 * cos(pi / 4), r3 * sin(pi / 4)),
+            (r3 * cos(-pi / 8), r3 * sin(-pi / 8)),
+            (r3 * cos(-3 * pi / 8), r3 * sin(-3 * pi / 8)),
+            (r3 * cos(7 * pi / 8), r3 * sin(7 * pi / 8)),
+            (r3 * cos(5 * pi / 8), r3 * sin(5 * pi / 8)),
+            (r3 * cos(pi), r3 * sin(pi)),
+            (r3 * cos(-3 * pi / 4), r3 * sin(-3 * pi / 4)),
         )
 
     # pylint: enable=invalid-name
@@ -591,10 +596,10 @@ def _createModulationTable(config: TestDefinition):
     )
 
     with open(target, "wb") as fd:
-        for cos, sin in table:
-            fd.write(bytes(str(cos), encoding="utf8"))
+        for cos_value, sin_value in table:
+            fd.write(bytes(str(cos_value), encoding="utf8"))
             fd.write(b"\n")
-            fd.write(bytes(str(sin), encoding="utf8"))
+            fd.write(bytes(str(sin_value), encoding="utf8"))
             fd.write(b"\n")
 
 
@@ -602,13 +607,9 @@ def _createAuxiliaryTables():
     """
     Creates the binary LDPC table files if they don't already exist
     """
-    pool = Pool()
-
-    pool.map_async(_populateLdpcTable, TEST_CONFIGS)
-    pool.map_async(_createModulationTable, CONSTELLATION_MAPPER_CONFIGS)
-
-    pool.close()
-    pool.join()
+    with Pool() as pool:
+        pool.map_async(_populateLdpcTable, TEST_CONFIGS)
+        pool.map_async(_createModulationTable, CONSTELLATION_MAPPER_CONFIGS)
 
 
 class GhdlPragmaHandler:
@@ -692,20 +693,23 @@ def setupTests(vunit, args):
             vunit.library("lib").entity("axi_bch_encoder_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=8,
+                    test_cfg=config.getTestConfigString(),
+                    NUMBER_OF_TEST_FRAMES=8,
                 ),
             )
 
             vunit.library("lib").entity("axi_ldpc_encoder_core_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                    test_cfg=config.getTestConfigString(),
+                    NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
             vunit.library("lib").entity("axi_ldpc_table_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                    test_cfg=config.getTestConfigString(),
+                    NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
 
@@ -713,7 +717,8 @@ def setupTests(vunit, args):
             vunit.library("lib").entity("axi_constellation_mapper_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                    test_cfg=config.getTestConfigString(),
+                    NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
 
@@ -730,12 +735,14 @@ def setupTests(vunit, args):
 
         addAllConfigsTest(
             entity=vunit.library("lib").entity("axi_ldpc_encoder_core_tb"),
-            configs=_getConfigs(constellations=(ConstellationType.MOD_8PSK,),),
+            configs=_getConfigs(constellations=(ConstellationType.MOD_8PSK,)),
         )
 
         addAllConfigsTest(
             entity=vunit.library("lib").entity("axi_ldpc_table_tb"),
-            configs=_getConfigs(constellations=(ConstellationType.MOD_8PSK,),),
+            configs=_getConfigs(
+                constellations=(ConstellationType.MOD_8PSK,),
+            ),
         )
 
         # Run the DVB S2 Tx testbench with a smaller sample of configs to check
@@ -758,13 +765,13 @@ def setupTests(vunit, args):
             vunit.library("lib").entity("axi_plframe_header_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3
                 ),
             )
             vunit.library("lib").entity("axi_physical_layer_scrambler_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3
                 ),
             )
         if vunit.get_simulator_name() != "ghdl":
@@ -772,7 +779,7 @@ def setupTests(vunit, args):
                 vunit.library("lib").entity("dvbs2_encoder_tb").add_config(
                     name=config.name,
                     generics=dict(
-                        test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=2,
+                        test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=2
                     ),
                 )
 
@@ -880,7 +887,7 @@ def main():
     vunit.set_compile_option("ghdl.a_flags", ["-frelaxed-rules", "-O2", "-g"])
 
     # Make components not bound (error 3473) an error
-    vsim_flags = ["-error", "3473"]
+    vsim_flags = ["-error", "3473", "-title", p.abspath(p.curdir)]
     if args.gui:
         vsim_flags += ['-voptargs="+acc=n"']
 

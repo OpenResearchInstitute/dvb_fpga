@@ -25,6 +25,7 @@ create_project dvbs2_encoder ${path_to_repo_root}/build/vivado/dvbs2_encoder -pa
 set_property library str_format [ add_files [ glob ${path_to_repo_root}/third_party/hdl_string_format/src/str_format_pkg.vhd ] ]
 set_property library fpga_cores [ add_files [ glob ${path_to_repo_root}/third_party/fpga_cores/src/*.vhd ] ]
 
+add_files [ glob ${path_to_repo_root}/rtl/polyphase_filter/*.vhd ]
 add_files [ glob ${path_to_repo_root}/rtl/ldpc/*.vhd ]
 add_files [ glob ${path_to_repo_root}/rtl/*.vhd ]
 set_property FILE_TYPE {VHDL 2008} [ get_files *.vhd ]
