@@ -35,7 +35,7 @@ use fpga_cores.common_pkg.all;
 ------------------------
 -- Entity declaration --
 ------------------------
-entity polyphase_filter_vhd is
+entity polyphase_filter is
   generic (
      NUMBER_TAPS       : integer:= 32;
      DATA_IN_WIDTH     : integer:= 16;
@@ -62,9 +62,9 @@ entity polyphase_filter_vhd is
     m_tready     : in std_logic;
     m_tdata      : out std_logic_vector(DATA_OUT_WIDTH - 1 downto 0)
   );
-end polyphase_filter_vhd;
+end polyphase_filter;
 
-architecture polyphase_filter_vhd of polyphase_filter_vhd is
+architecture polyphase_filter of polyphase_filter is
 
   -- Constants
   constant SUB_LENGTH : integer := NUMBER_TAPS/RATE_CHANGE;
@@ -147,7 +147,7 @@ begin
     filter_m_tlast          <= filter_m_tdata_agg(DATA_IN_WIDTH);
     fir_input_data_valid(i) <= filter_m_tvalid and filter_m_tready;
 
-    fir_filter_u : entity work.fir_filter_vhd
+    fir_filter_u : entity work.fir_filter
       generic map (
         NUMBER_TAPS       => SUB_LENGTH,
         DATA_WIDTH        => DATA_IN_WIDTH,
@@ -209,4 +209,4 @@ begin
     end if;
   end process;
 
-end polyphase_filter_vhd;
+end polyphase_filter;

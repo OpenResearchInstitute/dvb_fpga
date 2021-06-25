@@ -17,7 +17,6 @@
 # As per CERN-OHL-W v2 section 4.1, should You produce hardware based on this
 # source, You must maintain the Source Location visible on the external case of
 # the DVB Encoder or other products you make using this source.
-read_verilog third_party/polyphase_filter/*.v
 
 ghdl --std=08                                                                  \
   --work=fpga_cores third_party/fpga_cores/src/common_pkg.vhd                  \
@@ -35,7 +34,8 @@ ghdl --std=08                                                                  \
                     third_party/fpga_cores/src/axi_stream_delay.vhd            \
                     third_party/fpga_cores/src/sync_fifo.vhd                   \
                     third_party/fpga_cores/src/axi_stream_master_adapter.vhd   \
-                    third_party/fpga_cores/src/axi_stream_duplicate.vhd        \
+                    third_party/fpga_cores/src/axi_stream_flow_control.vhd     \
+                    third_party/fpga_cores/src/axi_stream_replicate.vhd        \
                     third_party/fpga_cores/src/axi_stream_fifo.vhd             \
                     third_party/fpga_cores/src/axi_stream_frame_fifo.vhd       \
                     third_party/fpga_cores/src/async_fifo.vhd                  \
@@ -73,6 +73,9 @@ ghdl --std=08                                                                  \
                     rtl/plframe_header_pkg.vhd                                 \
                     rtl/ldpc/ldpc_pkg.vhd                                      \
                     rtl/ldpc/ldpc_tables_pkg.vhd                               \
+                    rtl/polyphase_filter/fir_filter.vhd                        \
+                    rtl/polyphase_filter/multiply_accumulate.vhd               \
+                    rtl/polyphase_filter/polyphase_filter.vhd                  \
                     rtl/dvbs2_encoder.vhd                                      \
                     rtl/axi_bch_encoder.vhd                                    \
   -e dvbs2_encoder

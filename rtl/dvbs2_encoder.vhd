@@ -617,7 +617,7 @@ begin
       m_tdata               => pl_frame_dbg.tdata,
       m_tid                 => pl_frame_dbg.tid);
 
-  polyphase_filter_q : entity work.polyphase_filter_vhd
+  polyphase_filter_q : entity work.polyphase_filter
     generic map (
       NUMBER_TAPS       => POLYPHASE_FILTER_NUMBER_TAPS,
       DATA_IN_WIDTH     => DATA_WIDTH/2,
@@ -643,7 +643,7 @@ begin
       coeffs_wdata => regs2user.polyphase_filter_coefficients_wdata(DATA_WIDTH/2 - 1 downto 0),
       coeffs_rdata => user2regs.polyphase_filter_coefficients_rdata(DATA_WIDTH/2 - 1 downto 0));
 
-  polyphase_filter_i : entity work.polyphase_filter_vhd
+  polyphase_filter_i : entity work.polyphase_filter
     generic map (
       NUMBER_TAPS       => POLYPHASE_FILTER_NUMBER_TAPS,
       DATA_IN_WIDTH     => DATA_WIDTH/2,

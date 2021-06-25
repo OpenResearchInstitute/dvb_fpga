@@ -35,7 +35,7 @@ use fpga_cores.common_pkg.all;
 ------------------------
 -- Entity declaration --
 ------------------------
-entity fir_filter_vhd is
+entity fir_filter is
   generic (
     NUMBER_TAPS       : integer := 16;
     DATA_WIDTH        : integer := 16;
@@ -58,9 +58,9 @@ entity fir_filter_vhd is
     data_out_tdata  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
     data_out_tlast  : out std_logic;
     data_out_tvalid : out std_logic);
-end fir_filter_vhd;
+end fir_filter;
 
-architecture fir_filter_vhd of fir_filter_vhd is
+architecture fir_filter of fir_filter is
 
   constant CARRY_WIDTH  : integer := 48;
   constant MAC_DELAY    : integer := 2;
@@ -116,7 +116,7 @@ begin
 
     mac(i + 1).en <= (tvalid_delay_line(i) and data_in_tready_i and data_in_tvalid) or empty_remaining;
 
-    mac_u : entity work.multiply_accumulate_vhd
+    mac_u : entity work.multiply_accumulate
       generic map (
         OP_A_WIDTH          => DATA_WIDTH,
         OP_B_WIDTH          => COEFFICIENT_WIDTH,
@@ -196,4 +196,4 @@ begin
     end if;
   end process;
 
-end fir_filter_vhd;
+end fir_filter;

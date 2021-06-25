@@ -661,11 +661,11 @@ def setupSources(vunit):
     library.add_source_files(p.join(ROOT, "rtl", "ldpc", "*.vhd"))
     library.add_source_files(p.join(ROOT, "third_party", "bch_generated", "*.vhd"))
     library.add_source_files(p.join(ROOT, "third_party", "airhdl", "*.vhd"))
-    testbench_files = glob(p.join(ROOT, "testbench", "*.vhd"))
+    library.add_source_files(p.join(ROOT, "rtl", "polyphase_filter", "*.vhd"))
 
+    testbench_files = glob(p.join(ROOT, "testbench", "*.vhd"))
     if vunit.get_simulator_name() != "ghdl":
         library.add_source_files(testbench_files)
-        library.add_source_files(p.join(ROOT, "third_party", "polyphase_filter", "*.v"))
     else:
         library.add_source_files(
             [x for x in testbench_files if p.basename(x) != "dvbs2_encoder_tb.vhd"]

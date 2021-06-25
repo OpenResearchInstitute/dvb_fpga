@@ -35,8 +35,6 @@ add_files ${path_to_repo_root}/build/vivado/dvbs2_encoder_wrapper.vhd
 add_files [ glob ${path_to_repo_root}/third_party/airhdl/*.vhd ]
 add_files [ glob ${path_to_repo_root}/third_party/bch_generated/*.vhd ]
 
-read_verilog -sv [ glob ${path_to_repo_root}/third_party/polyphase_filter/*.v ]
-
 # WARNING: [Synth 8-6849] Infeasible attribute ram_style = "block" set for RAM
 # "ldpc_encoder_u/frame_ram_u/ram_u/ram_reg", trying to implement using LUTRAM
 set_msg_config -id "Synth 8-6849" -new_severity ERROR

@@ -36,7 +36,7 @@ use fpga_cores.common_pkg.all;
 ------------------------
 -- Entity declaration --
 ------------------------
-entity multiply_accumulate_vhd is
+entity multiply_accumulate is
   generic (
     OP_A_WIDTH          : integer := 16;
     OP_B_WIDTH          : integer := 16;
@@ -54,9 +54,9 @@ entity multiply_accumulate_vhd is
     carry_out  : out std_logic_vector(CARRY_WIDTH - 1 downto 0);
     data_carry : out std_logic_vector(OP_A_WIDTH - 1 downto 0);
     data_out   : out std_logic_vector(OP_A_WIDTH - 1 downto 0));
-end multiply_accumulate_vhd;
+end multiply_accumulate;
 
-architecture multiply_accumulate_vhd of multiply_accumulate_vhd is
+architecture multiply_accumulate of multiply_accumulate is
 
   -------------
   -- Signals --
@@ -106,4 +106,4 @@ begin
     end if;
   end process;
 
-end multiply_accumulate_vhd;
+end multiply_accumulate;
