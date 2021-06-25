@@ -86,36 +86,6 @@ end dvbs2_encoder;
 
 architecture dvbs2_encoder of dvbs2_encoder is
 
-  -- Need a component to make it work w Yosys (polyphase filter is Verilog, the rest is
-  -- VHDL)
-  component polyphase_filter is
-    generic (
-      NUMBER_TAPS          : integer := 32;
-      DATA_IN_WIDTH        : integer := 16;
-      DATA_OUT_WIDTH       : integer := 16;
-      COEFFICIENT_WIDTH    : integer := 16;
-      RATE_CHANGE          : integer := 8;
-      DECIMATE_INTERPOLATE : integer := 1);
-    port (
-      data_in_aclk     : in std_logic;
-      data_in_aresetn  : in std_logic;
-      data_in_tready   : out std_logic;
-      data_in_tdata    : in std_logic_vector(DATA_IN_WIDTH - 1 downto 0);
-      data_in_tlast    : in std_logic;
-      data_in_tvalid   : in std_logic;
-
-      data_out_aclk    : in std_logic;
-      data_out_aresetn : in std_logic;
-      data_out_tready  : in std_logic;
-      data_out_tdata   : out std_logic_vector(DATA_OUT_WIDTH - 1 downto 0);
-      data_out_tlast   : out std_logic;
-      data_out_tvalid  : out std_logic;
-
-      coeffs_wren      : in std_logic;
-      coeffs_addr      : in std_logic_vector(numbits(NUMBER_TAPS) - 1 downto 0);
-      coeffs_wdata     : in std_logic_vector(COEFFICIENT_WIDTH - 1 downto 0));
-    end component;
-
   ---------------
   -- Constants --
   ---------------
@@ -647,61 +617,57 @@ begin
       m_tdata               => pl_frame_dbg.tdata,
       m_tid                 => pl_frame_dbg.tid);
 
-  polyphase_filter_q : polyphase_filter
+  polyphase_filter_q : entity work.polyphase_filter_vhd
     generic map (
-      NUMBER_TAPS          => POLYPHASE_FILTER_NUMBER_TAPS,
-      DATA_IN_WIDTH        => DATA_WIDTH/2,
-      DATA_OUT_WIDTH       => DATA_WIDTH/2,
-      COEFFICIENT_WIDTH    => DATA_WIDTH/2,
-      RATE_CHANGE          => POLYPHASE_FILTER_RATE_CHANGE,
-      DECIMATE_INTERPOLATE => 1) -- 0 => decimate, 1 => interpolate
+      NUMBER_TAPS       => POLYPHASE_FILTER_NUMBER_TAPS,
+      DATA_IN_WIDTH     => DATA_WIDTH/2,
+      DATA_OUT_WIDTH    => DATA_WIDTH/2,
+      COEFFICIENT_WIDTH => DATA_WIDTH/2,
+      RATE_CHANGE       => POLYPHASE_FILTER_RATE_CHANGE)
     port map (
       -- input data interface
-      data_in_aclk            => clk,
-      data_in_aresetn         => rst_n,
-      data_in_tready          => pl_frame_dbg.tready,
-      data_in_tdata           => pl_frame_dbg.tdata(DATA_WIDTH/2 - 1 downto 0),
-      data_in_tlast           => pl_frame_dbg.tlast ,
-      data_in_tvalid          => pl_frame_dbg.tvalid,
+      clk          => clk,
+      rst          => rst,
+      s_tready     => pl_frame_dbg.tready,
+      s_tdata      => pl_frame_dbg.tdata(DATA_WIDTH/2 - 1 downto 0),
+      s_tlast      => pl_frame_dbg.tlast ,
+      s_tvalid     => pl_frame_dbg.tvalid,
       -- output data interface
-      data_out_aclk           => clk,
-      data_out_aresetn        => rst_n,
-      data_out_tready         => polyphase_filter_out.tready,
-      data_out_tdata          => polyphase_filter_out.tdata(DATA_WIDTH/2 - 1 downto 0),
-      data_out_tlast          => polyphase_filter_out.tlast,
-      data_out_tvalid         => polyphase_filter_out.tvalid,
+      m_tready     => polyphase_filter_out.tready,
+      m_tdata      => polyphase_filter_out.tdata(DATA_WIDTH/2 - 1 downto 0),
+      m_tlast      => polyphase_filter_out.tlast,
+      m_tvalid     => polyphase_filter_out.tvalid,
       -- coefficients input interface
-      coeffs_wren             => or(regs2user.polyphase_filter_coefficients_wen),
-      coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(numbits(POLYPHASE_FILTER_NUMBER_TAPS) - 1 downto 0),
-      coeffs_wdata            => regs2user.polyphase_filter_coefficients_wdata(DATA_WIDTH/2 - 1 downto 0));
+      coeffs_wren  => or(regs2user.polyphase_filter_coefficients_wen),
+      coeffs_addr  => regs2user.polyphase_filter_coefficients_addr(numbits(POLYPHASE_FILTER_NUMBER_TAPS) - 1 downto 0),
+      coeffs_wdata => regs2user.polyphase_filter_coefficients_wdata(DATA_WIDTH/2 - 1 downto 0),
+      coeffs_rdata => user2regs.polyphase_filter_coefficients_rdata(DATA_WIDTH/2 - 1 downto 0));
 
-  polyphase_filter_i : polyphase_filter
+  polyphase_filter_i : entity work.polyphase_filter_vhd
     generic map (
-      NUMBER_TAPS          => POLYPHASE_FILTER_NUMBER_TAPS,
-      DATA_IN_WIDTH        => DATA_WIDTH/2,
-      DATA_OUT_WIDTH       => DATA_WIDTH/2,
-      COEFFICIENT_WIDTH    => DATA_WIDTH/2,
-      RATE_CHANGE          => POLYPHASE_FILTER_RATE_CHANGE,
-      DECIMATE_INTERPOLATE => 1) -- 0 => decimate, 1 => interpolate
+      NUMBER_TAPS       => POLYPHASE_FILTER_NUMBER_TAPS,
+      DATA_IN_WIDTH     => DATA_WIDTH/2,
+      DATA_OUT_WIDTH    => DATA_WIDTH/2,
+      COEFFICIENT_WIDTH => DATA_WIDTH/2,
+      RATE_CHANGE       => POLYPHASE_FILTER_RATE_CHANGE)
     port map (
       -- input data interface
-      data_in_aclk            => clk,
-      data_in_aresetn         => rst_n,
-      data_in_tready          => open,
-      data_in_tdata           => pl_frame_dbg.tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2),
-      data_in_tlast           => pl_frame_dbg.tlast ,
-      data_in_tvalid          => pl_frame_dbg.tvalid,
+      clk          => clk,
+      rst          => rst,
+      s_tready     => open,
+      s_tdata      => pl_frame_dbg.tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2),
+      s_tlast      => pl_frame_dbg.tlast ,
+      s_tvalid     => pl_frame_dbg.tvalid,
       -- output data interface
-      data_out_aclk           => clk,
-      data_out_aresetn        => rst_n,
-      data_out_tready         => polyphase_filter_out.tready,
-      data_out_tdata          => polyphase_filter_out.tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2),
-      data_out_tlast          => open,
-      data_out_tvalid         => open,
+      m_tready     => polyphase_filter_out.tready,
+      m_tdata      => polyphase_filter_out.tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2),
+      m_tlast      => open,
+      m_tvalid     => open,
       -- coefficients input interface
-      coeffs_wren             => or(regs2user.polyphase_filter_coefficients_wen),
-      coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(numbits(POLYPHASE_FILTER_NUMBER_TAPS) - 1 downto 0),
-      coeffs_wdata            => regs2user.polyphase_filter_coefficients_wdata(DATA_WIDTH - 1 downto DATA_WIDTH/2));
+      coeffs_wren  => or(regs2user.polyphase_filter_coefficients_wen),
+      coeffs_addr  => regs2user.polyphase_filter_coefficients_addr(numbits(POLYPHASE_FILTER_NUMBER_TAPS) - 1 downto 0),
+      coeffs_wdata => regs2user.polyphase_filter_coefficients_wdata(DATA_WIDTH - 1 downto DATA_WIDTH/2),
+      coeffs_rdata => user2regs.polyphase_filter_coefficients_rdata(DATA_WIDTH - 1 downto DATA_WIDTH/2));
 
   output_dbg_u : entity fpga_cores.axi_stream_debug
     generic map (

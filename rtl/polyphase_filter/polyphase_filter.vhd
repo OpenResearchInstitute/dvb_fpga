@@ -6,18 +6,21 @@
 -- This source describes Open Hardware and is licensed under the CERN-OHL-W v2.
 --
 -- You may redistribute and modify this source and make products using it under
--- the terms of the CERN-OHL-W v2 (https:--ohwr.org/cern_ohl_w_v2.txt).
+-- the terms of the CERN-OHL-W v2 (https://ohwr.org/cern_ohl_w_v2.txt).
 --
 -- This source is distributed WITHOUT ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING
 -- OF MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A PARTICULAR PURPOSE.
 -- Please see the CERN-OHL-W v2 for applicable conditions.
 --
--- Source location: https:--github.com/phase4ground/dvb_fpga
+-- Source location: https://github.com/phase4ground/dvb_fpga
 --
 -- As per CERN-OHL-W v2 section 4.1, should You produce hardware based on this
 -- source, You must maintain the Source Location visible on the external case of
 -- the DVB Encoder or other products you make using this source.
 -- Wrapper to allow instantiating the dvbs2_encoder to a Vivado block diagram
+
+-- This is heavily based on https://github.com/phase4ground/DVB-receiver/blob/master/modem/hdl/library/polyphase_filter/polyphase_filter.v
+-- by yrrapt (Thomas Parry)
 
 ---------------
 -- Libraries --
@@ -41,24 +44,23 @@ entity polyphase_filter_vhd is
      RATE_CHANGE       : integer:= 8
    );
   port (
-    clk             : in std_logic;
-    rst             : in std_logic;
+    clk          : in  std_logic;
+    rst          : in  std_logic;
     -- coeffs input interface
-    coeffs_wren     : in std_logic;
-    coeffs_addr     : in std_logic_vector(numbits(NUMBER_TAPS) - 1 downto 0);
-    coeffs_wdata    : in std_logic_vector(COEFFICIENT_WIDTH - 1 downto 0);
-
+    coeffs_wren  : in  std_logic;
+    coeffs_addr  : in  std_logic_vector(numbits(NUMBER_TAPS) - 1 downto 0);
+    coeffs_wdata : in  std_logic_vector(COEFFICIENT_WIDTH - 1 downto 0);
+    coeffs_rdata : out std_logic_vector(COEFFICIENT_WIDTH - 1 downto 0);
     -- input data interface
-    s_tvalid  : in  std_logic;
-    s_tlast   : in  std_logic;
-    s_tready  : out std_logic;
-    s_tdata   : in  std_logic_vector(DATA_IN_WIDTH - 1 downto 0);
-
+    s_tvalid     : in  std_logic;
+    s_tlast      : in  std_logic;
+    s_tready     : out std_logic;
+    s_tdata      : in  std_logic_vector(DATA_IN_WIDTH - 1 downto 0);
     -- output data interface
-    m_tvalid : out std_logic;
-    m_tlast  : out std_logic;
-    m_tready : in std_logic;
-    m_tdata  : out std_logic_vector(DATA_OUT_WIDTH - 1 downto 0)
+    m_tvalid     : out std_logic;
+    m_tlast      : out std_logic;
+    m_tready     : in std_logic;
+    m_tdata      : out std_logic_vector(DATA_OUT_WIDTH - 1 downto 0)
   );
 end polyphase_filter_vhd;
 
@@ -67,25 +69,24 @@ architecture polyphase_filter_vhd of polyphase_filter_vhd is
   -- Constants
   constant SUB_LENGTH : integer := NUMBER_TAPS/RATE_CHANGE;
 
-
   -------------
   -- Signals --
   -------------
-  signal input_mask       : std_logic_vector(RATE_CHANGE - 1 downto 0);
-  signal shift_input_mask : std_logic_vector(RATE_CHANGE - 1 downto 0);
-  signal output_mask       : std_logic_vector(RATE_CHANGE - 1 downto 0);
+  signal input_mask           : std_logic_vector(RATE_CHANGE - 1 downto 0);
+  signal fir_input_data_valid : std_logic_vector(RATE_CHANGE - 1 downto 0);
+  signal output_mask          : std_logic_vector(RATE_CHANGE - 1 downto 0);
 
-  signal rep_tdata        : std_logic_array_t(RATE_CHANGE - 1 downto 0)(DATA_IN_WIDTH downto 0);
-  signal rep_tvalid       : std_logic_vector(RATE_CHANGE - 1 downto 0);
-  signal rep_tready       : std_logic_vector(RATE_CHANGE - 1 downto 0);
+  signal rep_tdata            : std_logic_array_t(RATE_CHANGE - 1 downto 0)(DATA_IN_WIDTH downto 0);
+  signal rep_tvalid           : std_logic_vector(RATE_CHANGE - 1 downto 0);
+  signal rep_tready           : std_logic_vector(RATE_CHANGE - 1 downto 0);
 
-  signal filter_s_tready  : std_logic_vector(RATE_CHANGE - 1 downto 0);
-  signal filter_s_tdata   : std_logic_array_t(RATE_CHANGE - 1 downto 0)(DATA_OUT_WIDTH - 1 downto 0);
-  signal filter_s_tlast   : std_logic_vector(RATE_CHANGE - 1 downto 0);
-  signal filter_s_tvalid  : std_logic_vector(RATE_CHANGE - 1 downto 0);
+  signal filter_s_tready      : std_logic_vector(RATE_CHANGE - 1 downto 0);
+  signal filter_s_tdata       : std_logic_array_t(RATE_CHANGE - 1 downto 0)(DATA_OUT_WIDTH - 1 downto 0);
+  signal filter_s_tlast       : std_logic_vector(RATE_CHANGE - 1 downto 0);
+  signal filter_s_tvalid      : std_logic_vector(RATE_CHANGE - 1 downto 0);
 
-  signal selected_filter  : std_logic_vector(numbits(RATE_CHANGE) - 1 downto 0);
-  signal addr_filter      : std_logic_vector(numbits(SUB_LENGTH) - 1 downto 0);
+  signal selected_filter      : std_logic_vector(numbits(RATE_CHANGE) - 1 downto 0);
+  signal addr_filter          : std_logic_vector(numbits(SUB_LENGTH) - 1 downto 0);
 
 begin
 
@@ -118,7 +119,7 @@ begin
   end block;
 
   fir_filter_gen : for i in 0 to RATE_CHANGE - 1 generate
-    signal wren          : std_logic;
+    signal wren               : std_logic;
 
     signal filter_m_tready    : std_logic;
     signal filter_m_tdata_agg : std_logic_vector(DATA_IN_WIDTH downto 0);
@@ -142,9 +143,9 @@ begin
         m_tready => filter_m_tready,
         m_tdata  => filter_m_tdata_agg);
 
-    filter_m_tdata       <= filter_m_tdata_agg(DATA_IN_WIDTH - 1 downto 0);
-    filter_m_tlast       <= filter_m_tdata_agg(DATA_IN_WIDTH);
-    shift_input_mask(i)  <= filter_m_tvalid and filter_m_tready;
+    filter_m_tdata          <= filter_m_tdata_agg(DATA_IN_WIDTH - 1 downto 0);
+    filter_m_tlast          <= filter_m_tdata_agg(DATA_IN_WIDTH);
+    fir_input_data_valid(i) <= filter_m_tvalid and filter_m_tready;
 
     fir_filter_u : entity work.fir_filter_vhd
       generic map (
@@ -152,24 +153,24 @@ begin
         DATA_WIDTH        => DATA_IN_WIDTH,
         COEFFICIENT_WIDTH => COEFFICIENT_WIDTH)
       port map (
-        clk    => clk,
-        rst => rst,
+        clk             => clk,
+        rst             => rst,
 
+        -- FIR coefficients input
+        coeffs_wren      => wren,
+        coeffs_addr      => addr_filter,
+        coeffs_wdata     => coeffs_wdata,
+        coeffs_rdata     => coeffs_rdata,
+        --
         data_in_tready  => filter_m_tready,
         data_in_tdata   => filter_m_tdata,
         data_in_tlast   => filter_m_tlast,
         data_in_tvalid  => filter_m_tvalid,
-
-        data_out_tready  => filter_s_tready(i),
-        data_out_tdata   => filter_s_tdata(i),
-        data_out_tlast   => filter_s_tlast(i),
-        data_out_tvalid  => filter_s_tvalid(i),
         --
-        -- samples_remaining => open,
-        -- Upper bits address the coefficient. Lower bits address FIR instance
-        coeffs_wren      => wren,
-        coeffs_addr      => addr_filter,
-        coeffs_wdata     => coeffs_wdata);
+        data_out_tready => filter_s_tready(i),
+        data_out_tdata  => filter_s_tdata(i),
+        data_out_tlast  => filter_s_tlast(i),
+        data_out_tvalid => filter_s_tvalid(i));
   end generate;
 
   filter_s_tready <= (others => m_tready);
@@ -196,10 +197,12 @@ begin
       input_mask  <= (0 => '1', others => '0');
       output_mask <= (0 => '1', others => '0');
     elsif rising_edge(clk) then
-      if or(shift_input_mask) then
+      -- Shift input mask to allow data going into each of the FIR filter instances
+      if or(fir_input_data_valid) then
         input_mask <= input_mask(RATE_CHANGE - 2 downto 0) & input_mask(RATE_CHANGE - 1);
       end if;
 
+      -- Shift output mask to select the
       if or(filter_s_tvalid and filter_s_tready) then
         output_mask <= output_mask(RATE_CHANGE - 2 downto 0) & output_mask(RATE_CHANGE - 1);
       end if;
