@@ -55,8 +55,8 @@ set_property TOP dvbs2_encoder_wrapper [ current_fileset ]
 set_property STEPS.SYNTH_DESIGN.ARGS.ASSERT true [ get_runs synth_1 ]
 set_property -name {STEPS.SYNTH_DESIGN.ARGS.MORE OPTIONS} -value {-mode out_of_context} -object [get_runs synth_1]
 
-add_files -fileset constrs_1 build/vivado/constraints.xdc
-set_property target_constrs_file build/vivado/constraints.xdc [current_fileset -constrset]
+add_files -fileset constrs_1 ${path_to_repo_root}/build/vivado/constraints.xdc
+set_property target_constrs_file ${path_to_repo_root}/build/vivado/constraints.xdc [current_fileset -constrset]
 
 launch_runs synth_1
 wait_on_run synth_1
