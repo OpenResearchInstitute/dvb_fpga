@@ -208,8 +208,10 @@ begin
     axi_ldpc_constellation <= decode(get_field(axi_dup1_tdata, 3, WIDTHS));
     axi_ldpc_code_rate     <= decode(get_field(axi_dup1_tdata, 4, WIDTHS));
 
-    input_duplicate_u : entity fpga_cores.axi_stream_duplicate
-      generic map ( TDATA_WIDTH => AXI_DUP_DATA_WIDTH )
+    input_duplicate_u : entity fpga_cores.axi_stream_replicate
+      generic map (
+        INTERFACES => 2,
+        TDATA_WIDTH => AXI_DUP_DATA_WIDTH )
       port map (
         -- Usual ports
         clk       => clk,
@@ -218,14 +220,13 @@ begin
         s_tready  => s_tready,
         s_tdata   => s_tdata_agg,
         s_tvalid  => s_tvalid,
-        -- AXI stream output 0
-        m0_tready => axi_passthrough.tready,
-        m0_tdata  => axi_dup0_tdata,
-        m0_tvalid => axi_passthrough.tvalid,
-        -- AXI stream output 1
-        m1_tready => axi_ldpc.tready,
-        m1_tdata  => axi_dup1_tdata,
-        m1_tvalid => axi_ldpc.tvalid);
+        -- AXI stream outputs
+        m_tvalid(0) => axi_passthrough.tvalid,
+        m_tvalid(1) => axi_ldpc.tvalid,
+        m_tready(0) => axi_passthrough.tready,
+        m_tready(1) => axi_ldpc.tready,
+        m_tdata(0)  => axi_dup0_tdata,
+        m_tdata(1)  => axi_dup1_tdata);
 
   end block; -- }} ---------------------------------------------------------------------
 
