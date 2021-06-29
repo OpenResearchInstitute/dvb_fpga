@@ -157,6 +157,7 @@ architecture dvbs2_encoder of dvbs2_encoder is
   signal bch_encoder          : data_and_config_t(tdata(7 downto 0));
   signal bch_encoder_dbg      : data_and_config_t(tdata(7 downto 0));
   signal ldpc_encoder         : data_and_config_t(tdata(7 downto 0));
+  signal ldpc_encoder_reg     : data_and_config_t(tdata(7 downto 0));
   signal ldpc_encoder_dbg     : data_and_config_t(tdata(7 downto 0));
   signal ldpc_fifo            : data_and_config_t(tdata(7 downto 0));
   signal fork_bit_interleaver : axi_stream_ctrl_t;
@@ -367,6 +368,38 @@ begin
       m_tdata         => ldpc_encoder.tdata,
       m_tid           => ldpc_encoder.tid);
 
+  -- Using ldpc_encoder_dbg.tid as control for the demux makes it so that
+  -- ldpc_encoder_dbg.tvalid affects ldpc_encoder_dbg.tready. Because the
+  -- axi_stream_replicate inside axi_ldpc_encoder_core does the complement to that
+  -- (m_tvalid forward depends on m_tready) it creates a combinatorial loop. To avoid this
+  -- we'll sample the output of LDPC's AXI stream debug
+  ldpc_encoder_reg_block : block
+    signal tdata_agg_in  : std_logic_vector(ENCODED_CONFIG_WIDTH + 8 downto 0);
+    signal tdata_agg_out : std_logic_vector(ENCODED_CONFIG_WIDTH + 8 downto 0);
+  begin
+    ldpc_encoder_reg_u : entity fpga_cores.axi_stream_delay
+      generic map (
+        DELAY_CYCLES => 1,
+        TDATA_WIDTH  => ENCODED_CONFIG_WIDTH + 9)
+      port map (
+        -- Usual ports
+        clk     => clk,
+        rst     => rst,
+        -- Write side
+        s_tvalid => ldpc_encoder.tvalid,
+        s_tready => ldpc_encoder.tready,
+        s_tdata  => tdata_agg_in,
+        -- Read side
+        m_tvalid => ldpc_encoder_reg.tvalid,
+        m_tready => ldpc_encoder_reg.tready,
+        m_tdata  => tdata_agg_out);
+
+    tdata_agg_in           <= ldpc_encoder.tlast & ldpc_encoder.tid & ldpc_encoder.tdata;
+    ldpc_encoder_reg.tdata <= tdata_agg_out(7 downto 0);
+    ldpc_encoder_reg.tid   <= tdata_agg_out(ENCODED_CONFIG_WIDTH + 7 downto 8);
+    ldpc_encoder_reg.tlast <= tdata_agg_out(ENCODED_CONFIG_WIDTH + 8);
+  end block;
+
   ldpc_encoder_dbg_u : entity fpga_cores.axi_stream_debug
     generic map (
       TDATA_WIDTH        => 8,
@@ -387,11 +420,11 @@ begin
       sts_min_frame_length  => user2regs.axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length,
       sts_max_frame_length  => user2regs.axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length,
       -- AXI input
-      s_tready              => ldpc_encoder.tready,
-      s_tvalid              => ldpc_encoder.tvalid,
-      s_tlast               => ldpc_encoder.tlast,
-      s_tdata               => ldpc_encoder.tdata,
-      s_tid                 => ldpc_encoder.tid,
+      s_tready              => ldpc_encoder_reg.tready,
+      s_tvalid              => ldpc_encoder_reg.tvalid,
+      s_tlast               => ldpc_encoder_reg.tlast,
+      s_tdata               => ldpc_encoder_reg.tdata,
+      s_tid                 => ldpc_encoder_reg.tid,
       -- AXI output
       m_tready              => ldpc_encoder_dbg.tready,
       m_tvalid              => ldpc_encoder_dbg.tvalid,
@@ -399,7 +432,11 @@ begin
       m_tdata               => ldpc_encoder_dbg.tdata,
       m_tid                 => ldpc_encoder_dbg.tid);
 
-  mux_sel <= "10" when decode(ldpc_encoder_dbg.tid).constellation = mod_qpsk else "01";
+
+  with decode(ldpc_encoder_dbg.tid).constellation select
+    mux_sel <= "UU" when not_set,
+               "10" when mod_qpsk,
+               "01" when others;
 
   -- Bit interleaver is not needed for QPSK
   bit_interleaver_demux_u : entity fpga_cores.axi_stream_demux
