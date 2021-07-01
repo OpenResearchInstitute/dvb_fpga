@@ -70,11 +70,10 @@ entity axi_gse_encoder is
 end axi_gse_encoder;
 
 architecture axi_gse_encoder of axi_gse_encoder is
-  shared variable gse_start_header : std_logic_vector((GSE_START_HEADER_LEN * 8) -1 downto 0);
-  shared variable gse_end_header : std_logic_vector((GSE_END_HEADER_LEN * 8)  - 1  downto 0);
 
   impure function get_gse_end_header return std_logic_vector is
-  variable pdu_length : unsigned;
+  variable pdu_length : unsigned(15 downto 0);
+  variable  gse_end_header : std_logic_vector((GSE_END_HEADER_LEN * 8)  - 1  downto 0);
   begin
     pdu_length := unsigned(s_pdu_length(15 downto 0));
     if (pdu_length < 4096) then
@@ -95,7 +94,8 @@ architecture axi_gse_encoder of axi_gse_encoder is
   end;
 
   impure function get_gse_start_header return std_logic_vector is
-  variable pdu_length : unsigned ;
+  variable pdu_length : unsigned(15 downto 0);
+  variable gse_start_header : std_logic_vector((GSE_START_HEADER_LEN * 8) -1 downto 0);
   begin
     pdu_length := unsigned(s_pdu_length(15 downto 0));
 
@@ -119,7 +119,7 @@ architecture axi_gse_encoder of axi_gse_encoder is
     gse_start_header(55 downto 40) := x"0800";
     -- elsif (pdu_length > 4096 and pdu_length < 8096) then
     -- else if (pdu_length > 8096) then
-    return gse_end_header;
+    return gse_start_header;
   end;
 
   -- 5 state FSM --
@@ -134,9 +134,9 @@ architecture axi_gse_encoder of axi_gse_encoder is
   signal start_hdr_transfer_complete : boolean;
   signal start_hdr_ndx : integer;
   signal end_hdr_ndx : integer;
-
+  constant  gse_start_header : std_logic_vector := get_gse_start_header;
+  constant  gse_end_header : std_logic_vector := get_gse_end_header;
   begin
-  
   -- State Machine Implementation
   process(clk, rst)
   begin
