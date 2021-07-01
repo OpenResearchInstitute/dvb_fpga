@@ -42,9 +42,9 @@ entity axi_gse_encoder is
     TDATA_WIDTH : positive := 8;
     ADDR_WIDTH   : natural := 16;
     TID_WIDTH   : natural  := 0;
-    GSE_HEADER_LEN : positive := 10;
-    MAX_UDP_PKT_SIZE : positive := 512;
-    MAX_AXI_WORDS : positive := 8
+    GSE_START_HEADER_LEN : positive := 10;
+    GSE_END_HEADER_LEN : positive := 10;
+    MAX_UDP_PKT_SIZE : positive := 512
   );
   port (
     -- Usual ports
@@ -54,6 +54,7 @@ entity axi_gse_encoder is
     -- AXI input
     s_frame_type : in  frame_type_t;
     s_code_rate  : in  code_rate_t;
+    s_pdu_length : in  std_logic_vector(15 downto 0);
     s_tvalid : in  std_logic;
     s_tlast  : in  std_logic;
     s_tready : out std_logic;
@@ -69,105 +70,181 @@ entity axi_gse_encoder is
 end axi_gse_encoder;
 
 architecture axi_gse_encoder of axi_gse_encoder is
+  shared variable gse_start_header : std_logic_vector((GSE_START_HEADER_LEN * 8) -1 downto 0);
+  shared variable gse_end_header : std_logic_vector((GSE_END_HEADER_LEN * 8)  - 1  downto 0);
 
-  function get_gse_header return std_logic_vector is
-  variable gse_header : std_logic_vector(numbits(GSE_HEADER_LEN) -1 downto 0);
+  impure function get_gse_end_header return std_logic_vector is
+  variable pdu_length : unsigned;
   begin
-    -- start bit
-    gse_header(0) := '1';
-    gse_header(1) := '1';
-    gse_header(3 downto 2) := "10";
-    return gse_header;
+    pdu_length := unsigned(s_pdu_length(15 downto 0));
+    if (pdu_length < 4096) then
+      -- start bit
+      gse_end_header(0) := '0';
+      --end bit
+      gse_end_header(1) := '1';
+      -- label type
+      gse_end_header(3 downto 2) := "11";
+      -- gse length
+      gse_end_header(15 downto 4) := s_pdu_length(5 downto 0);
+      --frag ID
+      gse_end_header(23 downto 16) :=  "11111111";
+    -- elsif (pdu_length > 4096 and pdu_length < 8096) then
+    -- else if (pdu_length > 8096) then
+    end if;
+    return gse_end_header;
   end;
-  constant num_input_words : natural := 8;
-  -- FSM --
-  type state_type is (idle, write_ram);
-  type data_type is array (0 to (MAX_AXI_WORDS - 1)) of std_logic_vector(TDATA_WIDTH- 1 downto 0);
-  --type t_Memory is array (0 to 127) of std_logic_vector(7 downto 0);
-  shared variable ram: data_type;
-  signal state : state_type;
-  type t_gse_pkt_array is array  (0 to 512) of std_logic_vector(7 downto 0);
-  signal gse_pkt : t_gse_pkt_array;
-  --signal payload : std_logic_vector(numbits(MAX_UDP_PKT_SIZE) -1 downto 0);
-  signal tlast_i : std_logic;
-  signal ram_wren : std_logic;
-  signal ram_wrndx : natural;
-  signal ram_wrcomplete : boolean := False;
-  signal s_tready_i : std_logic;
+
+  impure function get_gse_start_header return std_logic_vector is
+  variable pdu_length : unsigned ;
   begin
-  --constant GSE_HEADER := std_logic_vector := get_gse_header();
+    pdu_length := unsigned(s_pdu_length(15 downto 0));
+
+    -- start bit
+    gse_start_header(0) := '1';
+    -- end bit
+    if (pdu_length < 4096) then
+      gse_start_header(1) := '1';
+    else
+      gse_start_header(1) := '0';
+    end if;
+    -- label type
+    gse_start_header(3 downto 2) := "11";
+    -- max length 4 k, numbits 6.
+    gse_start_header(15 downto 4) := s_pdu_length(5 downto 0);
+    -- Fragment ID
+    gse_start_header(23 downto 16) :=  "11111111";
+    -- total length
+    gse_start_header(39 downto 24) := s_pdu_length(15 downto 0);
+    -- protocol type.
+    gse_start_header(55 downto 40) := x"0800";
+    -- elsif (pdu_length > 4096 and pdu_length < 8096) then
+    -- else if (pdu_length > 8096) then
+    return gse_end_header;
+  end;
+
+  -- 5 state FSM --
+  type state_type is (idle, send_start_hdr, send_continue_hdr, send_end_hdr, send_pdu, send_crc);
+  signal state : state_type;
+
+  -- internatl signals.
+  signal tlast_i : std_logic;
+  signal m_tvalid_i : std_logic;
+  signal s_tready_i : std_logic;
+  signal end_hdr_transfer_complete : boolean;
+  signal start_hdr_transfer_complete : boolean;
+  signal start_hdr_ndx : integer;
+  signal end_hdr_ndx : integer;
+
+  begin
   
   -- State Machine Implementation
   process(clk, rst)
   begin
     if rst = '1' then
-      state <= Idle;
+      state <= idle;
       tlast_i <= '0';
+      s_tready_i <= '0'; -- we are not accepting data
+      m_tvalid_i <= '0'; -- we are not sending any data
     elsif clk'event and clk = '1' then
       case state is
-        when Idle =>
+        when idle =>
           -- sink starts accepting data when s_tvalid is asserted to indicate presence of data.
           if (s_tvalid = '1') then
-            state <= write_ram; -- read and write to ram
-        end if;
-        when write_ram =>
-          -- when writing to ram is complete, switch back to idle to read again.
-          if (ram_wrcomplete) then
-            state <= idle;
+            s_tready_i <= '0'; -- sink not ready to accept data yet.
+            state <= send_start_hdr; -- data available from master. send start header.
           else
-            state <= write_ram;
+            state <= idle;
           end if;
+        when send_start_hdr =>
+          -- send start header. source start sending data.
+          m_tvalid_i <= '1';
+        when send_pdu =>
+          if s_tlast = '1' then
+            if (unsigned(s_pdu_length(15 downto 0)) > 4096) then
+              -- send end header only if size is > 4096.
+              s_tready_i <= '0'; -- sink not accepting any data. Need to send end header.
+              state <= send_end_hdr;
+            else
+              state <= idle;
+            end if;
+          else
+            state <= send_pdu;
+            s_tready_i <= '1'; -- sink receive pdu
+            m_tvalid_i <= '1'; -- source forward it.
+          end if;
+        when send_end_hdr =>
+          m_tvalid_i <= '1'; -- forward it.
         when others =>
           state <= idle;
-      end case;    
+      end case;
     end if;
   end process;
   
-  -- sink/reader is always ready to accept s_tdata and write to ram until the ram is full.
-  s_tready_i <= '1' when (state = write_ram and ram_wrndx <= MAX_AXI_WORDS - 1) else '0';
+  s_tready <= s_tready_i;
+  m_tvalid <= m_tvalid_i;
 
+  --send start header
   process(clk, rst)
   begin
   if rst = '1' then
-    ram_wrndx <= 0;
+    start_hdr_ndx <= 0;
   elsif clk'event and clk = '1' then
-    if (ram_wrndx <= MAX_AXI_WORDS  -1 ) then
-      if (ram_wren = '1') then
-        -- ram_wrndx pointer is incremented after every write to ram. 
-        -- This is done only when ram_wren is 1;
-        ram_wrndx <= ram_wrndx + 1;
-        ram_wrcomplete <= False;
+    if (start_hdr_ndx <= GSE_START_HEADER_LEN  -1 ) then
+      start_hdr_transfer_complete <= False;
+      if (m_tvalid_i = '1'and state = send_start_hdr) then
+        if start_hdr_ndx = 0 then
+        else
+          start_hdr_ndx <= start_hdr_ndx + 1;
+        end if;
       end if;
-      if ((ram_wrndx = MAX_AXI_WORDS -1 ) or s_tlast = '1') then
-        -- last AXI word received. write to ram done.
-        ram_wrcomplete <= True;
-      end if;
+      case start_hdr_ndx is
+        when 0 => m_tdata <= gse_start_header(7 downto 0);
+        when 1 => m_tdata <= gse_start_header(15 downto 8);
+        when 2 => m_tdata <= gse_start_header(23 downto 16);
+        when 3 => m_tdata <= gse_start_header(31 downto 24);
+        when 4 => m_tdata <= gse_start_header(39 downto 32);
+        when 5 => m_tdata <= gse_start_header(47 downto 40);
+        when 6 => m_tdata <= gse_start_header(55 downto 48);
+        when 7 => m_tdata <= gse_start_header(63 downto 56);
+        when 8 => m_tdata <= gse_start_header(71 downto 64);
+        when 9 => m_tdata <= gse_start_header(79 downto 72);
+        when others => m_tdata <= "00000000";
+      end case;
+    else
+      start_hdr_transfer_complete <= True;
+      --start header transfer complete. Now change FSM to send_pdu state.
+      state <= send_pdu;
     end if;
   end if;
   end process;
   
-  --ram_wren to enable write
-  ram_wren <= s_tvalid  and s_tready_i;
-  
-  process(clk, rst)
-  begin
-  if rst = '1' then
-  elsif clk'event and clk = '1' then
-    if (ram_wren = '1') then
-      ram(ram_wrndx) := s_tdata (TDATA_WIDTH -1 downto 0);
+  --send end header
+    process(clk, rst)
+    begin
+    if rst = '1' then
+      end_hdr_ndx <= 0;
+    elsif clk'event and clk = '1' then
+      if (end_hdr_ndx <= GSE_END_HEADER_LEN  -1 ) then
+        end_hdr_transfer_complete <= False;
+        if (m_tvalid_i = '1'and state = send_end_hdr) then
+          if end_hdr_ndx = 0 then
+          else
+            end_hdr_ndx <= end_hdr_ndx + 1;
+          end if;
+        end if;
+        case end_hdr_ndx is
+          when 0 => m_tdata <= gse_end_header(7 downto 0);
+          when 1 => m_tdata <= gse_end_header(15 downto 8);
+          when 2 => m_tdata <= gse_end_header(23 downto 16);
+          when 3 => m_tdata <= gse_end_header(31 downto 24);
+          when 4 => m_tdata <= gse_start_header(39 downto 32);
+          when others => m_tdata <= "00000000";
+        end case;
+      else
+        end_hdr_transfer_complete <= True;
+        --emd header transfer complete. Now change FSM to idle state.
+        state <= idle;
+      end if;
     end if;
-  end if;
-  end process;  
-  
-  --read data from memory.
-  process
-    if not ram_wrcomplete then 
-      wait until ram_wrcomplete;
-    end if;
-    
-    gse_pkt((MAX_UDP_PKT_SIZE * 8) -1 downto (MAX_UDP_PKT_SIZE - GSE_HEADER_LEN) * 8) <= gse_header( GSE_HEADER_LEN * 8 -1 downto 0);
-    -- gse_pkt( (MAX_UDP_PKT_SIZE - GSE_HEADER_LEN ) * 8 -1 downto 
-  end process;
-    
-   
+    end process;
 end axi_gse_encoder;
