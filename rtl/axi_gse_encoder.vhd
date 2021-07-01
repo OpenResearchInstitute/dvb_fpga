@@ -247,4 +247,15 @@ architecture axi_gse_encoder of axi_gse_encoder is
       end if;
     end if;
     end process;
+
+    --send end header
+    process(clk, rst)
+    begin
+    if rst = '1' then
+    elsif clk'event and clk = '1' then
+      if (s_tready_i = '1' and m_tvalid_i = '1') then
+        m_tdata <= s_tdata;
+      end if;
+    end if;
+    end process;
 end axi_gse_encoder;
