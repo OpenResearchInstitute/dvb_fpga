@@ -26,6 +26,7 @@ ghdl --std=08                                                                  \
                     third_party/fpga_cores/src/axi_stream_arbiter.vhd          \
   --work=work       third_party/airhdl/dvbs2_tx_wrapper_regmap_regs_pkg.vhd    \
                     third_party/airhdl/dvbs2_tx_wrapper_regmap_regs.vhd        \
+                    rtl/axi_gse_encoder.vhd                                    \
                     rtl/axi_baseband_scrambler.vhd                             \
                     rtl/axi_bit_interleaver.vhd                                \
                     rtl/axi_constellation_mapper.vhd                           \
