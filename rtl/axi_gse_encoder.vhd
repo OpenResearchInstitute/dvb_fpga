@@ -134,8 +134,8 @@ architecture axi_gse_encoder of axi_gse_encoder is
   signal start_hdr_transfer_complete : boolean;
   signal start_hdr_ndx : integer;
   signal end_hdr_ndx : integer;
-  signal  gse_start_header : std_logic_vector;
-  signal  gse_end_header : std_logic_vector;
+  signal  gse_start_header : std_logic_vector((GSE_START_HEADER_LEN * 8) -1 downto 0);
+  signal  gse_end_header : std_logic_vector((GSE_END_HEADER_LEN * 8) -1 downto 0);
   begin
   
   gse_start_header <= get_gse_start_header;
