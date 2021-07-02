@@ -204,26 +204,28 @@ architecture axi_gse_encoder of axi_gse_encoder is
   elsif clk'event and clk = '1' then
     if (start_hdr_ndx <= GSE_START_HEADER_LEN  -1 ) then
       start_hdr_transfer_complete <= False;
-      if (m_tvalid_i = '1'and state = send_start_hdr) then
-        if start_hdr_ndx = 0 then
-        else
-          start_hdr_ndx <= start_hdr_ndx + 1;
+      if (m_tvalid_i = '1') then
+        if (m_tready = '1' and state = send_start_hdr) then
+          if start_hdr_ndx = 0 then
+          else
+            start_hdr_ndx <= start_hdr_ndx + 1;
+          end if;
+          case start_hdr_ndx is
+            when 0 => m_tdata <= gse_start_header(7 downto 0);
+            when 1 => m_tdata <= gse_start_header(15 downto 8);
+            when 2 => m_tdata <= gse_start_header(23 downto 16);
+            when 3 => m_tdata <= gse_start_header(31 downto 24);
+            when 4 => m_tdata <= gse_start_header(39 downto 32);
+            when 5 => m_tdata <= gse_start_header(47 downto 40);
+            when 6 => m_tdata <= gse_start_header(55 downto 48);
+            when 7 => m_tdata <= gse_start_header(63 downto 56);
+            when 8 => m_tdata <= gse_start_header(71 downto 64);
+            when 9 => m_tdata <= gse_start_header(79 downto 72);
+            when others => m_tdata <= "00000000";
+          end case;
         end if;
       end if;
-      case start_hdr_ndx is
-        when 0 => m_tdata <= gse_start_header(7 downto 0);
-        when 1 => m_tdata <= gse_start_header(15 downto 8);
-        when 2 => m_tdata <= gse_start_header(23 downto 16);
-        when 3 => m_tdata <= gse_start_header(31 downto 24);
-        when 4 => m_tdata <= gse_start_header(39 downto 32);
-        when 5 => m_tdata <= gse_start_header(47 downto 40);
-        when 6 => m_tdata <= gse_start_header(55 downto 48);
-        when 7 => m_tdata <= gse_start_header(63 downto 56);
-        when 8 => m_tdata <= gse_start_header(71 downto 64);
-        when 9 => m_tdata <= gse_start_header(79 downto 72);
-        when others => m_tdata <= "00000000";
-      end case;
-    else
+    elsif (start_hdr_ndx = GSE_START_HEADER_LEN -1) then
       start_hdr_transfer_complete <= True;
     end if;
   end if;
@@ -237,23 +239,25 @@ architecture axi_gse_encoder of axi_gse_encoder is
     elsif clk'event and clk = '1' then
       if (end_hdr_ndx <= GSE_END_HEADER_LEN  -1 ) then
         end_hdr_transfer_complete <= False;
-        if (m_tvalid_i = '1'and state = send_end_hdr) then
-          if end_hdr_ndx = 0 then
-          else
-            end_hdr_ndx <= end_hdr_ndx + 1;
+        if (m_tvalid_i = '1') then
+          if (m_tready = '1' and state = send_end_hdr) then
+            if end_hdr_ndx = 0 then
+            else
+              end_hdr_ndx <= end_hdr_ndx + 1;
+            end if;
+            case end_hdr_ndx is
+              when 0 => m_tdata <= gse_end_header(7 downto 0);
+              when 1 => m_tdata <= gse_end_header(15 downto 8);
+              when 2 => m_tdata <= gse_end_header(23 downto 16);
+              when 3 => m_tdata <= gse_end_header(31 downto 24);
+              when 4 => m_tdata <= gse_start_header(39 downto 32);
+              when others => m_tdata <= "00000000";
+            end case;
           end if;
         end if;
-        case end_hdr_ndx is
-          when 0 => m_tdata <= gse_end_header(7 downto 0);
-          when 1 => m_tdata <= gse_end_header(15 downto 8);
-          when 2 => m_tdata <= gse_end_header(23 downto 16);
-          when 3 => m_tdata <= gse_end_header(31 downto 24);
-          when 4 => m_tdata <= gse_start_header(39 downto 32);
-          when others => m_tdata <= "00000000";
-        end case;
-      else
+      elsif (end_hdr_ndx = GSE_END_HEADER_LEN -1 ) then
         end_hdr_transfer_complete <= True;
-      end if;
+      end if;  
     end if;
     end process;
 
@@ -262,7 +266,7 @@ architecture axi_gse_encoder of axi_gse_encoder is
     begin
     if rst = '1' then
     elsif clk'event and clk = '1' then
-      if (s_tready_i = '1' and m_tvalid_i = '1') then
+      if (s_tready_i = '1' and m_tready = '1' and m_tvalid_i = '1') then
         m_tdata <= s_tdata;
       end if;
     end if;
