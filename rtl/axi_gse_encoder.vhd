@@ -158,6 +158,11 @@ architecture axi_gse_encoder of axi_gse_encoder is
         when send_start_hdr =>
           -- send start header. source start sending data.
           m_tvalid_i <= '1';
+          if (start_hdr_transfer_complete) then
+            --start header transfer complete. Now change FSM to send_pdu state.
+            m_tvalid_i <= '0';
+            state <= send_pdu;
+          end if;
         when send_pdu =>
           if s_tlast = '1' then
             if (unsigned(s_pdu_length(15 downto 0)) > 4096) then
@@ -174,6 +179,11 @@ architecture axi_gse_encoder of axi_gse_encoder is
           end if;
         when send_end_hdr =>
           m_tvalid_i <= '1'; -- forward it.
+          --emd header transfer complete. Now change FSM to idle state.
+          if (end_hdr_transfer_complete) then
+            state <= idle;
+            m_tvalid_i <= '0';
+          end if;
         when others =>
           state <= idle;
       end case;
@@ -212,8 +222,6 @@ architecture axi_gse_encoder of axi_gse_encoder is
       end case;
     else
       start_hdr_transfer_complete <= True;
-      --start header transfer complete. Now change FSM to send_pdu state.
-      state <= send_pdu;
     end if;
   end if;
   end process;
@@ -242,8 +250,6 @@ architecture axi_gse_encoder of axi_gse_encoder is
         end case;
       else
         end_hdr_transfer_complete <= True;
-        --emd header transfer complete. Now change FSM to idle state.
-        state <= idle;
       end if;
     end if;
     end process;
