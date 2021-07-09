@@ -261,7 +261,7 @@ architecture axi_gse_encoder of axi_gse_encoder is
     end if;
     end process;
 
-    --send end header
+    -- PDU
     process(clk, rst)
     begin
     if rst = '1' then
