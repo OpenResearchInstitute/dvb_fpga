@@ -18,9 +18,9 @@
 # source, You must maintain the Source Location visible on the external case of
 # the DVB Encoder or other products you make using this source.
 
-set path_to_repo_root [ file normalize "[ file dirname [ info script ] ]/../../"]
+set path_to_repo_root [ file normalize "[ file dirname [ info script ] ]/../../../"]
 
-create_project dvbs2_encoder ${path_to_repo_root}/build/vivado/dvbs2_encoder -part xczu4cg-sfvc784-1LV-i -force
+create_project dvbs2_encoder -part xczu4cg-sfvc784-1LV-i -force
 
 set_property library str_format [ add_files [ glob ${path_to_repo_root}/third_party/hdl_string_format/src/str_format_pkg.vhd ] ]
 set_property library fpga_cores [ add_files [ glob ${path_to_repo_root}/third_party/fpga_cores/src/*.vhd ] ]
@@ -55,8 +55,8 @@ set_property TOP dvbs2_encoder_wrapper [ current_fileset ]
 set_property STEPS.SYNTH_DESIGN.ARGS.ASSERT true [ get_runs synth_1 ]
 set_property -name {STEPS.SYNTH_DESIGN.ARGS.MORE OPTIONS} -value {-mode out_of_context} -object [get_runs synth_1]
 
-add_files -fileset constrs_1 ${path_to_repo_root}/build/vivado/constraints.xdc
-set_property target_constrs_file ${path_to_repo_root}/build/vivado/constraints.xdc [current_fileset -constrset]
+add_files -fileset constrs_1 ${path_to_repo_root}/build/vivado/standalone/constraints.xdc
+set_property target_constrs_file constraints.xdc [current_fileset -constrset]
 
 launch_runs synth_1
 wait_on_run synth_1

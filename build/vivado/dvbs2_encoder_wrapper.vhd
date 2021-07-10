@@ -44,7 +44,7 @@ entity dvbs2_encoder_wrapper is
     --write address channel
     s_axi_awvalid  : in  std_logic;
     s_axi_awready  : out std_logic;
-    s_axi_awaddr   : in  std_logic_vector(31 downto 0);
+    s_axi_awaddr   : in  std_logic_vector(11 downto 0);
     s_axi_awprot   : in  std_logic_vector(2 downto 0);
     -- write data channel
     s_axi_wvalid   : in  std_logic;
@@ -54,7 +54,7 @@ entity dvbs2_encoder_wrapper is
     --read address channel
     s_axi_arvalid  : in  std_logic;
     s_axi_arready  : out std_logic;
-    s_axi_araddr   : in  std_logic_vector(31 downto 0);
+    s_axi_araddr   : in  std_logic_vector(11 downto 0);
     s_axi_arprot   : in  std_logic_vector(2 downto 0);
     --read data channel
     s_axi_rvalid   : out std_logic;

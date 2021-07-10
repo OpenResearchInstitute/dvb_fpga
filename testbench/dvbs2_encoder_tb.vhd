@@ -190,7 +190,7 @@ begin
       --write address channel
       s_axi_awvalid   => axi_cfg.awvalid,
       s_axi_awready   => axi_cfg.awready,
-      s_axi_awaddr    => axi_cfg.awaddr,
+      s_axi_awaddr    => axi_cfg.awaddr(11 downto 0),
       -- write data channel
       s_axi_wvalid    => axi_cfg.wvalid,
       s_axi_wready    => axi_cfg.wready,
@@ -199,7 +199,7 @@ begin
       --read address channel
       s_axi_arvalid   => axi_cfg.arvalid,
       s_axi_arready   => axi_cfg.arready,
-      s_axi_araddr    => axi_cfg.araddr,
+      s_axi_araddr    => axi_cfg.araddr(11 downto 0),
       --read data channel
       s_axi_rvalid    => axi_cfg.rvalid,
       s_axi_rready    => axi_cfg.rready,

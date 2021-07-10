@@ -48,7 +48,7 @@ entity dvbs2_encoder is
     --write address channel
     s_axi_awvalid   : in  std_logic;
     s_axi_awready   : out std_logic;
-    s_axi_awaddr    : in  std_logic_vector(31 downto 0);
+    s_axi_awaddr    : in  std_logic_vector(11 downto 0);
     -- write data channel
     s_axi_wvalid    : in  std_logic;
     s_axi_wready    : out std_logic;
@@ -57,7 +57,7 @@ entity dvbs2_encoder is
     --read address channel
     s_axi_arvalid   : in  std_logic;
     s_axi_arready   : out std_logic;
-    s_axi_araddr    : in  std_logic_vector(31 downto 0);
+    s_axi_araddr    : in  std_logic_vector(11 downto 0);
     --read data channel
     s_axi_rvalid    : out std_logic;
     s_axi_rready    : in  std_logic;
@@ -775,7 +775,7 @@ begin
   -- Register map decoder
   regmap_u : entity work.dvbs2_encoder_regs
     generic map (
-      AXI_ADDR_WIDTH => 32,
+      AXI_ADDR_WIDTH => 12,
       BASEADDR       => (others => '0'))
     port map (
       -- Clock and Reset
