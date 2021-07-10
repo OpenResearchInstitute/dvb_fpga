@@ -188,8 +188,9 @@ def _runGnuRadio(config):
         os.makedirs(config.test_files_path)
 
     try:
-        subp.check_call(command, cwd=config.test_files_path)
-        open(config.timestamp, "w").write(time.asctime())
+        subp.check_call(command, cwd=config.test_files_path, stderr=subp.PIPE)
+        with open(config.timestamp, "w") as fd:
+            fd.write(time.asctime())
     except subp.CalledProcessError:
         _logger.exception("Failed to run %s", command)
         raise
