@@ -76,6 +76,8 @@ ghdl --std=08                                                                  \
                     rtl/ldpc/ldpc_tables_pkg.vhd                               \
                     rtl/dvbs2_encoder.vhd                                      \
                     rtl/axi_bch_encoder.vhd                                    \
+                    rtl/axi_gse_encoder.vhd                                    \
+                    rtl/axi_gse_bbframe.vhd                                    \
   -e dvbs2_encoder
 
 # read design
