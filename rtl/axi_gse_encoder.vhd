@@ -40,11 +40,9 @@ use work.dvb_utils_pkg.all;
 entity axi_gse_encoder is
   generic (
     TDATA_WIDTH : positive := 8;
-    ADDR_WIDTH   : natural := 16;
     TID_WIDTH   : natural  := 0;
     GSE_START_HEADER_LEN : positive := 10;
-    GSE_END_HEADER_LEN : positive := 10;
-    MAX_UDP_PKT_SIZE : positive := 512
+    GSE_END_HEADER_LEN : positive := 10
   );
   port (
     -- Usual ports
@@ -52,8 +50,8 @@ entity axi_gse_encoder is
     rst      : in  std_logic;
 
     -- AXI input
-    s_frame_type : in  frame_type_t;
-    s_code_rate  : in  code_rate_t;
+    --s_frame_type : in  frame_type_t;
+    --s_code_rate  : in  code_rate_t;
     s_pdu_length : in  std_logic_vector(15 downto 0);
     s_tvalid : in  std_logic;
     s_tlast  : in  std_logic;
@@ -110,13 +108,15 @@ architecture axi_gse_encoder of axi_gse_encoder is
     -- label type
     gse_start_header(3 downto 2) := "11";
     -- max length 4 k, numbits 6.
-    gse_start_header(15 downto 4) := s_pdu_length(5 downto 0);
+    -- currently hardcoded for 256 bytes packet. 256 byte PDU + 5 bytes of remaining header = 261
+    gse_start_header(15 downto 4) := x"105";
     -- Fragment ID
     gse_start_header(23 downto 16) :=  "11111111";
     -- total length
     gse_start_header(39 downto 24) := s_pdu_length(15 downto 0);
     -- protocol type.
     gse_start_header(55 downto 40) := x"0800";
+    -- crc
     -- elsif (pdu_length > 4096 and pdu_length < 8096) then
     -- else if (pdu_length > 8096) then
     return gse_start_header;
