@@ -108,7 +108,7 @@ architecture axi_gse_bbframe of axi_gse_bbframe is
   -- FSM --
   type state_type is (idle, write_ram, read_ram);
   type data_type is array (0 to (MAX_AXI_WORDS - 1)) of std_logic_vector(TDATA_WIDTH- 1 downto 0);
-  shared variable ram: data_type;
+  signal ram: data_type;
   signal state : state_type;
   signal tlast_i : std_logic;
   signal ram_wren : std_logic;
@@ -214,7 +214,7 @@ architecture axi_gse_bbframe of axi_gse_bbframe is
   elsif clk'event and clk = '1' then
     if (ram_wren = '1' and s_tvalid = '1') then
      -- we need to accumulate till we have received PDU of BBLENGTH
-      ram(ram_wrndx) := s_tdata (TDATA_WIDTH -1 downto 0);
+      ram(ram_wrndx) <= s_tdata (TDATA_WIDTH -1 downto 0);
     end if;
   end if;
   end process;  
