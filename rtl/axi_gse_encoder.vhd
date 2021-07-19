@@ -91,31 +91,42 @@ architecture axi_gse_encoder of axi_gse_encoder is
     return gse_end_header;
   end;
 
-  impure function get_gse_start_header return std_logic_vector is
+  impure function get_gse_start_header return std_logic_array_t is
   variable pdu_length : unsigned(15 downto 0);
-  variable gse_start_header : std_logic_vector((GSE_START_HEADER_LEN * 8) -1 downto 0);
+  variable gse_start_header : std_logic_array_t(0 to GSE_START_HEADER_LEN -1 )(TDATA_WIDTH -1 downto 0);
+  variable pdu_length_i : std_logic_vector(15 downto 0) := x"0118";
   begin
     pdu_length := unsigned(s_pdu_length(15 downto 0));
-
+   if (unsigned(pdu_length_i) < 4096) then
     -- start bit
-    gse_start_header(0) := '1';
-    -- end bit
-    if (pdu_length < 4096) then
-      gse_start_header(1) := '1';
+    gse_start_header(0) := (7 => '1',-- SOF
+                            6 => '1', -- EOF
+                            5 downto 4 => "11", -- label type
+                            3 downto 0 => "0001");
     else
-      gse_start_header(1) := '0';
+    gse_start_header(0) := (7 => '1',-- SOF
+                            6 => '1', -- EOF
+                            5 downto 4 => "11", -- label type
+                            3 downto 0 => "0001");
     end if;
-    -- label type
-    gse_start_header(3 downto 2) := "11";
+ 
     -- max length 4 k, numbits 6.
     -- currently hardcoded for 256 bytes packet. 256 byte PDU + 5 bytes of remaining header = 261
-    gse_start_header(15 downto 4) := x"105";
+    gse_start_header(1) := "00001100";
     -- Fragment ID
-    gse_start_header(23 downto 16) :=  "11111111";
+    gse_start_header(2) :=  x"00";
     -- total length
-    gse_start_header(39 downto 24) := s_pdu_length(15 downto 0);
+    --gse_start_header(3) := std_logic_vector(pdu_length_i(15 downto 8));
+    --gse_start_header(4) := std_logic_vector(pdu_length_i(7 downto 0));
+    gse_start_header(3) := x"01";
+    gse_start_header(4) := x"00";
     -- protocol type.
-    gse_start_header(55 downto 40) := x"0800";
+    gse_start_header(5) := (x"08");
+    gse_start_header(6) := (x"00");
+    -- gse_start_header(6) := x"00";
+    gse_start_header(7) := (x"00");
+    gse_start_header(8) := (x"00");
+    gse_start_header(9) := (x"00");
     -- crc
     -- elsif (pdu_length > 4096 and pdu_length < 8096) then
     -- else if (pdu_length > 8096) then
@@ -124,24 +135,24 @@ architecture axi_gse_encoder of axi_gse_encoder is
 
   -- 5 state FSM --
   type state_type is (idle, send_start_hdr, send_continue_hdr, send_end_hdr, send_pdu, send_crc);
-  signal state : state_type;
+  signal state : state_type := idle;
 
   -- internatl signals.
-  signal tlast_i : std_logic;
-  signal m_tvalid_i : std_logic;
-  signal s_tready_i : std_logic;
-  signal end_hdr_transfer_complete : boolean;
-  signal start_hdr_transfer_complete : boolean;
-  signal start_hdr_ndx : integer;
-  signal end_hdr_ndx : integer;
-  signal  gse_start_header : std_logic_vector((GSE_START_HEADER_LEN * 8) -1 downto 0);
+  signal tlast_i : std_logic := '0';
+  signal m_tvalid_i : std_logic := '0';
+  signal s_tready_i : std_logic := '0';
+  signal end_hdr_transfer_complete : boolean := False;
+  signal start_hdr_transfer_complete : boolean := False;
+  signal start_hdr_ndx : integer := 0;
+  signal end_hdr_ndx : integer := 0;
+  signal  gse_start_header : std_logic_array_t(0 to GSE_START_HEADER_LEN -1 )(TDATA_WIDTH -1 downto 0);
   signal  gse_end_header : std_logic_vector((GSE_END_HEADER_LEN * 8) -1 downto 0);
   begin
   
   gse_start_header <= get_gse_start_header;
   gse_end_header <= get_gse_end_header;
   -- State Machine Implementation
-  process(clk, rst)
+  /*process(clk, rst)
   begin
     if rst = '1' then
       state <= idle;
@@ -191,8 +202,9 @@ architecture axi_gse_encoder of axi_gse_encoder is
           state <= idle;
       end case;
     end if;
-  end process;
-  
+  end process;*/
+  m_tvalid_i <= '1';
+  state <= send_start_hdr;
   s_tready <= s_tready_i;
   m_tvalid <= m_tvalid_i;
 
@@ -203,27 +215,24 @@ architecture axi_gse_encoder of axi_gse_encoder is
     start_hdr_ndx <= 0;
   elsif clk'event and clk = '1' then
     if (start_hdr_ndx <= GSE_START_HEADER_LEN  -1 ) then
-      start_hdr_transfer_complete <= False;
+     -- start_hdr_transfer_complete <= False;
       if (m_tvalid_i = '1') then
-        if (m_tready = '1' and state = send_start_hdr) then
-          if start_hdr_ndx = 0 then
-          else
-            start_hdr_ndx <= start_hdr_ndx + 1;
-          end if;
+        --if (m_tready = '1' and state = send_start_hdr) then
           case start_hdr_ndx is
-            when 0 => m_tdata <= gse_start_header(7 downto 0);
-            when 1 => m_tdata <= gse_start_header(15 downto 8);
-            when 2 => m_tdata <= gse_start_header(23 downto 16);
-            when 3 => m_tdata <= gse_start_header(31 downto 24);
-            when 4 => m_tdata <= gse_start_header(39 downto 32);
-            when 5 => m_tdata <= gse_start_header(47 downto 40);
-            when 6 => m_tdata <= gse_start_header(55 downto 48);
-            when 7 => m_tdata <= gse_start_header(63 downto 56);
-            when 8 => m_tdata <= gse_start_header(71 downto 64);
-            when 9 => m_tdata <= gse_start_header(79 downto 72);
+            when 0 => m_tdata <= gse_start_header(0);
+            when 1 => m_tdata <= gse_start_header(1);
+            when 2 => m_tdata <= gse_start_header(2);
+            when 3 => m_tdata <= gse_start_header(3);
+            when 4 => m_tdata <= gse_start_header(4);
+            when 5 => m_tdata <= gse_start_header(5);
+            when 6 => m_tdata <= gse_start_header(6);
+            when 7 => m_tdata <= gse_start_header(7);
+            when 8 => m_tdata <= gse_start_header(8);
+            when 9 => m_tdata <= gse_start_header(9);
             when others => m_tdata <= "00000000";
           end case;
-        end if;
+          start_hdr_ndx <= start_hdr_ndx + 1;
+        --end if;
       end if;
     elsif (start_hdr_ndx = GSE_START_HEADER_LEN -1) then
       start_hdr_transfer_complete <= True;
@@ -232,7 +241,7 @@ architecture axi_gse_encoder of axi_gse_encoder is
   end process;
   
   --send end header
-    process(clk, rst)
+  /*  process(clk, rst)
     begin
     if rst = '1' then
       end_hdr_ndx <= 0;
@@ -250,7 +259,7 @@ architecture axi_gse_encoder of axi_gse_encoder is
               when 1 => m_tdata <= gse_end_header(15 downto 8);
               when 2 => m_tdata <= gse_end_header(23 downto 16);
               when 3 => m_tdata <= gse_end_header(31 downto 24);
-              when 4 => m_tdata <= gse_start_header(39 downto 32);
+              when 4 => m_tdata <= gse_end_header(39 downto 32);
               when others => m_tdata <= "00000000";
             end case;
           end if;
@@ -259,10 +268,10 @@ architecture axi_gse_encoder of axi_gse_encoder is
         end_hdr_transfer_complete <= True;
       end if;  
     end if;
-    end process;
+    end process; */
 
     -- PDU
-    process(clk, rst)
+    /* process(clk, rst)
     begin
     if rst = '1' then
     elsif clk'event and clk = '1' then
@@ -270,5 +279,5 @@ architecture axi_gse_encoder of axi_gse_encoder is
         m_tdata <= s_tdata;
       end if;
     end if;
-    end process;
+    end process;*/
 end axi_gse_encoder;
