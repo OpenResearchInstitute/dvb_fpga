@@ -138,6 +138,7 @@ begin
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
+  axi_slave.tready <= '1';
   clk <= not clk after CLK_PERIOD/2;
 
   test_runner_watchdog(runner, 3 ms);
@@ -251,7 +252,7 @@ begin
       -- we need to check for the header only. PDU can be anything
       -- here we are checking for start header.
       --for i in 0 to expected'length - 1 loop
-      for i in 0 to 0 loop
+      for i in 0 to 10 loop
         receive(net, self, msg);
         received := pop(msg);
         info(logger, sformat("Received frame: %s", to_string(received)));
@@ -288,7 +289,7 @@ begin
 
         run_test(pdu_length => 256);
 
-        --wait_for_transfers;
+        wait_for_transfers;
 
       end if;
 
