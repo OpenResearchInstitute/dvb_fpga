@@ -775,14 +775,14 @@ begin
   -- Register map decoder
   regmap_u : entity work.dvbs2_encoder_regs
     generic map (
-      AXI_ADDR_WIDTH => 12,
+      AXI_ADDR_WIDTH => 32,
       BASEADDR       => (others => '0'))
     port map (
       -- Clock and Reset
       axi_aclk    => clk,
       axi_aresetn => rst_n,
       -- AXI Write Address Channel
-      s_axi_awaddr  => s_axi_awaddr,
+      s_axi_awaddr  => (32 - 12 - 1 downto 0 => '0') & s_axi_awaddr,
       s_axi_awprot  => (others => '0'),
       s_axi_awvalid => s_axi_awvalid,
       s_axi_awready => s_axi_awready,
@@ -792,7 +792,7 @@ begin
       s_axi_wvalid  => s_axi_wvalid,
       s_axi_wready  => s_axi_wready,
       -- AXI Read Address Channel
-      s_axi_araddr  => s_axi_araddr,
+      s_axi_araddr  => (32 - 12 - 1 downto 0 => '0') & s_axi_araddr,
       s_axi_arprot  => (others => '0'),
       s_axi_arvalid => s_axi_arvalid,
       s_axi_arready => s_axi_arready,
