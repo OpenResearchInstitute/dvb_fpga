@@ -138,7 +138,6 @@ begin
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  axi_slave.tready <= '1';
   clk <= not clk after CLK_PERIOD/2;
 
   test_runner_watchdog(runner, 3 ms);
@@ -153,7 +152,7 @@ begin
     constant logger         : logger_t         := get_logger("main");
     constant self           : actor_t          := new_actor("main");
     constant checker        : actor_t          := new_actor("checker");
-    variable axi_master_bfm : axi_stream_bfm_t := create_bfm("axi_config_input_u");
+    variable axi_master_bfm : axi_stream_bfm_t := create_bfm;
     ------------------------------------------------------------------------------------
     procedure walk(constant steps : natural) is
     begin
@@ -235,7 +234,6 @@ begin
       variable msg        : msg_t;
       variable received   : std_logic_vector(TDATA_WIDTH downto 0);
     begin
-
       -- Use TID LSB for the PDU length while the MSB is just random data. Need to unpack
       -- this before going into the DUT
       tid := random.RandSlv(8) & std_logic_vector(to_unsigned(pdu_length, numbits(MAX_PDU_LENGTH)));
@@ -246,9 +244,9 @@ begin
         tid         => tid,
         probability => 1.0,
         blocking    => False);
-      info(logger, sformat("Input1 frame: %s", to_string(data)));
+      info(logger, sformat("Input frame: %s", to_string(data)));
       info(logger, sformat("Expected frame: %s", to_string(expected)));
-      
+
       -- we need to check for the header only. PDU can be anything
       -- here we are checking for start header.
       --for i in 0 to expected'length - 1 loop
@@ -256,7 +254,7 @@ begin
         receive(net, self, msg);
         received := pop(msg);
         info(logger, sformat("Received frame: %s", to_string(received)));
-       
+
         check_equal(received(TDATA_WIDTH - 1 downto 0), expected(i));
         check_equal(received(TDATA_WIDTH), i = expected'length - 1);
       end loop;
@@ -277,12 +275,12 @@ begin
     show(display_handler, debug);
 
     while test_suite loop
+      tready_probability <= 0.0;
+
       rst <= '1';
       walk(4);
       rst <= '0';
       walk(4);
-
-      tready_probability <= 1.0;
 
       if run("back_to_back") then
         tready_probability <= 1.0;
