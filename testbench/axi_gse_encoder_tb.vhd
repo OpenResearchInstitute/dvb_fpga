@@ -214,6 +214,7 @@ begin
       frame(9) := (x"00"); -- Label type
 
       for i in 0 to pdu_byte_length - 1 loop
+        --starting reading from 10th byte onwards.
         frame(i + 10) := data(i);
        end loop;
 

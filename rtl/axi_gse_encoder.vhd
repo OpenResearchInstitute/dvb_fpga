@@ -184,7 +184,7 @@ architecture axi_gse_encoder of axi_gse_encoder is
             --m_tvalid_i <= '0';
             state <= send_pdu;
           end if;
-        when send_pdu =>
+        /* when send_pdu =>
           if s_tlast = '1' then
             if (unsigned(s_pdu_length(15 downto 0)) > 4096) then
               -- send end header only if size is > 4096.
@@ -197,7 +197,7 @@ architecture axi_gse_encoder of axi_gse_encoder is
             state <= send_pdu;
             --s_tready_i <= '1'; -- sink receive pdu
             --m_tvalid_i <= '1'; -- source forward it.
-          end if;
+          end if; */
           /* when send_end_hdr =>
           m_tvalid_i <= '1'; -- forward it.
           --emd header transfer complete. Now change FSM to idle state.
@@ -215,14 +215,12 @@ architecture axi_gse_encoder of axi_gse_encoder is
   ------------------------------
   ---Asynchronous assignments---
   ------------------------------
-  s_tready <= '1' when s_tvalid = '1' else '0';
+  -- s_tready <= '1' when s_tvalid = '1' else '0';
   m_tvalid <= m_tvalid_i;
-  m_tready_to_send <= m_tvalid_i and m_tready;
-  s_tready_to_accept <= s_tvalid and s_tready_i;
-  m_tdata  <= gse_start_header(index) when m_tready_to_send = '1';
-  -- else s_tdata when (m_tready_to_send = '1' and s_tready_to_accept = '1');
-  --m_tdata <= s_tdata when (m_tready_to_send = '1' and s_tready_to_accept = '1') else (others => 'U');
-  
+  m_tready_to_send <= '1' when (m_tvalid_i = '1' and m_tready = '1') else '0';
+  s_tready_to_accept <= '1' when (s_tvalid =  '1' and s_tready = '1') else '0';
+  m_tdata  <= gse_start_header(index) when ( m_tready_to_send = '1' and s_tready_to_accept = '0') else s_tdata when (m_tready_to_send = '1' and s_tready_to_accept = '1');
+
   
   -------------------
     -- Port Mappings --
@@ -245,6 +243,7 @@ architecture axi_gse_encoder of axi_gse_encoder is
   begin
   if rst = '1' then
     m_tvalid_i <= '0';
+    s_tready <= '0';
    -- don't transfer if we are waiting.
   elsif clk'event and clk = '1' then
     if (state = send_start_hdr) then
@@ -252,14 +251,14 @@ architecture axi_gse_encoder of axi_gse_encoder is
         if (m_tready_to_send = '1') then -- wait till we (master) receive ready from slave (downstream)
           if (index < 9) then 
             index <= index + 1;
-          elsif (index = 9) then 
+          end if;
+          if (index  = 7) then 
             start_hdr_transfer_complete <= True;
-            -- start header transfer done. No more data for the timebeing.
-            m_tvalid_i <= '0';
           end if;
         end if;
     elsif (state = send_pdu) then
-        m_tvalid_i <= '1'; -- nothing to send till we get data from slave (upstream)
+      s_tready <= '1';
+      m_tvalid_i <= '1'; -- nothing to send till we get data from slave (upstream)
     end if;
   end if;
   end process;
