@@ -80,7 +80,7 @@ architecture axi_gse_encoder_tb of axi_gse_encoder_tb is
 
   -- AXI input
   signal axi_master            : axi_t;
-  signal axi_master_pdu_length : std_logic_vector(15 downto 0);
+  signal axi_slave_pdu_length : std_logic_vector(15 downto 0);
   signal m_data_valid          : boolean;
 
   signal axi_slave             : axi_t;
@@ -109,7 +109,7 @@ begin
       m_tvalid => axi_master.tvalid,
       m_tlast  => axi_master.tlast);
 
-  axi_master_pdu_length <= axi_master.tuser(15 downto 0);
+  -- axi_master_pdu_length <= axi_master.tuser(15 downto 0);
 
   dut : entity work.axi_gse_encoder
     generic map (
@@ -122,22 +122,23 @@ begin
       clk           => clk,
       rst           => rst,
       -- AXI input
-      s_pdu_length  => axi_master_pdu_length,
-      s_tvalid      => axi_master.tvalid,
-      s_tlast       => axi_master.tlast,
-      s_tready      => axi_master.tready,
-      s_tdata       => axi_master.tdata,
-      s_tid         => axi_master.tuser,
+      s_tready      => axi_master.tready, -- out
+      s_tvalid      => axi_master.tvalid, -- in
+      s_tlast       => axi_master.tlast, -- in
+      s_tdata       => axi_master.tdata, -- in
+      --s_tid         => axi_master.tid,
       -- AXI output
-      m_tready      => axi_slave.tready,
-      m_tvalid      => axi_slave.tvalid,
-      m_tlast       => axi_slave.tlast,
-      m_tdata       => axi_slave.tdata,
-      m_tid         => axi_slave.tuser);
+      s_pdu_length  => axi_slave_pdu_length,
+      m_tvalid      => axi_slave.tvalid, -- out
+      m_tlast       => axi_slave.tlast, -- out
+      m_tready      => axi_slave.tready, -- in
+      m_tdata       => axi_slave.tdata); -- out
+      -- m_tid         => axi_slave.tid);
 
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
+  --axi_slave.tready <= '1';
   clk <= not clk after CLK_PERIOD/2;
 
   test_runner_watchdog(runner, 3 ms);
@@ -168,7 +169,7 @@ begin
       variable frame : std_logic_array_t(0 to length - 1)(TDATA_WIDTH - 1 downto 0);
     begin
       for i in 0 to length - 1 loop
-        frame(i) := random.RandSlv(TDATA_WIDTH);
+        frame(i) := x"FE"; --random.RandSlv(TDATA_WIDTH);
       end loop;
 
       return frame;
@@ -250,7 +251,7 @@ begin
       -- we need to check for the header only. PDU can be anything
       -- here we are checking for start header.
       --for i in 0 to expected'length - 1 loop
-      for i in 0 to 10 loop
+      for i in 0 to 50 loop
         receive(net, self, msg);
         received := pop(msg);
         info(logger, sformat("Received frame: %s", to_string(received)));

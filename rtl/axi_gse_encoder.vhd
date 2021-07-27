@@ -57,18 +57,18 @@ entity axi_gse_encoder is
     s_tlast  : in  std_logic;
     s_tready : out std_logic;
     s_tdata  : in  std_logic_vector(TDATA_WIDTH - 1 downto 0);
-    s_tid    : in  std_logic_vector(TID_WIDTH - 1 downto 0);
+    --s_tid    : in  std_logic_vector(TID_WIDTH - 1 downto 0);
 
     -- AXI output
     m_tready : in  std_logic;
     m_tvalid : out std_logic;
     m_tlast  : out std_logic;
-    m_tdata  : out std_logic_vector(TDATA_WIDTH - 1 downto 0);
-    m_tid    : out std_logic_vector(TID_WIDTH - 1 downto 0));
+    m_tdata  : out std_logic_vector(TDATA_WIDTH - 1 downto 0));
+    --m_tid    : out std_logic_vector(TID_WIDTH - 1 downto 0));
 end axi_gse_encoder;
 
 architecture axi_gse_encoder of axi_gse_encoder is
-
+  
   impure function get_gse_end_header return std_logic_vector is
   variable pdu_length : unsigned(15 downto 0);
   variable  gse_end_header : std_logic_vector((GSE_END_HEADER_LEN * 8)  - 1  downto 0);
@@ -134,7 +134,9 @@ architecture axi_gse_encoder of axi_gse_encoder is
   end;
 
   -- 5 state FSM --
-  
+    -- SOF is the same for all configs, so we'll only store the PLS
+  --constant PLS_ROM       : std_logic_array_t := get_gse_start_header;
+  --constant PLS_ROM_DEPTH : integer           := PLS_ROM'length;
 
   -- internatl signals.
   signal tlast_i : std_logic := '0';
@@ -143,27 +145,31 @@ architecture axi_gse_encoder of axi_gse_encoder is
   signal end_hdr_transfer_complete : boolean := False;
   signal start_hdr_transfer_complete : boolean := False;
   signal end_hdr_ndx : integer := 0;
-  signal  gse_start_header : std_logic_array_t(0 to GSE_START_HEADER_LEN -1 )(TDATA_WIDTH -1 downto 0);
+  --constant  gse_start_header : std_logic_array_t(0 to GSE_START_HEADER_LEN -1 )(TDATA_WIDTH -1 downto 0);
   signal  gse_end_header : std_logic_vector((GSE_END_HEADER_LEN * 8) -1 downto 0);
   signal m_tdata_i : std_logic_vector(TDATA_WIDTH -1 downto 0);
+  signal m_tready_to_send : std_logic := '0';
+  signal s_tready_to_accept : std_logic := '0';
+  type state_type is (idle, send_start_hdr, send_continue_hdr, send_end_hdr, send_pdu, send_crc);
+  signal state : state_type := idle;
+  constant gse_start_header       : std_logic_array_t := get_gse_start_header;
+  signal index : natural range 0 to 9 := 0;
   begin
   
-  gse_start_header <= get_gse_start_header;
+  --gse_start_header <= get_gse_start_header;
   gse_end_header <= get_gse_end_header;
   -- State Machine Implementation
   process(clk, rst)
-    type state_type is (idle, send_start_hdr, send_continue_hdr, send_end_hdr, send_pdu, send_crc);
-    variable state : state_type := idle;
   begin
     if rst = '1' then
-      state := idle;
+      state <= idle;
       tlast_i <= '0';
-      s_tready_i <= '0'; -- we are not accepting data
+      --s_tready_i <= '0'; -- we are not accepting data
       --m_tvalid_i <= '0'; -- we are not sending any data
     elsif rising_edge(clk) then
       case state is
         when idle =>
-          state := send_start_hdr; -- we (master) need to send header first downstream..
+          state <= send_start_hdr; -- we (master) need to send header first downstream..
           -- source(upstream or master) has indicated that it has placed valid data.
           --if (s_tvalid = '1') then
           --  s_tready_i <= '0'; -- sink not ready to accept data yet
@@ -176,23 +182,23 @@ architecture axi_gse_encoder of axi_gse_encoder is
           if (start_hdr_transfer_complete) then
             --start header transfer complete. Now change FSM to send_pdu state.
             --m_tvalid_i <= '0';
-            state := send_pdu;
+            state <= send_pdu;
           end if;
-        /* when send_pdu =>
+        when send_pdu =>
           if s_tlast = '1' then
             if (unsigned(s_pdu_length(15 downto 0)) > 4096) then
               -- send end header only if size is > 4096.
-              s_tready_i <= '0'; -- sink not accepting any data. Need to send end header.
+              --s_tready_i <= '0'; -- sink not accepting any data. Need to send end header.
               state <= send_end_hdr;
             else
               state <= idle;
             end if;
           else
             state <= send_pdu;
-            s_tready_i <= '1'; -- sink receive pdu
-            m_tvalid_i <= '1'; -- source forward it.
+            --s_tready_i <= '1'; -- sink receive pdu
+            --m_tvalid_i <= '1'; -- source forward it.
           end if;
-         when send_end_hdr =>
+          /* when send_end_hdr =>
           m_tvalid_i <= '1'; -- forward it.
           --emd header transfer complete. Now change FSM to idle state.
           if (end_hdr_transfer_complete) then
@@ -200,34 +206,61 @@ architecture axi_gse_encoder of axi_gse_encoder is
             m_tvalid_i <= '0';
           end if;*/
         when others =>
-          state := idle;
+          state <= idle;
       end case;
     end if;
   end process;
   -- m_tvalid_i <= '1';
   -- state <= send_start_hdr;
-  s_tready <= s_tready_i;
+  ------------------------------
+  ---Asynchronous assignments---
+  ------------------------------
+  s_tready <= '1' when s_tvalid = '1' else '0';
   m_tvalid <= m_tvalid_i;
+  m_tready_to_send <= m_tvalid_i and m_tready;
+  s_tready_to_accept <= s_tvalid and s_tready_i;
+  m_tdata  <= gse_start_header(index) when m_tready_to_send = '1';
+  -- else s_tdata when (m_tready_to_send = '1' and s_tready_to_accept = '1');
+  --m_tdata <= s_tdata when (m_tready_to_send = '1' and s_tready_to_accept = '1') else (others => 'U');
+  
+  
+  -------------------
+    -- Port Mappings --
+    -------------------
+    /* pls_rom_u : entity fpga_cores.rom_inference
+    generic map (
+      ROM_DATA     => PLS_ROM,
+      ROM_TYPE     => lut, -- To allo same cycle reading
+      OUTPUT_DELAY => 0)
+    port map (
+      clk    => clk,
+      clken  => '1',
+      addr   => "01",
+      rddata => m_tdata_i); */
+
   --m_tdata <= m_tdata_i;
   --send start header
   process(clk, rst)
-  variable index : integer := 0;
+  -- variable index : natural range 0 to 9 := 0;
   begin
   if rst = '1' then
-    --start_hdr_ndx <= 0;
-    --m_tvalid_i <= '0';
-  --elsif clk'event and clk = '1' then
-  elsif rising_edge(clk) then
-    --if (m_tvalid_i <= '1') then
-    m_tvalid_i <= '1';
-      if (index < 10) then 
-      --for i in 0 to 10 loop
-        m_tdata <= gse_start_header(index);
-        index := index + 1;
-      end if;
-      --end loop;
-    --end if;
-    start_hdr_transfer_complete <= True;
+    m_tvalid_i <= '0';
+   -- don't transfer if we are waiting.
+  elsif clk'event and clk = '1' then
+    if (state = send_start_hdr) then
+        m_tvalid_i <= '1';
+        if (m_tready_to_send = '1') then -- wait till we (master) receive ready from slave (downstream)
+          if (index < 9) then 
+            index <= index + 1;
+          elsif (index = 9) then 
+            start_hdr_transfer_complete <= True;
+            -- start header transfer done. No more data for the timebeing.
+            m_tvalid_i <= '0';
+          end if;
+        end if;
+    elsif (state = send_pdu) then
+        m_tvalid_i <= '1'; -- nothing to send till we get data from slave (upstream)
+    end if;
   end if;
   end process;
   
