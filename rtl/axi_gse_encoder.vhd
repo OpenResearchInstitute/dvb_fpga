@@ -184,20 +184,20 @@ architecture axi_gse_encoder of axi_gse_encoder is
             --m_tvalid_i <= '0';
             state <= send_pdu;
           end if;
-        /* when send_pdu =>
+        when send_pdu =>
           if s_tlast = '1' then
-            if (unsigned(s_pdu_length(15 downto 0)) > 4096) then
+            --if (unsigned(s_pdu_length(15 downto 0)) > 4096) then
               -- send end header only if size is > 4096.
               --s_tready_i <= '0'; -- sink not accepting any data. Need to send end header.
-              state <= send_end_hdr;
-            else
+              --state <= send_end_hdr;
+            --else
               state <= idle;
-            end if;
-          else
-            state <= send_pdu;
+            --end if;
+          --else
+          --  state <= send_pdu;
             --s_tready_i <= '1'; -- sink receive pdu
             --m_tvalid_i <= '1'; -- source forward it.
-          end if; */
+          end if;
           /* when send_end_hdr =>
           m_tvalid_i <= '1'; -- forward it.
           --emd header transfer complete. Now change FSM to idle state.
@@ -217,8 +217,8 @@ architecture axi_gse_encoder of axi_gse_encoder is
   ------------------------------
   -- s_tready <= '1' when s_tvalid = '1' else '0';
   m_tvalid <= m_tvalid_i;
-  m_tready_to_send <= '1' when (m_tvalid_i = '1' and m_tready = '1') else '0';
-  s_tready_to_accept <= '1' when (s_tvalid =  '1' and s_tready = '1') else '0';
+  m_tready_to_send <= '1' when (m_tvalid_i = '1' and m_tready = '1' and state /= idle) else '0';
+  s_tready_to_accept <= '1' when (s_tvalid =  '1' and s_tready = '1' and state /= idle) else '0';
   m_tdata  <= gse_start_header(index) when ( m_tready_to_send = '1' and s_tready_to_accept = '0') else s_tdata when (m_tready_to_send = '1' and s_tready_to_accept = '1');
 
   
@@ -252,13 +252,15 @@ architecture axi_gse_encoder of axi_gse_encoder is
           if (index < 9) then 
             index <= index + 1;
           end if;
-          if (index  = 7) then 
+          if (index  = 7) then -- to save on 2 cycles that is used for signal updation.
             start_hdr_transfer_complete <= True;
           end if;
         end if;
     elsif (state = send_pdu) then
       s_tready <= '1';
       m_tvalid_i <= '1'; -- nothing to send till we get data from slave (upstream)
+    elsif (state = idle) then
+      m_tvalid_i <= '0';
     end if;
   end if;
   end process;
