@@ -169,13 +169,14 @@ architecture axi_gse_encoder of axi_gse_encoder is
     elsif rising_edge(clk) then
       case state is
         when idle =>
-          state <= send_start_hdr; -- we (master) need to send header first downstream..
+          if (s_tvalid = '1') then
+            state <= send_start_hdr; -- we (master) need to send header first downstream if something is avaialble form upstream
           -- source(upstream or master) has indicated that it has placed valid data.
           --if (s_tvalid = '1') then
           --  s_tready_i <= '0'; -- sink not ready to accept data yet
           --else
            -- state <= idle;
-          --end if;
+          end if;
         when send_start_hdr =>
           -- send start header. source (we master) start sending data downstream
           --m_tvalid_i <= '1';
@@ -216,93 +217,31 @@ architecture axi_gse_encoder of axi_gse_encoder is
   ---Asynchronous assignments---
   ------------------------------
   -- s_tready <= '1' when s_tvalid = '1' else '0';
-  m_tvalid <= m_tvalid_i;
-  m_tready_to_send <= '1' when (m_tvalid_i = '1' and m_tready = '1' and state /= idle) else '0';
+  --m_tvalid <= m_tvalid_i;
+  m_tready_to_send <= '1' when (m_tready = '1' and state /= idle) else '0';
+  m_tvalid <= '1' when (m_tready_to_send = '1') else '0';
   s_tready_to_accept <= '1' when (s_tvalid =  '1' and s_tready = '1' and state /= idle) else '0';
   m_tdata  <= gse_start_header(index) when ( m_tready_to_send = '1' and s_tready_to_accept = '0') else s_tdata when (m_tready_to_send = '1' and s_tready_to_accept = '1');
-
+  m_tlast <= s_tlast  when (m_tready_to_send = '1' and s_tready_to_accept = '1') else '0';
+  s_tready <= '1' when (s_tvalid = '1' and state = send_pdu) else '0';
   
-  -------------------
-    -- Port Mappings --
-    -------------------
-    /* pls_rom_u : entity fpga_cores.rom_inference
-    generic map (
-      ROM_DATA     => PLS_ROM,
-      ROM_TYPE     => lut, -- To allo same cycle reading
-      OUTPUT_DELAY => 0)
-    port map (
-      clk    => clk,
-      clken  => '1',
-      addr   => "01",
-      rddata => m_tdata_i); */
 
-  --m_tdata <= m_tdata_i;
-  --send start header
   process(clk, rst)
   -- variable index : natural range 0 to 9 := 0;
   begin
-  if rst = '1' then
-    m_tvalid_i <= '0';
-    s_tready <= '0';
-   -- don't transfer if we are waiting.
-  elsif clk'event and clk = '1' then
+  if clk'event and clk = '1' then
     if (state = send_start_hdr) then
-        m_tvalid_i <= '1';
-        if (m_tready_to_send = '1') then -- wait till we (master) receive ready from slave (downstream)
-          if (index < 9) then 
-            index <= index + 1;
-          end if;
-          if (index  = 7) then -- to save on 2 cycles that is used for signal updation.
-            start_hdr_transfer_complete <= True;
-          end if;
+      if (m_tready_to_send = '1') then -- wait till we (master) receive ready from slave (downstream)
+        if (index < 9) then 
+          index <= index + 1;
         end if;
-    elsif (state = send_pdu) then
-      s_tready <= '1';
-      m_tvalid_i <= '1'; -- nothing to send till we get data from slave (upstream)
-    elsif (state = idle) then
-      m_tvalid_i <= '0';
-    end if;
-  end if;
-  end process;
-  
-  --send end header
-  /*  process(clk, rst)
-    begin
-    if rst = '1' then
-      end_hdr_ndx <= 0;
-    elsif clk'event and clk = '1' then
-      if (end_hdr_ndx <= GSE_END_HEADER_LEN  -1 ) then
-        end_hdr_transfer_complete <= False;
-        if (m_tvalid_i = '1') then
-          if (m_tready = '1' and state = send_end_hdr) then
-            if end_hdr_ndx = 0 then
-            else
-              end_hdr_ndx <= end_hdr_ndx + 1;
-            end if;
-            case end_hdr_ndx is
-              when 0 => m_tdata <= gse_end_header(7 downto 0);
-              when 1 => m_tdata <= gse_end_header(15 downto 8);
-              when 2 => m_tdata <= gse_end_header(23 downto 16);
-              when 3 => m_tdata <= gse_end_header(31 downto 24);
-              when 4 => m_tdata <= gse_end_header(39 downto 32);
-              when others => m_tdata <= "00000000";
-            end case;
-          end if;
+        if (index  = 8) then -- to save on 2 cycles that is used for signal updation.
+          start_hdr_transfer_complete <= True;
         end if;
-      elsif (end_hdr_ndx = GSE_END_HEADER_LEN -1 ) then
-        end_hdr_transfer_complete <= True;
-      end if;  
-    end if;
-    end process; */
-
-    -- PDU
-    /*process(clk, rst)
-    begin
-    if rst = '1' then
-    elsif clk'event and clk = '1' then
-      if (s_tready_i = '1' and m_tready = '1' and m_tvalid_i = '1') then
-        m_tdata <= s_tdata;
       end if;
     end if;
-    end process;*/
+  end if;   
+  end process;
+  
+  
 end axi_gse_encoder;
