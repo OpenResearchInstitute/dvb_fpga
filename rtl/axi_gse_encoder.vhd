@@ -112,7 +112,7 @@ architecture axi_gse_encoder of axi_gse_encoder is
  
     -- max length 4 k, numbits 6.
     -- currently hardcoded for 256 bytes packet. 256 byte PDU + 5 bytes of remaining header = 261
-    gse_start_header(1) := "00001100";
+    gse_start_header(1) := "00001000";
     -- Fragment ID
     gse_start_header(2) :=  x"00";
     -- total length
@@ -229,7 +229,10 @@ architecture axi_gse_encoder of axi_gse_encoder is
   process(clk, rst)
   -- variable index : natural range 0 to 9 := 0;
   begin
-  if clk'event and clk = '1' then
+  if rst = '1' then
+    start_hdr_transfer_complete <= False;
+    index <= 0;
+  elsif clk'event and clk = '1' then
     if (state = send_start_hdr) then
       if (m_tready_to_send = '1') then -- wait till we (master) receive ready from slave (downstream)
         if (index < 9) then 

@@ -169,7 +169,8 @@ begin
       variable frame : std_logic_array_t(0 to length - 1)(TDATA_WIDTH - 1 downto 0);
     begin
       for i in 0 to length - 1 loop
-        frame(i) := x"FE"; --random.RandSlv(TDATA_WIDTH);
+        --frame(i) := x"FE"; --random.RandSlv(TDATA_WIDTH);
+        frame(i) := random.RandSlv(TDATA_WIDTH);
       end loop;
 
       return frame;
@@ -185,8 +186,8 @@ begin
         2 + -- total length
         2 + -- protocol type
         3 + -- label
-        pdu_byte_length +
-        4;  -- CRC
+        pdu_byte_length; -- +
+        --4;  -- CRC
 
       constant gse_length_field : unsigned(11 downto 0) := to_unsigned(gse_frame_length - 2, 12);
       constant total_length_field : unsigned(15 downto 0) := to_unsigned(pdu_byte_length, 16);
@@ -211,7 +212,10 @@ begin
       frame(6) := (x"00"); -- Protocol type
       frame(7) := (x"00"); -- Label type
       frame(8) := (x"00"); -- Label type
-      frame(9) := (x"00"); -- Label type
+      frame(9) := (x"00"); -- Label type  -- 10 byte header
+
+      info(logger, sformat("data length %s", to_string(pdu_byte_length))); -- 256
+      info(logger, sformat("data length1 %s", to_string(data'length)));
 
       for i in 0 to pdu_byte_length - 1 loop
         --starting reading from 10th byte onwards.
@@ -219,10 +223,10 @@ begin
        end loop;
 
       -- CRC
-      frame(gse_frame_length - 4) := (x"00");
-      frame(gse_frame_length - 3) := (x"00");
-      frame(gse_frame_length - 2) := (x"00");
-      frame(gse_frame_length - 1) := (x"00");
+      --frame(gse_frame_length - 4) := (x"00"); -- 4 byte CRC
+      --frame(gse_frame_length - 3) := (x"00");
+      --frame(gse_frame_length - 2) := (x"00");
+      --frame(gse_frame_length - 1) := (x"00");
 
       return reinterpret(frame, TDATA_WIDTH);
     end function;
@@ -248,18 +252,20 @@ begin
         blocking    => False);
       info(logger, sformat("Input frame: %s", to_string(data)));
       info(logger, sformat("Expected frame: %s", to_string(expected)));
+      info(logger, sformat("Expected lenght: %s", to_string(expected'length))); -- 270 = 256 + 10+ 4
 
       -- we need to check for the header only. PDU can be anything
       -- here we are checking for start header.
-      --for i in 0 to expected'length - 1 loop
-      for i in 0 to 50 loop
+      for i in 0 to expected'length - 1  loop -- 0 to 265
         receive(net, self, msg);
         received := pop(msg);
         info(logger, sformat("Received frame: %s", to_string(received)));
 
         check_equal(received(TDATA_WIDTH - 1 downto 0), expected(i));
         check_equal(received(TDATA_WIDTH), i = expected'length - 1);
+        info(logger, sformat("done: %s", to_string(i))); -- 270 = 256 + 10+ 4
       end loop;
+      info(logger, sformat("doneee")); -- 270 = 256 + 10+ 4
 
     end procedure run_test;
 
@@ -270,6 +276,15 @@ begin
       -- wait_all_read(net, file_checker);
     end procedure wait_for_transfers;
     ------------------------------------------------------------------------------------
+    procedure wait_for_completion is -- {{ ----------------------------------------------
+      variable msg : msg_t;
+    begin
+      --join(net, dut);
+      walk(4);
+      wait until rising_edge(clk) and axi_slave.tvalid = '0' for 1 ms;
+      check_equal(axi_slave.tvalid, '0', "axi_slave.tvalid should be '0'");
+      walk(1);
+    end procedure wait_for_completion; -- }} --------------------------------------------
 
   begin
 
@@ -285,14 +300,21 @@ begin
       walk(4);
 
       if run("back_to_back") then
+      for i in 0 to 10 loop
         tready_probability <= 1.0;
-
         run_test(pdu_length => 256);
+        wait_for_completion;
 
-        wait_for_transfers;
+        rst <= '1';
+        walk(4);
+        rst <= '0';
+        walk(4);
+      end loop;
 
+        --wait_for_transfers;
       end if;
 
+      debug(logger, sformat("Test Complete4"));
       walk(8);
     end loop;
 
