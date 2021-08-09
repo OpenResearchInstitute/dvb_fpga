@@ -2,7 +2,7 @@
 --
 -- DVB FPGA
 --
--- Copyright 2019 by Suoto <andre820@gmail.com>
+-- Copyright 2021 by Anshul Makkar <anshulmakkar@gmail.com>
 --
 -- This file is part of DVB FPGA.
 --

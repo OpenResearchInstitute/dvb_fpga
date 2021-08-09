@@ -133,11 +133,6 @@ architecture axi_gse_encoder of axi_gse_encoder is
     return gse_start_header;
   end;
 
-  -- 5 state FSM --
-    -- SOF is the same for all configs, so we'll only store the PLS
-  --constant PLS_ROM       : std_logic_array_t := get_gse_start_header;
-  --constant PLS_ROM_DEPTH : integer           := PLS_ROM'length;
-
   -- internatl signals.
   signal tlast_i : std_logic := '0';
   signal m_tvalid_i : std_logic := '0';
