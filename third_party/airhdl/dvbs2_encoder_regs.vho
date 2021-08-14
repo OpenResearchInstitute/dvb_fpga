@@ -1,19 +1,19 @@
 -- -----------------------------------------------------------------------------
 -- 'dvbs2_encoder' Register Component
--- Revision: 144
+-- Revision: 292
 -- -----------------------------------------------------------------------------
--- Generated on 2021-04-09 at 07:38 (UTC) by airhdl version 2021.03.1
+-- Generated on 2021-08-14 at 16:56 (UTC) by airhdl version 2021.06.1
 -- -----------------------------------------------------------------------------
--- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
--- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
--- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
--- ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE 
--- LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
--- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
--- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
--- INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
--- CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
--- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+-- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+-- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-- ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+-- LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+-- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+-- INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+-- CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+-- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 -- POSSIBILITY OF SUCH DAMAGE.
 -- -----------------------------------------------------------------------------
 
@@ -51,7 +51,7 @@ component dvbs2_encoder_regs
         s_axi_bresp   : out std_logic_vector(1 downto 0);
         s_axi_bvalid  : out std_logic;
         s_axi_bready  : in  std_logic;
-        -- User Ports          
+        -- User Ports
         user2regs     : in user2regs_t;
         regs2user     : out regs2user_t
     );
@@ -60,7 +60,7 @@ end component;
 
 ------------- Begin Cut here for CONSTANT and SIGNAL Declarations --------------
 -- Constants:
-constant AXI_ADDR_WIDTH : integer := 32;  -- width of the AXI address bus		
+constant AXI_ADDR_WIDTH : integer := 32;  -- width of the AXI address bus
 constant BASEADDR : std_logic_vector(31 downto 0) := x"00000000"; -- the register file's system base address
 
 -- AXI interface signals:
@@ -99,33 +99,33 @@ your_instance_name : dvbs2_encoder_regs
     )
     port map(
         -- Clock and Reset
-        axi_aclk    => axi_aclk,   
+        axi_aclk    => axi_aclk,
         axi_aresetn => axi_aresetn,
         -- AXI Write Address Channel
-        s_axi_awaddr  => s_axi_awaddr, 
-        s_axi_awprot  => s_axi_awprot, 
+        s_axi_awaddr  => s_axi_awaddr,
+        s_axi_awprot  => s_axi_awprot,
         s_axi_awvalid => s_axi_awvalid,
         s_axi_awready => s_axi_awready,
         -- AXI Write Data Channel
-        s_axi_wdata   => s_axi_wdata, 
-        s_axi_wstrb   => s_axi_wstrb, 
+        s_axi_wdata   => s_axi_wdata,
+        s_axi_wstrb   => s_axi_wstrb,
         s_axi_wvalid  => s_axi_wvalid,
         s_axi_wready  => s_axi_wready,
         -- AXI Read Address Channel
-        s_axi_araddr  => s_axi_araddr, 
-        s_axi_arprot  => s_axi_arprot,         
+        s_axi_araddr  => s_axi_araddr,
+        s_axi_arprot  => s_axi_arprot,
         s_axi_arvalid => s_axi_arvalid,
         s_axi_arready => s_axi_arready,
         -- AXI Read Data Channel
-        s_axi_rdata   => s_axi_rdata, 
-        s_axi_rresp   => s_axi_rresp, 
+        s_axi_rdata   => s_axi_rdata,
+        s_axi_rresp   => s_axi_rresp,
         s_axi_rvalid  => s_axi_rvalid,
         s_axi_rready  => s_axi_rready,
         -- AXI Write Response Channel
         s_axi_bresp   => s_axi_bresp,
-        s_axi_bvalid  => s_axi_bvalid, 
+        s_axi_bvalid  => s_axi_bvalid,
         s_axi_bready  => s_axi_bready,
-        -- User Ports  
+        -- User Ports
         user2regs     => user2regs,
         regs2user     => regs2user
     );

@@ -1,19 +1,19 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_encoder' Register Component
-// Revision: 144
+// Revision: 292
 // -----------------------------------------------------------------------------
-// Generated on 2021-04-09 at 07:38 (UTC) by airhdl version 2021.03.1
+// Generated on 2021-08-14 at 16:56 (UTC) by airhdl version 2021.06.1
 // -----------------------------------------------------------------------------
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE 
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // -----------------------------------------------------------------------------
 
@@ -21,41 +21,41 @@
 
 module dvbs2_encoder_regs #(
     parameter AXI_ADDR_WIDTH = 32, // width of the AXI address bus
-    parameter logic [31:0] BASEADDR = 32'h00000000 // the register file's system base address 
+    parameter logic [31:0] BASEADDR = 32'h00000000 // the register file's system base address
     ) (
     // Clock and Reset
     input  wire                      axi_aclk,
     input  wire                      axi_aresetn,
-                                     
-    // AXI Write Address Channel     
+
+    // AXI Write Address Channel
     input  wire [AXI_ADDR_WIDTH-1:0] s_axi_awaddr,
     input  wire [2:0]                s_axi_awprot,
     input  wire                      s_axi_awvalid,
     output wire                      s_axi_awready,
-                                     
-    // AXI Write Data Channel        
+
+    // AXI Write Data Channel
     input  wire [31:0]               s_axi_wdata,
     input  wire [3:0]                s_axi_wstrb,
     input  wire                      s_axi_wvalid,
     output wire                      s_axi_wready,
-                                     
-    // AXI Read Address Channel      
+
+    // AXI Read Address Channel
     input  wire [AXI_ADDR_WIDTH-1:0] s_axi_araddr,
     input  wire [2:0]                s_axi_arprot,
     input  wire                      s_axi_arvalid,
     output wire                      s_axi_arready,
-                                     
-    // AXI Read Data Channel         
+
+    // AXI Read Data Channel
     output wire [31:0]               s_axi_rdata,
     output wire [1:0]                s_axi_rresp,
     output wire                      s_axi_rvalid,
     input  wire                      s_axi_rready,
-                                     
-    // AXI Write Response Channel    
+
+    // AXI Write Response Channel
     output wire [1:0]                s_axi_bresp,
     output wire                      s_axi_bvalid,
     input  wire                      s_axi_bready,
-    
+
     // User Ports
     input dvbs2_encoder_regs_pkg::user2regs_t user2regs,
     output dvbs2_encoder_regs_pkg::regs2user_t regs2user
@@ -90,20 +90,21 @@ module dvbs2_encoder_regs #(
     logic s_frames_in_transit_strobe_r;
     logic [7:0] s_reg_frames_in_transit_value;
     logic [7:0] s_bit_mapper_ram_raddr_r;
+    logic s_bit_mapper_ram_ren_r;
     logic [31:0] s_bit_mapper_ram_rdata;
     logic [7:0] s_bit_mapper_ram_waddr_r;
     logic [3:0] s_bit_mapper_ram_wen_r;
-    logic [31:0] s_bit_mapper_ram_wdata_r;        
+    logic [31:0] s_bit_mapper_ram_wdata_r;
     logic [8:0] s_polyphase_filter_coefficients_raddr_r;
+    logic s_polyphase_filter_coefficients_ren_r;
     logic [31:0] s_polyphase_filter_coefficients_rdata;
     logic [8:0] s_polyphase_filter_coefficients_waddr_r;
     logic [3:0] s_polyphase_filter_coefficients_wen_r;
-    logic [31:0] s_polyphase_filter_coefficients_wdata_r;        
+    logic [31:0] s_polyphase_filter_coefficients_wdata_r;
     logic s_axi_debug_input_width_converter_cfg_strobe_r;
     logic [0:0] s_reg_axi_debug_input_width_converter_cfg_block_data_r;
     logic [0:0] s_reg_axi_debug_input_width_converter_cfg_allow_word_r;
     logic [0:0] s_reg_axi_debug_input_width_converter_cfg_allow_frame_r;
-    logic [0:0] s_reg_axi_debug_input_width_converter_cfg_reset_min_max_r;
     logic s_axi_debug_input_width_converter_frame_count_strobe_r;
     logic [15:0] s_reg_axi_debug_input_width_converter_frame_count_value;
     logic s_axi_debug_input_width_converter_last_frame_length_strobe_r;
@@ -111,11 +112,17 @@ module dvbs2_encoder_regs #(
     logic s_axi_debug_input_width_converter_min_max_frame_length_strobe_r;
     logic [15:0] s_reg_axi_debug_input_width_converter_min_max_frame_length_min_frame_length;
     logic [15:0] s_reg_axi_debug_input_width_converter_min_max_frame_length_max_frame_length;
+    logic s_axi_debug_input_width_converter_word_count_strobe_r;
+    logic [15:0] s_reg_axi_debug_input_width_converter_word_count_value;
+    logic s_axi_debug_input_width_converter_strobes_strobe_r;
+    logic [0:0] s_reg_axi_debug_input_width_converter_strobes_s_tvalid;
+    logic [0:0] s_reg_axi_debug_input_width_converter_strobes_s_tready;
+    logic [0:0] s_reg_axi_debug_input_width_converter_strobes_m_tvalid;
+    logic [0:0] s_reg_axi_debug_input_width_converter_strobes_m_tready;
     logic s_axi_debug_bb_scrambler_cfg_strobe_r;
     logic [0:0] s_reg_axi_debug_bb_scrambler_cfg_block_data_r;
     logic [0:0] s_reg_axi_debug_bb_scrambler_cfg_allow_word_r;
     logic [0:0] s_reg_axi_debug_bb_scrambler_cfg_allow_frame_r;
-    logic [0:0] s_reg_axi_debug_bb_scrambler_cfg_reset_min_max_r;
     logic s_axi_debug_bb_scrambler_frame_count_strobe_r;
     logic [15:0] s_reg_axi_debug_bb_scrambler_frame_count_value;
     logic s_axi_debug_bb_scrambler_last_frame_length_strobe_r;
@@ -123,11 +130,17 @@ module dvbs2_encoder_regs #(
     logic s_axi_debug_bb_scrambler_min_max_frame_length_strobe_r;
     logic [15:0] s_reg_axi_debug_bb_scrambler_min_max_frame_length_min_frame_length;
     logic [15:0] s_reg_axi_debug_bb_scrambler_min_max_frame_length_max_frame_length;
+    logic s_axi_debug_bb_scrambler_word_count_strobe_r;
+    logic [15:0] s_reg_axi_debug_bb_scrambler_word_count_value;
+    logic s_axi_debug_bb_scrambler_strobes_strobe_r;
+    logic [0:0] s_reg_axi_debug_bb_scrambler_strobes_s_tvalid;
+    logic [0:0] s_reg_axi_debug_bb_scrambler_strobes_s_tready;
+    logic [0:0] s_reg_axi_debug_bb_scrambler_strobes_m_tvalid;
+    logic [0:0] s_reg_axi_debug_bb_scrambler_strobes_m_tready;
     logic s_axi_debug_bch_encoder_cfg_strobe_r;
     logic [0:0] s_reg_axi_debug_bch_encoder_cfg_block_data_r;
     logic [0:0] s_reg_axi_debug_bch_encoder_cfg_allow_word_r;
     logic [0:0] s_reg_axi_debug_bch_encoder_cfg_allow_frame_r;
-    logic [0:0] s_reg_axi_debug_bch_encoder_cfg_reset_min_max_r;
     logic s_axi_debug_bch_encoder_frame_count_strobe_r;
     logic [15:0] s_reg_axi_debug_bch_encoder_frame_count_value;
     logic s_axi_debug_bch_encoder_last_frame_length_strobe_r;
@@ -135,11 +148,17 @@ module dvbs2_encoder_regs #(
     logic s_axi_debug_bch_encoder_min_max_frame_length_strobe_r;
     logic [15:0] s_reg_axi_debug_bch_encoder_min_max_frame_length_min_frame_length;
     logic [15:0] s_reg_axi_debug_bch_encoder_min_max_frame_length_max_frame_length;
+    logic s_axi_debug_bch_encoder_word_count_strobe_r;
+    logic [15:0] s_reg_axi_debug_bch_encoder_word_count_value;
+    logic s_axi_debug_bch_encoder_strobes_strobe_r;
+    logic [0:0] s_reg_axi_debug_bch_encoder_strobes_s_tvalid;
+    logic [0:0] s_reg_axi_debug_bch_encoder_strobes_s_tready;
+    logic [0:0] s_reg_axi_debug_bch_encoder_strobes_m_tvalid;
+    logic [0:0] s_reg_axi_debug_bch_encoder_strobes_m_tready;
     logic s_axi_debug_ldpc_encoder_cfg_strobe_r;
     logic [0:0] s_reg_axi_debug_ldpc_encoder_cfg_block_data_r;
     logic [0:0] s_reg_axi_debug_ldpc_encoder_cfg_allow_word_r;
     logic [0:0] s_reg_axi_debug_ldpc_encoder_cfg_allow_frame_r;
-    logic [0:0] s_reg_axi_debug_ldpc_encoder_cfg_reset_min_max_r;
     logic s_axi_debug_ldpc_encoder_frame_count_strobe_r;
     logic [15:0] s_reg_axi_debug_ldpc_encoder_frame_count_value;
     logic s_axi_debug_ldpc_encoder_last_frame_length_strobe_r;
@@ -147,11 +166,17 @@ module dvbs2_encoder_regs #(
     logic s_axi_debug_ldpc_encoder_min_max_frame_length_strobe_r;
     logic [15:0] s_reg_axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length;
     logic [15:0] s_reg_axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length;
+    logic s_axi_debug_ldpc_encoder_word_count_strobe_r;
+    logic [15:0] s_reg_axi_debug_ldpc_encoder_word_count_value;
+    logic s_axi_debug_ldpc_encoder_strobes_strobe_r;
+    logic [0:0] s_reg_axi_debug_ldpc_encoder_strobes_s_tvalid;
+    logic [0:0] s_reg_axi_debug_ldpc_encoder_strobes_s_tready;
+    logic [0:0] s_reg_axi_debug_ldpc_encoder_strobes_m_tvalid;
+    logic [0:0] s_reg_axi_debug_ldpc_encoder_strobes_m_tready;
     logic s_axi_debug_bit_interleaver_cfg_strobe_r;
     logic [0:0] s_reg_axi_debug_bit_interleaver_cfg_block_data_r;
     logic [0:0] s_reg_axi_debug_bit_interleaver_cfg_allow_word_r;
     logic [0:0] s_reg_axi_debug_bit_interleaver_cfg_allow_frame_r;
-    logic [0:0] s_reg_axi_debug_bit_interleaver_cfg_reset_min_max_r;
     logic s_axi_debug_bit_interleaver_frame_count_strobe_r;
     logic [15:0] s_reg_axi_debug_bit_interleaver_frame_count_value;
     logic s_axi_debug_bit_interleaver_last_frame_length_strobe_r;
@@ -159,11 +184,17 @@ module dvbs2_encoder_regs #(
     logic s_axi_debug_bit_interleaver_min_max_frame_length_strobe_r;
     logic [15:0] s_reg_axi_debug_bit_interleaver_min_max_frame_length_min_frame_length;
     logic [15:0] s_reg_axi_debug_bit_interleaver_min_max_frame_length_max_frame_length;
+    logic s_axi_debug_bit_interleaver_word_count_strobe_r;
+    logic [15:0] s_reg_axi_debug_bit_interleaver_word_count_value;
+    logic s_axi_debug_bit_interleaver_strobes_strobe_r;
+    logic [0:0] s_reg_axi_debug_bit_interleaver_strobes_s_tvalid;
+    logic [0:0] s_reg_axi_debug_bit_interleaver_strobes_s_tready;
+    logic [0:0] s_reg_axi_debug_bit_interleaver_strobes_m_tvalid;
+    logic [0:0] s_reg_axi_debug_bit_interleaver_strobes_m_tready;
     logic s_axi_debug_plframe_cfg_strobe_r;
     logic [0:0] s_reg_axi_debug_plframe_cfg_block_data_r;
     logic [0:0] s_reg_axi_debug_plframe_cfg_allow_word_r;
     logic [0:0] s_reg_axi_debug_plframe_cfg_allow_frame_r;
-    logic [0:0] s_reg_axi_debug_plframe_cfg_reset_min_max_r;
     logic s_axi_debug_plframe_frame_count_strobe_r;
     logic [15:0] s_reg_axi_debug_plframe_frame_count_value;
     logic s_axi_debug_plframe_last_frame_length_strobe_r;
@@ -171,11 +202,17 @@ module dvbs2_encoder_regs #(
     logic s_axi_debug_plframe_min_max_frame_length_strobe_r;
     logic [15:0] s_reg_axi_debug_plframe_min_max_frame_length_min_frame_length;
     logic [15:0] s_reg_axi_debug_plframe_min_max_frame_length_max_frame_length;
+    logic s_axi_debug_plframe_word_count_strobe_r;
+    logic [15:0] s_reg_axi_debug_plframe_word_count_value;
+    logic s_axi_debug_plframe_strobes_strobe_r;
+    logic [0:0] s_reg_axi_debug_plframe_strobes_s_tvalid;
+    logic [0:0] s_reg_axi_debug_plframe_strobes_s_tready;
+    logic [0:0] s_reg_axi_debug_plframe_strobes_m_tvalid;
+    logic [0:0] s_reg_axi_debug_plframe_strobes_m_tready;
     logic s_axi_debug_output_cfg_strobe_r;
     logic [0:0] s_reg_axi_debug_output_cfg_block_data_r;
     logic [0:0] s_reg_axi_debug_output_cfg_allow_word_r;
     logic [0:0] s_reg_axi_debug_output_cfg_allow_frame_r;
-    logic [0:0] s_reg_axi_debug_output_cfg_reset_min_max_r;
     logic s_axi_debug_output_frame_count_strobe_r;
     logic [15:0] s_reg_axi_debug_output_frame_count_value;
     logic s_axi_debug_output_last_frame_length_strobe_r;
@@ -183,6 +220,13 @@ module dvbs2_encoder_regs #(
     logic s_axi_debug_output_min_max_frame_length_strobe_r;
     logic [15:0] s_reg_axi_debug_output_min_max_frame_length_min_frame_length;
     logic [15:0] s_reg_axi_debug_output_min_max_frame_length_max_frame_length;
+    logic s_axi_debug_output_word_count_strobe_r;
+    logic [15:0] s_reg_axi_debug_output_word_count_value;
+    logic s_axi_debug_output_strobes_strobe_r;
+    logic [0:0] s_reg_axi_debug_output_strobes_s_tvalid;
+    logic [0:0] s_reg_axi_debug_output_strobes_s_tready;
+    logic [0:0] s_reg_axi_debug_output_strobes_m_tvalid;
+    logic [0:0] s_reg_axi_debug_output_strobes_m_tready;
 
     //--------------------------------------------------------------------------
     // Inputs
@@ -191,41 +235,76 @@ module dvbs2_encoder_regs #(
     assign s_reg_ldpc_fifo_status_ldpc_fifo_empty = user2regs.ldpc_fifo_status_ldpc_fifo_empty;
     assign s_reg_ldpc_fifo_status_ldpc_fifo_full = user2regs.ldpc_fifo_status_ldpc_fifo_full;
     assign s_reg_frames_in_transit_value = user2regs.frames_in_transit_value;
-    assign s_bit_mapper_ram_rdata = user2regs.bit_mapper_ram_rdata; 
-    assign s_polyphase_filter_coefficients_rdata = user2regs.polyphase_filter_coefficients_rdata; 
+    assign s_bit_mapper_ram_rdata = user2regs.bit_mapper_ram_rdata;
+    assign s_polyphase_filter_coefficients_rdata = user2regs.polyphase_filter_coefficients_rdata;
     assign s_reg_axi_debug_input_width_converter_frame_count_value = user2regs.axi_debug_input_width_converter_frame_count_value;
     assign s_reg_axi_debug_input_width_converter_last_frame_length_value = user2regs.axi_debug_input_width_converter_last_frame_length_value;
     assign s_reg_axi_debug_input_width_converter_min_max_frame_length_min_frame_length = user2regs.axi_debug_input_width_converter_min_max_frame_length_min_frame_length;
     assign s_reg_axi_debug_input_width_converter_min_max_frame_length_max_frame_length = user2regs.axi_debug_input_width_converter_min_max_frame_length_max_frame_length;
+    assign s_reg_axi_debug_input_width_converter_word_count_value = user2regs.axi_debug_input_width_converter_word_count_value;
+    assign s_reg_axi_debug_input_width_converter_strobes_s_tvalid = user2regs.axi_debug_input_width_converter_strobes_s_tvalid;
+    assign s_reg_axi_debug_input_width_converter_strobes_s_tready = user2regs.axi_debug_input_width_converter_strobes_s_tready;
+    assign s_reg_axi_debug_input_width_converter_strobes_m_tvalid = user2regs.axi_debug_input_width_converter_strobes_m_tvalid;
+    assign s_reg_axi_debug_input_width_converter_strobes_m_tready = user2regs.axi_debug_input_width_converter_strobes_m_tready;
     assign s_reg_axi_debug_bb_scrambler_frame_count_value = user2regs.axi_debug_bb_scrambler_frame_count_value;
     assign s_reg_axi_debug_bb_scrambler_last_frame_length_value = user2regs.axi_debug_bb_scrambler_last_frame_length_value;
     assign s_reg_axi_debug_bb_scrambler_min_max_frame_length_min_frame_length = user2regs.axi_debug_bb_scrambler_min_max_frame_length_min_frame_length;
     assign s_reg_axi_debug_bb_scrambler_min_max_frame_length_max_frame_length = user2regs.axi_debug_bb_scrambler_min_max_frame_length_max_frame_length;
+    assign s_reg_axi_debug_bb_scrambler_word_count_value = user2regs.axi_debug_bb_scrambler_word_count_value;
+    assign s_reg_axi_debug_bb_scrambler_strobes_s_tvalid = user2regs.axi_debug_bb_scrambler_strobes_s_tvalid;
+    assign s_reg_axi_debug_bb_scrambler_strobes_s_tready = user2regs.axi_debug_bb_scrambler_strobes_s_tready;
+    assign s_reg_axi_debug_bb_scrambler_strobes_m_tvalid = user2regs.axi_debug_bb_scrambler_strobes_m_tvalid;
+    assign s_reg_axi_debug_bb_scrambler_strobes_m_tready = user2regs.axi_debug_bb_scrambler_strobes_m_tready;
     assign s_reg_axi_debug_bch_encoder_frame_count_value = user2regs.axi_debug_bch_encoder_frame_count_value;
     assign s_reg_axi_debug_bch_encoder_last_frame_length_value = user2regs.axi_debug_bch_encoder_last_frame_length_value;
     assign s_reg_axi_debug_bch_encoder_min_max_frame_length_min_frame_length = user2regs.axi_debug_bch_encoder_min_max_frame_length_min_frame_length;
     assign s_reg_axi_debug_bch_encoder_min_max_frame_length_max_frame_length = user2regs.axi_debug_bch_encoder_min_max_frame_length_max_frame_length;
+    assign s_reg_axi_debug_bch_encoder_word_count_value = user2regs.axi_debug_bch_encoder_word_count_value;
+    assign s_reg_axi_debug_bch_encoder_strobes_s_tvalid = user2regs.axi_debug_bch_encoder_strobes_s_tvalid;
+    assign s_reg_axi_debug_bch_encoder_strobes_s_tready = user2regs.axi_debug_bch_encoder_strobes_s_tready;
+    assign s_reg_axi_debug_bch_encoder_strobes_m_tvalid = user2regs.axi_debug_bch_encoder_strobes_m_tvalid;
+    assign s_reg_axi_debug_bch_encoder_strobes_m_tready = user2regs.axi_debug_bch_encoder_strobes_m_tready;
     assign s_reg_axi_debug_ldpc_encoder_frame_count_value = user2regs.axi_debug_ldpc_encoder_frame_count_value;
     assign s_reg_axi_debug_ldpc_encoder_last_frame_length_value = user2regs.axi_debug_ldpc_encoder_last_frame_length_value;
     assign s_reg_axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length = user2regs.axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length;
     assign s_reg_axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length = user2regs.axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length;
+    assign s_reg_axi_debug_ldpc_encoder_word_count_value = user2regs.axi_debug_ldpc_encoder_word_count_value;
+    assign s_reg_axi_debug_ldpc_encoder_strobes_s_tvalid = user2regs.axi_debug_ldpc_encoder_strobes_s_tvalid;
+    assign s_reg_axi_debug_ldpc_encoder_strobes_s_tready = user2regs.axi_debug_ldpc_encoder_strobes_s_tready;
+    assign s_reg_axi_debug_ldpc_encoder_strobes_m_tvalid = user2regs.axi_debug_ldpc_encoder_strobes_m_tvalid;
+    assign s_reg_axi_debug_ldpc_encoder_strobes_m_tready = user2regs.axi_debug_ldpc_encoder_strobes_m_tready;
     assign s_reg_axi_debug_bit_interleaver_frame_count_value = user2regs.axi_debug_bit_interleaver_frame_count_value;
     assign s_reg_axi_debug_bit_interleaver_last_frame_length_value = user2regs.axi_debug_bit_interleaver_last_frame_length_value;
     assign s_reg_axi_debug_bit_interleaver_min_max_frame_length_min_frame_length = user2regs.axi_debug_bit_interleaver_min_max_frame_length_min_frame_length;
     assign s_reg_axi_debug_bit_interleaver_min_max_frame_length_max_frame_length = user2regs.axi_debug_bit_interleaver_min_max_frame_length_max_frame_length;
+    assign s_reg_axi_debug_bit_interleaver_word_count_value = user2regs.axi_debug_bit_interleaver_word_count_value;
+    assign s_reg_axi_debug_bit_interleaver_strobes_s_tvalid = user2regs.axi_debug_bit_interleaver_strobes_s_tvalid;
+    assign s_reg_axi_debug_bit_interleaver_strobes_s_tready = user2regs.axi_debug_bit_interleaver_strobes_s_tready;
+    assign s_reg_axi_debug_bit_interleaver_strobes_m_tvalid = user2regs.axi_debug_bit_interleaver_strobes_m_tvalid;
+    assign s_reg_axi_debug_bit_interleaver_strobes_m_tready = user2regs.axi_debug_bit_interleaver_strobes_m_tready;
     assign s_reg_axi_debug_plframe_frame_count_value = user2regs.axi_debug_plframe_frame_count_value;
     assign s_reg_axi_debug_plframe_last_frame_length_value = user2regs.axi_debug_plframe_last_frame_length_value;
     assign s_reg_axi_debug_plframe_min_max_frame_length_min_frame_length = user2regs.axi_debug_plframe_min_max_frame_length_min_frame_length;
     assign s_reg_axi_debug_plframe_min_max_frame_length_max_frame_length = user2regs.axi_debug_plframe_min_max_frame_length_max_frame_length;
+    assign s_reg_axi_debug_plframe_word_count_value = user2regs.axi_debug_plframe_word_count_value;
+    assign s_reg_axi_debug_plframe_strobes_s_tvalid = user2regs.axi_debug_plframe_strobes_s_tvalid;
+    assign s_reg_axi_debug_plframe_strobes_s_tready = user2regs.axi_debug_plframe_strobes_s_tready;
+    assign s_reg_axi_debug_plframe_strobes_m_tvalid = user2regs.axi_debug_plframe_strobes_m_tvalid;
+    assign s_reg_axi_debug_plframe_strobes_m_tready = user2regs.axi_debug_plframe_strobes_m_tready;
     assign s_reg_axi_debug_output_frame_count_value = user2regs.axi_debug_output_frame_count_value;
     assign s_reg_axi_debug_output_last_frame_length_value = user2regs.axi_debug_output_last_frame_length_value;
     assign s_reg_axi_debug_output_min_max_frame_length_min_frame_length = user2regs.axi_debug_output_min_max_frame_length_min_frame_length;
     assign s_reg_axi_debug_output_min_max_frame_length_max_frame_length = user2regs.axi_debug_output_min_max_frame_length_max_frame_length;
+    assign s_reg_axi_debug_output_word_count_value = user2regs.axi_debug_output_word_count_value;
+    assign s_reg_axi_debug_output_strobes_s_tvalid = user2regs.axi_debug_output_strobes_s_tvalid;
+    assign s_reg_axi_debug_output_strobes_s_tready = user2regs.axi_debug_output_strobes_s_tready;
+    assign s_reg_axi_debug_output_strobes_m_tvalid = user2regs.axi_debug_output_strobes_m_tvalid;
+    assign s_reg_axi_debug_output_strobes_m_tready = user2regs.axi_debug_output_strobes_m_tready;
 
     //--------------------------------------------------------------------------
     // Read-transaction FSM
-    //    
-    localparam MAX_MEMORY_LATENCY = 2;
+    //
+    localparam MAX_MEMORY_LATENCY = 5;
 
     typedef enum {
         READ_IDLE,
@@ -240,7 +319,7 @@ module dvbs2_encoder_regs #(
         read_state_t v_state_r;
         logic [31:0] v_rdata_r;
         logic [1:0] v_rresp_r;
-        int v_mem_wait_count_r;
+        logic [$clog2(MAX_MEMORY_LATENCY)-1:0] v_mem_wait_count_r;
         // combinatorial helper variables
         logic v_addr_hit;
         logic [AXI_ADDR_WIDTH-1:0] v_mem_addr;
@@ -248,7 +327,7 @@ module dvbs2_encoder_regs #(
             v_state_r          <= READ_IDLE;
             v_rdata_r          <= '0;
             v_rresp_r          <= '0;
-            v_mem_wait_count_r <= 0;            
+            v_mem_wait_count_r <= '0;
             s_axi_arready_r    <= '0;
             s_axi_rvalid_r     <= '0;
             s_axi_rresp_r      <= '0;
@@ -257,28 +336,44 @@ module dvbs2_encoder_regs #(
             s_ldpc_fifo_status_strobe_r <= '0;
             s_frames_in_transit_strobe_r <= '0;
             s_bit_mapper_ram_raddr_r <= '0;
+            s_bit_mapper_ram_ren_r <= 0;
             s_polyphase_filter_coefficients_raddr_r <= '0;
+            s_polyphase_filter_coefficients_ren_r <= 0;
             s_axi_debug_input_width_converter_frame_count_strobe_r <= '0;
             s_axi_debug_input_width_converter_last_frame_length_strobe_r <= '0;
             s_axi_debug_input_width_converter_min_max_frame_length_strobe_r <= '0;
+            s_axi_debug_input_width_converter_word_count_strobe_r <= '0;
+            s_axi_debug_input_width_converter_strobes_strobe_r <= '0;
             s_axi_debug_bb_scrambler_frame_count_strobe_r <= '0;
             s_axi_debug_bb_scrambler_last_frame_length_strobe_r <= '0;
             s_axi_debug_bb_scrambler_min_max_frame_length_strobe_r <= '0;
+            s_axi_debug_bb_scrambler_word_count_strobe_r <= '0;
+            s_axi_debug_bb_scrambler_strobes_strobe_r <= '0;
             s_axi_debug_bch_encoder_frame_count_strobe_r <= '0;
             s_axi_debug_bch_encoder_last_frame_length_strobe_r <= '0;
             s_axi_debug_bch_encoder_min_max_frame_length_strobe_r <= '0;
+            s_axi_debug_bch_encoder_word_count_strobe_r <= '0;
+            s_axi_debug_bch_encoder_strobes_strobe_r <= '0;
             s_axi_debug_ldpc_encoder_frame_count_strobe_r <= '0;
             s_axi_debug_ldpc_encoder_last_frame_length_strobe_r <= '0;
             s_axi_debug_ldpc_encoder_min_max_frame_length_strobe_r <= '0;
+            s_axi_debug_ldpc_encoder_word_count_strobe_r <= '0;
+            s_axi_debug_ldpc_encoder_strobes_strobe_r <= '0;
             s_axi_debug_bit_interleaver_frame_count_strobe_r <= '0;
             s_axi_debug_bit_interleaver_last_frame_length_strobe_r <= '0;
             s_axi_debug_bit_interleaver_min_max_frame_length_strobe_r <= '0;
+            s_axi_debug_bit_interleaver_word_count_strobe_r <= '0;
+            s_axi_debug_bit_interleaver_strobes_strobe_r <= '0;
             s_axi_debug_plframe_frame_count_strobe_r <= '0;
             s_axi_debug_plframe_last_frame_length_strobe_r <= '0;
             s_axi_debug_plframe_min_max_frame_length_strobe_r <= '0;
+            s_axi_debug_plframe_word_count_strobe_r <= '0;
+            s_axi_debug_plframe_strobes_strobe_r <= '0;
             s_axi_debug_output_frame_count_strobe_r <= '0;
             s_axi_debug_output_last_frame_length_strobe_r <= '0;
             s_axi_debug_output_min_max_frame_length_strobe_r <= '0;
+            s_axi_debug_output_word_count_strobe_r <= '0;
+            s_axi_debug_output_strobes_strobe_r <= '0;
         end else begin
             // Default values:
             s_axi_arready_r <= 1'b0;
@@ -289,28 +384,42 @@ module dvbs2_encoder_regs #(
             s_axi_debug_input_width_converter_frame_count_strobe_r <= '0;
             s_axi_debug_input_width_converter_last_frame_length_strobe_r <= '0;
             s_axi_debug_input_width_converter_min_max_frame_length_strobe_r <= '0;
+            s_axi_debug_input_width_converter_word_count_strobe_r <= '0;
+            s_axi_debug_input_width_converter_strobes_strobe_r <= '0;
             s_axi_debug_bb_scrambler_frame_count_strobe_r <= '0;
             s_axi_debug_bb_scrambler_last_frame_length_strobe_r <= '0;
             s_axi_debug_bb_scrambler_min_max_frame_length_strobe_r <= '0;
+            s_axi_debug_bb_scrambler_word_count_strobe_r <= '0;
+            s_axi_debug_bb_scrambler_strobes_strobe_r <= '0;
             s_axi_debug_bch_encoder_frame_count_strobe_r <= '0;
             s_axi_debug_bch_encoder_last_frame_length_strobe_r <= '0;
             s_axi_debug_bch_encoder_min_max_frame_length_strobe_r <= '0;
+            s_axi_debug_bch_encoder_word_count_strobe_r <= '0;
+            s_axi_debug_bch_encoder_strobes_strobe_r <= '0;
             s_axi_debug_ldpc_encoder_frame_count_strobe_r <= '0;
             s_axi_debug_ldpc_encoder_last_frame_length_strobe_r <= '0;
             s_axi_debug_ldpc_encoder_min_max_frame_length_strobe_r <= '0;
+            s_axi_debug_ldpc_encoder_word_count_strobe_r <= '0;
+            s_axi_debug_ldpc_encoder_strobes_strobe_r <= '0;
             s_axi_debug_bit_interleaver_frame_count_strobe_r <= '0;
             s_axi_debug_bit_interleaver_last_frame_length_strobe_r <= '0;
             s_axi_debug_bit_interleaver_min_max_frame_length_strobe_r <= '0;
+            s_axi_debug_bit_interleaver_word_count_strobe_r <= '0;
+            s_axi_debug_bit_interleaver_strobes_strobe_r <= '0;
             s_axi_debug_plframe_frame_count_strobe_r <= '0;
             s_axi_debug_plframe_last_frame_length_strobe_r <= '0;
             s_axi_debug_plframe_min_max_frame_length_strobe_r <= '0;
+            s_axi_debug_plframe_word_count_strobe_r <= '0;
+            s_axi_debug_plframe_strobes_strobe_r <= '0;
             s_axi_debug_output_frame_count_strobe_r <= '0;
             s_axi_debug_output_last_frame_length_strobe_r <= '0;
             s_axi_debug_output_min_max_frame_length_strobe_r <= '0;
+            s_axi_debug_output_word_count_strobe_r <= '0;
+            s_axi_debug_output_strobes_strobe_r <= '0;
 
             case (v_state_r)
 
-                // Wait for the start of a read transaction, which is 
+                // Wait for the start of a read transaction, which is
                 // initiated by the assertion of ARVALID
                 READ_IDLE: begin
                     if (s_axi_arvalid) begin
@@ -325,16 +434,16 @@ module dvbs2_encoder_regs #(
                     // defaults:
                     v_addr_hit = 1'b0;
                     v_rdata_r  <= '0;
-                    
+
                     // register 'config' at address offset 0x0
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::CONFIG_OFFSET) begin
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::CONFIG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[17:0] <= s_reg_config_physical_layer_scrambler_shift_reg_init_r;
                         v_rdata_r[18:18] <= s_reg_config_enable_dummy_frames_r;
                         v_state_r <= READ_RESPONSE;
                     end
                     // register 'ldpc_fifo_status' at address offset 0x4
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::LDPC_FIFO_STATUS_OFFSET) begin
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::LDPC_FIFO_STATUS_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[13:0] <= s_reg_ldpc_fifo_status_ldpc_fifo_entries;
                         v_rdata_r[16:16] <= s_reg_ldpc_fifo_status_ldpc_fifo_empty;
@@ -343,247 +452,361 @@ module dvbs2_encoder_regs #(
                         v_state_r <= READ_RESPONSE;
                     end
                     // register 'frames_in_transit' at address offset 0x8
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::FRAMES_IN_TRANSIT_OFFSET) begin
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::FRAMES_IN_TRANSIT_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[7:0] <= s_reg_frames_in_transit_value;
                         s_frames_in_transit_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
                     // memory 'bit_mapper_ram' at address offset 0xC
-                    if (s_axi_araddr_reg_r >= BASEADDR + dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_OFFSET && 
+                    if (s_axi_araddr_reg_r >= BASEADDR + dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_OFFSET &&
                         s_axi_araddr_reg_r < BASEADDR + dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_OFFSET + dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_DEPTH * 4) begin
                         v_addr_hit = 1'b1;
                         // generate memory read address:
                         v_mem_addr = s_axi_araddr_reg_r - BASEADDR - dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_OFFSET;
                         s_bit_mapper_ram_raddr_r <= v_mem_addr[9:2]; // output address has 4-byte granularity
+                        s_bit_mapper_ram_ren_r <= 1;
                         v_mem_wait_count_r <= dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_READ_LATENCY;
                         v_state_r <= WAIT_MEMORY_RDATA;
                     end
                     // memory 'polyphase_filter_coefficients' at address offset 0x3CC
-                    if (s_axi_araddr_reg_r >= BASEADDR + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET && 
+                    if (s_axi_araddr_reg_r >= BASEADDR + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET &&
                         s_axi_araddr_reg_r < BASEADDR + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_DEPTH * 4) begin
                         v_addr_hit = 1'b1;
                         // generate memory read address:
                         v_mem_addr = s_axi_araddr_reg_r - BASEADDR - dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET;
                         s_polyphase_filter_coefficients_raddr_r <= v_mem_addr[10:2]; // output address has 4-byte granularity
+                        s_polyphase_filter_coefficients_ren_r <= 1;
                         v_mem_wait_count_r <= dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_READ_LATENCY;
                         v_state_r <= WAIT_MEMORY_RDATA;
                     end
-                    // register 'axi_debug_input_width_converter_cfg' at address offset 0xBCC
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET) begin
+                    // register 'axi_debug_input_width_converter_cfg' at address offset 0xD00
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[0:0] <= s_reg_axi_debug_input_width_converter_cfg_block_data_r;
                         v_rdata_r[1:1] <= s_reg_axi_debug_input_width_converter_cfg_allow_word_r;
                         v_rdata_r[2:2] <= s_reg_axi_debug_input_width_converter_cfg_allow_frame_r;
-                        v_rdata_r[3:3] <= s_reg_axi_debug_input_width_converter_cfg_reset_min_max_r;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_input_width_converter_frame_count' at address offset 0xBD0
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_FRAME_COUNT_OFFSET) begin
+                    // register 'axi_debug_input_width_converter_frame_count' at address offset 0xD04
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_FRAME_COUNT_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_input_width_converter_frame_count_value;
                         s_axi_debug_input_width_converter_frame_count_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_input_width_converter_last_frame_length' at address offset 0xBD4
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_LAST_FRAME_LENGTH_OFFSET) begin
+                    // register 'axi_debug_input_width_converter_last_frame_length' at address offset 0xD08
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_LAST_FRAME_LENGTH_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_input_width_converter_last_frame_length_value;
                         s_axi_debug_input_width_converter_last_frame_length_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_input_width_converter_min_max_frame_length' at address offset 0xBD8
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_OFFSET) begin
+                    // register 'axi_debug_input_width_converter_min_max_frame_length' at address offset 0xD0C
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_input_width_converter_min_max_frame_length_min_frame_length;
                         v_rdata_r[31:16] <= s_reg_axi_debug_input_width_converter_min_max_frame_length_max_frame_length;
                         s_axi_debug_input_width_converter_min_max_frame_length_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_bb_scrambler_cfg' at address offset 0xBDC
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_CFG_OFFSET) begin
+                    // register 'axi_debug_input_width_converter_word_count' at address offset 0xD10
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_WORD_COUNT_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
+                        v_addr_hit = 1'b1;
+                        v_rdata_r[15:0] <= s_reg_axi_debug_input_width_converter_word_count_value;
+                        s_axi_debug_input_width_converter_word_count_strobe_r <= 1'b1;
+                        v_state_r <= READ_RESPONSE;
+                    end
+                    // register 'axi_debug_input_width_converter_strobes' at address offset 0xD14
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
+                        v_addr_hit = 1'b1;
+                        v_rdata_r[0:0] <= s_reg_axi_debug_input_width_converter_strobes_s_tvalid;
+                        v_rdata_r[1:1] <= s_reg_axi_debug_input_width_converter_strobes_s_tready;
+                        v_rdata_r[2:2] <= s_reg_axi_debug_input_width_converter_strobes_m_tvalid;
+                        v_rdata_r[3:3] <= s_reg_axi_debug_input_width_converter_strobes_m_tready;
+                        s_axi_debug_input_width_converter_strobes_strobe_r <= 1'b1;
+                        v_state_r <= READ_RESPONSE;
+                    end
+                    // register 'axi_debug_bb_scrambler_cfg' at address offset 0xE00
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_CFG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[0:0] <= s_reg_axi_debug_bb_scrambler_cfg_block_data_r;
                         v_rdata_r[1:1] <= s_reg_axi_debug_bb_scrambler_cfg_allow_word_r;
                         v_rdata_r[2:2] <= s_reg_axi_debug_bb_scrambler_cfg_allow_frame_r;
-                        v_rdata_r[3:3] <= s_reg_axi_debug_bb_scrambler_cfg_reset_min_max_r;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_bb_scrambler_frame_count' at address offset 0xBE0
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_FRAME_COUNT_OFFSET) begin
+                    // register 'axi_debug_bb_scrambler_frame_count' at address offset 0xE04
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_FRAME_COUNT_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_bb_scrambler_frame_count_value;
                         s_axi_debug_bb_scrambler_frame_count_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_bb_scrambler_last_frame_length' at address offset 0xBE4
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_LAST_FRAME_LENGTH_OFFSET) begin
+                    // register 'axi_debug_bb_scrambler_last_frame_length' at address offset 0xE08
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_LAST_FRAME_LENGTH_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_bb_scrambler_last_frame_length_value;
                         s_axi_debug_bb_scrambler_last_frame_length_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_bb_scrambler_min_max_frame_length' at address offset 0xBE8
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_OFFSET) begin
+                    // register 'axi_debug_bb_scrambler_min_max_frame_length' at address offset 0xE0C
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_bb_scrambler_min_max_frame_length_min_frame_length;
                         v_rdata_r[31:16] <= s_reg_axi_debug_bb_scrambler_min_max_frame_length_max_frame_length;
                         s_axi_debug_bb_scrambler_min_max_frame_length_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_bch_encoder_cfg' at address offset 0xBEC
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_CFG_OFFSET) begin
+                    // register 'axi_debug_bb_scrambler_word_count' at address offset 0xE10
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_WORD_COUNT_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
+                        v_addr_hit = 1'b1;
+                        v_rdata_r[15:0] <= s_reg_axi_debug_bb_scrambler_word_count_value;
+                        s_axi_debug_bb_scrambler_word_count_strobe_r <= 1'b1;
+                        v_state_r <= READ_RESPONSE;
+                    end
+                    // register 'axi_debug_bb_scrambler_strobes' at address offset 0xE14
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_STROBES_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
+                        v_addr_hit = 1'b1;
+                        v_rdata_r[0:0] <= s_reg_axi_debug_bb_scrambler_strobes_s_tvalid;
+                        v_rdata_r[1:1] <= s_reg_axi_debug_bb_scrambler_strobes_s_tready;
+                        v_rdata_r[2:2] <= s_reg_axi_debug_bb_scrambler_strobes_m_tvalid;
+                        v_rdata_r[3:3] <= s_reg_axi_debug_bb_scrambler_strobes_m_tready;
+                        s_axi_debug_bb_scrambler_strobes_strobe_r <= 1'b1;
+                        v_state_r <= READ_RESPONSE;
+                    end
+                    // register 'axi_debug_bch_encoder_cfg' at address offset 0xF00
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_CFG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[0:0] <= s_reg_axi_debug_bch_encoder_cfg_block_data_r;
                         v_rdata_r[1:1] <= s_reg_axi_debug_bch_encoder_cfg_allow_word_r;
                         v_rdata_r[2:2] <= s_reg_axi_debug_bch_encoder_cfg_allow_frame_r;
-                        v_rdata_r[3:3] <= s_reg_axi_debug_bch_encoder_cfg_reset_min_max_r;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_bch_encoder_frame_count' at address offset 0xBF0
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_FRAME_COUNT_OFFSET) begin
+                    // register 'axi_debug_bch_encoder_frame_count' at address offset 0xF04
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_FRAME_COUNT_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_bch_encoder_frame_count_value;
                         s_axi_debug_bch_encoder_frame_count_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_bch_encoder_last_frame_length' at address offset 0xBF4
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_LAST_FRAME_LENGTH_OFFSET) begin
+                    // register 'axi_debug_bch_encoder_last_frame_length' at address offset 0xF08
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_LAST_FRAME_LENGTH_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_bch_encoder_last_frame_length_value;
                         s_axi_debug_bch_encoder_last_frame_length_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_bch_encoder_min_max_frame_length' at address offset 0xBF8
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_OFFSET) begin
+                    // register 'axi_debug_bch_encoder_min_max_frame_length' at address offset 0xF0C
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_bch_encoder_min_max_frame_length_min_frame_length;
                         v_rdata_r[31:16] <= s_reg_axi_debug_bch_encoder_min_max_frame_length_max_frame_length;
                         s_axi_debug_bch_encoder_min_max_frame_length_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_ldpc_encoder_cfg' at address offset 0xBFC
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_CFG_OFFSET) begin
+                    // register 'axi_debug_bch_encoder_word_count' at address offset 0xF10
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_WORD_COUNT_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
+                        v_addr_hit = 1'b1;
+                        v_rdata_r[15:0] <= s_reg_axi_debug_bch_encoder_word_count_value;
+                        s_axi_debug_bch_encoder_word_count_strobe_r <= 1'b1;
+                        v_state_r <= READ_RESPONSE;
+                    end
+                    // register 'axi_debug_bch_encoder_strobes' at address offset 0xF14
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_STROBES_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
+                        v_addr_hit = 1'b1;
+                        v_rdata_r[0:0] <= s_reg_axi_debug_bch_encoder_strobes_s_tvalid;
+                        v_rdata_r[1:1] <= s_reg_axi_debug_bch_encoder_strobes_s_tready;
+                        v_rdata_r[2:2] <= s_reg_axi_debug_bch_encoder_strobes_m_tvalid;
+                        v_rdata_r[3:3] <= s_reg_axi_debug_bch_encoder_strobes_m_tready;
+                        s_axi_debug_bch_encoder_strobes_strobe_r <= 1'b1;
+                        v_state_r <= READ_RESPONSE;
+                    end
+                    // register 'axi_debug_ldpc_encoder_cfg' at address offset 0x1000
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_CFG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[0:0] <= s_reg_axi_debug_ldpc_encoder_cfg_block_data_r;
                         v_rdata_r[1:1] <= s_reg_axi_debug_ldpc_encoder_cfg_allow_word_r;
                         v_rdata_r[2:2] <= s_reg_axi_debug_ldpc_encoder_cfg_allow_frame_r;
-                        v_rdata_r[3:3] <= s_reg_axi_debug_ldpc_encoder_cfg_reset_min_max_r;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_ldpc_encoder_frame_count' at address offset 0xC00
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_FRAME_COUNT_OFFSET) begin
+                    // register 'axi_debug_ldpc_encoder_frame_count' at address offset 0x1004
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_FRAME_COUNT_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_ldpc_encoder_frame_count_value;
                         s_axi_debug_ldpc_encoder_frame_count_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_ldpc_encoder_last_frame_length' at address offset 0xC04
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_LAST_FRAME_LENGTH_OFFSET) begin
+                    // register 'axi_debug_ldpc_encoder_last_frame_length' at address offset 0x1008
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_LAST_FRAME_LENGTH_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_ldpc_encoder_last_frame_length_value;
                         s_axi_debug_ldpc_encoder_last_frame_length_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_ldpc_encoder_min_max_frame_length' at address offset 0xC08
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_OFFSET) begin
+                    // register 'axi_debug_ldpc_encoder_min_max_frame_length' at address offset 0x100C
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length;
                         v_rdata_r[31:16] <= s_reg_axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length;
                         s_axi_debug_ldpc_encoder_min_max_frame_length_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_bit_interleaver_cfg' at address offset 0xC0C
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_CFG_OFFSET) begin
+                    // register 'axi_debug_ldpc_encoder_word_count' at address offset 0x1010
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_WORD_COUNT_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
+                        v_addr_hit = 1'b1;
+                        v_rdata_r[15:0] <= s_reg_axi_debug_ldpc_encoder_word_count_value;
+                        s_axi_debug_ldpc_encoder_word_count_strobe_r <= 1'b1;
+                        v_state_r <= READ_RESPONSE;
+                    end
+                    // register 'axi_debug_ldpc_encoder_strobes' at address offset 0x1014
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_STROBES_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
+                        v_addr_hit = 1'b1;
+                        v_rdata_r[0:0] <= s_reg_axi_debug_ldpc_encoder_strobes_s_tvalid;
+                        v_rdata_r[1:1] <= s_reg_axi_debug_ldpc_encoder_strobes_s_tready;
+                        v_rdata_r[2:2] <= s_reg_axi_debug_ldpc_encoder_strobes_m_tvalid;
+                        v_rdata_r[3:3] <= s_reg_axi_debug_ldpc_encoder_strobes_m_tready;
+                        s_axi_debug_ldpc_encoder_strobes_strobe_r <= 1'b1;
+                        v_state_r <= READ_RESPONSE;
+                    end
+                    // register 'axi_debug_bit_interleaver_cfg' at address offset 0x1100
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_CFG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[0:0] <= s_reg_axi_debug_bit_interleaver_cfg_block_data_r;
                         v_rdata_r[1:1] <= s_reg_axi_debug_bit_interleaver_cfg_allow_word_r;
                         v_rdata_r[2:2] <= s_reg_axi_debug_bit_interleaver_cfg_allow_frame_r;
-                        v_rdata_r[3:3] <= s_reg_axi_debug_bit_interleaver_cfg_reset_min_max_r;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_bit_interleaver_frame_count' at address offset 0xC10
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_FRAME_COUNT_OFFSET) begin
+                    // register 'axi_debug_bit_interleaver_frame_count' at address offset 0x1104
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_FRAME_COUNT_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_bit_interleaver_frame_count_value;
                         s_axi_debug_bit_interleaver_frame_count_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_bit_interleaver_last_frame_length' at address offset 0xC14
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_LAST_FRAME_LENGTH_OFFSET) begin
+                    // register 'axi_debug_bit_interleaver_last_frame_length' at address offset 0x1108
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_LAST_FRAME_LENGTH_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_bit_interleaver_last_frame_length_value;
                         s_axi_debug_bit_interleaver_last_frame_length_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_bit_interleaver_min_max_frame_length' at address offset 0xC18
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_OFFSET) begin
+                    // register 'axi_debug_bit_interleaver_min_max_frame_length' at address offset 0x110C
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_bit_interleaver_min_max_frame_length_min_frame_length;
                         v_rdata_r[31:16] <= s_reg_axi_debug_bit_interleaver_min_max_frame_length_max_frame_length;
                         s_axi_debug_bit_interleaver_min_max_frame_length_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_plframe_cfg' at address offset 0xC1C
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_CFG_OFFSET) begin
+                    // register 'axi_debug_bit_interleaver_word_count' at address offset 0x1110
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_WORD_COUNT_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
+                        v_addr_hit = 1'b1;
+                        v_rdata_r[15:0] <= s_reg_axi_debug_bit_interleaver_word_count_value;
+                        s_axi_debug_bit_interleaver_word_count_strobe_r <= 1'b1;
+                        v_state_r <= READ_RESPONSE;
+                    end
+                    // register 'axi_debug_bit_interleaver_strobes' at address offset 0x1114
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_STROBES_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
+                        v_addr_hit = 1'b1;
+                        v_rdata_r[0:0] <= s_reg_axi_debug_bit_interleaver_strobes_s_tvalid;
+                        v_rdata_r[1:1] <= s_reg_axi_debug_bit_interleaver_strobes_s_tready;
+                        v_rdata_r[2:2] <= s_reg_axi_debug_bit_interleaver_strobes_m_tvalid;
+                        v_rdata_r[3:3] <= s_reg_axi_debug_bit_interleaver_strobes_m_tready;
+                        s_axi_debug_bit_interleaver_strobes_strobe_r <= 1'b1;
+                        v_state_r <= READ_RESPONSE;
+                    end
+                    // register 'axi_debug_plframe_cfg' at address offset 0x1200
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_CFG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[0:0] <= s_reg_axi_debug_plframe_cfg_block_data_r;
                         v_rdata_r[1:1] <= s_reg_axi_debug_plframe_cfg_allow_word_r;
                         v_rdata_r[2:2] <= s_reg_axi_debug_plframe_cfg_allow_frame_r;
-                        v_rdata_r[3:3] <= s_reg_axi_debug_plframe_cfg_reset_min_max_r;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_plframe_frame_count' at address offset 0xC20
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_FRAME_COUNT_OFFSET) begin
+                    // register 'axi_debug_plframe_frame_count' at address offset 0x1204
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_FRAME_COUNT_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_plframe_frame_count_value;
                         s_axi_debug_plframe_frame_count_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_plframe_last_frame_length' at address offset 0xC24
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_OFFSET) begin
+                    // register 'axi_debug_plframe_last_frame_length' at address offset 0x1208
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_plframe_last_frame_length_value;
                         s_axi_debug_plframe_last_frame_length_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_plframe_min_max_frame_length' at address offset 0xC28
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_OFFSET) begin
+                    // register 'axi_debug_plframe_min_max_frame_length' at address offset 0x120C
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_plframe_min_max_frame_length_min_frame_length;
                         v_rdata_r[31:16] <= s_reg_axi_debug_plframe_min_max_frame_length_max_frame_length;
                         s_axi_debug_plframe_min_max_frame_length_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_output_cfg' at address offset 0xC2C
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_CFG_OFFSET) begin
+                    // register 'axi_debug_plframe_word_count' at address offset 0x1210
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_WORD_COUNT_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
+                        v_addr_hit = 1'b1;
+                        v_rdata_r[15:0] <= s_reg_axi_debug_plframe_word_count_value;
+                        s_axi_debug_plframe_word_count_strobe_r <= 1'b1;
+                        v_state_r <= READ_RESPONSE;
+                    end
+                    // register 'axi_debug_plframe_strobes' at address offset 0x1214
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_STROBES_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
+                        v_addr_hit = 1'b1;
+                        v_rdata_r[0:0] <= s_reg_axi_debug_plframe_strobes_s_tvalid;
+                        v_rdata_r[1:1] <= s_reg_axi_debug_plframe_strobes_s_tready;
+                        v_rdata_r[2:2] <= s_reg_axi_debug_plframe_strobes_m_tvalid;
+                        v_rdata_r[3:3] <= s_reg_axi_debug_plframe_strobes_m_tready;
+                        s_axi_debug_plframe_strobes_strobe_r <= 1'b1;
+                        v_state_r <= READ_RESPONSE;
+                    end
+                    // register 'axi_debug_output_cfg' at address offset 0x1300
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_CFG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[0:0] <= s_reg_axi_debug_output_cfg_block_data_r;
                         v_rdata_r[1:1] <= s_reg_axi_debug_output_cfg_allow_word_r;
                         v_rdata_r[2:2] <= s_reg_axi_debug_output_cfg_allow_frame_r;
-                        v_rdata_r[3:3] <= s_reg_axi_debug_output_cfg_reset_min_max_r;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_output_frame_count' at address offset 0xC30
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_FRAME_COUNT_OFFSET) begin
+                    // register 'axi_debug_output_frame_count' at address offset 0x1304
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_FRAME_COUNT_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_output_frame_count_value;
                         s_axi_debug_output_frame_count_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_output_last_frame_length' at address offset 0xC34
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_OFFSET) begin
+                    // register 'axi_debug_output_last_frame_length' at address offset 0x1308
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_output_last_frame_length_value;
                         s_axi_debug_output_last_frame_length_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
-                    // register 'axi_debug_output_min_max_frame_length' at address offset 0xC38
-                    if (s_axi_araddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_OFFSET) begin
+                    // register 'axi_debug_output_min_max_frame_length' at address offset 0x130C
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         v_rdata_r[15:0] <= s_reg_axi_debug_output_min_max_frame_length_min_frame_length;
                         v_rdata_r[31:16] <= s_reg_axi_debug_output_min_max_frame_length_max_frame_length;
                         s_axi_debug_output_min_max_frame_length_strobe_r <= 1'b1;
+                        v_state_r <= READ_RESPONSE;
+                    end
+                    // register 'axi_debug_output_word_count' at address offset 0x1310
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_WORD_COUNT_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
+                        v_addr_hit = 1'b1;
+                        v_rdata_r[15:0] <= s_reg_axi_debug_output_word_count_value;
+                        s_axi_debug_output_word_count_strobe_r <= 1'b1;
+                        v_state_r <= READ_RESPONSE;
+                    end
+                    // register 'axi_debug_output_strobes' at address offset 0x1314
+                    if (s_axi_araddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_STROBES_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
+                        v_addr_hit = 1'b1;
+                        v_rdata_r[0:0] <= s_reg_axi_debug_output_strobes_s_tvalid;
+                        v_rdata_r[1:1] <= s_reg_axi_debug_output_strobes_s_tready;
+                        v_rdata_r[2:2] <= s_reg_axi_debug_output_strobes_m_tvalid;
+                        v_rdata_r[3:3] <= s_reg_axi_debug_output_strobes_m_tready;
+                        s_axi_debug_output_strobes_strobe_r <= 1'b1;
                         v_state_r <= READ_RESPONSE;
                     end
                     if (v_addr_hit) begin
@@ -596,19 +819,21 @@ module dvbs2_encoder_regs #(
                         v_state_r <= READ_RESPONSE;
                     end
                 end
-                
+
                 // Wait for memory read data
                 WAIT_MEMORY_RDATA: begin
                     if (v_mem_wait_count_r == 0) begin
                         // memory 'bit_mapper_ram' at address offset 0xC
-                        if (s_axi_araddr_reg_r >= BASEADDR + dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_OFFSET && 
+                        if (s_axi_araddr_reg_r >= BASEADDR + dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_OFFSET &&
                             s_axi_araddr_reg_r < BASEADDR + dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_OFFSET + dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_DEPTH * 4) begin
                             v_rdata_r[31:0] <= s_bit_mapper_ram_rdata[31:0];
+                            s_bit_mapper_ram_ren_r <= 0;
                         end
                         // memory 'polyphase_filter_coefficients' at address offset 0x3CC
-                        if (s_axi_araddr_reg_r >= BASEADDR + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET && 
+                        if (s_axi_araddr_reg_r >= BASEADDR + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET &&
                             s_axi_araddr_reg_r < BASEADDR + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_DEPTH * 4) begin
                             v_rdata_r[31:0] <= s_polyphase_filter_coefficients_rdata[31:0];
+                            s_polyphase_filter_coefficients_ren_r <= 0;
                         end
                         v_state_r <= READ_RESPONSE;
                     end else begin
@@ -631,15 +856,15 @@ module dvbs2_encoder_regs #(
                         s_axi_rdata_r  <= '0;
                         v_state_r      <= READ_IDLE;
                     end
-                end        
-                                    
+                end
+
             endcase
         end
     end: read_fsm
 
     //--------------------------------------------------------------------------
     // Write-transaction FSM
-    //    
+    //
 
     typedef enum {
         WRITE_IDLE,
@@ -664,7 +889,7 @@ module dvbs2_encoder_regs #(
             s_axi_wstrb_reg_r           <= '0;
             s_axi_bvalid_r              <= 1'b0;
             s_axi_bresp_r               <= '0;
-                        
+
             s_config_strobe_r <= '0;
             s_reg_config_physical_layer_scrambler_shift_reg_init_r <= dvbs2_encoder_regs_pkg::CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_RESET;
             s_reg_config_enable_dummy_frames_r <= dvbs2_encoder_regs_pkg::CONFIG_ENABLE_DUMMY_FRAMES_RESET;
@@ -678,37 +903,30 @@ module dvbs2_encoder_regs #(
             s_reg_axi_debug_input_width_converter_cfg_block_data_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_BLOCK_DATA_RESET;
             s_reg_axi_debug_input_width_converter_cfg_allow_word_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_ALLOW_WORD_RESET;
             s_reg_axi_debug_input_width_converter_cfg_allow_frame_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_ALLOW_FRAME_RESET;
-            s_reg_axi_debug_input_width_converter_cfg_reset_min_max_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_RESET_MIN_MAX_RESET;
             s_axi_debug_bb_scrambler_cfg_strobe_r <= '0;
             s_reg_axi_debug_bb_scrambler_cfg_block_data_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_CFG_BLOCK_DATA_RESET;
             s_reg_axi_debug_bb_scrambler_cfg_allow_word_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_CFG_ALLOW_WORD_RESET;
             s_reg_axi_debug_bb_scrambler_cfg_allow_frame_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_CFG_ALLOW_FRAME_RESET;
-            s_reg_axi_debug_bb_scrambler_cfg_reset_min_max_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_CFG_RESET_MIN_MAX_RESET;
             s_axi_debug_bch_encoder_cfg_strobe_r <= '0;
             s_reg_axi_debug_bch_encoder_cfg_block_data_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_CFG_BLOCK_DATA_RESET;
             s_reg_axi_debug_bch_encoder_cfg_allow_word_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_CFG_ALLOW_WORD_RESET;
             s_reg_axi_debug_bch_encoder_cfg_allow_frame_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_CFG_ALLOW_FRAME_RESET;
-            s_reg_axi_debug_bch_encoder_cfg_reset_min_max_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_CFG_RESET_MIN_MAX_RESET;
             s_axi_debug_ldpc_encoder_cfg_strobe_r <= '0;
             s_reg_axi_debug_ldpc_encoder_cfg_block_data_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_CFG_BLOCK_DATA_RESET;
             s_reg_axi_debug_ldpc_encoder_cfg_allow_word_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_CFG_ALLOW_WORD_RESET;
             s_reg_axi_debug_ldpc_encoder_cfg_allow_frame_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_CFG_ALLOW_FRAME_RESET;
-            s_reg_axi_debug_ldpc_encoder_cfg_reset_min_max_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_CFG_RESET_MIN_MAX_RESET;
             s_axi_debug_bit_interleaver_cfg_strobe_r <= '0;
             s_reg_axi_debug_bit_interleaver_cfg_block_data_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_CFG_BLOCK_DATA_RESET;
             s_reg_axi_debug_bit_interleaver_cfg_allow_word_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_CFG_ALLOW_WORD_RESET;
             s_reg_axi_debug_bit_interleaver_cfg_allow_frame_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_CFG_ALLOW_FRAME_RESET;
-            s_reg_axi_debug_bit_interleaver_cfg_reset_min_max_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_CFG_RESET_MIN_MAX_RESET;
             s_axi_debug_plframe_cfg_strobe_r <= '0;
             s_reg_axi_debug_plframe_cfg_block_data_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_CFG_BLOCK_DATA_RESET;
             s_reg_axi_debug_plframe_cfg_allow_word_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_CFG_ALLOW_WORD_RESET;
             s_reg_axi_debug_plframe_cfg_allow_frame_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_CFG_ALLOW_FRAME_RESET;
-            s_reg_axi_debug_plframe_cfg_reset_min_max_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_CFG_RESET_MIN_MAX_RESET;
             s_axi_debug_output_cfg_strobe_r <= '0;
             s_reg_axi_debug_output_cfg_block_data_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_CFG_BLOCK_DATA_RESET;
             s_reg_axi_debug_output_cfg_allow_word_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_CFG_ALLOW_WORD_RESET;
             s_reg_axi_debug_output_cfg_allow_frame_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_CFG_ALLOW_FRAME_RESET;
-            s_reg_axi_debug_output_cfg_reset_min_max_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_CFG_RESET_MIN_MAX_RESET;
 
         end else begin
             // Default values:
@@ -727,47 +945,40 @@ module dvbs2_encoder_regs #(
             s_axi_debug_plframe_cfg_strobe_r <= '0;
             s_axi_debug_output_cfg_strobe_r <= '0;
             v_addr_hit = 1'b0;
-            
+
             // Self-clearing fields:
             s_reg_axi_debug_input_width_converter_cfg_allow_word_r <= '0;
             s_reg_axi_debug_input_width_converter_cfg_allow_frame_r <= '0;
-            s_reg_axi_debug_input_width_converter_cfg_reset_min_max_r <= '0;
             s_reg_axi_debug_bb_scrambler_cfg_allow_word_r <= '0;
             s_reg_axi_debug_bb_scrambler_cfg_allow_frame_r <= '0;
-            s_reg_axi_debug_bb_scrambler_cfg_reset_min_max_r <= '0;
             s_reg_axi_debug_bch_encoder_cfg_allow_word_r <= '0;
             s_reg_axi_debug_bch_encoder_cfg_allow_frame_r <= '0;
-            s_reg_axi_debug_bch_encoder_cfg_reset_min_max_r <= '0;
             s_reg_axi_debug_ldpc_encoder_cfg_allow_word_r <= '0;
             s_reg_axi_debug_ldpc_encoder_cfg_allow_frame_r <= '0;
-            s_reg_axi_debug_ldpc_encoder_cfg_reset_min_max_r <= '0;
             s_reg_axi_debug_bit_interleaver_cfg_allow_word_r <= '0;
             s_reg_axi_debug_bit_interleaver_cfg_allow_frame_r <= '0;
-            s_reg_axi_debug_bit_interleaver_cfg_reset_min_max_r <= '0;
             s_reg_axi_debug_plframe_cfg_allow_word_r <= '0;
             s_reg_axi_debug_plframe_cfg_allow_frame_r <= '0;
-            s_reg_axi_debug_plframe_cfg_reset_min_max_r <= '0;
             s_reg_axi_debug_output_cfg_allow_word_r <= '0;
             s_reg_axi_debug_output_cfg_allow_frame_r <= '0;
-            s_reg_axi_debug_output_cfg_reset_min_max_r <= '0;
 
             case (v_state_r)
 
-                // Wait for the start of a write transaction, which may be 
+                // Wait for the start of a write transaction, which may be
                 // initiated by either of the following conditions:
                 //   * assertion of both AWVALID and WVALID
                 //   * assertion of AWVALID
                 //   * assertion of WVALID
                 WRITE_IDLE: begin
                     if (s_axi_awvalid && s_axi_wvalid) begin
-                        s_axi_awaddr_reg_r <= s_axi_awaddr; // save the write-address 
+                        s_axi_awaddr_reg_r <= s_axi_awaddr; // save the write-address
                         s_axi_awready_r    <= 1'b1; // acknowledge the write-address
                         s_axi_wdata_reg_r  <= s_axi_wdata; // save the write-data
                         s_axi_wstrb_reg_r  <= s_axi_wstrb; // save the write-strobe
                         s_axi_wready_r     <= 1'b1; // acknowledge the write-data
                         v_state_r          <= WRITE_UPDATE_REGISTER;
                     end else if (s_axi_awvalid) begin
-                        s_axi_awaddr_reg_r <= s_axi_awaddr; // save the write-address 
+                        s_axi_awaddr_reg_r <= s_axi_awaddr; // save the write-address
                         s_axi_awready_r    <= 1'b1; // acknowledge the write-address
                         v_state_r          <= WRITE_ADDR_FIRST;
                     end else if (s_axi_wvalid) begin
@@ -791,7 +1002,7 @@ module dvbs2_encoder_regs #(
                 // Data-first write transaction: wait for the write-address
                 WRITE_DATA_FIRST: begin
                     if (s_axi_awvalid) begin
-                        s_axi_awaddr_reg_r <= s_axi_awaddr; // save the write-address 
+                        s_axi_awaddr_reg_r <= s_axi_awaddr; // save the write-address
                         s_axi_awready_r    <= 1'b1; // acknowledge the write-address
                         v_state_r          <= WRITE_UPDATE_REGISTER;
                     end
@@ -803,7 +1014,7 @@ module dvbs2_encoder_regs #(
                     s_axi_bvalid_r <= 1'b1;
 
                     // register 'config' at address offset 0x0
-                    if (s_axi_awaddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::CONFIG_OFFSET) begin
+                    if (s_axi_awaddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::CONFIG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         s_config_strobe_r <= 1'b1;
                         // field 'physical_layer_scrambler_shift_reg_init':
@@ -869,28 +1080,28 @@ module dvbs2_encoder_regs #(
 
 
 
-                    // memory 'bit_mapper_ram' at address offset 0xC                    
-                    if (s_axi_awaddr_reg_r >= BASEADDR + dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_OFFSET && 
+                    // memory 'bit_mapper_ram' at address offset 0xC
+                    if (s_axi_awaddr_reg_r >= BASEADDR + dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_OFFSET &&
                         s_axi_awaddr_reg_r < BASEADDR + dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_OFFSET + dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_DEPTH * 4) begin
                         v_addr_hit = 1'b1;
                         v_mem_addr = s_axi_awaddr_reg_r - BASEADDR - dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_OFFSET;
                         s_bit_mapper_ram_waddr_r <= v_mem_addr[9:2]; // output address has 4-byte granularity
                         s_bit_mapper_ram_wen_r <= s_axi_wstrb_reg_r;
                         s_bit_mapper_ram_wdata_r <= s_axi_wdata_reg_r;
-                    end    
+                    end
 
-                    // memory 'polyphase_filter_coefficients' at address offset 0x3CC                    
-                    if (s_axi_awaddr_reg_r >= BASEADDR + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET && 
+                    // memory 'polyphase_filter_coefficients' at address offset 0x3CC
+                    if (s_axi_awaddr_reg_r >= BASEADDR + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET &&
                         s_axi_awaddr_reg_r < BASEADDR + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_DEPTH * 4) begin
                         v_addr_hit = 1'b1;
                         v_mem_addr = s_axi_awaddr_reg_r - BASEADDR - dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET;
                         s_polyphase_filter_coefficients_waddr_r <= v_mem_addr[10:2]; // output address has 4-byte granularity
                         s_polyphase_filter_coefficients_wen_r <= s_axi_wstrb_reg_r;
                         s_polyphase_filter_coefficients_wdata_r <= s_axi_wdata_reg_r;
-                    end    
+                    end
 
-                    // register 'axi_debug_input_width_converter_cfg' at address offset 0xBCC
-                    if (s_axi_awaddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET) begin
+                    // register 'axi_debug_input_width_converter_cfg' at address offset 0xD00
+                    if (s_axi_awaddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         s_axi_debug_input_width_converter_cfg_strobe_r <= 1'b1;
                         // field 'block_data':
@@ -905,17 +1116,15 @@ module dvbs2_encoder_regs #(
                         if (s_axi_wstrb_reg_r[0]) begin
                             s_reg_axi_debug_input_width_converter_cfg_allow_frame_r[0] <= s_axi_wdata_reg_r[2]; // allow_frame[0]
                         end
-                        // field 'reset_min_max':
-                        if (s_axi_wstrb_reg_r[0]) begin
-                            s_reg_axi_debug_input_width_converter_cfg_reset_min_max_r[0] <= s_axi_wdata_reg_r[3]; // reset_min_max[0]
-                        end
                     end
 
 
 
 
-                    // register 'axi_debug_bb_scrambler_cfg' at address offset 0xBDC
-                    if (s_axi_awaddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_CFG_OFFSET) begin
+
+
+                    // register 'axi_debug_bb_scrambler_cfg' at address offset 0xE00
+                    if (s_axi_awaddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BB_SCRAMBLER_CFG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         s_axi_debug_bb_scrambler_cfg_strobe_r <= 1'b1;
                         // field 'block_data':
@@ -930,17 +1139,15 @@ module dvbs2_encoder_regs #(
                         if (s_axi_wstrb_reg_r[0]) begin
                             s_reg_axi_debug_bb_scrambler_cfg_allow_frame_r[0] <= s_axi_wdata_reg_r[2]; // allow_frame[0]
                         end
-                        // field 'reset_min_max':
-                        if (s_axi_wstrb_reg_r[0]) begin
-                            s_reg_axi_debug_bb_scrambler_cfg_reset_min_max_r[0] <= s_axi_wdata_reg_r[3]; // reset_min_max[0]
-                        end
                     end
 
 
 
 
-                    // register 'axi_debug_bch_encoder_cfg' at address offset 0xBEC
-                    if (s_axi_awaddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_CFG_OFFSET) begin
+
+
+                    // register 'axi_debug_bch_encoder_cfg' at address offset 0xF00
+                    if (s_axi_awaddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BCH_ENCODER_CFG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         s_axi_debug_bch_encoder_cfg_strobe_r <= 1'b1;
                         // field 'block_data':
@@ -955,17 +1162,15 @@ module dvbs2_encoder_regs #(
                         if (s_axi_wstrb_reg_r[0]) begin
                             s_reg_axi_debug_bch_encoder_cfg_allow_frame_r[0] <= s_axi_wdata_reg_r[2]; // allow_frame[0]
                         end
-                        // field 'reset_min_max':
-                        if (s_axi_wstrb_reg_r[0]) begin
-                            s_reg_axi_debug_bch_encoder_cfg_reset_min_max_r[0] <= s_axi_wdata_reg_r[3]; // reset_min_max[0]
-                        end
                     end
 
 
 
 
-                    // register 'axi_debug_ldpc_encoder_cfg' at address offset 0xBFC
-                    if (s_axi_awaddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_CFG_OFFSET) begin
+
+
+                    // register 'axi_debug_ldpc_encoder_cfg' at address offset 0x1000
+                    if (s_axi_awaddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_LDPC_ENCODER_CFG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         s_axi_debug_ldpc_encoder_cfg_strobe_r <= 1'b1;
                         // field 'block_data':
@@ -980,17 +1185,15 @@ module dvbs2_encoder_regs #(
                         if (s_axi_wstrb_reg_r[0]) begin
                             s_reg_axi_debug_ldpc_encoder_cfg_allow_frame_r[0] <= s_axi_wdata_reg_r[2]; // allow_frame[0]
                         end
-                        // field 'reset_min_max':
-                        if (s_axi_wstrb_reg_r[0]) begin
-                            s_reg_axi_debug_ldpc_encoder_cfg_reset_min_max_r[0] <= s_axi_wdata_reg_r[3]; // reset_min_max[0]
-                        end
                     end
 
 
 
 
-                    // register 'axi_debug_bit_interleaver_cfg' at address offset 0xC0C
-                    if (s_axi_awaddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_CFG_OFFSET) begin
+
+
+                    // register 'axi_debug_bit_interleaver_cfg' at address offset 0x1100
+                    if (s_axi_awaddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_BIT_INTERLEAVER_CFG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         s_axi_debug_bit_interleaver_cfg_strobe_r <= 1'b1;
                         // field 'block_data':
@@ -1005,17 +1208,15 @@ module dvbs2_encoder_regs #(
                         if (s_axi_wstrb_reg_r[0]) begin
                             s_reg_axi_debug_bit_interleaver_cfg_allow_frame_r[0] <= s_axi_wdata_reg_r[2]; // allow_frame[0]
                         end
-                        // field 'reset_min_max':
-                        if (s_axi_wstrb_reg_r[0]) begin
-                            s_reg_axi_debug_bit_interleaver_cfg_reset_min_max_r[0] <= s_axi_wdata_reg_r[3]; // reset_min_max[0]
-                        end
                     end
 
 
 
 
-                    // register 'axi_debug_plframe_cfg' at address offset 0xC1C
-                    if (s_axi_awaddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_CFG_OFFSET) begin
+
+
+                    // register 'axi_debug_plframe_cfg' at address offset 0x1200
+                    if (s_axi_awaddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_PLFRAME_CFG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         s_axi_debug_plframe_cfg_strobe_r <= 1'b1;
                         // field 'block_data':
@@ -1030,17 +1231,15 @@ module dvbs2_encoder_regs #(
                         if (s_axi_wstrb_reg_r[0]) begin
                             s_reg_axi_debug_plframe_cfg_allow_frame_r[0] <= s_axi_wdata_reg_r[2]; // allow_frame[0]
                         end
-                        // field 'reset_min_max':
-                        if (s_axi_wstrb_reg_r[0]) begin
-                            s_reg_axi_debug_plframe_cfg_reset_min_max_r[0] <= s_axi_wdata_reg_r[3]; // reset_min_max[0]
-                        end
                     end
 
 
 
 
-                    // register 'axi_debug_output_cfg' at address offset 0xC2C
-                    if (s_axi_awaddr_reg_r == BASEADDR + dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_CFG_OFFSET) begin
+
+
+                    // register 'axi_debug_output_cfg' at address offset 0x1300
+                    if (s_axi_awaddr_reg_r[AXI_ADDR_WIDTH-1:2] == BASEADDR[AXI_ADDR_WIDTH-1:2] + dvbs2_encoder_regs_pkg::AXI_DEBUG_OUTPUT_CFG_OFFSET[AXI_ADDR_WIDTH-1:2]) begin
                         v_addr_hit = 1'b1;
                         s_axi_debug_output_cfg_strobe_r <= 1'b1;
                         // field 'block_data':
@@ -1055,11 +1254,9 @@ module dvbs2_encoder_regs #(
                         if (s_axi_wstrb_reg_r[0]) begin
                             s_reg_axi_debug_output_cfg_allow_frame_r[0] <= s_axi_wdata_reg_r[2]; // allow_frame[0]
                         end
-                        // field 'reset_min_max':
-                        if (s_axi_wstrb_reg_r[0]) begin
-                            s_reg_axi_debug_output_cfg_reset_min_max_r[0] <= s_axi_wdata_reg_r[3]; // reset_min_max[0]
-                        end
                     end
+
+
 
 
 
@@ -1104,67 +1301,76 @@ module dvbs2_encoder_regs #(
     assign regs2user.ldpc_fifo_status_strobe = s_ldpc_fifo_status_strobe_r;
     assign regs2user.frames_in_transit_strobe = s_frames_in_transit_strobe_r;
     assign regs2user.bit_mapper_ram_addr = s_bit_mapper_ram_waddr_r | s_bit_mapper_ram_raddr_r; // using wired OR as read/write address multiplexer
-    assign regs2user.bit_mapper_ram_wen = s_bit_mapper_ram_wen_r;   
+    assign regs2user.bit_mapper_ram_wen = s_bit_mapper_ram_wen_r;
     assign regs2user.bit_mapper_ram_wdata = s_bit_mapper_ram_wdata_r;
+    assign regs2user.bit_mapper_ram_ren = s_bit_mapper_ram_ren_r;
     assign regs2user.polyphase_filter_coefficients_addr = s_polyphase_filter_coefficients_waddr_r | s_polyphase_filter_coefficients_raddr_r; // using wired OR as read/write address multiplexer
-    assign regs2user.polyphase_filter_coefficients_wen = s_polyphase_filter_coefficients_wen_r;   
+    assign regs2user.polyphase_filter_coefficients_wen = s_polyphase_filter_coefficients_wen_r;
     assign regs2user.polyphase_filter_coefficients_wdata = s_polyphase_filter_coefficients_wdata_r;
+    assign regs2user.polyphase_filter_coefficients_ren = s_polyphase_filter_coefficients_ren_r;
     assign regs2user.axi_debug_input_width_converter_cfg_strobe = s_axi_debug_input_width_converter_cfg_strobe_r;
     assign regs2user.axi_debug_input_width_converter_cfg_block_data = s_reg_axi_debug_input_width_converter_cfg_block_data_r;
     assign regs2user.axi_debug_input_width_converter_cfg_allow_word = s_reg_axi_debug_input_width_converter_cfg_allow_word_r;
     assign regs2user.axi_debug_input_width_converter_cfg_allow_frame = s_reg_axi_debug_input_width_converter_cfg_allow_frame_r;
-    assign regs2user.axi_debug_input_width_converter_cfg_reset_min_max = s_reg_axi_debug_input_width_converter_cfg_reset_min_max_r;
     assign regs2user.axi_debug_input_width_converter_frame_count_strobe = s_axi_debug_input_width_converter_frame_count_strobe_r;
     assign regs2user.axi_debug_input_width_converter_last_frame_length_strobe = s_axi_debug_input_width_converter_last_frame_length_strobe_r;
     assign regs2user.axi_debug_input_width_converter_min_max_frame_length_strobe = s_axi_debug_input_width_converter_min_max_frame_length_strobe_r;
+    assign regs2user.axi_debug_input_width_converter_word_count_strobe = s_axi_debug_input_width_converter_word_count_strobe_r;
+    assign regs2user.axi_debug_input_width_converter_strobes_strobe = s_axi_debug_input_width_converter_strobes_strobe_r;
     assign regs2user.axi_debug_bb_scrambler_cfg_strobe = s_axi_debug_bb_scrambler_cfg_strobe_r;
     assign regs2user.axi_debug_bb_scrambler_cfg_block_data = s_reg_axi_debug_bb_scrambler_cfg_block_data_r;
     assign regs2user.axi_debug_bb_scrambler_cfg_allow_word = s_reg_axi_debug_bb_scrambler_cfg_allow_word_r;
     assign regs2user.axi_debug_bb_scrambler_cfg_allow_frame = s_reg_axi_debug_bb_scrambler_cfg_allow_frame_r;
-    assign regs2user.axi_debug_bb_scrambler_cfg_reset_min_max = s_reg_axi_debug_bb_scrambler_cfg_reset_min_max_r;
     assign regs2user.axi_debug_bb_scrambler_frame_count_strobe = s_axi_debug_bb_scrambler_frame_count_strobe_r;
     assign regs2user.axi_debug_bb_scrambler_last_frame_length_strobe = s_axi_debug_bb_scrambler_last_frame_length_strobe_r;
     assign regs2user.axi_debug_bb_scrambler_min_max_frame_length_strobe = s_axi_debug_bb_scrambler_min_max_frame_length_strobe_r;
+    assign regs2user.axi_debug_bb_scrambler_word_count_strobe = s_axi_debug_bb_scrambler_word_count_strobe_r;
+    assign regs2user.axi_debug_bb_scrambler_strobes_strobe = s_axi_debug_bb_scrambler_strobes_strobe_r;
     assign regs2user.axi_debug_bch_encoder_cfg_strobe = s_axi_debug_bch_encoder_cfg_strobe_r;
     assign regs2user.axi_debug_bch_encoder_cfg_block_data = s_reg_axi_debug_bch_encoder_cfg_block_data_r;
     assign regs2user.axi_debug_bch_encoder_cfg_allow_word = s_reg_axi_debug_bch_encoder_cfg_allow_word_r;
     assign regs2user.axi_debug_bch_encoder_cfg_allow_frame = s_reg_axi_debug_bch_encoder_cfg_allow_frame_r;
-    assign regs2user.axi_debug_bch_encoder_cfg_reset_min_max = s_reg_axi_debug_bch_encoder_cfg_reset_min_max_r;
     assign regs2user.axi_debug_bch_encoder_frame_count_strobe = s_axi_debug_bch_encoder_frame_count_strobe_r;
     assign regs2user.axi_debug_bch_encoder_last_frame_length_strobe = s_axi_debug_bch_encoder_last_frame_length_strobe_r;
     assign regs2user.axi_debug_bch_encoder_min_max_frame_length_strobe = s_axi_debug_bch_encoder_min_max_frame_length_strobe_r;
+    assign regs2user.axi_debug_bch_encoder_word_count_strobe = s_axi_debug_bch_encoder_word_count_strobe_r;
+    assign regs2user.axi_debug_bch_encoder_strobes_strobe = s_axi_debug_bch_encoder_strobes_strobe_r;
     assign regs2user.axi_debug_ldpc_encoder_cfg_strobe = s_axi_debug_ldpc_encoder_cfg_strobe_r;
     assign regs2user.axi_debug_ldpc_encoder_cfg_block_data = s_reg_axi_debug_ldpc_encoder_cfg_block_data_r;
     assign regs2user.axi_debug_ldpc_encoder_cfg_allow_word = s_reg_axi_debug_ldpc_encoder_cfg_allow_word_r;
     assign regs2user.axi_debug_ldpc_encoder_cfg_allow_frame = s_reg_axi_debug_ldpc_encoder_cfg_allow_frame_r;
-    assign regs2user.axi_debug_ldpc_encoder_cfg_reset_min_max = s_reg_axi_debug_ldpc_encoder_cfg_reset_min_max_r;
     assign regs2user.axi_debug_ldpc_encoder_frame_count_strobe = s_axi_debug_ldpc_encoder_frame_count_strobe_r;
     assign regs2user.axi_debug_ldpc_encoder_last_frame_length_strobe = s_axi_debug_ldpc_encoder_last_frame_length_strobe_r;
     assign regs2user.axi_debug_ldpc_encoder_min_max_frame_length_strobe = s_axi_debug_ldpc_encoder_min_max_frame_length_strobe_r;
+    assign regs2user.axi_debug_ldpc_encoder_word_count_strobe = s_axi_debug_ldpc_encoder_word_count_strobe_r;
+    assign regs2user.axi_debug_ldpc_encoder_strobes_strobe = s_axi_debug_ldpc_encoder_strobes_strobe_r;
     assign regs2user.axi_debug_bit_interleaver_cfg_strobe = s_axi_debug_bit_interleaver_cfg_strobe_r;
     assign regs2user.axi_debug_bit_interleaver_cfg_block_data = s_reg_axi_debug_bit_interleaver_cfg_block_data_r;
     assign regs2user.axi_debug_bit_interleaver_cfg_allow_word = s_reg_axi_debug_bit_interleaver_cfg_allow_word_r;
     assign regs2user.axi_debug_bit_interleaver_cfg_allow_frame = s_reg_axi_debug_bit_interleaver_cfg_allow_frame_r;
-    assign regs2user.axi_debug_bit_interleaver_cfg_reset_min_max = s_reg_axi_debug_bit_interleaver_cfg_reset_min_max_r;
     assign regs2user.axi_debug_bit_interleaver_frame_count_strobe = s_axi_debug_bit_interleaver_frame_count_strobe_r;
     assign regs2user.axi_debug_bit_interleaver_last_frame_length_strobe = s_axi_debug_bit_interleaver_last_frame_length_strobe_r;
     assign regs2user.axi_debug_bit_interleaver_min_max_frame_length_strobe = s_axi_debug_bit_interleaver_min_max_frame_length_strobe_r;
+    assign regs2user.axi_debug_bit_interleaver_word_count_strobe = s_axi_debug_bit_interleaver_word_count_strobe_r;
+    assign regs2user.axi_debug_bit_interleaver_strobes_strobe = s_axi_debug_bit_interleaver_strobes_strobe_r;
     assign regs2user.axi_debug_plframe_cfg_strobe = s_axi_debug_plframe_cfg_strobe_r;
     assign regs2user.axi_debug_plframe_cfg_block_data = s_reg_axi_debug_plframe_cfg_block_data_r;
     assign regs2user.axi_debug_plframe_cfg_allow_word = s_reg_axi_debug_plframe_cfg_allow_word_r;
     assign regs2user.axi_debug_plframe_cfg_allow_frame = s_reg_axi_debug_plframe_cfg_allow_frame_r;
-    assign regs2user.axi_debug_plframe_cfg_reset_min_max = s_reg_axi_debug_plframe_cfg_reset_min_max_r;
     assign regs2user.axi_debug_plframe_frame_count_strobe = s_axi_debug_plframe_frame_count_strobe_r;
     assign regs2user.axi_debug_plframe_last_frame_length_strobe = s_axi_debug_plframe_last_frame_length_strobe_r;
     assign regs2user.axi_debug_plframe_min_max_frame_length_strobe = s_axi_debug_plframe_min_max_frame_length_strobe_r;
+    assign regs2user.axi_debug_plframe_word_count_strobe = s_axi_debug_plframe_word_count_strobe_r;
+    assign regs2user.axi_debug_plframe_strobes_strobe = s_axi_debug_plframe_strobes_strobe_r;
     assign regs2user.axi_debug_output_cfg_strobe = s_axi_debug_output_cfg_strobe_r;
     assign regs2user.axi_debug_output_cfg_block_data = s_reg_axi_debug_output_cfg_block_data_r;
     assign regs2user.axi_debug_output_cfg_allow_word = s_reg_axi_debug_output_cfg_allow_word_r;
     assign regs2user.axi_debug_output_cfg_allow_frame = s_reg_axi_debug_output_cfg_allow_frame_r;
-    assign regs2user.axi_debug_output_cfg_reset_min_max = s_reg_axi_debug_output_cfg_reset_min_max_r;
     assign regs2user.axi_debug_output_frame_count_strobe = s_axi_debug_output_frame_count_strobe_r;
     assign regs2user.axi_debug_output_last_frame_length_strobe = s_axi_debug_output_last_frame_length_strobe_r;
     assign regs2user.axi_debug_output_min_max_frame_length_strobe = s_axi_debug_output_min_max_frame_length_strobe_r;
+    assign regs2user.axi_debug_output_word_count_strobe = s_axi_debug_output_word_count_strobe_r;
+    assign regs2user.axi_debug_output_strobes_strobe = s_axi_debug_output_strobes_strobe_r;
 
 endmodule: dvbs2_encoder_regs
 

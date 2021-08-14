@@ -48,7 +48,7 @@ entity dvbs2_encoder is
     --write address channel
     s_axi_awvalid   : in  std_logic;
     s_axi_awready   : out std_logic;
-    s_axi_awaddr    : in  std_logic_vector(11 downto 0);
+    s_axi_awaddr    : in  std_logic_vector(15 downto 0);
     -- write data channel
     s_axi_wvalid    : in  std_logic;
     s_axi_wready    : out std_logic;
@@ -57,7 +57,7 @@ entity dvbs2_encoder is
     --read address channel
     s_axi_arvalid   : in  std_logic;
     s_axi_arready   : out std_logic;
-    s_axi_araddr    : in  std_logic_vector(11 downto 0);
+    s_axi_araddr    : in  std_logic_vector(15 downto 0);
     --read data channel
     s_axi_rvalid    : out std_logic;
     s_axi_rready    : in  std_logic;
@@ -213,29 +213,41 @@ begin
       FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
     port map (
       -- Usual ports
-      clk                   => clk,
-      rst                   => rst,
+      clk                        => clk,
+      rst                        => rst,
       -- Control and status
-      cfg_reset_min_max     => regs2user.axi_debug_input_width_converter_cfg_reset_min_max(0),
-      cfg_block_data        => regs2user.axi_debug_input_width_converter_cfg_block_data(0),
-      cfg_allow_word        => regs2user.axi_debug_input_width_converter_cfg_allow_word(0),
-      cfg_allow_frame       => regs2user.axi_debug_input_width_converter_cfg_allow_frame(0),
-      sts_frame_count       => user2regs.axi_debug_input_width_converter_frame_count_value,
-      sts_last_frame_length => user2regs.axi_debug_input_width_converter_last_frame_length_value,
-      sts_min_frame_length  => user2regs.axi_debug_input_width_converter_min_max_frame_length_min_frame_length,
-      sts_max_frame_length  => user2regs.axi_debug_input_width_converter_min_max_frame_length_max_frame_length,
+      cfg.block_data             => regs2user.axi_debug_input_width_converter_cfg_block_data(0),
+      cfg.allow_word             => regs2user.axi_debug_input_width_converter_cfg_allow_word(0),
+      cfg.allow_frame            => regs2user.axi_debug_input_width_converter_cfg_allow_frame(0),
+
+      cfg.clear_max_frame_length => regs2user.axi_debug_input_width_converter_min_max_frame_length_strobe,
+      cfg.clear_min_frame_length => regs2user.axi_debug_input_width_converter_min_max_frame_length_strobe,
+      cfg.clear_s_tvalid         => regs2user.axi_debug_input_width_converter_strobes_strobe,
+      cfg.clear_s_tready         => regs2user.axi_debug_input_width_converter_strobes_strobe,
+      cfg.clear_m_tvalid         => regs2user.axi_debug_input_width_converter_strobes_strobe,
+      cfg.clear_m_tready         => regs2user.axi_debug_input_width_converter_strobes_strobe,
+
+      sts.frame_count            => user2regs.axi_debug_input_width_converter_frame_count_value,
+      sts.word_count             => user2regs.axi_debug_input_width_converter_word_count_value,
+      sts.s_tvalid               => user2regs.axi_debug_input_width_converter_strobes_s_tvalid(0),
+      sts.s_tready               => user2regs.axi_debug_input_width_converter_strobes_s_tready(0),
+      sts.m_tvalid               => user2regs.axi_debug_input_width_converter_strobes_m_tvalid(0),
+      sts.m_tready               => user2regs.axi_debug_input_width_converter_strobes_m_tready(0),
+      sts.last_frame_length      => user2regs.axi_debug_input_width_converter_last_frame_length_value,
+      sts.min_frame_length       => user2regs.axi_debug_input_width_converter_min_max_frame_length_min_frame_length,
+      sts.max_frame_length       => user2regs.axi_debug_input_width_converter_min_max_frame_length_max_frame_length,
       -- AXI input
-      s_tready              => width_conv.tready,
-      s_tvalid              => width_conv.tvalid,
-      s_tlast               => width_conv.tlast,
-      s_tdata               => width_conv.tdata,
-      s_tid                 => width_conv.tid,
+      s_tready                   => width_conv.tready,
+      s_tvalid                   => width_conv.tvalid,
+      s_tlast                    => width_conv.tlast,
+      s_tdata                    => width_conv.tdata,
+      s_tid                      => width_conv.tid,
       -- AXI output
-      m_tready              => width_conv_dbg.tready,
-      m_tvalid              => width_conv_dbg.tvalid,
-      m_tlast               => width_conv_dbg.tlast,
-      m_tdata               => width_conv_dbg.tdata,
-      m_tid                 => width_conv_dbg.tid);
+      m_tready                   => width_conv_dbg.tready,
+      m_tvalid                   => width_conv_dbg.tvalid,
+      m_tlast                    => width_conv_dbg.tlast,
+      m_tdata                    => width_conv_dbg.tdata,
+      m_tid                      => width_conv_dbg.tid);
 
   bb_scrambler_u : entity work.axi_baseband_scrambler
     generic map (
@@ -266,29 +278,41 @@ begin
       FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
     port map (
       -- Usual ports
-      clk                   => clk,
-      rst                   => rst,
+      clk                        => clk,
+      rst                        => rst,
       -- Control and status
-      cfg_reset_min_max     => regs2user.axi_debug_bb_scrambler_cfg_reset_min_max(0),
-      cfg_block_data        => regs2user.axi_debug_bb_scrambler_cfg_block_data(0),
-      cfg_allow_word        => regs2user.axi_debug_bb_scrambler_cfg_allow_word(0),
-      cfg_allow_frame       => regs2user.axi_debug_bb_scrambler_cfg_allow_frame(0),
-      sts_frame_count       => user2regs.axi_debug_bb_scrambler_frame_count_value,
-      sts_last_frame_length => user2regs.axi_debug_bb_scrambler_last_frame_length_value,
-      sts_min_frame_length  => user2regs.axi_debug_bb_scrambler_min_max_frame_length_min_frame_length,
-      sts_max_frame_length  => user2regs.axi_debug_bb_scrambler_min_max_frame_length_max_frame_length,
+      cfg.block_data             => regs2user.axi_debug_bb_scrambler_cfg_block_data(0),
+      cfg.allow_word             => regs2user.axi_debug_bb_scrambler_cfg_allow_word(0),
+      cfg.allow_frame            => regs2user.axi_debug_bb_scrambler_cfg_allow_frame(0),
+
+      cfg.clear_max_frame_length => regs2user.axi_debug_bb_scrambler_min_max_frame_length_strobe,
+      cfg.clear_min_frame_length => regs2user.axi_debug_bb_scrambler_min_max_frame_length_strobe,
+      cfg.clear_s_tvalid         => regs2user.axi_debug_bb_scrambler_strobes_strobe,
+      cfg.clear_s_tready         => regs2user.axi_debug_bb_scrambler_strobes_strobe,
+      cfg.clear_m_tvalid         => regs2user.axi_debug_bb_scrambler_strobes_strobe,
+      cfg.clear_m_tready         => regs2user.axi_debug_bb_scrambler_strobes_strobe,
+
+      sts.frame_count            => user2regs.axi_debug_bb_scrambler_frame_count_value,
+      sts.word_count             => user2regs.axi_debug_bb_scrambler_word_count_value,
+      sts.s_tvalid               => user2regs.axi_debug_bb_scrambler_strobes_s_tvalid(0),
+      sts.s_tready               => user2regs.axi_debug_bb_scrambler_strobes_s_tready(0),
+      sts.m_tvalid               => user2regs.axi_debug_bb_scrambler_strobes_m_tvalid(0),
+      sts.m_tready               => user2regs.axi_debug_bb_scrambler_strobes_m_tready(0),
+      sts.last_frame_length      => user2regs.axi_debug_bb_scrambler_last_frame_length_value,
+      sts.min_frame_length       => user2regs.axi_debug_bb_scrambler_min_max_frame_length_min_frame_length,
+      sts.max_frame_length       => user2regs.axi_debug_bb_scrambler_min_max_frame_length_max_frame_length,
       -- AXI input
-      s_tready              => bb_scrambler.tready,
-      s_tvalid              => bb_scrambler.tvalid,
-      s_tlast               => bb_scrambler.tlast,
-      s_tdata               => bb_scrambler.tdata,
-      s_tid                 => bb_scrambler.tid,
+      s_tready                   => bb_scrambler.tready,
+      s_tvalid                   => bb_scrambler.tvalid,
+      s_tlast                    => bb_scrambler.tlast,
+      s_tdata                    => bb_scrambler.tdata,
+      s_tid                      => bb_scrambler.tid,
       -- AXI output
-      m_tready              => bb_scrambler_dbg.tready,
-      m_tvalid              => bb_scrambler_dbg.tvalid,
-      m_tlast               => bb_scrambler_dbg.tlast,
-      m_tdata               => bb_scrambler_dbg.tdata,
-      m_tid                 => bb_scrambler_dbg.tid);
+      m_tready                   => bb_scrambler_dbg.tready,
+      m_tvalid                   => bb_scrambler_dbg.tvalid,
+      m_tlast                    => bb_scrambler_dbg.tlast,
+      m_tdata                    => bb_scrambler_dbg.tdata,
+      m_tid                      => bb_scrambler_dbg.tid);
 
   bch_encoder_u : entity work.axi_bch_encoder
     generic map (
@@ -321,29 +345,41 @@ begin
       FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
     port map (
       -- Usual ports
-      clk                   => clk,
-      rst                   => rst,
+      clk                        => clk,
+      rst                        => rst,
       -- Control and status
-      cfg_reset_min_max     => regs2user.axi_debug_bch_encoder_cfg_reset_min_max(0),
-      cfg_block_data        => regs2user.axi_debug_bch_encoder_cfg_block_data(0),
-      cfg_allow_word        => regs2user.axi_debug_bch_encoder_cfg_allow_word(0),
-      cfg_allow_frame       => regs2user.axi_debug_bch_encoder_cfg_allow_frame(0),
-      sts_frame_count       => user2regs.axi_debug_bch_encoder_frame_count_value,
-      sts_last_frame_length => user2regs.axi_debug_bch_encoder_last_frame_length_value,
-      sts_min_frame_length  => user2regs.axi_debug_bch_encoder_min_max_frame_length_min_frame_length,
-      sts_max_frame_length  => user2regs.axi_debug_bch_encoder_min_max_frame_length_max_frame_length,
+      cfg.block_data             => regs2user.axi_debug_bch_encoder_cfg_block_data(0),
+      cfg.allow_word             => regs2user.axi_debug_bch_encoder_cfg_allow_word(0),
+      cfg.allow_frame            => regs2user.axi_debug_bch_encoder_cfg_allow_frame(0),
+
+      cfg.clear_max_frame_length => regs2user.axi_debug_bch_encoder_min_max_frame_length_strobe,
+      cfg.clear_min_frame_length => regs2user.axi_debug_bch_encoder_min_max_frame_length_strobe,
+      cfg.clear_s_tvalid         => regs2user.axi_debug_bch_encoder_strobes_strobe,
+      cfg.clear_s_tready         => regs2user.axi_debug_bch_encoder_strobes_strobe,
+      cfg.clear_m_tvalid         => regs2user.axi_debug_bch_encoder_strobes_strobe,
+      cfg.clear_m_tready         => regs2user.axi_debug_bch_encoder_strobes_strobe,
+
+      sts.frame_count            => user2regs.axi_debug_bch_encoder_frame_count_value,
+      sts.word_count             => user2regs.axi_debug_bch_encoder_word_count_value,
+      sts.s_tvalid               => user2regs.axi_debug_bch_encoder_strobes_s_tvalid(0),
+      sts.s_tready               => user2regs.axi_debug_bch_encoder_strobes_s_tready(0),
+      sts.m_tvalid               => user2regs.axi_debug_bch_encoder_strobes_m_tvalid(0),
+      sts.m_tready               => user2regs.axi_debug_bch_encoder_strobes_m_tready(0),
+      sts.last_frame_length      => user2regs.axi_debug_bch_encoder_last_frame_length_value,
+      sts.min_frame_length       => user2regs.axi_debug_bch_encoder_min_max_frame_length_min_frame_length,
+      sts.max_frame_length       => user2regs.axi_debug_bch_encoder_min_max_frame_length_max_frame_length,
       -- AXI input
-      s_tready              => bch_encoder.tready,
-      s_tvalid              => bch_encoder.tvalid,
-      s_tlast               => bch_encoder.tlast,
-      s_tdata               => bch_encoder.tdata,
-      s_tid                 => bch_encoder.tid,
+      s_tready                   => bch_encoder.tready,
+      s_tvalid                   => bch_encoder.tvalid,
+      s_tlast                    => bch_encoder.tlast,
+      s_tdata                    => bch_encoder.tdata,
+      s_tid                      => bch_encoder.tid,
       -- AXI output
-      m_tready              => bch_encoder_dbg.tready,
-      m_tvalid              => bch_encoder_dbg.tvalid,
-      m_tlast               => bch_encoder_dbg.tlast,
-      m_tdata               => bch_encoder_dbg.tdata,
-      m_tid                 => bch_encoder_dbg.tid);
+      m_tready                   => bch_encoder_dbg.tready,
+      m_tvalid                   => bch_encoder_dbg.tvalid,
+      m_tlast                    => bch_encoder_dbg.tlast,
+      m_tdata                    => bch_encoder_dbg.tdata,
+      m_tid                      => bch_encoder_dbg.tid);
 
   ldpc_encoder_u : entity work.axi_ldpc_encoder
     generic map ( TID_WIDTH   => ENCODED_CONFIG_WIDTH )
@@ -408,29 +444,41 @@ begin
       FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
     port map (
       -- Usual ports
-      clk                   => clk,
-      rst                   => rst,
+      clk                        => clk,
+      rst                        => rst,
       -- Control and status
-      cfg_reset_min_max     => regs2user.axi_debug_ldpc_encoder_cfg_reset_min_max(0),
-      cfg_block_data        => regs2user.axi_debug_ldpc_encoder_cfg_block_data(0),
-      cfg_allow_word        => regs2user.axi_debug_ldpc_encoder_cfg_allow_word(0),
-      cfg_allow_frame       => regs2user.axi_debug_ldpc_encoder_cfg_allow_frame(0),
-      sts_frame_count       => user2regs.axi_debug_ldpc_encoder_frame_count_value,
-      sts_last_frame_length => user2regs.axi_debug_ldpc_encoder_last_frame_length_value,
-      sts_min_frame_length  => user2regs.axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length,
-      sts_max_frame_length  => user2regs.axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length,
+      cfg.block_data             => regs2user.axi_debug_ldpc_encoder_cfg_block_data(0),
+      cfg.allow_word             => regs2user.axi_debug_ldpc_encoder_cfg_allow_word(0),
+      cfg.allow_frame            => regs2user.axi_debug_ldpc_encoder_cfg_allow_frame(0),
+
+      cfg.clear_max_frame_length => regs2user.axi_debug_ldpc_encoder_min_max_frame_length_strobe,
+      cfg.clear_min_frame_length => regs2user.axi_debug_ldpc_encoder_min_max_frame_length_strobe,
+      cfg.clear_s_tvalid         => regs2user.axi_debug_ldpc_encoder_strobes_strobe,
+      cfg.clear_s_tready         => regs2user.axi_debug_ldpc_encoder_strobes_strobe,
+      cfg.clear_m_tvalid         => regs2user.axi_debug_ldpc_encoder_strobes_strobe,
+      cfg.clear_m_tready         => regs2user.axi_debug_ldpc_encoder_strobes_strobe,
+
+      sts.frame_count            => user2regs.axi_debug_ldpc_encoder_frame_count_value,
+      sts.word_count             => user2regs.axi_debug_ldpc_encoder_word_count_value,
+      sts.s_tvalid               => user2regs.axi_debug_ldpc_encoder_strobes_s_tvalid(0),
+      sts.s_tready               => user2regs.axi_debug_ldpc_encoder_strobes_s_tready(0),
+      sts.m_tvalid               => user2regs.axi_debug_ldpc_encoder_strobes_m_tvalid(0),
+      sts.m_tready               => user2regs.axi_debug_ldpc_encoder_strobes_m_tready(0),
+      sts.last_frame_length      => user2regs.axi_debug_ldpc_encoder_last_frame_length_value,
+      sts.min_frame_length       => user2regs.axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length,
+      sts.max_frame_length       => user2regs.axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length,
       -- AXI input
-      s_tready              => ldpc_encoder_reg.tready,
-      s_tvalid              => ldpc_encoder_reg.tvalid,
-      s_tlast               => ldpc_encoder_reg.tlast,
-      s_tdata               => ldpc_encoder_reg.tdata,
-      s_tid                 => ldpc_encoder_reg.tid,
+      s_tready                   => ldpc_encoder_reg.tready,
+      s_tvalid                   => ldpc_encoder_reg.tvalid,
+      s_tlast                    => ldpc_encoder_reg.tlast,
+      s_tdata                    => ldpc_encoder_reg.tdata,
+      s_tid                      => ldpc_encoder_reg.tid,
       -- AXI output
-      m_tready              => ldpc_encoder_dbg.tready,
-      m_tvalid              => ldpc_encoder_dbg.tvalid,
-      m_tlast               => ldpc_encoder_dbg.tlast,
-      m_tdata               => ldpc_encoder_dbg.tdata,
-      m_tid                 => ldpc_encoder_dbg.tid);
+      m_tready                   => ldpc_encoder_dbg.tready,
+      m_tvalid                   => ldpc_encoder_dbg.tvalid,
+      m_tlast                    => ldpc_encoder_dbg.tlast,
+      m_tdata                    => ldpc_encoder_dbg.tdata,
+      m_tid                      => ldpc_encoder_dbg.tid);
 
 
   with decode(ldpc_encoder_dbg.tid).constellation select
@@ -491,29 +539,41 @@ begin
       FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
     port map (
       -- Usual ports
-      clk                   => clk,
-      rst                   => rst,
+      clk                        => clk,
+      rst                        => rst,
       -- Control and status
-      cfg_reset_min_max     => regs2user.axi_debug_bit_interleaver_cfg_reset_min_max(0),
-      cfg_block_data        => regs2user.axi_debug_bit_interleaver_cfg_block_data(0),
-      cfg_allow_word        => regs2user.axi_debug_bit_interleaver_cfg_allow_word(0),
-      cfg_allow_frame       => regs2user.axi_debug_bit_interleaver_cfg_allow_frame(0),
-      sts_frame_count       => user2regs.axi_debug_bit_interleaver_frame_count_value,
-      sts_last_frame_length => user2regs.axi_debug_bit_interleaver_last_frame_length_value,
-      sts_min_frame_length  => user2regs.axi_debug_bit_interleaver_min_max_frame_length_min_frame_length,
-      sts_max_frame_length  => user2regs.axi_debug_bit_interleaver_min_max_frame_length_max_frame_length,
+      cfg.block_data             => regs2user.axi_debug_bit_interleaver_cfg_block_data(0),
+      cfg.allow_word             => regs2user.axi_debug_bit_interleaver_cfg_allow_word(0),
+      cfg.allow_frame            => regs2user.axi_debug_bit_interleaver_cfg_allow_frame(0),
+
+      cfg.clear_max_frame_length => regs2user.axi_debug_bit_interleaver_min_max_frame_length_strobe,
+      cfg.clear_min_frame_length => regs2user.axi_debug_bit_interleaver_min_max_frame_length_strobe,
+      cfg.clear_s_tvalid         => regs2user.axi_debug_bit_interleaver_strobes_strobe,
+      cfg.clear_s_tready         => regs2user.axi_debug_bit_interleaver_strobes_strobe,
+      cfg.clear_m_tvalid         => regs2user.axi_debug_bit_interleaver_strobes_strobe,
+      cfg.clear_m_tready         => regs2user.axi_debug_bit_interleaver_strobes_strobe,
+
+      sts.frame_count            => user2regs.axi_debug_bit_interleaver_frame_count_value,
+      sts.word_count             => user2regs.axi_debug_bit_interleaver_word_count_value,
+      sts.s_tvalid               => user2regs.axi_debug_bit_interleaver_strobes_s_tvalid(0),
+      sts.s_tready               => user2regs.axi_debug_bit_interleaver_strobes_s_tready(0),
+      sts.m_tvalid               => user2regs.axi_debug_bit_interleaver_strobes_m_tvalid(0),
+      sts.m_tready               => user2regs.axi_debug_bit_interleaver_strobes_m_tready(0),
+      sts.last_frame_length      => user2regs.axi_debug_bit_interleaver_last_frame_length_value,
+      sts.min_frame_length       => user2regs.axi_debug_bit_interleaver_min_max_frame_length_min_frame_length,
+      sts.max_frame_length       => user2regs.axi_debug_bit_interleaver_min_max_frame_length_max_frame_length,
       -- AXI input
-      s_tready              => bit_interleaver.tready,
-      s_tvalid              => bit_interleaver.tvalid,
-      s_tlast               => bit_interleaver.tlast,
-      s_tdata               => bit_interleaver.tdata,
-      s_tid                 => bit_interleaver.tid,
+      s_tready                   => bit_interleaver.tready,
+      s_tvalid                   => bit_interleaver.tvalid,
+      s_tlast                    => bit_interleaver.tlast,
+      s_tdata                    => bit_interleaver.tdata,
+      s_tid                      => bit_interleaver.tid,
       -- AXI output
-      m_tready              => bit_interleaver_dbg.tready,
-      m_tvalid              => bit_interleaver_dbg.tvalid,
-      m_tlast               => bit_interleaver_dbg.tlast,
-      m_tdata               => bit_interleaver_dbg.tdata,
-      m_tid                 => bit_interleaver_dbg.tid);
+      m_tready                   => bit_interleaver_dbg.tready,
+      m_tvalid                   => bit_interleaver_dbg.tvalid,
+      m_tlast                    => bit_interleaver_dbg.tlast,
+      m_tdata                    => bit_interleaver_dbg.tdata,
+      m_tid                      => bit_interleaver_dbg.tid);
 
   ldpc_fifo_block : block
     signal tdata_agg_in  : std_logic_vector(ENCODED_CONFIG_WIDTH + 7 downto 0);
@@ -660,29 +720,41 @@ begin
       FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
     port map (
       -- Usual ports
-      clk                   => clk,
-      rst                   => rst,
+      clk                        => clk,
+      rst                        => rst,
       -- Control and status
-      cfg_reset_min_max     => regs2user.axi_debug_plframe_cfg_reset_min_max(0),
-      cfg_block_data        => regs2user.axi_debug_plframe_cfg_block_data(0),
-      cfg_allow_word        => regs2user.axi_debug_plframe_cfg_allow_word(0),
-      cfg_allow_frame       => regs2user.axi_debug_plframe_cfg_allow_frame(0),
-      sts_frame_count       => user2regs.axi_debug_plframe_frame_count_value,
-      sts_last_frame_length => user2regs.axi_debug_plframe_last_frame_length_value,
-      sts_min_frame_length  => user2regs.axi_debug_plframe_min_max_frame_length_min_frame_length,
-      sts_max_frame_length  => user2regs.axi_debug_plframe_min_max_frame_length_max_frame_length,
+      cfg.block_data             => regs2user.axi_debug_plframe_cfg_block_data(0),
+      cfg.allow_word             => regs2user.axi_debug_plframe_cfg_allow_word(0),
+      cfg.allow_frame            => regs2user.axi_debug_plframe_cfg_allow_frame(0),
+
+      cfg.clear_max_frame_length => regs2user.axi_debug_plframe_min_max_frame_length_strobe,
+      cfg.clear_min_frame_length => regs2user.axi_debug_plframe_min_max_frame_length_strobe,
+      cfg.clear_s_tvalid         => regs2user.axi_debug_plframe_strobes_strobe,
+      cfg.clear_s_tready         => regs2user.axi_debug_plframe_strobes_strobe,
+      cfg.clear_m_tvalid         => regs2user.axi_debug_plframe_strobes_strobe,
+      cfg.clear_m_tready         => regs2user.axi_debug_plframe_strobes_strobe,
+
+      sts.frame_count            => user2regs.axi_debug_plframe_frame_count_value,
+      sts.word_count             => user2regs.axi_debug_plframe_word_count_value,
+      sts.s_tvalid               => user2regs.axi_debug_plframe_strobes_s_tvalid(0),
+      sts.s_tready               => user2regs.axi_debug_plframe_strobes_s_tready(0),
+      sts.m_tvalid               => user2regs.axi_debug_plframe_strobes_m_tvalid(0),
+      sts.m_tready               => user2regs.axi_debug_plframe_strobes_m_tready(0),
+      sts.last_frame_length      => user2regs.axi_debug_plframe_last_frame_length_value,
+      sts.min_frame_length       => user2regs.axi_debug_plframe_min_max_frame_length_min_frame_length,
+      sts.max_frame_length       => user2regs.axi_debug_plframe_min_max_frame_length_max_frame_length,
       -- AXI input
-      s_tready              => pl_frame.tready,
-      s_tvalid              => pl_frame.tvalid,
-      s_tlast               => pl_frame.tlast,
-      s_tdata               => pl_frame.tdata,
-      s_tid                 => pl_frame.tid,
+      s_tready                   => pl_frame.tready,
+      s_tvalid                   => pl_frame.tvalid,
+      s_tlast                    => pl_frame.tlast,
+      s_tdata                    => pl_frame.tdata,
+      s_tid                      => pl_frame.tid,
       -- AXI output
-      m_tready              => pl_frame_dbg.tready,
-      m_tvalid              => pl_frame_dbg.tvalid,
-      m_tlast               => pl_frame_dbg.tlast,
-      m_tdata               => pl_frame_dbg.tdata,
-      m_tid                 => pl_frame_dbg.tid);
+      m_tready                   => pl_frame_dbg.tready,
+      m_tvalid                   => pl_frame_dbg.tvalid,
+      m_tlast                    => pl_frame_dbg.tlast,
+      m_tdata                    => pl_frame_dbg.tdata,
+      m_tid                      => pl_frame_dbg.tid);
 
   polyphase_filter_q : polyphase_filter
     generic map (
@@ -748,66 +820,86 @@ begin
       FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
     port map (
       -- Usual ports
-      clk                   => clk,
-      rst                   => rst,
+      clk                        => clk,
+      rst                        => rst,
       -- Control and status
-      cfg_reset_min_max     => regs2user.axi_debug_output_cfg_reset_min_max(0),
-      cfg_block_data        => regs2user.axi_debug_output_cfg_block_data(0),
-      cfg_allow_word        => regs2user.axi_debug_output_cfg_allow_word(0),
-      cfg_allow_frame       => regs2user.axi_debug_output_cfg_allow_frame(0),
-      sts_frame_count       => user2regs.axi_debug_output_frame_count_value,
-      sts_last_frame_length => user2regs.axi_debug_output_last_frame_length_value,
-      sts_min_frame_length  => user2regs.axi_debug_output_min_max_frame_length_min_frame_length,
-      sts_max_frame_length  => user2regs.axi_debug_output_min_max_frame_length_max_frame_length,
+      cfg.block_data             => regs2user.axi_debug_output_cfg_block_data(0),
+      cfg.allow_word             => regs2user.axi_debug_output_cfg_allow_word(0),
+      cfg.allow_frame            => regs2user.axi_debug_output_cfg_allow_frame(0),
+
+      cfg.clear_max_frame_length => regs2user.axi_debug_output_min_max_frame_length_strobe,
+      cfg.clear_min_frame_length => regs2user.axi_debug_output_min_max_frame_length_strobe,
+      cfg.clear_s_tvalid         => regs2user.axi_debug_output_strobes_strobe,
+      cfg.clear_s_tready         => regs2user.axi_debug_output_strobes_strobe,
+      cfg.clear_m_tvalid         => regs2user.axi_debug_output_strobes_strobe,
+      cfg.clear_m_tready         => regs2user.axi_debug_output_strobes_strobe,
+
+      sts.frame_count            => user2regs.axi_debug_output_frame_count_value,
+      sts.word_count             => user2regs.axi_debug_output_word_count_value,
+      sts.s_tvalid               => user2regs.axi_debug_output_strobes_s_tvalid(0),
+      sts.s_tready               => user2regs.axi_debug_output_strobes_s_tready(0),
+      sts.m_tvalid               => user2regs.axi_debug_output_strobes_m_tvalid(0),
+      sts.m_tready               => user2regs.axi_debug_output_strobes_m_tready(0),
+      sts.last_frame_length      => user2regs.axi_debug_output_last_frame_length_value,
+      sts.min_frame_length       => user2regs.axi_debug_output_min_max_frame_length_min_frame_length,
+      sts.max_frame_length       => user2regs.axi_debug_output_min_max_frame_length_max_frame_length,
       -- AXI input
-      s_tready              => polyphase_filter_out.tready,
-      s_tvalid              => polyphase_filter_out.tvalid,
-      s_tlast               => polyphase_filter_out.tlast,
-      s_tdata               => polyphase_filter_out.tdata,
-      s_tid                 => polyphase_filter_out.tid,
+      s_tready                   => polyphase_filter_out.tready,
+      s_tvalid                   => polyphase_filter_out.tvalid,
+      s_tlast                    => polyphase_filter_out.tlast,
+      s_tdata                    => polyphase_filter_out.tdata,
+      s_tid                      => polyphase_filter_out.tid,
       -- AXI output
-      m_tready              => m_tready,
-      m_tvalid              => m_tvalid_i,
-      m_tlast               => m_tlast_i,
-      m_tdata               => m_tdata,
-      m_tid                 => open);
+      m_tready                   => m_tready,
+      m_tvalid                   => m_tvalid_i,
+      m_tlast                    => m_tlast_i,
+      m_tdata                    => m_tdata,
+      m_tid                      => open);
 
   -- Register map decoder
-  regmap_u : entity work.dvbs2_encoder_regs
-    generic map (
-      AXI_ADDR_WIDTH => 32,
-      BASEADDR       => (others => '0'))
-    port map (
-      -- Clock and Reset
-      axi_aclk    => clk,
-      axi_aresetn => rst_n,
-      -- AXI Write Address Channel
-      s_axi_awaddr  => (32 - 12 - 1 downto 0 => '0') & s_axi_awaddr,
-      s_axi_awprot  => (others => '0'),
-      s_axi_awvalid => s_axi_awvalid,
-      s_axi_awready => s_axi_awready,
-      -- AXI Write Data Channel
-      s_axi_wdata   => s_axi_wdata,
-      s_axi_wstrb   => s_axi_wstrb,
-      s_axi_wvalid  => s_axi_wvalid,
-      s_axi_wready  => s_axi_wready,
-      -- AXI Read Address Channel
-      s_axi_araddr  => (32 - 12 - 1 downto 0 => '0') & s_axi_araddr,
-      s_axi_arprot  => (others => '0'),
-      s_axi_arvalid => s_axi_arvalid,
-      s_axi_arready => s_axi_arready,
-      -- AXI Read Data Channel
-      s_axi_rdata   => s_axi_rdata,
-      s_axi_rresp   => s_axi_rresp,
-      s_axi_rvalid  => s_axi_rvalid,
-      s_axi_rready  => s_axi_rready,
-      -- AXI Write Response Channel
-      s_axi_bresp   => s_axi_bresp,
-      s_axi_bvalid  => s_axi_bvalid,
-      s_axi_bready  => s_axi_bready,
-      -- User Ports
-      user2regs     => user2regs,
-      regs2user     => regs2user);
+  regmap_block : block
+    signal s_axi_awaddr_32 : std_logic_vector(31 downto 0);
+    signal s_axi_araddr_32 : std_logic_vector(31 downto 0);
+  begin
+    s_axi_awaddr_32 <= (32 - 16 - 1 downto 0 => '0') & s_axi_awaddr;
+    s_axi_araddr_32 <= (32 - 16 - 1 downto 0 => '0') & s_axi_araddr;
+
+    regmap_u : entity work.dvbs2_encoder_regs
+      generic map (
+        AXI_ADDR_WIDTH => 32,
+        BASEADDR       => (others => '0'))
+      port map (
+        -- Clock and Reset
+        axi_aclk    => clk,
+        axi_aresetn => rst_n,
+        -- AXI Write Address Channel
+        s_axi_awaddr  => s_axi_awaddr_32,
+        s_axi_awprot  => (others => '0'),
+        s_axi_awvalid => s_axi_awvalid,
+        s_axi_awready => s_axi_awready,
+        -- AXI Write Data Channel
+        s_axi_wdata   => s_axi_wdata,
+        s_axi_wstrb   => s_axi_wstrb,
+        s_axi_wvalid  => s_axi_wvalid,
+        s_axi_wready  => s_axi_wready,
+        -- AXI Read Address Channel
+        s_axi_araddr  => s_axi_araddr_32,
+        s_axi_arprot  => (others => '0'),
+        s_axi_arvalid => s_axi_arvalid,
+        s_axi_arready => s_axi_arready,
+        -- AXI Read Data Channel
+        s_axi_rdata   => s_axi_rdata,
+        s_axi_rresp   => s_axi_rresp,
+        s_axi_rvalid  => s_axi_rvalid,
+        s_axi_rready  => s_axi_rready,
+        -- AXI Write Response Channel
+        s_axi_bresp   => s_axi_bresp,
+        s_axi_bvalid  => s_axi_bvalid,
+        s_axi_bready  => s_axi_bready,
+        -- User Ports
+        user2regs     => user2regs,
+        regs2user     => regs2user);
+  end block regmap_block;
 
 
   ------------------------------
