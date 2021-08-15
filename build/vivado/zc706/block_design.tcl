@@ -235,6 +235,10 @@ proc create_root_design { parentCell } {
    CONFIG.C_DATA_INTERFACE_TYPE {0} \
    CONFIG.C_HAS_AXIS_TKEEP {true} \
    CONFIG.C_HAS_AXIS_TUSER {true} \
+   CONFIG.C_RX_FIFO_DEPTH {65536} \
+   CONFIG.C_RX_FIFO_PE_THRESHOLD {5} \
+   CONFIG.C_RX_FIFO_PF_THRESHOLD {507} \
+   CONFIG.C_USE_RX_CUT_THROUGH {true} \
    CONFIG.C_USE_TX_CTRL {0} \
    CONFIG.C_USE_TX_CUT_THROUGH {0} \
  ] $axi_fifo_mm_s
