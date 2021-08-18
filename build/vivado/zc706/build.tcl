@@ -18,9 +18,10 @@
 # source, You must maintain the Source Location visible on the external case of
 # the DVB Encoder or other products you make using this source.
 
-set path_to_repo_root [ file normalize "[ file dirname [ info script ] ]/../../"]
+set path_to_repo_root [ file normalize "[ file dirname [ info script ] ]/../../../"]
 
-create_project dvbs2_encoder ${path_to_repo_root}/build/vivado/dvbs2_encoder -part xczu4cg-sfvc784-1LV-i -force
+create_project dvbs2_encoder zc706 -part xc7z045ffg900-2
+set_property BOARD_PART xilinx.com:zc706:part0:1.4 [current_project]
 
 set_property library str_format [ add_files [ glob ${path_to_repo_root}/third_party/hdl_string_format/src/str_format_pkg.vhd ] ]
 set_property library fpga_cores [ add_files [ glob ${path_to_repo_root}/third_party/fpga_cores/src/*.vhd ] ]
@@ -36,30 +37,27 @@ add_files [ glob ${path_to_repo_root}/third_party/bch_generated/*.vhd ]
 
 read_verilog -sv [ glob ${path_to_repo_root}/third_party/polyphase_filter/*.v ]
 
-# WARNING: [Synth 8-6849] Infeasible attribute ram_style = "block" set for RAM
-# "ldpc_encoder_u/frame_ram_u/ram_u/ram_reg", trying to implement using LUTRAM
-set_msg_config -id "Synth 8-6849" -new_severity ERROR
+source ${path_to_repo_root}/build/vivado/zc706/block_design.tcl
+
+make_wrapper -files [get_files zc706/dvbs2_encoder.srcs/sources_1/bd/design_1/design_1.bd] -top
+add_files -norecurse zc706/dvbs2_encoder.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v
+update_compile_order -fileset sources_1
+# Disabling source management mode.  This is to allow the top design properties to be set without GUI intervention.
+set_property source_mgmt_mode None [current_project]
+set_property top design_1_wrapper [current_fileset]
+# Re-enabling previously disabled source management mode.
+set_property source_mgmt_mode All [current_project]
+update_compile_order -fileset sources_1
+
 
 # CRITICAL WARNING: [Synth 8-507] null range (31 downto 32) not supported
 # We're largely OK with null ranges, make it a regular warning
 set_msg_config -id "Synth 8-507" -new_severity WARNING
 
-
-# INFO: [Synth 8-7053] The timing for the instance
-# ldpc_encoder_u/frame_ram_u/ram_u/ram_reg_bram_0 (implemented as a Block RAM) might be
-# sub-optimal as no optional output register could be merged into the ram block. Providing
-# additional output register may help in improving timing.
-# set_msg_config -id "Synth 8-7053" -new_severity ERROR
-
-set_property TOP dvbs2_encoder_wrapper [ current_fileset ]
-set_property STEPS.SYNTH_DESIGN.ARGS.ASSERT true [ get_runs synth_1 ]
-set_property -name {STEPS.SYNTH_DESIGN.ARGS.MORE OPTIONS} -value {-mode out_of_context} -object [get_runs synth_1]
-
-add_files -fileset constrs_1 ${path_to_repo_root}/build/vivado/constraints.xdc
-set_property target_constrs_file ${path_to_repo_root}/build/vivado/constraints.xdc [current_fileset -constrset]
-
-launch_runs synth_1
+launch_runs synth_1 -jobs 8
 wait_on_run synth_1
 
-launch_runs impl_1
+launch_runs impl_1 -to_step write_bitstream -jobs 8
 wait_on_run impl_1
+
+write_hw_platform -fixed -force zc706/dvbs2_encoder.xsa

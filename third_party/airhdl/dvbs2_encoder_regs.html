@@ -4,17 +4,17 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>dvbs2_encoder Register Map</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">        
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
         <style>
             .dl-horizontal dt {
                 text-align: left;
                 margin-bottom: 1em;
             }
-            
+
             .dl-horizontal dl {
                 margin-bottom: 1em;
-            }        
+            }
         </style>
     </head>
     <body>
@@ -28,11 +28,11 @@
                     <dt><strong>Description</strong></dt><dd>n/a</dd>
                     <dt><strong>Default base address</strong></dt><dd style="font-family:monospace;">0x0</dd>
                     <dt><strong>Register Width</strong></dt><dd>32 bits</dd>
-                    <dt><strong>Register Count</strong></dt><dd>33</dd>
+                    <dt><strong>Register Count</strong></dt><dd>47</dd>
                     <dt>Range</dt>
-                    <dd>3132 bytes 
-                    </dd>                    
-                    <dt><strong>Revision</strong></dt><dd>144</dd>
+                    <dd>4888 bytes
+                    </dd>
+                    <dt><strong>Revision</strong></dt><dd>292</dd>
                 </dl>
 <a id="OVERVIEW"></a>
                 <h3 class="page-header">Overview</h3>
@@ -43,32 +43,32 @@
                             <col class="col-md-2">
                             <col class="col-md-8">
                             <col class="col-md-1">
-                        </colgroup>                    
+                        </colgroup>
                         <tr class="active">
                             <th style="padding-left: 2em;">Offset</th>
                             <th>Name</th>
                             <th>Description</th>
                             <th>Type</th>
                         </tr>
-                        <tr onclick="window.location='#REG@config';">                        
+                        <tr onclick="window.location='#REG@config';">
                             <td style="font-family: monospace; padding-left: 2em;">0x0</td>
                             <td>config</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@ldpc_fifo_status';">                        
+                        <tr onclick="window.location='#REG@ldpc_fifo_status';">
                             <td style="font-family: monospace; padding-left: 2em;">0x4</td>
                             <td>ldpc_fifo_status</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@frames_in_transit';">                        
+                        <tr onclick="window.location='#REG@frames_in_transit';">
                             <td style="font-family: monospace; padding-left: 2em;">0x8</td>
                             <td>frames_in_transit</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@bit_mapper_ram';">                        
+                        <tr onclick="window.location='#REG@bit_mapper_ram';">
                             <td style="font-family: monospace; padding-left: 2em;">0xC</td>
                             <td>bit_mapper_ram</td>
                             <td>- 0x00 - 0x03: QPSK map
@@ -77,177 +77,261 @@
 - 0x1C - 0x3B: 32APSK map</td>
                             <td style="font-family: monospace;">MEM[240]</td>
                         </tr>
-                        <tr onclick="window.location='#REG@polyphase_filter_coefficients';">                        
+                        <tr onclick="window.location='#REG@polyphase_filter_coefficients';">
                             <td style="font-family: monospace; padding-left: 2em;">0x3CC</td>
                             <td>polyphase_filter_coefficients</td>
                             <td>Depth needs to match polyphase_filter&#39;s NUMBER_TAPS</td>
                             <td style="font-family: monospace;">MEM[512]</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_input_width_converter_cfg';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xBCC</td>
+                        <tr onclick="window.location='#REG@axi_debug_input_width_converter_cfg';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xD00</td>
                             <td>axi_debug_input_width_converter_cfg</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_input_width_converter_frame_count';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xBD0</td>
+                        <tr onclick="window.location='#REG@axi_debug_input_width_converter_frame_count';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xD04</td>
                             <td>axi_debug_input_width_converter_frame_count</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_input_width_converter_last_frame_length';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xBD4</td>
+                        <tr onclick="window.location='#REG@axi_debug_input_width_converter_last_frame_length';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xD08</td>
                             <td>axi_debug_input_width_converter_last_frame_length</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_input_width_converter_min_max_frame_length';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xBD8</td>
+                        <tr onclick="window.location='#REG@axi_debug_input_width_converter_min_max_frame_length';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xD0C</td>
                             <td>axi_debug_input_width_converter_min_max_frame_length</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_bb_scrambler_cfg';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xBDC</td>
+                        <tr onclick="window.location='#REG@axi_debug_input_width_converter_word_count';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xD10</td>
+                            <td>axi_debug_input_width_converter_word_count</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_input_width_converter_strobes';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xD14</td>
+                            <td>axi_debug_input_width_converter_strobes</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_bb_scrambler_cfg';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xE00</td>
                             <td>axi_debug_bb_scrambler_cfg</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_bb_scrambler_frame_count';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xBE0</td>
+                        <tr onclick="window.location='#REG@axi_debug_bb_scrambler_frame_count';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xE04</td>
                             <td>axi_debug_bb_scrambler_frame_count</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_bb_scrambler_last_frame_length';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xBE4</td>
+                        <tr onclick="window.location='#REG@axi_debug_bb_scrambler_last_frame_length';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xE08</td>
                             <td>axi_debug_bb_scrambler_last_frame_length</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_bb_scrambler_min_max_frame_length';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xBE8</td>
+                        <tr onclick="window.location='#REG@axi_debug_bb_scrambler_min_max_frame_length';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xE0C</td>
                             <td>axi_debug_bb_scrambler_min_max_frame_length</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_bch_encoder_cfg';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xBEC</td>
+                        <tr onclick="window.location='#REG@axi_debug_bb_scrambler_word_count';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xE10</td>
+                            <td>axi_debug_bb_scrambler_word_count</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_bb_scrambler_strobes';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xE14</td>
+                            <td>axi_debug_bb_scrambler_strobes</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_bch_encoder_cfg';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xF00</td>
                             <td>axi_debug_bch_encoder_cfg</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_bch_encoder_frame_count';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xBF0</td>
+                        <tr onclick="window.location='#REG@axi_debug_bch_encoder_frame_count';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xF04</td>
                             <td>axi_debug_bch_encoder_frame_count</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_bch_encoder_last_frame_length';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xBF4</td>
+                        <tr onclick="window.location='#REG@axi_debug_bch_encoder_last_frame_length';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xF08</td>
                             <td>axi_debug_bch_encoder_last_frame_length</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_bch_encoder_min_max_frame_length';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xBF8</td>
+                        <tr onclick="window.location='#REG@axi_debug_bch_encoder_min_max_frame_length';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xF0C</td>
                             <td>axi_debug_bch_encoder_min_max_frame_length</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_ldpc_encoder_cfg';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xBFC</td>
+                        <tr onclick="window.location='#REG@axi_debug_bch_encoder_word_count';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xF10</td>
+                            <td>axi_debug_bch_encoder_word_count</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_bch_encoder_strobes';">
+                            <td style="font-family: monospace; padding-left: 2em;">0xF14</td>
+                            <td>axi_debug_bch_encoder_strobes</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_ldpc_encoder_cfg';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1000</td>
                             <td>axi_debug_ldpc_encoder_cfg</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_ldpc_encoder_frame_count';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xC00</td>
+                        <tr onclick="window.location='#REG@axi_debug_ldpc_encoder_frame_count';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1004</td>
                             <td>axi_debug_ldpc_encoder_frame_count</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_ldpc_encoder_last_frame_length';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xC04</td>
+                        <tr onclick="window.location='#REG@axi_debug_ldpc_encoder_last_frame_length';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1008</td>
                             <td>axi_debug_ldpc_encoder_last_frame_length</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_ldpc_encoder_min_max_frame_length';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xC08</td>
+                        <tr onclick="window.location='#REG@axi_debug_ldpc_encoder_min_max_frame_length';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x100C</td>
                             <td>axi_debug_ldpc_encoder_min_max_frame_length</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_bit_interleaver_cfg';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xC0C</td>
+                        <tr onclick="window.location='#REG@axi_debug_ldpc_encoder_word_count';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1010</td>
+                            <td>axi_debug_ldpc_encoder_word_count</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_ldpc_encoder_strobes';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1014</td>
+                            <td>axi_debug_ldpc_encoder_strobes</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_bit_interleaver_cfg';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1100</td>
                             <td>axi_debug_bit_interleaver_cfg</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_bit_interleaver_frame_count';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xC10</td>
+                        <tr onclick="window.location='#REG@axi_debug_bit_interleaver_frame_count';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1104</td>
                             <td>axi_debug_bit_interleaver_frame_count</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_bit_interleaver_last_frame_length';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xC14</td>
+                        <tr onclick="window.location='#REG@axi_debug_bit_interleaver_last_frame_length';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1108</td>
                             <td>axi_debug_bit_interleaver_last_frame_length</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_bit_interleaver_min_max_frame_length';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xC18</td>
+                        <tr onclick="window.location='#REG@axi_debug_bit_interleaver_min_max_frame_length';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x110C</td>
                             <td>axi_debug_bit_interleaver_min_max_frame_length</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_plframe_cfg';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xC1C</td>
+                        <tr onclick="window.location='#REG@axi_debug_bit_interleaver_word_count';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1110</td>
+                            <td>axi_debug_bit_interleaver_word_count</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_bit_interleaver_strobes';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1114</td>
+                            <td>axi_debug_bit_interleaver_strobes</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_plframe_cfg';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1200</td>
                             <td>axi_debug_plframe_cfg</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_plframe_frame_count';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xC20</td>
+                        <tr onclick="window.location='#REG@axi_debug_plframe_frame_count';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1204</td>
                             <td>axi_debug_plframe_frame_count</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_plframe_last_frame_length';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xC24</td>
+                        <tr onclick="window.location='#REG@axi_debug_plframe_last_frame_length';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1208</td>
                             <td>axi_debug_plframe_last_frame_length</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_plframe_min_max_frame_length';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xC28</td>
+                        <tr onclick="window.location='#REG@axi_debug_plframe_min_max_frame_length';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x120C</td>
                             <td>axi_debug_plframe_min_max_frame_length</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_output_cfg';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xC2C</td>
+                        <tr onclick="window.location='#REG@axi_debug_plframe_word_count';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1210</td>
+                            <td>axi_debug_plframe_word_count</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_plframe_strobes';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1214</td>
+                            <td>axi_debug_plframe_strobes</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_output_cfg';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1300</td>
                             <td>axi_debug_output_cfg</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_output_frame_count';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xC30</td>
+                        <tr onclick="window.location='#REG@axi_debug_output_frame_count';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1304</td>
                             <td>axi_debug_output_frame_count</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_output_last_frame_length';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xC34</td>
+                        <tr onclick="window.location='#REG@axi_debug_output_last_frame_length';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1308</td>
                             <td>axi_debug_output_last_frame_length</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@axi_debug_output_min_max_frame_length';">                        
-                            <td style="font-family: monospace; padding-left: 2em;">0xC38</td>
+                        <tr onclick="window.location='#REG@axi_debug_output_min_max_frame_length';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x130C</td>
                             <td>axi_debug_output_min_max_frame_length</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_output_word_count';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1310</td>
+                            <td>axi_debug_output_word_count</td>
+                            <td></td>
+                            <td style="font-family: monospace;">REG</td>
+                        </tr>
+                        <tr onclick="window.location='#REG@axi_debug_output_strobes';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x1314</td>
+                            <td>axi_debug_output_strobes</td>
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
@@ -274,7 +358,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x1</span>
                         </td>
@@ -285,7 +369,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -309,7 +393,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -320,7 +404,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -331,7 +415,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -355,7 +439,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -389,7 +473,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -415,7 +499,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -429,7 +513,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_input_width_converter_cfg&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xBCC
+                            <br/>Offset: 0xD00
                             <br/>Access: READ_WRITE
                         </td>
                     </tr>
@@ -440,7 +524,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -452,7 +536,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                                 <br/><span class="badge">Self-clearing</span>
@@ -465,19 +549,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
-                        </td>
-                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
-                        <td><strong>reset_min_max</strong><br/>
-                        
-                        </td>
-                        <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                                 <br/><span class="badge">Self-clearing</span>
@@ -492,7 +564,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_input_width_converter_frame_count&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xBD0
+                            <br/>Offset: 0xD04
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -502,7 +574,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -516,7 +588,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_input_width_converter_last_frame_length&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xBD4
+                            <br/>Offset: 0xD08
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -526,7 +598,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -540,7 +612,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_input_width_converter_min_max_frame_length&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xBD8
+                            <br/>Offset: 0xD0C
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -550,7 +622,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -561,7 +633,88 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_input_width_converter_word_count"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_input_width_converter_word_count&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0xD10
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[15:0]</td>
+                        <td><strong>value</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_input_width_converter_strobes"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_input_width_converter_strobes&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0xD14
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[0]</td>
+                        <td><strong>s_tvalid</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[1]</td>
+                        <td><strong>s_tready</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[2]</td>
+                        <td><strong>m_tvalid</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
+                        <td><strong>m_tready</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -575,7 +728,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_bb_scrambler_cfg&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xBDC
+                            <br/>Offset: 0xE00
                             <br/>Access: READ_WRITE
                         </td>
                     </tr>
@@ -586,7 +739,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -598,7 +751,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                                 <br/><span class="badge">Self-clearing</span>
@@ -611,19 +764,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
-                        </td>
-                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
-                        <td><strong>reset_min_max</strong><br/>
-                        
-                        </td>
-                        <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                                 <br/><span class="badge">Self-clearing</span>
@@ -638,7 +779,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_bb_scrambler_frame_count&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xBE0
+                            <br/>Offset: 0xE04
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -648,7 +789,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -662,7 +803,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_bb_scrambler_last_frame_length&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xBE4
+                            <br/>Offset: 0xE08
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -672,7 +813,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -686,7 +827,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_bb_scrambler_min_max_frame_length&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xBE8
+                            <br/>Offset: 0xE0C
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -696,7 +837,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -707,7 +848,88 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_bb_scrambler_word_count"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_bb_scrambler_word_count&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0xE10
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[15:0]</td>
+                        <td><strong>value</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_bb_scrambler_strobes"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_bb_scrambler_strobes&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0xE14
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[0]</td>
+                        <td><strong>s_tvalid</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[1]</td>
+                        <td><strong>s_tready</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[2]</td>
+                        <td><strong>m_tvalid</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
+                        <td><strong>m_tready</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -721,7 +943,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_bch_encoder_cfg&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xBEC
+                            <br/>Offset: 0xF00
                             <br/>Access: READ_WRITE
                         </td>
                     </tr>
@@ -732,7 +954,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -744,7 +966,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                                 <br/><span class="badge">Self-clearing</span>
@@ -757,19 +979,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
-                        </td>
-                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
-                        <td><strong>reset_min_max</strong><br/>
-                        
-                        </td>
-                        <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                                 <br/><span class="badge">Self-clearing</span>
@@ -784,7 +994,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_bch_encoder_frame_count&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xBF0
+                            <br/>Offset: 0xF04
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -794,7 +1004,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -808,7 +1018,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_bch_encoder_last_frame_length&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xBF4
+                            <br/>Offset: 0xF08
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -818,7 +1028,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -832,7 +1042,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_bch_encoder_min_max_frame_length&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xBF8
+                            <br/>Offset: 0xF0C
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -842,7 +1052,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -853,7 +1063,88 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_bch_encoder_word_count"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_bch_encoder_word_count&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0xF10
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[15:0]</td>
+                        <td><strong>value</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_bch_encoder_strobes"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_bch_encoder_strobes&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0xF14
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[0]</td>
+                        <td><strong>s_tvalid</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[1]</td>
+                        <td><strong>s_tready</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[2]</td>
+                        <td><strong>m_tvalid</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
+                        <td><strong>m_tready</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -867,7 +1158,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_ldpc_encoder_cfg&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xBFC
+                            <br/>Offset: 0x1000
                             <br/>Access: READ_WRITE
                         </td>
                     </tr>
@@ -878,7 +1169,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -890,7 +1181,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                                 <br/><span class="badge">Self-clearing</span>
@@ -903,19 +1194,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
-                        </td>
-                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
-                        <td><strong>reset_min_max</strong><br/>
-                        
-                        </td>
-                        <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                                 <br/><span class="badge">Self-clearing</span>
@@ -930,7 +1209,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_ldpc_encoder_frame_count&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xC00
+                            <br/>Offset: 0x1004
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -940,7 +1219,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -954,7 +1233,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_ldpc_encoder_last_frame_length&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xC04
+                            <br/>Offset: 0x1008
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -964,7 +1243,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -978,7 +1257,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_ldpc_encoder_min_max_frame_length&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xC08
+                            <br/>Offset: 0x100C
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -988,7 +1267,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -999,7 +1278,88 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_ldpc_encoder_word_count"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_ldpc_encoder_word_count&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0x1010
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[15:0]</td>
+                        <td><strong>value</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_ldpc_encoder_strobes"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_ldpc_encoder_strobes&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0x1014
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[0]</td>
+                        <td><strong>s_tvalid</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[1]</td>
+                        <td><strong>s_tready</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[2]</td>
+                        <td><strong>m_tvalid</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
+                        <td><strong>m_tready</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1013,7 +1373,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_bit_interleaver_cfg&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xC0C
+                            <br/>Offset: 0x1100
                             <br/>Access: READ_WRITE
                         </td>
                     </tr>
@@ -1024,7 +1384,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1036,7 +1396,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                                 <br/><span class="badge">Self-clearing</span>
@@ -1049,19 +1409,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
-                        </td>
-                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
-                        <td><strong>reset_min_max</strong><br/>
-                        
-                        </td>
-                        <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                                 <br/><span class="badge">Self-clearing</span>
@@ -1076,7 +1424,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_bit_interleaver_frame_count&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xC10
+                            <br/>Offset: 0x1104
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -1086,7 +1434,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1100,7 +1448,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_bit_interleaver_last_frame_length&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xC14
+                            <br/>Offset: 0x1108
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -1110,7 +1458,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1124,7 +1472,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_bit_interleaver_min_max_frame_length&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xC18
+                            <br/>Offset: 0x110C
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -1134,7 +1482,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1145,7 +1493,88 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_bit_interleaver_word_count"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_bit_interleaver_word_count&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0x1110
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[15:0]</td>
+                        <td><strong>value</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_bit_interleaver_strobes"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_bit_interleaver_strobes&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0x1114
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[0]</td>
+                        <td><strong>s_tvalid</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[1]</td>
+                        <td><strong>s_tready</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[2]</td>
+                        <td><strong>m_tvalid</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
+                        <td><strong>m_tready</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1159,7 +1588,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_plframe_cfg&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xC1C
+                            <br/>Offset: 0x1200
                             <br/>Access: READ_WRITE
                         </td>
                     </tr>
@@ -1170,7 +1599,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1182,7 +1611,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                                 <br/><span class="badge">Self-clearing</span>
@@ -1195,19 +1624,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
-                        </td>
-                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
-                        <td><strong>reset_min_max</strong><br/>
-                        
-                        </td>
-                        <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                                 <br/><span class="badge">Self-clearing</span>
@@ -1222,7 +1639,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_plframe_frame_count&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xC20
+                            <br/>Offset: 0x1204
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -1232,7 +1649,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1246,7 +1663,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_plframe_last_frame_length&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xC24
+                            <br/>Offset: 0x1208
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -1256,7 +1673,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1270,7 +1687,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_plframe_min_max_frame_length&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xC28
+                            <br/>Offset: 0x120C
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -1280,7 +1697,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1291,7 +1708,88 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_plframe_word_count"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_plframe_word_count&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0x1210
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[15:0]</td>
+                        <td><strong>value</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_plframe_strobes"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_plframe_strobes&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0x1214
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[0]</td>
+                        <td><strong>s_tvalid</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[1]</td>
+                        <td><strong>s_tready</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[2]</td>
+                        <td><strong>m_tvalid</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
+                        <td><strong>m_tready</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1305,7 +1803,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_output_cfg&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xC2C
+                            <br/>Offset: 0x1300
                             <br/>Access: READ_WRITE
                         </td>
                     </tr>
@@ -1316,7 +1814,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1328,7 +1826,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                                 <br/><span class="badge">Self-clearing</span>
@@ -1341,19 +1839,7 @@
 
                         </td>
                         <td>
-                            &nbsp;                            
-                        </td>
-                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
-                        <td><strong>reset_min_max</strong><br/>
-                        
-                        </td>
-                        <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                                 <br/><span class="badge">Self-clearing</span>
@@ -1368,7 +1854,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_output_frame_count&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xC30
+                            <br/>Offset: 0x1304
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -1378,7 +1864,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1392,7 +1878,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_output_last_frame_length&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xC34
+                            <br/>Offset: 0x1308
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -1402,7 +1888,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1416,7 +1902,7 @@
                         <td colspan="3"><span class="lead"><strong>axi_debug_output_min_max_frame_length&nbsp;</span></strong><br/></td>
                         <td colspan="2" style="font-family:monospace;">
                             Register
-                            <br/>Offset: 0xC38
+                            <br/>Offset: 0x130C
                             <br/>Access: READ_ONLY
                         </td>
                     </tr>
@@ -1426,7 +1912,7 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1437,7 +1923,88 @@
                         
                         </td>
                         <td>
-                            &nbsp;                            
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_output_word_count"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_output_word_count&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0x1310
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[15:0]</td>
+                        <td><strong>value</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                </table>
+</div>
+<a id="REG@axi_debug_output_strobes"></a>
+<div class="panel panel-default">
+                <table class="table">
+                    <tr class="active">
+                        <td colspan="3"><span class="lead"><strong>axi_debug_output_strobes&nbsp;</span></strong><br/></td>
+                        <td colspan="2" style="font-family:monospace;">
+                            Register
+                            <br/>Offset: 0x1314
+                            <br/>Access: READ_ONLY
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[0]</td>
+                        <td><strong>s_tvalid</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[1]</td>
+                        <td><strong>s_tready</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[2]</td>
+                        <td><strong>m_tvalid</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" style="font-family:monospace; width:4em;">[3]</td>
+                        <td><strong>m_tready</strong><br/>
+                        
+                        </td>
+                        <td>
+                            &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
                         </td>
@@ -1445,10 +2012,10 @@
                 </table>
 </div>
             </div>
-        </div>        
+        </div>
         <div class="row">
             <div class="col-md-offset-3 col-md-6">
-                <p class="text-center" style="padding-top:1em; color:#888;">Generated on 2021-04-09 at 07:38 (UTC) by airhdl version 2021.03.1</p>
+                <p class="text-center" style="padding-top:1em; color:#888;">Generated on 2021-08-14 at 16:56 (UTC) by airhdl version 2021.06.1</p>
             </div>
         </div>
     </body>

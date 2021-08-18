@@ -1,19 +1,19 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_encoder' Register Definitions
-// Revision: 144
+// Revision: 292
 // -----------------------------------------------------------------------------
-// Generated on 2021-04-09 at 07:38 (UTC) by airhdl version 2021.03.1
+// Generated on 2021-08-14 at 16:56 (UTC) by airhdl version 2021.06.1
 // -----------------------------------------------------------------------------
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE 
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // -----------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@
 #define DVBS2_ENCODER_REGS_H
 
 /* Revision number of the 'dvbs2_encoder' register map */
-#define DVBS2_ENCODER_REVISION 144
+#define DVBS2_ENCODER_REVISION 292
 
 /* Default base address of the 'dvbs2_encoder' register map */
 #define DVBS2_ENCODER_DEFAULT_BASEADDR 0x00000000
@@ -92,7 +92,7 @@
 #define POLYPHASE_FILTER_COEFFICIENTS_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_input_width_converter_cfg' */
-#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET 0x00000BCC /* address offset of the 'axi_debug_input_width_converter_cfg' register */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET 0x00000D00 /* address offset of the 'axi_debug_input_width_converter_cfg' register */
 
 /* Field  'axi_debug_input_width_converter_cfg.block_data' */
 #define AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_BLOCK_DATA_BIT_OFFSET 0 /* bit offset of the 'block_data' field */
@@ -112,14 +112,8 @@
 #define AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_ALLOW_FRAME_BIT_MASK 0x00000004 /* bit mask of the 'allow_frame' field */
 #define AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_ALLOW_FRAME_RESET 0x0 /* reset value of the 'allow_frame' field */
 
-/* Field  'axi_debug_input_width_converter_cfg.reset_min_max' */
-#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_RESET_MIN_MAX_BIT_OFFSET 3 /* bit offset of the 'reset_min_max' field */
-#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_RESET_MIN_MAX_BIT_WIDTH 1 /* bit width of the 'reset_min_max' field */
-#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_RESET_MIN_MAX_BIT_MASK 0x00000008 /* bit mask of the 'reset_min_max' field */
-#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_RESET_MIN_MAX_RESET 0x0 /* reset value of the 'reset_min_max' field */
-
 /* Register 'axi_debug_input_width_converter_frame_count' */
-#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_FRAME_COUNT_OFFSET 0x00000BD0 /* address offset of the 'axi_debug_input_width_converter_frame_count' register */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_FRAME_COUNT_OFFSET 0x00000D04 /* address offset of the 'axi_debug_input_width_converter_frame_count' register */
 
 /* Field  'axi_debug_input_width_converter_frame_count.value' */
 #define AXI_DEBUG_INPUT_WIDTH_CONVERTER_FRAME_COUNT_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
@@ -128,7 +122,7 @@
 #define AXI_DEBUG_INPUT_WIDTH_CONVERTER_FRAME_COUNT_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_input_width_converter_last_frame_length' */
-#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_LAST_FRAME_LENGTH_OFFSET 0x00000BD4 /* address offset of the 'axi_debug_input_width_converter_last_frame_length' register */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_LAST_FRAME_LENGTH_OFFSET 0x00000D08 /* address offset of the 'axi_debug_input_width_converter_last_frame_length' register */
 
 /* Field  'axi_debug_input_width_converter_last_frame_length.value' */
 #define AXI_DEBUG_INPUT_WIDTH_CONVERTER_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
@@ -137,7 +131,7 @@
 #define AXI_DEBUG_INPUT_WIDTH_CONVERTER_LAST_FRAME_LENGTH_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_input_width_converter_min_max_frame_length' */
-#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_OFFSET 0x00000BD8 /* address offset of the 'axi_debug_input_width_converter_min_max_frame_length' register */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_OFFSET 0x00000D0C /* address offset of the 'axi_debug_input_width_converter_min_max_frame_length' register */
 
 /* Field  'axi_debug_input_width_converter_min_max_frame_length.min_frame_length' */
 #define AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET 0 /* bit offset of the 'min_frame_length' field */
@@ -151,8 +145,44 @@
 #define AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_MASK 0xFFFF0000 /* bit mask of the 'max_frame_length' field */
 #define AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET 0x0 /* reset value of the 'max_frame_length' field */
 
+/* Register 'axi_debug_input_width_converter_word_count' */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_WORD_COUNT_OFFSET 0x00000D10 /* address offset of the 'axi_debug_input_width_converter_word_count' register */
+
+/* Field  'axi_debug_input_width_converter_word_count.value' */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_WORD_COUNT_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_WORD_COUNT_VALUE_BIT_WIDTH 16 /* bit width of the 'value' field */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_WORD_COUNT_VALUE_BIT_MASK 0x0000FFFF /* bit mask of the 'value' field */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_WORD_COUNT_VALUE_RESET 0x0 /* reset value of the 'value' field */
+
+/* Register 'axi_debug_input_width_converter_strobes' */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_OFFSET 0x00000D14 /* address offset of the 'axi_debug_input_width_converter_strobes' register */
+
+/* Field  'axi_debug_input_width_converter_strobes.s_tvalid' */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_S_TVALID_BIT_OFFSET 0 /* bit offset of the 's_tvalid' field */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_S_TVALID_BIT_WIDTH 1 /* bit width of the 's_tvalid' field */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_S_TVALID_BIT_MASK 0x00000001 /* bit mask of the 's_tvalid' field */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_S_TVALID_RESET 0x0 /* reset value of the 's_tvalid' field */
+
+/* Field  'axi_debug_input_width_converter_strobes.s_tready' */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_S_TREADY_BIT_OFFSET 1 /* bit offset of the 's_tready' field */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_S_TREADY_BIT_WIDTH 1 /* bit width of the 's_tready' field */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_S_TREADY_BIT_MASK 0x00000002 /* bit mask of the 's_tready' field */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_S_TREADY_RESET 0x0 /* reset value of the 's_tready' field */
+
+/* Field  'axi_debug_input_width_converter_strobes.m_tvalid' */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_M_TVALID_BIT_OFFSET 2 /* bit offset of the 'm_tvalid' field */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_M_TVALID_BIT_WIDTH 1 /* bit width of the 'm_tvalid' field */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_M_TVALID_BIT_MASK 0x00000004 /* bit mask of the 'm_tvalid' field */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_M_TVALID_RESET 0x0 /* reset value of the 'm_tvalid' field */
+
+/* Field  'axi_debug_input_width_converter_strobes.m_tready' */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_M_TREADY_BIT_OFFSET 3 /* bit offset of the 'm_tready' field */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_M_TREADY_BIT_WIDTH 1 /* bit width of the 'm_tready' field */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_M_TREADY_BIT_MASK 0x00000008 /* bit mask of the 'm_tready' field */
+#define AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_M_TREADY_RESET 0x0 /* reset value of the 'm_tready' field */
+
 /* Register 'axi_debug_bb_scrambler_cfg' */
-#define AXI_DEBUG_BB_SCRAMBLER_CFG_OFFSET 0x00000BDC /* address offset of the 'axi_debug_bb_scrambler_cfg' register */
+#define AXI_DEBUG_BB_SCRAMBLER_CFG_OFFSET 0x00000E00 /* address offset of the 'axi_debug_bb_scrambler_cfg' register */
 
 /* Field  'axi_debug_bb_scrambler_cfg.block_data' */
 #define AXI_DEBUG_BB_SCRAMBLER_CFG_BLOCK_DATA_BIT_OFFSET 0 /* bit offset of the 'block_data' field */
@@ -172,14 +202,8 @@
 #define AXI_DEBUG_BB_SCRAMBLER_CFG_ALLOW_FRAME_BIT_MASK 0x00000004 /* bit mask of the 'allow_frame' field */
 #define AXI_DEBUG_BB_SCRAMBLER_CFG_ALLOW_FRAME_RESET 0x0 /* reset value of the 'allow_frame' field */
 
-/* Field  'axi_debug_bb_scrambler_cfg.reset_min_max' */
-#define AXI_DEBUG_BB_SCRAMBLER_CFG_RESET_MIN_MAX_BIT_OFFSET 3 /* bit offset of the 'reset_min_max' field */
-#define AXI_DEBUG_BB_SCRAMBLER_CFG_RESET_MIN_MAX_BIT_WIDTH 1 /* bit width of the 'reset_min_max' field */
-#define AXI_DEBUG_BB_SCRAMBLER_CFG_RESET_MIN_MAX_BIT_MASK 0x00000008 /* bit mask of the 'reset_min_max' field */
-#define AXI_DEBUG_BB_SCRAMBLER_CFG_RESET_MIN_MAX_RESET 0x0 /* reset value of the 'reset_min_max' field */
-
 /* Register 'axi_debug_bb_scrambler_frame_count' */
-#define AXI_DEBUG_BB_SCRAMBLER_FRAME_COUNT_OFFSET 0x00000BE0 /* address offset of the 'axi_debug_bb_scrambler_frame_count' register */
+#define AXI_DEBUG_BB_SCRAMBLER_FRAME_COUNT_OFFSET 0x00000E04 /* address offset of the 'axi_debug_bb_scrambler_frame_count' register */
 
 /* Field  'axi_debug_bb_scrambler_frame_count.value' */
 #define AXI_DEBUG_BB_SCRAMBLER_FRAME_COUNT_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
@@ -188,7 +212,7 @@
 #define AXI_DEBUG_BB_SCRAMBLER_FRAME_COUNT_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_bb_scrambler_last_frame_length' */
-#define AXI_DEBUG_BB_SCRAMBLER_LAST_FRAME_LENGTH_OFFSET 0x00000BE4 /* address offset of the 'axi_debug_bb_scrambler_last_frame_length' register */
+#define AXI_DEBUG_BB_SCRAMBLER_LAST_FRAME_LENGTH_OFFSET 0x00000E08 /* address offset of the 'axi_debug_bb_scrambler_last_frame_length' register */
 
 /* Field  'axi_debug_bb_scrambler_last_frame_length.value' */
 #define AXI_DEBUG_BB_SCRAMBLER_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
@@ -197,7 +221,7 @@
 #define AXI_DEBUG_BB_SCRAMBLER_LAST_FRAME_LENGTH_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_bb_scrambler_min_max_frame_length' */
-#define AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_OFFSET 0x00000BE8 /* address offset of the 'axi_debug_bb_scrambler_min_max_frame_length' register */
+#define AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_OFFSET 0x00000E0C /* address offset of the 'axi_debug_bb_scrambler_min_max_frame_length' register */
 
 /* Field  'axi_debug_bb_scrambler_min_max_frame_length.min_frame_length' */
 #define AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET 0 /* bit offset of the 'min_frame_length' field */
@@ -211,8 +235,44 @@
 #define AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_MASK 0xFFFF0000 /* bit mask of the 'max_frame_length' field */
 #define AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET 0x0 /* reset value of the 'max_frame_length' field */
 
+/* Register 'axi_debug_bb_scrambler_word_count' */
+#define AXI_DEBUG_BB_SCRAMBLER_WORD_COUNT_OFFSET 0x00000E10 /* address offset of the 'axi_debug_bb_scrambler_word_count' register */
+
+/* Field  'axi_debug_bb_scrambler_word_count.value' */
+#define AXI_DEBUG_BB_SCRAMBLER_WORD_COUNT_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
+#define AXI_DEBUG_BB_SCRAMBLER_WORD_COUNT_VALUE_BIT_WIDTH 16 /* bit width of the 'value' field */
+#define AXI_DEBUG_BB_SCRAMBLER_WORD_COUNT_VALUE_BIT_MASK 0x0000FFFF /* bit mask of the 'value' field */
+#define AXI_DEBUG_BB_SCRAMBLER_WORD_COUNT_VALUE_RESET 0x0 /* reset value of the 'value' field */
+
+/* Register 'axi_debug_bb_scrambler_strobes' */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_OFFSET 0x00000E14 /* address offset of the 'axi_debug_bb_scrambler_strobes' register */
+
+/* Field  'axi_debug_bb_scrambler_strobes.s_tvalid' */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_S_TVALID_BIT_OFFSET 0 /* bit offset of the 's_tvalid' field */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_S_TVALID_BIT_WIDTH 1 /* bit width of the 's_tvalid' field */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_S_TVALID_BIT_MASK 0x00000001 /* bit mask of the 's_tvalid' field */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_S_TVALID_RESET 0x0 /* reset value of the 's_tvalid' field */
+
+/* Field  'axi_debug_bb_scrambler_strobes.s_tready' */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_S_TREADY_BIT_OFFSET 1 /* bit offset of the 's_tready' field */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_S_TREADY_BIT_WIDTH 1 /* bit width of the 's_tready' field */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_S_TREADY_BIT_MASK 0x00000002 /* bit mask of the 's_tready' field */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_S_TREADY_RESET 0x0 /* reset value of the 's_tready' field */
+
+/* Field  'axi_debug_bb_scrambler_strobes.m_tvalid' */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_M_TVALID_BIT_OFFSET 2 /* bit offset of the 'm_tvalid' field */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_M_TVALID_BIT_WIDTH 1 /* bit width of the 'm_tvalid' field */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_M_TVALID_BIT_MASK 0x00000004 /* bit mask of the 'm_tvalid' field */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_M_TVALID_RESET 0x0 /* reset value of the 'm_tvalid' field */
+
+/* Field  'axi_debug_bb_scrambler_strobes.m_tready' */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_M_TREADY_BIT_OFFSET 3 /* bit offset of the 'm_tready' field */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_M_TREADY_BIT_WIDTH 1 /* bit width of the 'm_tready' field */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_M_TREADY_BIT_MASK 0x00000008 /* bit mask of the 'm_tready' field */
+#define AXI_DEBUG_BB_SCRAMBLER_STROBES_M_TREADY_RESET 0x0 /* reset value of the 'm_tready' field */
+
 /* Register 'axi_debug_bch_encoder_cfg' */
-#define AXI_DEBUG_BCH_ENCODER_CFG_OFFSET 0x00000BEC /* address offset of the 'axi_debug_bch_encoder_cfg' register */
+#define AXI_DEBUG_BCH_ENCODER_CFG_OFFSET 0x00000F00 /* address offset of the 'axi_debug_bch_encoder_cfg' register */
 
 /* Field  'axi_debug_bch_encoder_cfg.block_data' */
 #define AXI_DEBUG_BCH_ENCODER_CFG_BLOCK_DATA_BIT_OFFSET 0 /* bit offset of the 'block_data' field */
@@ -232,14 +292,8 @@
 #define AXI_DEBUG_BCH_ENCODER_CFG_ALLOW_FRAME_BIT_MASK 0x00000004 /* bit mask of the 'allow_frame' field */
 #define AXI_DEBUG_BCH_ENCODER_CFG_ALLOW_FRAME_RESET 0x0 /* reset value of the 'allow_frame' field */
 
-/* Field  'axi_debug_bch_encoder_cfg.reset_min_max' */
-#define AXI_DEBUG_BCH_ENCODER_CFG_RESET_MIN_MAX_BIT_OFFSET 3 /* bit offset of the 'reset_min_max' field */
-#define AXI_DEBUG_BCH_ENCODER_CFG_RESET_MIN_MAX_BIT_WIDTH 1 /* bit width of the 'reset_min_max' field */
-#define AXI_DEBUG_BCH_ENCODER_CFG_RESET_MIN_MAX_BIT_MASK 0x00000008 /* bit mask of the 'reset_min_max' field */
-#define AXI_DEBUG_BCH_ENCODER_CFG_RESET_MIN_MAX_RESET 0x0 /* reset value of the 'reset_min_max' field */
-
 /* Register 'axi_debug_bch_encoder_frame_count' */
-#define AXI_DEBUG_BCH_ENCODER_FRAME_COUNT_OFFSET 0x00000BF0 /* address offset of the 'axi_debug_bch_encoder_frame_count' register */
+#define AXI_DEBUG_BCH_ENCODER_FRAME_COUNT_OFFSET 0x00000F04 /* address offset of the 'axi_debug_bch_encoder_frame_count' register */
 
 /* Field  'axi_debug_bch_encoder_frame_count.value' */
 #define AXI_DEBUG_BCH_ENCODER_FRAME_COUNT_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
@@ -248,7 +302,7 @@
 #define AXI_DEBUG_BCH_ENCODER_FRAME_COUNT_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_bch_encoder_last_frame_length' */
-#define AXI_DEBUG_BCH_ENCODER_LAST_FRAME_LENGTH_OFFSET 0x00000BF4 /* address offset of the 'axi_debug_bch_encoder_last_frame_length' register */
+#define AXI_DEBUG_BCH_ENCODER_LAST_FRAME_LENGTH_OFFSET 0x00000F08 /* address offset of the 'axi_debug_bch_encoder_last_frame_length' register */
 
 /* Field  'axi_debug_bch_encoder_last_frame_length.value' */
 #define AXI_DEBUG_BCH_ENCODER_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
@@ -257,7 +311,7 @@
 #define AXI_DEBUG_BCH_ENCODER_LAST_FRAME_LENGTH_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_bch_encoder_min_max_frame_length' */
-#define AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_OFFSET 0x00000BF8 /* address offset of the 'axi_debug_bch_encoder_min_max_frame_length' register */
+#define AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_OFFSET 0x00000F0C /* address offset of the 'axi_debug_bch_encoder_min_max_frame_length' register */
 
 /* Field  'axi_debug_bch_encoder_min_max_frame_length.min_frame_length' */
 #define AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET 0 /* bit offset of the 'min_frame_length' field */
@@ -271,8 +325,44 @@
 #define AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_MASK 0xFFFF0000 /* bit mask of the 'max_frame_length' field */
 #define AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET 0x0 /* reset value of the 'max_frame_length' field */
 
+/* Register 'axi_debug_bch_encoder_word_count' */
+#define AXI_DEBUG_BCH_ENCODER_WORD_COUNT_OFFSET 0x00000F10 /* address offset of the 'axi_debug_bch_encoder_word_count' register */
+
+/* Field  'axi_debug_bch_encoder_word_count.value' */
+#define AXI_DEBUG_BCH_ENCODER_WORD_COUNT_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
+#define AXI_DEBUG_BCH_ENCODER_WORD_COUNT_VALUE_BIT_WIDTH 16 /* bit width of the 'value' field */
+#define AXI_DEBUG_BCH_ENCODER_WORD_COUNT_VALUE_BIT_MASK 0x0000FFFF /* bit mask of the 'value' field */
+#define AXI_DEBUG_BCH_ENCODER_WORD_COUNT_VALUE_RESET 0x0 /* reset value of the 'value' field */
+
+/* Register 'axi_debug_bch_encoder_strobes' */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_OFFSET 0x00000F14 /* address offset of the 'axi_debug_bch_encoder_strobes' register */
+
+/* Field  'axi_debug_bch_encoder_strobes.s_tvalid' */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_S_TVALID_BIT_OFFSET 0 /* bit offset of the 's_tvalid' field */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_S_TVALID_BIT_WIDTH 1 /* bit width of the 's_tvalid' field */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_S_TVALID_BIT_MASK 0x00000001 /* bit mask of the 's_tvalid' field */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_S_TVALID_RESET 0x0 /* reset value of the 's_tvalid' field */
+
+/* Field  'axi_debug_bch_encoder_strobes.s_tready' */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_S_TREADY_BIT_OFFSET 1 /* bit offset of the 's_tready' field */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_S_TREADY_BIT_WIDTH 1 /* bit width of the 's_tready' field */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_S_TREADY_BIT_MASK 0x00000002 /* bit mask of the 's_tready' field */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_S_TREADY_RESET 0x0 /* reset value of the 's_tready' field */
+
+/* Field  'axi_debug_bch_encoder_strobes.m_tvalid' */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_M_TVALID_BIT_OFFSET 2 /* bit offset of the 'm_tvalid' field */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_M_TVALID_BIT_WIDTH 1 /* bit width of the 'm_tvalid' field */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_M_TVALID_BIT_MASK 0x00000004 /* bit mask of the 'm_tvalid' field */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_M_TVALID_RESET 0x0 /* reset value of the 'm_tvalid' field */
+
+/* Field  'axi_debug_bch_encoder_strobes.m_tready' */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_M_TREADY_BIT_OFFSET 3 /* bit offset of the 'm_tready' field */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_M_TREADY_BIT_WIDTH 1 /* bit width of the 'm_tready' field */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_M_TREADY_BIT_MASK 0x00000008 /* bit mask of the 'm_tready' field */
+#define AXI_DEBUG_BCH_ENCODER_STROBES_M_TREADY_RESET 0x0 /* reset value of the 'm_tready' field */
+
 /* Register 'axi_debug_ldpc_encoder_cfg' */
-#define AXI_DEBUG_LDPC_ENCODER_CFG_OFFSET 0x00000BFC /* address offset of the 'axi_debug_ldpc_encoder_cfg' register */
+#define AXI_DEBUG_LDPC_ENCODER_CFG_OFFSET 0x00001000 /* address offset of the 'axi_debug_ldpc_encoder_cfg' register */
 
 /* Field  'axi_debug_ldpc_encoder_cfg.block_data' */
 #define AXI_DEBUG_LDPC_ENCODER_CFG_BLOCK_DATA_BIT_OFFSET 0 /* bit offset of the 'block_data' field */
@@ -292,14 +382,8 @@
 #define AXI_DEBUG_LDPC_ENCODER_CFG_ALLOW_FRAME_BIT_MASK 0x00000004 /* bit mask of the 'allow_frame' field */
 #define AXI_DEBUG_LDPC_ENCODER_CFG_ALLOW_FRAME_RESET 0x0 /* reset value of the 'allow_frame' field */
 
-/* Field  'axi_debug_ldpc_encoder_cfg.reset_min_max' */
-#define AXI_DEBUG_LDPC_ENCODER_CFG_RESET_MIN_MAX_BIT_OFFSET 3 /* bit offset of the 'reset_min_max' field */
-#define AXI_DEBUG_LDPC_ENCODER_CFG_RESET_MIN_MAX_BIT_WIDTH 1 /* bit width of the 'reset_min_max' field */
-#define AXI_DEBUG_LDPC_ENCODER_CFG_RESET_MIN_MAX_BIT_MASK 0x00000008 /* bit mask of the 'reset_min_max' field */
-#define AXI_DEBUG_LDPC_ENCODER_CFG_RESET_MIN_MAX_RESET 0x0 /* reset value of the 'reset_min_max' field */
-
 /* Register 'axi_debug_ldpc_encoder_frame_count' */
-#define AXI_DEBUG_LDPC_ENCODER_FRAME_COUNT_OFFSET 0x00000C00 /* address offset of the 'axi_debug_ldpc_encoder_frame_count' register */
+#define AXI_DEBUG_LDPC_ENCODER_FRAME_COUNT_OFFSET 0x00001004 /* address offset of the 'axi_debug_ldpc_encoder_frame_count' register */
 
 /* Field  'axi_debug_ldpc_encoder_frame_count.value' */
 #define AXI_DEBUG_LDPC_ENCODER_FRAME_COUNT_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
@@ -308,7 +392,7 @@
 #define AXI_DEBUG_LDPC_ENCODER_FRAME_COUNT_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_ldpc_encoder_last_frame_length' */
-#define AXI_DEBUG_LDPC_ENCODER_LAST_FRAME_LENGTH_OFFSET 0x00000C04 /* address offset of the 'axi_debug_ldpc_encoder_last_frame_length' register */
+#define AXI_DEBUG_LDPC_ENCODER_LAST_FRAME_LENGTH_OFFSET 0x00001008 /* address offset of the 'axi_debug_ldpc_encoder_last_frame_length' register */
 
 /* Field  'axi_debug_ldpc_encoder_last_frame_length.value' */
 #define AXI_DEBUG_LDPC_ENCODER_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
@@ -317,7 +401,7 @@
 #define AXI_DEBUG_LDPC_ENCODER_LAST_FRAME_LENGTH_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_ldpc_encoder_min_max_frame_length' */
-#define AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_OFFSET 0x00000C08 /* address offset of the 'axi_debug_ldpc_encoder_min_max_frame_length' register */
+#define AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_OFFSET 0x0000100C /* address offset of the 'axi_debug_ldpc_encoder_min_max_frame_length' register */
 
 /* Field  'axi_debug_ldpc_encoder_min_max_frame_length.min_frame_length' */
 #define AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET 0 /* bit offset of the 'min_frame_length' field */
@@ -331,8 +415,44 @@
 #define AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_MASK 0xFFFF0000 /* bit mask of the 'max_frame_length' field */
 #define AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET 0x0 /* reset value of the 'max_frame_length' field */
 
+/* Register 'axi_debug_ldpc_encoder_word_count' */
+#define AXI_DEBUG_LDPC_ENCODER_WORD_COUNT_OFFSET 0x00001010 /* address offset of the 'axi_debug_ldpc_encoder_word_count' register */
+
+/* Field  'axi_debug_ldpc_encoder_word_count.value' */
+#define AXI_DEBUG_LDPC_ENCODER_WORD_COUNT_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
+#define AXI_DEBUG_LDPC_ENCODER_WORD_COUNT_VALUE_BIT_WIDTH 16 /* bit width of the 'value' field */
+#define AXI_DEBUG_LDPC_ENCODER_WORD_COUNT_VALUE_BIT_MASK 0x0000FFFF /* bit mask of the 'value' field */
+#define AXI_DEBUG_LDPC_ENCODER_WORD_COUNT_VALUE_RESET 0x0 /* reset value of the 'value' field */
+
+/* Register 'axi_debug_ldpc_encoder_strobes' */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_OFFSET 0x00001014 /* address offset of the 'axi_debug_ldpc_encoder_strobes' register */
+
+/* Field  'axi_debug_ldpc_encoder_strobes.s_tvalid' */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_S_TVALID_BIT_OFFSET 0 /* bit offset of the 's_tvalid' field */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_S_TVALID_BIT_WIDTH 1 /* bit width of the 's_tvalid' field */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_S_TVALID_BIT_MASK 0x00000001 /* bit mask of the 's_tvalid' field */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_S_TVALID_RESET 0x0 /* reset value of the 's_tvalid' field */
+
+/* Field  'axi_debug_ldpc_encoder_strobes.s_tready' */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_S_TREADY_BIT_OFFSET 1 /* bit offset of the 's_tready' field */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_S_TREADY_BIT_WIDTH 1 /* bit width of the 's_tready' field */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_S_TREADY_BIT_MASK 0x00000002 /* bit mask of the 's_tready' field */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_S_TREADY_RESET 0x0 /* reset value of the 's_tready' field */
+
+/* Field  'axi_debug_ldpc_encoder_strobes.m_tvalid' */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_M_TVALID_BIT_OFFSET 2 /* bit offset of the 'm_tvalid' field */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_M_TVALID_BIT_WIDTH 1 /* bit width of the 'm_tvalid' field */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_M_TVALID_BIT_MASK 0x00000004 /* bit mask of the 'm_tvalid' field */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_M_TVALID_RESET 0x0 /* reset value of the 'm_tvalid' field */
+
+/* Field  'axi_debug_ldpc_encoder_strobes.m_tready' */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_M_TREADY_BIT_OFFSET 3 /* bit offset of the 'm_tready' field */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_M_TREADY_BIT_WIDTH 1 /* bit width of the 'm_tready' field */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_M_TREADY_BIT_MASK 0x00000008 /* bit mask of the 'm_tready' field */
+#define AXI_DEBUG_LDPC_ENCODER_STROBES_M_TREADY_RESET 0x0 /* reset value of the 'm_tready' field */
+
 /* Register 'axi_debug_bit_interleaver_cfg' */
-#define AXI_DEBUG_BIT_INTERLEAVER_CFG_OFFSET 0x00000C0C /* address offset of the 'axi_debug_bit_interleaver_cfg' register */
+#define AXI_DEBUG_BIT_INTERLEAVER_CFG_OFFSET 0x00001100 /* address offset of the 'axi_debug_bit_interleaver_cfg' register */
 
 /* Field  'axi_debug_bit_interleaver_cfg.block_data' */
 #define AXI_DEBUG_BIT_INTERLEAVER_CFG_BLOCK_DATA_BIT_OFFSET 0 /* bit offset of the 'block_data' field */
@@ -352,14 +472,8 @@
 #define AXI_DEBUG_BIT_INTERLEAVER_CFG_ALLOW_FRAME_BIT_MASK 0x00000004 /* bit mask of the 'allow_frame' field */
 #define AXI_DEBUG_BIT_INTERLEAVER_CFG_ALLOW_FRAME_RESET 0x0 /* reset value of the 'allow_frame' field */
 
-/* Field  'axi_debug_bit_interleaver_cfg.reset_min_max' */
-#define AXI_DEBUG_BIT_INTERLEAVER_CFG_RESET_MIN_MAX_BIT_OFFSET 3 /* bit offset of the 'reset_min_max' field */
-#define AXI_DEBUG_BIT_INTERLEAVER_CFG_RESET_MIN_MAX_BIT_WIDTH 1 /* bit width of the 'reset_min_max' field */
-#define AXI_DEBUG_BIT_INTERLEAVER_CFG_RESET_MIN_MAX_BIT_MASK 0x00000008 /* bit mask of the 'reset_min_max' field */
-#define AXI_DEBUG_BIT_INTERLEAVER_CFG_RESET_MIN_MAX_RESET 0x0 /* reset value of the 'reset_min_max' field */
-
 /* Register 'axi_debug_bit_interleaver_frame_count' */
-#define AXI_DEBUG_BIT_INTERLEAVER_FRAME_COUNT_OFFSET 0x00000C10 /* address offset of the 'axi_debug_bit_interleaver_frame_count' register */
+#define AXI_DEBUG_BIT_INTERLEAVER_FRAME_COUNT_OFFSET 0x00001104 /* address offset of the 'axi_debug_bit_interleaver_frame_count' register */
 
 /* Field  'axi_debug_bit_interleaver_frame_count.value' */
 #define AXI_DEBUG_BIT_INTERLEAVER_FRAME_COUNT_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
@@ -368,7 +482,7 @@
 #define AXI_DEBUG_BIT_INTERLEAVER_FRAME_COUNT_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_bit_interleaver_last_frame_length' */
-#define AXI_DEBUG_BIT_INTERLEAVER_LAST_FRAME_LENGTH_OFFSET 0x00000C14 /* address offset of the 'axi_debug_bit_interleaver_last_frame_length' register */
+#define AXI_DEBUG_BIT_INTERLEAVER_LAST_FRAME_LENGTH_OFFSET 0x00001108 /* address offset of the 'axi_debug_bit_interleaver_last_frame_length' register */
 
 /* Field  'axi_debug_bit_interleaver_last_frame_length.value' */
 #define AXI_DEBUG_BIT_INTERLEAVER_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
@@ -377,7 +491,7 @@
 #define AXI_DEBUG_BIT_INTERLEAVER_LAST_FRAME_LENGTH_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_bit_interleaver_min_max_frame_length' */
-#define AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_OFFSET 0x00000C18 /* address offset of the 'axi_debug_bit_interleaver_min_max_frame_length' register */
+#define AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_OFFSET 0x0000110C /* address offset of the 'axi_debug_bit_interleaver_min_max_frame_length' register */
 
 /* Field  'axi_debug_bit_interleaver_min_max_frame_length.min_frame_length' */
 #define AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET 0 /* bit offset of the 'min_frame_length' field */
@@ -391,8 +505,44 @@
 #define AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_MASK 0xFFFF0000 /* bit mask of the 'max_frame_length' field */
 #define AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET 0x0 /* reset value of the 'max_frame_length' field */
 
+/* Register 'axi_debug_bit_interleaver_word_count' */
+#define AXI_DEBUG_BIT_INTERLEAVER_WORD_COUNT_OFFSET 0x00001110 /* address offset of the 'axi_debug_bit_interleaver_word_count' register */
+
+/* Field  'axi_debug_bit_interleaver_word_count.value' */
+#define AXI_DEBUG_BIT_INTERLEAVER_WORD_COUNT_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
+#define AXI_DEBUG_BIT_INTERLEAVER_WORD_COUNT_VALUE_BIT_WIDTH 16 /* bit width of the 'value' field */
+#define AXI_DEBUG_BIT_INTERLEAVER_WORD_COUNT_VALUE_BIT_MASK 0x0000FFFF /* bit mask of the 'value' field */
+#define AXI_DEBUG_BIT_INTERLEAVER_WORD_COUNT_VALUE_RESET 0x0 /* reset value of the 'value' field */
+
+/* Register 'axi_debug_bit_interleaver_strobes' */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_OFFSET 0x00001114 /* address offset of the 'axi_debug_bit_interleaver_strobes' register */
+
+/* Field  'axi_debug_bit_interleaver_strobes.s_tvalid' */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_S_TVALID_BIT_OFFSET 0 /* bit offset of the 's_tvalid' field */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_S_TVALID_BIT_WIDTH 1 /* bit width of the 's_tvalid' field */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_S_TVALID_BIT_MASK 0x00000001 /* bit mask of the 's_tvalid' field */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_S_TVALID_RESET 0x0 /* reset value of the 's_tvalid' field */
+
+/* Field  'axi_debug_bit_interleaver_strobes.s_tready' */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_S_TREADY_BIT_OFFSET 1 /* bit offset of the 's_tready' field */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_S_TREADY_BIT_WIDTH 1 /* bit width of the 's_tready' field */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_S_TREADY_BIT_MASK 0x00000002 /* bit mask of the 's_tready' field */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_S_TREADY_RESET 0x0 /* reset value of the 's_tready' field */
+
+/* Field  'axi_debug_bit_interleaver_strobes.m_tvalid' */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_M_TVALID_BIT_OFFSET 2 /* bit offset of the 'm_tvalid' field */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_M_TVALID_BIT_WIDTH 1 /* bit width of the 'm_tvalid' field */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_M_TVALID_BIT_MASK 0x00000004 /* bit mask of the 'm_tvalid' field */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_M_TVALID_RESET 0x0 /* reset value of the 'm_tvalid' field */
+
+/* Field  'axi_debug_bit_interleaver_strobes.m_tready' */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_M_TREADY_BIT_OFFSET 3 /* bit offset of the 'm_tready' field */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_M_TREADY_BIT_WIDTH 1 /* bit width of the 'm_tready' field */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_M_TREADY_BIT_MASK 0x00000008 /* bit mask of the 'm_tready' field */
+#define AXI_DEBUG_BIT_INTERLEAVER_STROBES_M_TREADY_RESET 0x0 /* reset value of the 'm_tready' field */
+
 /* Register 'axi_debug_plframe_cfg' */
-#define AXI_DEBUG_PLFRAME_CFG_OFFSET 0x00000C1C /* address offset of the 'axi_debug_plframe_cfg' register */
+#define AXI_DEBUG_PLFRAME_CFG_OFFSET 0x00001200 /* address offset of the 'axi_debug_plframe_cfg' register */
 
 /* Field  'axi_debug_plframe_cfg.block_data' */
 #define AXI_DEBUG_PLFRAME_CFG_BLOCK_DATA_BIT_OFFSET 0 /* bit offset of the 'block_data' field */
@@ -412,14 +562,8 @@
 #define AXI_DEBUG_PLFRAME_CFG_ALLOW_FRAME_BIT_MASK 0x00000004 /* bit mask of the 'allow_frame' field */
 #define AXI_DEBUG_PLFRAME_CFG_ALLOW_FRAME_RESET 0x0 /* reset value of the 'allow_frame' field */
 
-/* Field  'axi_debug_plframe_cfg.reset_min_max' */
-#define AXI_DEBUG_PLFRAME_CFG_RESET_MIN_MAX_BIT_OFFSET 3 /* bit offset of the 'reset_min_max' field */
-#define AXI_DEBUG_PLFRAME_CFG_RESET_MIN_MAX_BIT_WIDTH 1 /* bit width of the 'reset_min_max' field */
-#define AXI_DEBUG_PLFRAME_CFG_RESET_MIN_MAX_BIT_MASK 0x00000008 /* bit mask of the 'reset_min_max' field */
-#define AXI_DEBUG_PLFRAME_CFG_RESET_MIN_MAX_RESET 0x0 /* reset value of the 'reset_min_max' field */
-
 /* Register 'axi_debug_plframe_frame_count' */
-#define AXI_DEBUG_PLFRAME_FRAME_COUNT_OFFSET 0x00000C20 /* address offset of the 'axi_debug_plframe_frame_count' register */
+#define AXI_DEBUG_PLFRAME_FRAME_COUNT_OFFSET 0x00001204 /* address offset of the 'axi_debug_plframe_frame_count' register */
 
 /* Field  'axi_debug_plframe_frame_count.value' */
 #define AXI_DEBUG_PLFRAME_FRAME_COUNT_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
@@ -428,7 +572,7 @@
 #define AXI_DEBUG_PLFRAME_FRAME_COUNT_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_plframe_last_frame_length' */
-#define AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_OFFSET 0x00000C24 /* address offset of the 'axi_debug_plframe_last_frame_length' register */
+#define AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_OFFSET 0x00001208 /* address offset of the 'axi_debug_plframe_last_frame_length' register */
 
 /* Field  'axi_debug_plframe_last_frame_length.value' */
 #define AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
@@ -437,7 +581,7 @@
 #define AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_plframe_min_max_frame_length' */
-#define AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_OFFSET 0x00000C28 /* address offset of the 'axi_debug_plframe_min_max_frame_length' register */
+#define AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_OFFSET 0x0000120C /* address offset of the 'axi_debug_plframe_min_max_frame_length' register */
 
 /* Field  'axi_debug_plframe_min_max_frame_length.min_frame_length' */
 #define AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET 0 /* bit offset of the 'min_frame_length' field */
@@ -451,8 +595,44 @@
 #define AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_MASK 0xFFFF0000 /* bit mask of the 'max_frame_length' field */
 #define AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET 0x0 /* reset value of the 'max_frame_length' field */
 
+/* Register 'axi_debug_plframe_word_count' */
+#define AXI_DEBUG_PLFRAME_WORD_COUNT_OFFSET 0x00001210 /* address offset of the 'axi_debug_plframe_word_count' register */
+
+/* Field  'axi_debug_plframe_word_count.value' */
+#define AXI_DEBUG_PLFRAME_WORD_COUNT_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
+#define AXI_DEBUG_PLFRAME_WORD_COUNT_VALUE_BIT_WIDTH 16 /* bit width of the 'value' field */
+#define AXI_DEBUG_PLFRAME_WORD_COUNT_VALUE_BIT_MASK 0x0000FFFF /* bit mask of the 'value' field */
+#define AXI_DEBUG_PLFRAME_WORD_COUNT_VALUE_RESET 0x0 /* reset value of the 'value' field */
+
+/* Register 'axi_debug_plframe_strobes' */
+#define AXI_DEBUG_PLFRAME_STROBES_OFFSET 0x00001214 /* address offset of the 'axi_debug_plframe_strobes' register */
+
+/* Field  'axi_debug_plframe_strobes.s_tvalid' */
+#define AXI_DEBUG_PLFRAME_STROBES_S_TVALID_BIT_OFFSET 0 /* bit offset of the 's_tvalid' field */
+#define AXI_DEBUG_PLFRAME_STROBES_S_TVALID_BIT_WIDTH 1 /* bit width of the 's_tvalid' field */
+#define AXI_DEBUG_PLFRAME_STROBES_S_TVALID_BIT_MASK 0x00000001 /* bit mask of the 's_tvalid' field */
+#define AXI_DEBUG_PLFRAME_STROBES_S_TVALID_RESET 0x0 /* reset value of the 's_tvalid' field */
+
+/* Field  'axi_debug_plframe_strobes.s_tready' */
+#define AXI_DEBUG_PLFRAME_STROBES_S_TREADY_BIT_OFFSET 1 /* bit offset of the 's_tready' field */
+#define AXI_DEBUG_PLFRAME_STROBES_S_TREADY_BIT_WIDTH 1 /* bit width of the 's_tready' field */
+#define AXI_DEBUG_PLFRAME_STROBES_S_TREADY_BIT_MASK 0x00000002 /* bit mask of the 's_tready' field */
+#define AXI_DEBUG_PLFRAME_STROBES_S_TREADY_RESET 0x0 /* reset value of the 's_tready' field */
+
+/* Field  'axi_debug_plframe_strobes.m_tvalid' */
+#define AXI_DEBUG_PLFRAME_STROBES_M_TVALID_BIT_OFFSET 2 /* bit offset of the 'm_tvalid' field */
+#define AXI_DEBUG_PLFRAME_STROBES_M_TVALID_BIT_WIDTH 1 /* bit width of the 'm_tvalid' field */
+#define AXI_DEBUG_PLFRAME_STROBES_M_TVALID_BIT_MASK 0x00000004 /* bit mask of the 'm_tvalid' field */
+#define AXI_DEBUG_PLFRAME_STROBES_M_TVALID_RESET 0x0 /* reset value of the 'm_tvalid' field */
+
+/* Field  'axi_debug_plframe_strobes.m_tready' */
+#define AXI_DEBUG_PLFRAME_STROBES_M_TREADY_BIT_OFFSET 3 /* bit offset of the 'm_tready' field */
+#define AXI_DEBUG_PLFRAME_STROBES_M_TREADY_BIT_WIDTH 1 /* bit width of the 'm_tready' field */
+#define AXI_DEBUG_PLFRAME_STROBES_M_TREADY_BIT_MASK 0x00000008 /* bit mask of the 'm_tready' field */
+#define AXI_DEBUG_PLFRAME_STROBES_M_TREADY_RESET 0x0 /* reset value of the 'm_tready' field */
+
 /* Register 'axi_debug_output_cfg' */
-#define AXI_DEBUG_OUTPUT_CFG_OFFSET 0x00000C2C /* address offset of the 'axi_debug_output_cfg' register */
+#define AXI_DEBUG_OUTPUT_CFG_OFFSET 0x00001300 /* address offset of the 'axi_debug_output_cfg' register */
 
 /* Field  'axi_debug_output_cfg.block_data' */
 #define AXI_DEBUG_OUTPUT_CFG_BLOCK_DATA_BIT_OFFSET 0 /* bit offset of the 'block_data' field */
@@ -472,14 +652,8 @@
 #define AXI_DEBUG_OUTPUT_CFG_ALLOW_FRAME_BIT_MASK 0x00000004 /* bit mask of the 'allow_frame' field */
 #define AXI_DEBUG_OUTPUT_CFG_ALLOW_FRAME_RESET 0x0 /* reset value of the 'allow_frame' field */
 
-/* Field  'axi_debug_output_cfg.reset_min_max' */
-#define AXI_DEBUG_OUTPUT_CFG_RESET_MIN_MAX_BIT_OFFSET 3 /* bit offset of the 'reset_min_max' field */
-#define AXI_DEBUG_OUTPUT_CFG_RESET_MIN_MAX_BIT_WIDTH 1 /* bit width of the 'reset_min_max' field */
-#define AXI_DEBUG_OUTPUT_CFG_RESET_MIN_MAX_BIT_MASK 0x00000008 /* bit mask of the 'reset_min_max' field */
-#define AXI_DEBUG_OUTPUT_CFG_RESET_MIN_MAX_RESET 0x0 /* reset value of the 'reset_min_max' field */
-
 /* Register 'axi_debug_output_frame_count' */
-#define AXI_DEBUG_OUTPUT_FRAME_COUNT_OFFSET 0x00000C30 /* address offset of the 'axi_debug_output_frame_count' register */
+#define AXI_DEBUG_OUTPUT_FRAME_COUNT_OFFSET 0x00001304 /* address offset of the 'axi_debug_output_frame_count' register */
 
 /* Field  'axi_debug_output_frame_count.value' */
 #define AXI_DEBUG_OUTPUT_FRAME_COUNT_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
@@ -488,7 +662,7 @@
 #define AXI_DEBUG_OUTPUT_FRAME_COUNT_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_output_last_frame_length' */
-#define AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_OFFSET 0x00000C34 /* address offset of the 'axi_debug_output_last_frame_length' register */
+#define AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_OFFSET 0x00001308 /* address offset of the 'axi_debug_output_last_frame_length' register */
 
 /* Field  'axi_debug_output_last_frame_length.value' */
 #define AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
@@ -497,7 +671,7 @@
 #define AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_output_min_max_frame_length' */
-#define AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_OFFSET 0x00000C38 /* address offset of the 'axi_debug_output_min_max_frame_length' register */
+#define AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_OFFSET 0x0000130C /* address offset of the 'axi_debug_output_min_max_frame_length' register */
 
 /* Field  'axi_debug_output_min_max_frame_length.min_frame_length' */
 #define AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET 0 /* bit offset of the 'min_frame_length' field */
@@ -510,5 +684,41 @@
 #define AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_WIDTH 16 /* bit width of the 'max_frame_length' field */
 #define AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_MASK 0xFFFF0000 /* bit mask of the 'max_frame_length' field */
 #define AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET 0x0 /* reset value of the 'max_frame_length' field */
+
+/* Register 'axi_debug_output_word_count' */
+#define AXI_DEBUG_OUTPUT_WORD_COUNT_OFFSET 0x00001310 /* address offset of the 'axi_debug_output_word_count' register */
+
+/* Field  'axi_debug_output_word_count.value' */
+#define AXI_DEBUG_OUTPUT_WORD_COUNT_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
+#define AXI_DEBUG_OUTPUT_WORD_COUNT_VALUE_BIT_WIDTH 16 /* bit width of the 'value' field */
+#define AXI_DEBUG_OUTPUT_WORD_COUNT_VALUE_BIT_MASK 0x0000FFFF /* bit mask of the 'value' field */
+#define AXI_DEBUG_OUTPUT_WORD_COUNT_VALUE_RESET 0x0 /* reset value of the 'value' field */
+
+/* Register 'axi_debug_output_strobes' */
+#define AXI_DEBUG_OUTPUT_STROBES_OFFSET 0x00001314 /* address offset of the 'axi_debug_output_strobes' register */
+
+/* Field  'axi_debug_output_strobes.s_tvalid' */
+#define AXI_DEBUG_OUTPUT_STROBES_S_TVALID_BIT_OFFSET 0 /* bit offset of the 's_tvalid' field */
+#define AXI_DEBUG_OUTPUT_STROBES_S_TVALID_BIT_WIDTH 1 /* bit width of the 's_tvalid' field */
+#define AXI_DEBUG_OUTPUT_STROBES_S_TVALID_BIT_MASK 0x00000001 /* bit mask of the 's_tvalid' field */
+#define AXI_DEBUG_OUTPUT_STROBES_S_TVALID_RESET 0x0 /* reset value of the 's_tvalid' field */
+
+/* Field  'axi_debug_output_strobes.s_tready' */
+#define AXI_DEBUG_OUTPUT_STROBES_S_TREADY_BIT_OFFSET 1 /* bit offset of the 's_tready' field */
+#define AXI_DEBUG_OUTPUT_STROBES_S_TREADY_BIT_WIDTH 1 /* bit width of the 's_tready' field */
+#define AXI_DEBUG_OUTPUT_STROBES_S_TREADY_BIT_MASK 0x00000002 /* bit mask of the 's_tready' field */
+#define AXI_DEBUG_OUTPUT_STROBES_S_TREADY_RESET 0x0 /* reset value of the 's_tready' field */
+
+/* Field  'axi_debug_output_strobes.m_tvalid' */
+#define AXI_DEBUG_OUTPUT_STROBES_M_TVALID_BIT_OFFSET 2 /* bit offset of the 'm_tvalid' field */
+#define AXI_DEBUG_OUTPUT_STROBES_M_TVALID_BIT_WIDTH 1 /* bit width of the 'm_tvalid' field */
+#define AXI_DEBUG_OUTPUT_STROBES_M_TVALID_BIT_MASK 0x00000004 /* bit mask of the 'm_tvalid' field */
+#define AXI_DEBUG_OUTPUT_STROBES_M_TVALID_RESET 0x0 /* reset value of the 'm_tvalid' field */
+
+/* Field  'axi_debug_output_strobes.m_tready' */
+#define AXI_DEBUG_OUTPUT_STROBES_M_TREADY_BIT_OFFSET 3 /* bit offset of the 'm_tready' field */
+#define AXI_DEBUG_OUTPUT_STROBES_M_TREADY_BIT_WIDTH 1 /* bit width of the 'm_tready' field */
+#define AXI_DEBUG_OUTPUT_STROBES_M_TREADY_BIT_MASK 0x00000008 /* bit mask of the 'm_tready' field */
+#define AXI_DEBUG_OUTPUT_STROBES_M_TREADY_RESET 0x0 /* reset value of the 'm_tready' field */
 
 #endif  /* DVBS2_ENCODER_REGS_H */

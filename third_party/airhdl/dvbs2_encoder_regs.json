@@ -137,7 +137,7 @@
         "name": "axi_debug_input_width_converter_cfg",
         "description": "",
         "access": "READ_WRITE",
-        "addressOffset": 3020,
+        "addressOffset": 3328,
         "size": 32,
         "fields": [
           {
@@ -166,15 +166,6 @@
             "reset": 0,
             "selfClear": true,
             "enumValues": []
-          },
-          {
-            "name": "reset_min_max",
-            "description": "",
-            "bitWidth": 1,
-            "bitOffset": 3,
-            "reset": 0,
-            "selfClear": true,
-            "enumValues": []
           }
         ]
       },
@@ -183,7 +174,7 @@
         "name": "axi_debug_input_width_converter_frame_count",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3024,
+        "addressOffset": 3332,
         "size": 32,
         "fields": [
           {
@@ -202,7 +193,7 @@
         "name": "axi_debug_input_width_converter_last_frame_length",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3028,
+        "addressOffset": 3336,
         "size": 32,
         "fields": [
           {
@@ -221,7 +212,7 @@
         "name": "axi_debug_input_width_converter_min_max_frame_length",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3032,
+        "addressOffset": 3340,
         "size": 32,
         "fields": [
           {
@@ -246,10 +237,75 @@
       },
       {
         "type": "Register",
+        "name": "axi_debug_input_width_converter_word_count",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3344,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_input_width_converter_strobes",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3348,
+        "size": 32,
+        "fields": [
+          {
+            "name": "s_tvalid",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "s_tready",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 1,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "m_tvalid",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 2,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "m_tready",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 3,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
         "name": "axi_debug_bb_scrambler_cfg",
         "description": "",
         "access": "READ_WRITE",
-        "addressOffset": 3036,
+        "addressOffset": 3584,
         "size": 32,
         "fields": [
           {
@@ -278,15 +334,6 @@
             "reset": 0,
             "selfClear": true,
             "enumValues": []
-          },
-          {
-            "name": "reset_min_max",
-            "description": "",
-            "bitWidth": 1,
-            "bitOffset": 3,
-            "reset": 0,
-            "selfClear": true,
-            "enumValues": []
           }
         ]
       },
@@ -295,7 +342,7 @@
         "name": "axi_debug_bb_scrambler_frame_count",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3040,
+        "addressOffset": 3588,
         "size": 32,
         "fields": [
           {
@@ -314,7 +361,7 @@
         "name": "axi_debug_bb_scrambler_last_frame_length",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3044,
+        "addressOffset": 3592,
         "size": 32,
         "fields": [
           {
@@ -333,7 +380,7 @@
         "name": "axi_debug_bb_scrambler_min_max_frame_length",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3048,
+        "addressOffset": 3596,
         "size": 32,
         "fields": [
           {
@@ -358,10 +405,75 @@
       },
       {
         "type": "Register",
+        "name": "axi_debug_bb_scrambler_word_count",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3600,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_bb_scrambler_strobes",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3604,
+        "size": 32,
+        "fields": [
+          {
+            "name": "s_tvalid",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "s_tready",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 1,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "m_tvalid",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 2,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "m_tready",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 3,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
         "name": "axi_debug_bch_encoder_cfg",
         "description": "",
         "access": "READ_WRITE",
-        "addressOffset": 3052,
+        "addressOffset": 3840,
         "size": 32,
         "fields": [
           {
@@ -390,15 +502,6 @@
             "reset": 0,
             "selfClear": true,
             "enumValues": []
-          },
-          {
-            "name": "reset_min_max",
-            "description": "",
-            "bitWidth": 1,
-            "bitOffset": 3,
-            "reset": 0,
-            "selfClear": true,
-            "enumValues": []
           }
         ]
       },
@@ -407,7 +510,7 @@
         "name": "axi_debug_bch_encoder_frame_count",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3056,
+        "addressOffset": 3844,
         "size": 32,
         "fields": [
           {
@@ -426,7 +529,7 @@
         "name": "axi_debug_bch_encoder_last_frame_length",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3060,
+        "addressOffset": 3848,
         "size": 32,
         "fields": [
           {
@@ -445,7 +548,7 @@
         "name": "axi_debug_bch_encoder_min_max_frame_length",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3064,
+        "addressOffset": 3852,
         "size": 32,
         "fields": [
           {
@@ -470,10 +573,75 @@
       },
       {
         "type": "Register",
+        "name": "axi_debug_bch_encoder_word_count",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3856,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_bch_encoder_strobes",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 3860,
+        "size": 32,
+        "fields": [
+          {
+            "name": "s_tvalid",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "s_tready",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 1,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "m_tvalid",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 2,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "m_tready",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 3,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
         "name": "axi_debug_ldpc_encoder_cfg",
         "description": "",
         "access": "READ_WRITE",
-        "addressOffset": 3068,
+        "addressOffset": 4096,
         "size": 32,
         "fields": [
           {
@@ -502,15 +670,6 @@
             "reset": 0,
             "selfClear": true,
             "enumValues": []
-          },
-          {
-            "name": "reset_min_max",
-            "description": "",
-            "bitWidth": 1,
-            "bitOffset": 3,
-            "reset": 0,
-            "selfClear": true,
-            "enumValues": []
           }
         ]
       },
@@ -519,7 +678,7 @@
         "name": "axi_debug_ldpc_encoder_frame_count",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3072,
+        "addressOffset": 4100,
         "size": 32,
         "fields": [
           {
@@ -538,7 +697,7 @@
         "name": "axi_debug_ldpc_encoder_last_frame_length",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3076,
+        "addressOffset": 4104,
         "size": 32,
         "fields": [
           {
@@ -557,7 +716,7 @@
         "name": "axi_debug_ldpc_encoder_min_max_frame_length",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3080,
+        "addressOffset": 4108,
         "size": 32,
         "fields": [
           {
@@ -582,10 +741,75 @@
       },
       {
         "type": "Register",
+        "name": "axi_debug_ldpc_encoder_word_count",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 4112,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_ldpc_encoder_strobes",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 4116,
+        "size": 32,
+        "fields": [
+          {
+            "name": "s_tvalid",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "s_tready",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 1,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "m_tvalid",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 2,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "m_tready",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 3,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
         "name": "axi_debug_bit_interleaver_cfg",
         "description": "",
         "access": "READ_WRITE",
-        "addressOffset": 3084,
+        "addressOffset": 4352,
         "size": 32,
         "fields": [
           {
@@ -614,15 +838,6 @@
             "reset": 0,
             "selfClear": true,
             "enumValues": []
-          },
-          {
-            "name": "reset_min_max",
-            "description": "",
-            "bitWidth": 1,
-            "bitOffset": 3,
-            "reset": 0,
-            "selfClear": true,
-            "enumValues": []
           }
         ]
       },
@@ -631,7 +846,7 @@
         "name": "axi_debug_bit_interleaver_frame_count",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3088,
+        "addressOffset": 4356,
         "size": 32,
         "fields": [
           {
@@ -650,7 +865,7 @@
         "name": "axi_debug_bit_interleaver_last_frame_length",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3092,
+        "addressOffset": 4360,
         "size": 32,
         "fields": [
           {
@@ -669,7 +884,7 @@
         "name": "axi_debug_bit_interleaver_min_max_frame_length",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3096,
+        "addressOffset": 4364,
         "size": 32,
         "fields": [
           {
@@ -694,10 +909,75 @@
       },
       {
         "type": "Register",
+        "name": "axi_debug_bit_interleaver_word_count",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 4368,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_bit_interleaver_strobes",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 4372,
+        "size": 32,
+        "fields": [
+          {
+            "name": "s_tvalid",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "s_tready",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 1,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "m_tvalid",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 2,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "m_tready",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 3,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
         "name": "axi_debug_plframe_cfg",
         "description": "",
         "access": "READ_WRITE",
-        "addressOffset": 3100,
+        "addressOffset": 4608,
         "size": 32,
         "fields": [
           {
@@ -726,15 +1006,6 @@
             "reset": 0,
             "selfClear": true,
             "enumValues": []
-          },
-          {
-            "name": "reset_min_max",
-            "description": "",
-            "bitWidth": 1,
-            "bitOffset": 3,
-            "reset": 0,
-            "selfClear": true,
-            "enumValues": []
           }
         ]
       },
@@ -743,7 +1014,7 @@
         "name": "axi_debug_plframe_frame_count",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3104,
+        "addressOffset": 4612,
         "size": 32,
         "fields": [
           {
@@ -762,7 +1033,7 @@
         "name": "axi_debug_plframe_last_frame_length",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3108,
+        "addressOffset": 4616,
         "size": 32,
         "fields": [
           {
@@ -781,7 +1052,7 @@
         "name": "axi_debug_plframe_min_max_frame_length",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3112,
+        "addressOffset": 4620,
         "size": 32,
         "fields": [
           {
@@ -806,10 +1077,75 @@
       },
       {
         "type": "Register",
+        "name": "axi_debug_plframe_word_count",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 4624,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_plframe_strobes",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 4628,
+        "size": 32,
+        "fields": [
+          {
+            "name": "s_tvalid",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "s_tready",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 1,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "m_tvalid",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 2,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "m_tready",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 3,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
         "name": "axi_debug_output_cfg",
         "description": "",
         "access": "READ_WRITE",
-        "addressOffset": 3116,
+        "addressOffset": 4864,
         "size": 32,
         "fields": [
           {
@@ -838,15 +1174,6 @@
             "reset": 0,
             "selfClear": true,
             "enumValues": []
-          },
-          {
-            "name": "reset_min_max",
-            "description": "",
-            "bitWidth": 1,
-            "bitOffset": 3,
-            "reset": 0,
-            "selfClear": true,
-            "enumValues": []
           }
         ]
       },
@@ -855,7 +1182,7 @@
         "name": "axi_debug_output_frame_count",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3120,
+        "addressOffset": 4868,
         "size": 32,
         "fields": [
           {
@@ -874,7 +1201,7 @@
         "name": "axi_debug_output_last_frame_length",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3124,
+        "addressOffset": 4872,
         "size": 32,
         "fields": [
           {
@@ -893,7 +1220,7 @@
         "name": "axi_debug_output_min_max_frame_length",
         "description": "",
         "access": "READ_ONLY",
-        "addressOffset": 3128,
+        "addressOffset": 4876,
         "size": 32,
         "fields": [
           {
@@ -915,9 +1242,74 @@
             "enumValues": []
           }
         ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_output_word_count",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 4880,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 16,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "axi_debug_output_strobes",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 4884,
+        "size": 32,
+        "fields": [
+          {
+            "name": "s_tvalid",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "s_tready",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 1,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "m_tvalid",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 2,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "m_tready",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 3,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
       }
     ],
-    "revision": 144,
+    "revision": 292,
     "generateRecordPorts": true
   }
 }

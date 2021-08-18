@@ -190,7 +190,7 @@ begin
       --write address channel
       s_axi_awvalid   => axi_cfg.awvalid,
       s_axi_awready   => axi_cfg.awready,
-      s_axi_awaddr    => axi_cfg.awaddr,
+      s_axi_awaddr    => axi_cfg.awaddr(15 downto 0),
       -- write data channel
       s_axi_wvalid    => axi_cfg.wvalid,
       s_axi_wready    => axi_cfg.wready,
@@ -199,7 +199,7 @@ begin
       --read address channel
       s_axi_arvalid   => axi_cfg.arvalid,
       s_axi_arready   => axi_cfg.arready,
-      s_axi_araddr    => axi_cfg.araddr,
+      s_axi_araddr    => axi_cfg.araddr(15 downto 0),
       --read data channel
       s_axi_rvalid    => axi_cfg.rvalid,
       s_axi_rready    => axi_cfg.rready,
@@ -460,23 +460,6 @@ begin
       end if;
     end procedure walk; -- }} ----------------------------------------------------------
 
-    procedure wait_for_completion is -- {{ ---------------------------------------------
-      variable msg : msg_t;
-    begin
-      info(logger, "Waiting for test completion");
-      wait_all_read(net, input_stream);
-      wait_all_read(net, output_checker);
-      -- ghdl translate_off
-      wait_all_read(net, bb_scrambler_checker);
-      wait_all_read(net, bch_encoder_checker);
-      wait_all_read(net, ldpc_encoder_checker);
-      wait_all_read(net, pl_framer_checker);
-      -- ghdl translate_on
-      wait until rising_edge(clk) and axi_slave.tvalid = '0' for 1 ms;
-      walk(1);
-      info(logger, "All BFMs have now completed");
-    end procedure wait_for_completion; -- }} -------------------------------------------
-
     procedure axi_cfg_write (
       constant addr      : unsigned(axi_cfg.awaddr'range);
       constant data      : std_logic_vector(axi_cfg.wdata'range)) is
@@ -522,6 +505,74 @@ begin
 
       end loop;
     end procedure;
+
+    procedure axi_cfg_read (
+      constant addr      : unsigned(axi_cfg.araddr'range);
+      variable data      : out std_logic_vector(axi_cfg.rdata'range)) is
+      variable addr_ack  : boolean := False;
+      variable data_recv : boolean := False;
+    begin
+      info(logger, sformat("axi_cfg_read: %r", fo(addr)));
+      axi_cfg.arvalid <= '1';
+      axi_cfg.araddr  <= std_logic_vector(addr);
+
+      axi_cfg.rready <= '1';
+
+      while True loop
+        wait until rising_edge(clk);
+
+        if (axi_cfg.arvalid = '1' and axi_cfg.arready = '1') then
+          addr_ack        := True;
+          axi_cfg.arvalid <= '0';
+          axi_cfg.araddr  <= (others => 'U');
+        end if;
+
+        if (axi_cfg.rvalid = '1' and axi_cfg.rready = '1') then
+          data_recv      := True;
+          axi_cfg.rready <= '0';
+          data           := axi_cfg.rdata;
+        end if;
+
+        if addr_ack and data_recv then
+          exit;
+        end if;
+
+      end loop;
+    end procedure;
+
+    procedure wait_for_completion is -- {{ ---------------------------------------------
+      variable msg : msg_t;
+      variable data : std_logic_vector(31 downto 0);
+    begin
+
+      info(logger, "Waiting for test completion");
+      wait_all_read(net, input_stream);
+      wait_all_read(net, output_checker);
+      -- ghdl translate_off
+      wait_all_read(net, bb_scrambler_checker);
+      wait_all_read(net, bch_encoder_checker);
+      wait_all_read(net, ldpc_encoder_checker);
+      wait_all_read(net, pl_framer_checker);
+      -- ghdl translate_on
+      wait until rising_edge(clk) and axi_slave.tvalid = '0' for 1 ms;
+      walk(1);
+      info(logger, "All BFMs have now completed");
+
+      axi_cfg_read(to_unsigned(16#D0C#, 32), data);
+      warning(logger, sformat("Read %r", fo(data)));
+
+      axi_cfg_read(to_unsigned(16#100C#, 32), data);
+      warning(logger, sformat("Read %r", fo(data)));
+
+      axi_cfg_read(to_unsigned(16#110C#, 32), data);
+      warning(logger, sformat("Read %r", fo(data)));
+
+      axi_cfg_read(to_unsigned(16#120C#, 32), data);
+      warning(logger, sformat("Read %r", fo(data)));
+
+      axi_cfg_read(to_unsigned(16#130C#, 32), data);
+      warning(logger, sformat("Read %r", fo(data)));
+    end procedure wait_for_completion; -- }} -------------------------------------------
 
     procedure write_ram ( -- {{ --------------------------------------------------------
       constant addr : in integer;
@@ -594,7 +645,7 @@ begin
     end procedure; -- }} ---------------------------------------------------------------
 
     variable current_coefficients : real_vector(0 to POLYPHASE_FILTER_NUMBER_TAPS - 1);
-    procedure update_coefficients ( constant path : string ) is
+    procedure update_coefficients ( constant path : string ) is -- {{ ------------------
       file file_handler     : text;
       variable L            : line;
       variable addr         : integer := 0;
@@ -627,7 +678,7 @@ begin
         end if;
       end loop;
       current_coefficients := coefficients;
-    end procedure;
+    end procedure; -- }} ---------------------------------------------------------------
 
     procedure run_test ( -- {{ ---------------------------------------------------------
       constant config           : config_t;
