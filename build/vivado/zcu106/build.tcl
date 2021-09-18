@@ -20,8 +20,8 @@
 
 set path_to_repo_root [ file normalize "[ file dirname [ info script ] ]/../../../"]
 
-create_project dvbs2_encoder zc706 -part xc7z045ffg900-2
-set_property BOARD_PART xilinx.com:zc706:part0:1.4 [current_project]
+create_project dvbs2_encoder zcu106 -part xczu7ev-ffvc1156-2-e
+set_property board_part xilinx.com:zcu106:part0:2.6 [current_project]
 
 set_property library str_format [ add_files [ glob ${path_to_repo_root}/third_party/hdl_string_format/src/str_format_pkg.vhd ] ]
 set_property library fpga_cores [ add_files [ glob ${path_to_repo_root}/third_party/fpga_cores/src/*.vhd ] ]
@@ -37,10 +37,10 @@ add_files [ glob ${path_to_repo_root}/third_party/bch_generated/*.vhd ]
 
 read_verilog -sv [ glob ${path_to_repo_root}/third_party/polyphase_filter/*.v ]
 
-source ${path_to_repo_root}/build/vivado/zc706/block_design.tcl
+source ${path_to_repo_root}/build/vivado/zcu106/block_design.tcl
 
-make_wrapper -files [get_files zc706/dvbs2_encoder.srcs/sources_1/bd/design_1/design_1.bd] -top
-add_files -norecurse zc706/dvbs2_encoder.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v
+make_wrapper -files [get_files zcu106/dvbs2_encoder.srcs/sources_1/bd/design_1/design_1.bd] -top
+add_files -norecurse zcu106/dvbs2_encoder.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v
 update_compile_order -fileset sources_1
 # Disabling source management mode.  This is to allow the top design properties to be set without GUI intervention.
 set_property source_mgmt_mode None [current_project]
@@ -60,4 +60,4 @@ wait_on_run synth_1
 launch_runs impl_1 -to_step write_bitstream -jobs 8
 wait_on_run impl_1
 
-write_hw_platform -fixed -force -minimal zc706/dvbs2_encoder.xsa
+write_hw_platform -fixed -force zcu106/dvbs2_encoder.xsa

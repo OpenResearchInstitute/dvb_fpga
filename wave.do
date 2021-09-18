@@ -1,7 +1,9 @@
 add  wave  -noupdate -expand -group "TB top" "sim:/*"
 add  wave  -noupdate -expand -group "DUT"    "sim:/dut/*"
-add  wave  -noupdate -expand -group "DUT/poliyphase_filter" "sim:/dvbs2_encoder_tb/dut/polyphase_filter_u/*"
-add  wave  -noupdate -expand -group "DUT/poliyphase_filter/fir_filter\[0\]" "sim:/dvbs2_encoder_tb/dut/polyphase_filter_u/fir_filter\[0\]/fir_filter_inst/*"
+# add  wave  -noupdate -expand -group "DUT/poliyphase_filter" "sim:/dvbs2_encoder_tb/dut/polyphase_filter_u/*"
+# add  wave  -noupdate -expand -group "DUT/poliyphase_filter/fir_filter\[0\]" "sim:/dvbs2_encoder_tb/dut/polyphase_filter_u/fir_filter\[0\]/fir_filter_inst/*"
+
+add wave -noupdate -expand -group "axi debug" sim:/dvbs2_encoder_tb/dut/width_conv_dbg_u/*
 
 # add  wave  -noupdate -expand -group "DUT/width converter"  \
 #   "sim:/dvbs2_encoder_tb/dut/force_8_bit_u/*"                   \

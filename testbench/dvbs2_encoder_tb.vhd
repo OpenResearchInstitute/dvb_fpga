@@ -232,7 +232,8 @@ begin
       TOLERANCE           => 64,
       SWAP_BYTE_ENDIANESS => True,
       ERROR_CNT_WIDTH     => 8,
-      REPORT_SEVERITY     => Error)
+      REPORT_SEVERITY     => Error,
+      DUMP_FILENAME       => "actual_output.csv")  -- Leave empty to disable
     port map (
       -- Usual ports
       clk                => clk,
@@ -686,6 +687,7 @@ begin
       variable file_reader_msg  : msg_t;
       constant data_path        : string := strip(config.base_path, chars => (1 to 1 => nul));
       variable initial_addr     : integer := 0;
+      variable data             : std_logic_vector(31 downto 0);
       constant config_tuple     : config_tuple_t := (code_rate => config.code_rate,
                                                      constellation => config.constellation,
                                                      frame_type => config.frame_type);
@@ -696,6 +698,9 @@ begin
       info(logger, " - frame_type     : " & frame_type_t'image(config.frame_type));
       info(logger, " - code_rate      : " & code_rate_t'image(config.code_rate));
       info(logger, " - data path      : " & data_path);
+
+      axi_cfg_read(to_unsigned(16#D0C#, 32), data);
+      warning(logger, sformat("Read %r => %d and %d", fo(data), fo(data(31 downto 16)), fo(data(15 downto 0))));
 
       update_coefficients(data_path & "/polyphase_coefficients.bin");
 
@@ -761,5 +766,24 @@ begin
     test_runner_cleanup(runner);
     wait;
   end process; -- }} -------------------------------------------------------------------
+
+  porst:block
+    signal count   : unsigned(3 downto 0) := (others => '0');
+    signal rst_out : std_logic            := '1';
+  begin
+    process(clk, m_data_valid)
+    begin
+      if m_data_valid = '1' then
+        count   <= (others => '0');
+        rst_out <= '1';
+      elsif rising_edge(clk) then
+        if count < 15 then
+          count <= count + 1;
+        else
+          rst_out <= '0';
+        end if;
+      end if;
+    end process;
+  end block;
 
 end dvbs2_encoder_tb;

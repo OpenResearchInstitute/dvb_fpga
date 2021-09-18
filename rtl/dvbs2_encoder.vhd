@@ -482,7 +482,7 @@ begin
 
 
   with decode(ldpc_encoder_dbg.tid).constellation select
-    mux_sel <= "UU" when not_set,
+    mux_sel <= "01" when mod_8psk | mod_16apsk | mod_32apsk,
                "10" when mod_qpsk,
                "01" when others;
 
