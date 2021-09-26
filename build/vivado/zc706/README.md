@@ -13,13 +13,15 @@ The design's block diagram is shown below
 
 | Address range                  | Name                                 |
 | :---:                          | :---                                 |
-| `0x43C0_0000` to `0x43C0_FFFF` | `axi_fifo_mm_s/S_AXI`                |
+| `0x43C0_0000` to `0x43C0_FFFF` | `axi_data_fifo/S_AXI`                |
 | `0x43C1_0000` to `0x43C1_FFFF` | `dvbs2_encoder_wrapper_0/s_axi_lite` |
+| `0x43C2_0000` to `0x43C0_FFFF` | `axi_metadata_fifo/S_AXI`            |
 
 ## Data interface
 
-Data is sent to the DVB encoder using `axi_fifo_mm_s/AXI_STR_TXD`. The only detail
-is that the TID carries the DVB-S2 parameters. The value mapping is show below
+Data is sent to the DVB encoder using `axi_data_fifo/AXI_STR_TXD`, while frame
+configuration is sent using `axi_metadata_fifo/AXI_STR_TXD`. The mapping between
+metadata values and frame parameters is show below:
 
 | s_axis.tid value | Frame length    | Constellation | Code rate |
 | :---:            | :----           | :---:         | :---:     |
@@ -112,8 +114,6 @@ is that the TID carries the DVB-S2 parameters. The value mapping is show below
 | 0x56             | FECFRAME_NORMAL | 32APSK        | 8/9       |
 | 0x57             | FECFRAME_NORMAL | 32APSK        | 9/10      |
 
-
 [build_directory]: github.com/phase4ground/dvb_fpga/tree/master/build/vivado/zc706
 [zc706]: https://www.xilinx.com/products/boards-and-kits/ek-z7-zc706-g.html
 [AXI Stream FIFO]: https://www.xilinx.com/support/documentation/ip_documentation/axi_fifo_mm_s/v4_1/pg080-axi-fifo-mm-s.pdf
-

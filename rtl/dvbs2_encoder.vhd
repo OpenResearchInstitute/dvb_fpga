@@ -770,7 +770,7 @@ begin
       data_in_aresetn         => rst_n,
       data_in_tready          => pl_frame_dbg.tready,
       data_in_tdata           => pl_frame_dbg.tdata(DATA_WIDTH/2 - 1 downto 0),
-      data_in_tlast           => pl_frame_dbg.tlast ,
+      data_in_tlast           => pl_frame_dbg.tlast,
       data_in_tvalid          => pl_frame_dbg.tvalid,
       -- output data interface
       data_out_aclk           => clk,
@@ -798,7 +798,7 @@ begin
       data_in_aresetn         => rst_n,
       data_in_tready          => open,
       data_in_tdata           => pl_frame_dbg.tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2),
-      data_in_tlast           => pl_frame_dbg.tlast ,
+      data_in_tlast           => pl_frame_dbg.tlast,
       data_in_tvalid          => pl_frame_dbg.tvalid,
       -- output data interface
       data_out_aclk           => clk,
@@ -858,11 +858,11 @@ begin
 
   -- Register map decoder
   regmap_block : block
-    signal s_axi_awaddr_32 : std_logic_vector(31 downto 0);
-    signal s_axi_araddr_32 : std_logic_vector(31 downto 0);
+    signal s_axi_awaddr_32 : std_logic_vector(31 downto 0) := (others => '0');
+    signal s_axi_araddr_32 : std_logic_vector(31 downto 0) := (others => '0');
   begin
-    s_axi_awaddr_32 <= (32 - 16 - 1 downto 0 => '0') & s_axi_awaddr;
-    s_axi_araddr_32 <= (32 - 16 - 1 downto 0 => '0') & s_axi_araddr;
+    s_axi_awaddr_32(s_axi_awaddr'range) <= s_axi_awaddr;
+    s_axi_araddr_32(s_axi_araddr'range) <= s_axi_araddr;
 
     regmap_u : entity work.dvbs2_encoder_regs
       generic map (
