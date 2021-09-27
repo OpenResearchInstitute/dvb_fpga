@@ -546,7 +546,7 @@ begin
       variable data : std_logic_vector(31 downto 0);
     begin
 
-      info(logger, "Waiting for test completion");
+      info(logger, "Waiting for BFMs to complete");
       wait_all_read(net, input_stream);
       wait_all_read(net, output_checker);
       -- ghdl translate_off
@@ -558,21 +558,6 @@ begin
       wait until rising_edge(clk) and axi_slave.tvalid = '0' for 1 ms;
       walk(1);
       info(logger, "All BFMs have now completed");
-
-      axi_cfg_read(to_unsigned(16#D0C#, 32), data);
-      warning(logger, sformat("Read %r", fo(data)));
-
-      axi_cfg_read(to_unsigned(16#100C#, 32), data);
-      warning(logger, sformat("Read %r", fo(data)));
-
-      axi_cfg_read(to_unsigned(16#110C#, 32), data);
-      warning(logger, sformat("Read %r", fo(data)));
-
-      axi_cfg_read(to_unsigned(16#120C#, 32), data);
-      warning(logger, sformat("Read %r", fo(data)));
-
-      axi_cfg_read(to_unsigned(16#130C#, 32), data);
-      warning(logger, sformat("Read %r", fo(data)));
     end procedure wait_for_completion; -- }} -------------------------------------------
 
     procedure write_ram ( -- {{ --------------------------------------------------------
@@ -698,9 +683,6 @@ begin
       info(logger, " - frame_type     : " & frame_type_t'image(config.frame_type));
       info(logger, " - code_rate      : " & code_rate_t'image(config.code_rate));
       info(logger, " - data path      : " & data_path);
-
-      axi_cfg_read(to_unsigned(16#D0C#, 32), data);
-      warning(logger, sformat("Read %r => %d and %d", fo(data), fo(data(31 downto 16)), fo(data(15 downto 0))));
 
       update_coefficients(data_path & "/polyphase_coefficients.bin");
 

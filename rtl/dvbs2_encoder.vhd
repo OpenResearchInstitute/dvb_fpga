@@ -481,10 +481,7 @@ begin
       m_tid                      => ldpc_encoder_dbg.tid);
 
 
-  with decode(ldpc_encoder_dbg.tid).constellation select
-    mux_sel <= "01" when mod_8psk | mod_16apsk | mod_32apsk,
-               "10" when mod_qpsk,
-               "01" when others;
+  mux_sel <= "10" when decode(ldpc_encoder_dbg.tid).constellation = mod_qpsk else "01";
 
   -- Bit interleaver is not needed for QPSK
   bit_interleaver_demux_u : entity fpga_cores.axi_stream_demux
