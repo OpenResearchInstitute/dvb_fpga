@@ -55,7 +55,7 @@ entity axi_file_compare_complex is
     SWAP_BYTE_ENDIANESS : boolean := False;
     ERROR_CNT_WIDTH     : natural := 8;
     REPORT_SEVERITY     : severity_level := Error;
-    DUMP_FILENAME       : string := "");  -- Leave empty to disable
+    DUMP_FILE_FORMAT    : string := "");  -- Leave empty to disable
   port (
     -- Usual ports
     clk                : in  std_logic;
@@ -102,6 +102,63 @@ architecture axi_file_compare_complex of axi_file_compare_complex is
   signal dbg_error_re_max  : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
   signal dbg_error_im_max  : signed(DATA_WIDTH/2 - 1 downto 0) := (others => '0');
   signal dbg_acc_error     : complex := (re => 0.0, im => 0.0);
+
+  -- Handle opening, closing and keeping track of indexes for multiple files
+  type dump_file_t is protected
+    procedure write ( constant v : complex );
+    procedure close;
+  end protected;
+
+  type dump_file_t is protected body
+    constant logger    : logger_t := get_logger("dump_file_t");
+    variable index     : integer := 0;
+    variable file_name : line := null;
+
+    file file_handler  : text;
+
+    procedure init is
+    begin
+      assert file_name = null
+        report sformat("Can't initialize dump file, filename is '%s'", file_name.all)
+        severity Failure;
+
+      -- Apply the index to the file format
+      write(file_name, sformat(DUMP_FILE_FORMAT, fo(index)));
+      index := index + 1;
+
+      debug(logger, sformat("Opening file '%s'", file_name.all));
+
+      file_open(file_handler, file_name.all, write_mode);
+    end;
+
+    procedure write ( constant v : complex ) is
+      variable L : line;
+    begin
+      if DUMP_FILE_FORMAT = "" then
+        return;
+      end if;
+      -- Initialize if that's not done yet
+      if file_name = null then
+        init;
+      end if;
+      write(L, real'image(v.re) & ",");
+      write(L, real'image(v.im));
+      writeline(file_handler, L);
+      deallocate(L);
+    end procedure;
+
+    procedure close is
+    begin
+      if file_name = null then
+        return;
+      end if;
+      debug(logger, sformat("Closing '%s'", file_name.all));
+      file_close(file_handler);
+      deallocate(file_name);
+      file_name := null;
+    end;
+
+  end protected body;
 
 begin
 
@@ -176,19 +233,7 @@ begin
         return "(" & real'image(v.mag) & ", " & real'image(v.arg) & ")";
     end function;
 
-    file file_handler : text;
-
-    procedure write_to_dump_file ( constant v : complex ) is
-      variable L : line;
-    begin
-      if DUMP_FILENAME = "" then
-        return;
-      end if;
-      write(L, real'image(v.re) & ",");
-      write(L, real'image(v.im));
-      writeline(file_handler, L);
-      deallocate(L);
-    end procedure;
+    variable outfile : dump_file_t;
 
     procedure check_within_tolerance (
       constant v            : std_logic_vector;
@@ -209,7 +254,7 @@ begin
       ref_re_range := ( ref_re - TOLERANCE, ref_re + TOLERANCE);
       ref_im_range := ( ref_im - TOLERANCE, ref_im + TOLERANCE);
 
-      write_to_dump_file(v_rect);
+      outfile.write(v_rect);
 
       -- Now we know signs match, so we can check if v is within the set tolerance
       if v_re /= ref_re and (v_re < minimum(ref_re_range) or v_re > max(ref_re_range)) then
@@ -271,10 +316,6 @@ begin
     tdata_error_cnt_i <= (others => '0');
     tlast_error_cnt_i <= (others => '0');
 
-    if DUMP_FILENAME /= "" then
-      file_open(file_handler, DUMP_FILENAME, write_mode);
-    end if;
-
     wait until rst = '0';
     while True loop
       wait until axi_data_valid = '1' and rising_edge(clk);
@@ -291,9 +332,7 @@ begin
       check_within_tolerance(s_tdata, expected_tdata_i);
 
       if s_tlast = '1' then
-        if DUMP_FILENAME /= "" then
-          file_close(file_handler);
-        end if;
+        outfile.close;
       end if;
 
       if s_tlast /= m_tlast then

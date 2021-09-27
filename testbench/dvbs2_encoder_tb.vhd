@@ -233,7 +233,7 @@ begin
       SWAP_BYTE_ENDIANESS => True,
       ERROR_CNT_WIDTH     => 8,
       REPORT_SEVERITY     => Error,
-      DUMP_FILENAME       => "actual_output.csv")  -- Leave empty to disable
+      DUMP_FILE_FORMAT    => "actual_output_%d.csv")  -- Leave empty to disable
     port map (
       -- Usual ports
       clk                => clk,
