@@ -767,23 +767,4 @@ begin
     wait;
   end process; -- }} -------------------------------------------------------------------
 
-  porst:block
-    signal count   : unsigned(3 downto 0) := (others => '0');
-    signal rst_out : std_logic            := '1';
-  begin
-    process(clk, m_data_valid)
-    begin
-      if m_data_valid = '1' then
-        count   <= (others => '0');
-        rst_out <= '1';
-      elsif rising_edge(clk) then
-        if count < 15 then
-          count <= count + 1;
-        else
-          rst_out <= '0';
-        end if;
-      end if;
-    end process;
-  end block;
-
 end dvbs2_encoder_tb;
