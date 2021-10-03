@@ -18,37 +18,24 @@
 # source, You must maintain the Source Location visible on the external case of
 # the DVB Encoder or other products you make using this source.
 
-set path_to_repo_root [ file normalize "[ file dirname [ info script ] ]/../../../"]
+set path_to_repo_root [ file normalize "[ file dirname [ info script ] ]/../../" ]
 
 create_project dvbs2_encoder zc706 -part xc7z045ffg900-2
-set_property BOARD_PART xilinx.com:zc706:part0:1.4 [current_project]
+set_property BOARD_PART xilinx.com:zc706:part0:1.4 [ current_project ]
 
-set_property library str_format [ add_files [ glob ${path_to_repo_root}/third_party/hdl_string_format/src/str_format_pkg.vhd ] ]
-set_property library fpga_cores [ add_files [ glob ${path_to_repo_root}/third_party/fpga_cores/src/*.vhd ] ]
-
-add_files [ glob ${path_to_repo_root}/rtl/ldpc/*.vhd ]
-add_files [ glob ${path_to_repo_root}/rtl/*.vhd ]
-set_property FILE_TYPE {VHDL 2008} [ get_files *.vhd ]
-
+source ${path_to_repo_root}/build/vivado/add_dvbs2_files.tcl
 add_files ${path_to_repo_root}/build/vivado/dvbs2_encoder_wrapper.vhd
+source ${path_to_repo_root}/boards/zc706/block_design.tcl
 
-add_files [ glob ${path_to_repo_root}/third_party/airhdl/*.vhd ]
-add_files [ glob ${path_to_repo_root}/third_party/bch_generated/*.vhd ]
-
-read_verilog -sv [ glob ${path_to_repo_root}/third_party/polyphase_filter/*.v ]
-
-source ${path_to_repo_root}/build/vivado/zc706/block_design.tcl
-
-make_wrapper -files [get_files zc706/dvbs2_encoder.srcs/sources_1/bd/design_1/design_1.bd] -top
+make_wrapper -files [ get_files zc706/dvbs2_encoder.srcs/sources_1/bd/design_1/design_1.bd ] -top
 add_files -norecurse zc706/dvbs2_encoder.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v
 update_compile_order -fileset sources_1
 # Disabling source management mode.  This is to allow the top design properties to be set without GUI intervention.
-set_property source_mgmt_mode None [current_project]
-set_property top design_1_wrapper [current_fileset]
+set_property source_mgmt_mode None [ current_project ]
+set_property top design_1_wrapper [ current_fileset ]
 # Re-enabling previously disabled source management mode.
-set_property source_mgmt_mode All [current_project]
+set_property source_mgmt_mode All [ current_project ]
 update_compile_order -fileset sources_1
-
 
 # CRITICAL WARNING: [Synth 8-507] null range (31 downto 32) not supported
 # We're largely OK with null ranges, make it a regular warning

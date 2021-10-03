@@ -133,6 +133,8 @@ if { $bCheckIPs == 1 } {
    set list_check_ips "\ 
 xilinx.com:ip:axi_fifo_mm_s:4.2\
 xilinx.com:ip:proc_sys_reset:5.0\
+xilinx.com:ip:util_reduced_logic:2.0\
+xilinx.com:ip:xlconcat:2.1\
 xilinx.com:ip:zynq_ultra_ps_e:3.3\
 "
 
@@ -225,8 +227,8 @@ proc create_root_design { parentCell } {
 
   # Create ports
 
-  # Create instance: axi_fifo_mm_s_0, and set properties
-  set axi_fifo_mm_s_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_fifo_mm_s:4.2 axi_fifo_mm_s_0 ]
+  # Create instance: axi_data_fifo, and set properties
+  set axi_data_fifo [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_fifo_mm_s:4.2 axi_data_fifo ]
   set_property -dict [ list \
    CONFIG.C_AXIS_TUSER_WIDTH {8} \
    CONFIG.C_HAS_AXIS_TKEEP {true} \
@@ -236,7 +238,21 @@ proc create_root_design { parentCell } {
    CONFIG.C_RX_FIFO_PF_THRESHOLD {507} \
    CONFIG.C_USE_RX_CUT_THROUGH {true} \
    CONFIG.C_USE_TX_CTRL {0} \
- ] $axi_fifo_mm_s_0
+ ] $axi_data_fifo
+
+  # Create instance: axi_metadata_fifo, and set properties
+  set axi_metadata_fifo [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_fifo_mm_s:4.2 axi_metadata_fifo ]
+  set_property -dict [ list \
+   CONFIG.C_AXIS_TUSER_WIDTH {4} \
+   CONFIG.C_HAS_AXIS_TKEEP {false} \
+   CONFIG.C_HAS_AXIS_TUSER {false} \
+   CONFIG.C_RX_FIFO_DEPTH {512} \
+   CONFIG.C_RX_FIFO_PE_THRESHOLD {5} \
+   CONFIG.C_RX_FIFO_PF_THRESHOLD {507} \
+   CONFIG.C_USE_RX_CUT_THROUGH {false} \
+   CONFIG.C_USE_RX_DATA {0} \
+   CONFIG.C_USE_TX_CTRL {0} \
+ ] $axi_metadata_fifo
 
   # Create instance: dvbs2_encoder_wrapper_0, and set properties
   set block_name dvbs2_encoder_wrapper
@@ -252,11 +268,23 @@ proc create_root_design { parentCell } {
   # Create instance: ps8_0_axi_periph, and set properties
   set ps8_0_axi_periph [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 ps8_0_axi_periph ]
   set_property -dict [ list \
-   CONFIG.NUM_MI {2} \
+   CONFIG.NUM_MI {3} \
  ] $ps8_0_axi_periph
 
   # Create instance: rst_ps8_0_99M, and set properties
   set rst_ps8_0_99M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_ps8_0_99M ]
+
+  # Create instance: util_reduced_logic_0, and set properties
+  set util_reduced_logic_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_reduced_logic:2.0 util_reduced_logic_0 ]
+  set_property -dict [ list \
+   CONFIG.C_SIZE {3} \
+ ] $util_reduced_logic_0
+
+  # Create instance: xlconcat_0, and set properties
+  set xlconcat_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat:2.1 xlconcat_0 ]
+  set_property -dict [ list \
+   CONFIG.NUM_PORTS {3} \
+ ] $xlconcat_0
 
   # Create instance: zynq_ultra_ps_e_0, and set properties
   set zynq_ultra_ps_e_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.3 zynq_ultra_ps_e_0 ]
@@ -924,19 +952,27 @@ proc create_root_design { parentCell } {
  ] $zynq_ultra_ps_e_0
 
   # Create interface connections
-  connect_bd_intf_net -intf_net axi_fifo_mm_s_0_AXI_STR_TXD [get_bd_intf_pins axi_fifo_mm_s_0/AXI_STR_TXD] [get_bd_intf_pins dvbs2_encoder_wrapper_0/s_axis]
-  connect_bd_intf_net -intf_net dvbs2_encoder_wrapper_0_m_axis [get_bd_intf_pins axi_fifo_mm_s_0/AXI_STR_RXD] [get_bd_intf_pins dvbs2_encoder_wrapper_0/m_axis]
-  connect_bd_intf_net -intf_net ps8_0_axi_periph_M00_AXI [get_bd_intf_pins axi_fifo_mm_s_0/S_AXI] [get_bd_intf_pins ps8_0_axi_periph/M00_AXI]
+  connect_bd_intf_net -intf_net axi_fifo_mm_s_0_AXI_STR_TXD [get_bd_intf_pins axi_data_fifo/AXI_STR_TXD] [get_bd_intf_pins dvbs2_encoder_wrapper_0/s_axis]
+  connect_bd_intf_net -intf_net axi_metadata_fifo_AXI_STR_TXD [get_bd_intf_pins axi_metadata_fifo/AXI_STR_TXD] [get_bd_intf_pins dvbs2_encoder_wrapper_0/s_metadata]
+  connect_bd_intf_net -intf_net dvbs2_encoder_wrapper_0_m_axis [get_bd_intf_pins axi_data_fifo/AXI_STR_RXD] [get_bd_intf_pins dvbs2_encoder_wrapper_0/m_axis]
+  connect_bd_intf_net -intf_net ps8_0_axi_periph_M00_AXI [get_bd_intf_pins axi_data_fifo/S_AXI] [get_bd_intf_pins ps8_0_axi_periph/M00_AXI]
   connect_bd_intf_net -intf_net ps8_0_axi_periph_M01_AXI [get_bd_intf_pins dvbs2_encoder_wrapper_0/s_axi_lite] [get_bd_intf_pins ps8_0_axi_periph/M01_AXI]
+  connect_bd_intf_net -intf_net ps8_0_axi_periph_M02_AXI [get_bd_intf_pins axi_metadata_fifo/S_AXI] [get_bd_intf_pins ps8_0_axi_periph/M02_AXI]
   connect_bd_intf_net -intf_net zynq_ultra_ps_e_0_M_AXI_HPM0_LPD [get_bd_intf_pins ps8_0_axi_periph/S00_AXI] [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_LPD]
 
   # Create port connections
-  connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_pins axi_fifo_mm_s_0/s_axi_aresetn] [get_bd_pins dvbs2_encoder_wrapper_0/rst_n] [get_bd_pins ps8_0_axi_periph/ARESETN] [get_bd_pins ps8_0_axi_periph/M00_ARESETN] [get_bd_pins ps8_0_axi_periph/M01_ARESETN] [get_bd_pins ps8_0_axi_periph/S00_ARESETN] [get_bd_pins rst_ps8_0_99M/peripheral_aresetn]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins axi_fifo_mm_s_0/s_axi_aclk] [get_bd_pins dvbs2_encoder_wrapper_0/clk] [get_bd_pins ps8_0_axi_periph/ACLK] [get_bd_pins ps8_0_axi_periph/M00_ACLK] [get_bd_pins ps8_0_axi_periph/M01_ACLK] [get_bd_pins ps8_0_axi_periph/S00_ACLK] [get_bd_pins rst_ps8_0_99M/slowest_sync_clk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_lpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/pl_clk0]
+  connect_bd_net -net axi_data_fifo_mm2s_prmry_reset_out_n [get_bd_pins axi_data_fifo/mm2s_prmry_reset_out_n] [get_bd_pins xlconcat_0/In1]
+  connect_bd_net -net axi_data_fifo_s2mm_prmry_reset_out_n [get_bd_pins axi_data_fifo/s2mm_prmry_reset_out_n] [get_bd_pins xlconcat_0/In2]
+  connect_bd_net -net axi_metadata_fifo_mm2s_prmry_reset_out_n [get_bd_pins axi_metadata_fifo/mm2s_prmry_reset_out_n] [get_bd_pins xlconcat_0/In0]
+  connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_pins axi_data_fifo/s_axi_aresetn] [get_bd_pins axi_metadata_fifo/s_axi_aresetn] [get_bd_pins ps8_0_axi_periph/ARESETN] [get_bd_pins ps8_0_axi_periph/M00_ARESETN] [get_bd_pins ps8_0_axi_periph/M01_ARESETN] [get_bd_pins ps8_0_axi_periph/M02_ARESETN] [get_bd_pins ps8_0_axi_periph/S00_ARESETN] [get_bd_pins rst_ps8_0_99M/peripheral_aresetn]
+  connect_bd_net -net util_reduced_logic_0_Res [get_bd_pins dvbs2_encoder_wrapper_0/rst_n] [get_bd_pins util_reduced_logic_0/Res]
+  connect_bd_net -net xlconcat_0_dout [get_bd_pins util_reduced_logic_0/Op1] [get_bd_pins xlconcat_0/dout]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins axi_data_fifo/s_axi_aclk] [get_bd_pins axi_metadata_fifo/s_axi_aclk] [get_bd_pins dvbs2_encoder_wrapper_0/clk] [get_bd_pins ps8_0_axi_periph/ACLK] [get_bd_pins ps8_0_axi_periph/M00_ACLK] [get_bd_pins ps8_0_axi_periph/M01_ACLK] [get_bd_pins ps8_0_axi_periph/M02_ACLK] [get_bd_pins ps8_0_axi_periph/S00_ACLK] [get_bd_pins rst_ps8_0_99M/slowest_sync_clk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_lpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/pl_clk0]
   connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins rst_ps8_0_99M/ext_reset_in] [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0]
 
   # Create address segments
-  assign_bd_address -offset 0x80000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_fifo_mm_s_0/S_AXI/Mem0] -force
+  assign_bd_address -offset 0x80000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_data_fifo/S_AXI/Mem0] -force
+  assign_bd_address -offset 0x80020000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_metadata_fifo/S_AXI/Mem0] -force
   assign_bd_address -offset 0x80010000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs dvbs2_encoder_wrapper_0/s_axi_lite/reg0] -force
 
 
