@@ -1,6 +1,11 @@
 .hdl_checker/
 vunit_out
 gnuradio_data/*/
-*.bin
+# Boards (when built from the top level repo)
 /zc706/
+/LiteFury/
 /zcu106/
+# Vivado logs and journal files
+vivado*.log
+vivado*.str
+vivado*.jou
