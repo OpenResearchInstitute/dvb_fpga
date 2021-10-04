@@ -27,7 +27,7 @@ add_files ${path_to_repo_root}/build/vivado/dvbs2_encoder_wrapper.vhd
 source ${path_to_repo_root}/boards/LiteFury/block_design.tcl
 
 make_wrapper -files [ get_files LiteFury/dvbs2_encoder.srcs/sources_1/bd/design_1/design_1.bd ] -top
-add_files -norecurse LiteFury/dvbs2_encoder.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v
+add_files -norecurse LiteFury/dvbs2_encoder.srcs/sources_1/bd/design_1/hdl/design_1_wrapper.v
 
 add_files -fileset constrs_1 [ glob ${path_to_repo_root}/boards/LiteFury/*.xdc ]
 set_property PROCESSING_ORDER {EARLY} [ get_files ${path_to_repo_root}/boards/LiteFury/early.xdc ]

@@ -37,7 +37,8 @@ entity dvbs2_encoder is
   generic (
     POLYPHASE_FILTER_NUMBER_TAPS : positive := 33;
     POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
-    DATA_WIDTH                   : positive := 8
+    INPUT_DATA_WIDTH             : positive := 8; -- For ease of use only. Internally data will be always converted to 8 bits
+    IQ_WIDTH                     : positive := 32 -- IQ width of 32 means each component is 16-bit wide
   );
   port (
     -- Usual ports
@@ -73,15 +74,15 @@ entity dvbs2_encoder is
     s_frame_type    : in  frame_type_t;
     s_code_rate     : in  code_rate_t;
     s_tvalid        : in  std_logic;
-    s_tdata         : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
-    s_tkeep         : in  std_logic_vector(DATA_WIDTH/8 - 1 downto 0);
+    s_tdata         : in  std_logic_vector(INPUT_DATA_WIDTH - 1 downto 0);
+    s_tkeep         : in  std_logic_vector(INPUT_DATA_WIDTH/8 - 1 downto 0);
     s_tlast         : in  std_logic;
     s_tready        : out std_logic;
     -- AXI output
     m_tready        : in  std_logic;
     m_tvalid        : out std_logic;
     m_tlast         : out std_logic;
-    m_tdata         : out std_logic_vector(DATA_WIDTH - 1 downto 0));
+    m_tdata         : out std_logic_vector(IQ_WIDTH - 1 downto 0));
 end dvbs2_encoder;
 
 architecture dvbs2_encoder of dvbs2_encoder is
@@ -165,10 +166,10 @@ architecture dvbs2_encoder of dvbs2_encoder is
   signal bit_interleaver      : data_and_config_t(tdata(7 downto 0));
   signal bit_interleaver_dbg  : data_and_config_t(tdata(7 downto 0));
   signal arbiter_out          : data_and_config_t(tdata(7 downto 0));
-  signal constellation_mapper : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
-  signal pl_frame             : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
-  signal pl_frame_dbg         : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
-  signal polyphase_filter_out : data_and_config_t(tdata(DATA_WIDTH - 1 downto 0));
+  signal constellation_mapper : data_and_config_t(tdata(IQ_WIDTH - 1 downto 0));
+  signal pl_frame             : data_and_config_t(tdata(IQ_WIDTH - 1 downto 0));
+  signal pl_frame_dbg         : data_and_config_t(tdata(IQ_WIDTH - 1 downto 0));
+  signal polyphase_filter_out : data_and_config_t(tdata(IQ_WIDTH - 1 downto 0));
 
   -- User signals  :
   signal user2regs : user2regs_t;
@@ -181,7 +182,7 @@ begin
   -------------------
   force_8_bit_u : entity fpga_cores.axi_stream_width_converter
     generic map (
-      INPUT_DATA_WIDTH  => DATA_WIDTH,
+      INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
       OUTPUT_DATA_WIDTH => 8,
       AXI_TID_WIDTH     => ENCODED_CONFIG_WIDTH,
       ENDIANNESS        => LEFT_FIRST,
@@ -655,7 +656,7 @@ begin
   constellation_mapper_u : entity work.axi_constellation_mapper
     generic map (
       INPUT_DATA_WIDTH  => 8,
-      OUTPUT_DATA_WIDTH => DATA_WIDTH,
+      OUTPUT_DATA_WIDTH => IQ_WIDTH,
       TID_WIDTH         => ENCODED_CONFIG_WIDTH
     )
     port map (
@@ -665,8 +666,8 @@ begin
       -- Mapping RAM config
       ram_wren        => or(regs2user.bit_mapper_ram_wen),
       ram_addr        => regs2user.bit_mapper_ram_addr(5 downto 0), -- register map addresses bytes
-      ram_wdata       => regs2user.bit_mapper_ram_wdata(DATA_WIDTH - 1 downto 0),
-      ram_rdata       => user2regs.bit_mapper_ram_rdata(DATA_WIDTH - 1 downto 0),
+      ram_wdata       => regs2user.bit_mapper_ram_wdata(IQ_WIDTH - 1 downto 0),
+      ram_rdata       => user2regs.bit_mapper_ram_rdata(IQ_WIDTH - 1 downto 0),
       -- Per frame config input
       -- AXI input
       s_constellation => decode(arbiter_out.tid).constellation,
@@ -684,7 +685,7 @@ begin
 
   physical_layer_framer_u : entity work.axi_physical_layer_framer
     generic map (
-      TDATA_WIDTH => DATA_WIDTH,
+      TDATA_WIDTH => IQ_WIDTH,
       TID_WIDTH   => ENCODED_CONFIG_WIDTH)
     port map (
       -- Usual ports
@@ -711,7 +712,7 @@ begin
 
   plframe_dbg_u : entity fpga_cores.axi_stream_debug
     generic map (
-      TDATA_WIDTH        => DATA_WIDTH,
+      TDATA_WIDTH        => IQ_WIDTH,
       TID_WIDTH          => ENCODED_CONFIG_WIDTH,
       FRAME_COUNT_WIDTH  => FRAME_COUNT_WIDTH,
       FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
@@ -756,9 +757,9 @@ begin
   polyphase_filter_q : polyphase_filter
     generic map (
       NUMBER_TAPS          => POLYPHASE_FILTER_NUMBER_TAPS,
-      DATA_IN_WIDTH        => DATA_WIDTH/2,
-      DATA_OUT_WIDTH       => DATA_WIDTH/2,
-      COEFFICIENT_WIDTH    => DATA_WIDTH/2,
+      DATA_IN_WIDTH        => IQ_WIDTH/2,
+      DATA_OUT_WIDTH       => IQ_WIDTH/2,
+      COEFFICIENT_WIDTH    => IQ_WIDTH/2,
       RATE_CHANGE          => POLYPHASE_FILTER_RATE_CHANGE,
       DECIMATE_INTERPOLATE => 1) -- 0 => decimate, 1 => interpolate
     port map (
@@ -766,27 +767,27 @@ begin
       data_in_aclk            => clk,
       data_in_aresetn         => rst_n,
       data_in_tready          => pl_frame_dbg.tready,
-      data_in_tdata           => pl_frame_dbg.tdata(DATA_WIDTH/2 - 1 downto 0),
+      data_in_tdata           => pl_frame_dbg.tdata(IQ_WIDTH/2 - 1 downto 0),
       data_in_tlast           => pl_frame_dbg.tlast,
       data_in_tvalid          => pl_frame_dbg.tvalid,
       -- output data interface
       data_out_aclk           => clk,
       data_out_aresetn        => rst_n,
       data_out_tready         => polyphase_filter_out.tready,
-      data_out_tdata          => polyphase_filter_out.tdata(DATA_WIDTH/2 - 1 downto 0),
+      data_out_tdata          => polyphase_filter_out.tdata(IQ_WIDTH/2 - 1 downto 0),
       data_out_tlast          => polyphase_filter_out.tlast,
       data_out_tvalid         => polyphase_filter_out.tvalid,
       -- coefficients input interface
       coeffs_wren             => or(regs2user.polyphase_filter_coefficients_wen),
       coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(numbits(POLYPHASE_FILTER_NUMBER_TAPS) - 1 downto 0),
-      coeffs_wdata            => regs2user.polyphase_filter_coefficients_wdata(DATA_WIDTH/2 - 1 downto 0));
+      coeffs_wdata            => regs2user.polyphase_filter_coefficients_wdata(IQ_WIDTH/2 - 1 downto 0));
 
   polyphase_filter_i : polyphase_filter
     generic map (
       NUMBER_TAPS          => POLYPHASE_FILTER_NUMBER_TAPS,
-      DATA_IN_WIDTH        => DATA_WIDTH/2,
-      DATA_OUT_WIDTH       => DATA_WIDTH/2,
-      COEFFICIENT_WIDTH    => DATA_WIDTH/2,
+      DATA_IN_WIDTH        => IQ_WIDTH/2,
+      DATA_OUT_WIDTH       => IQ_WIDTH/2,
+      COEFFICIENT_WIDTH    => IQ_WIDTH/2,
       RATE_CHANGE          => POLYPHASE_FILTER_RATE_CHANGE,
       DECIMATE_INTERPOLATE => 1) -- 0 => decimate, 1 => interpolate
     port map (
@@ -794,24 +795,24 @@ begin
       data_in_aclk            => clk,
       data_in_aresetn         => rst_n,
       data_in_tready          => open,
-      data_in_tdata           => pl_frame_dbg.tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2),
+      data_in_tdata           => pl_frame_dbg.tdata(IQ_WIDTH - 1 downto IQ_WIDTH/2),
       data_in_tlast           => pl_frame_dbg.tlast,
       data_in_tvalid          => pl_frame_dbg.tvalid,
       -- output data interface
       data_out_aclk           => clk,
       data_out_aresetn        => rst_n,
       data_out_tready         => polyphase_filter_out.tready,
-      data_out_tdata          => polyphase_filter_out.tdata(DATA_WIDTH - 1 downto DATA_WIDTH/2),
+      data_out_tdata          => polyphase_filter_out.tdata(IQ_WIDTH - 1 downto IQ_WIDTH/2),
       data_out_tlast          => open,
       data_out_tvalid         => open,
       -- coefficients input interface
       coeffs_wren             => or(regs2user.polyphase_filter_coefficients_wen),
       coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(numbits(POLYPHASE_FILTER_NUMBER_TAPS) - 1 downto 0),
-      coeffs_wdata            => regs2user.polyphase_filter_coefficients_wdata(DATA_WIDTH - 1 downto DATA_WIDTH/2));
+      coeffs_wdata            => regs2user.polyphase_filter_coefficients_wdata(IQ_WIDTH - 1 downto IQ_WIDTH/2));
 
   output_dbg_u : entity fpga_cores.axi_stream_debug
     generic map (
-      TDATA_WIDTH        => DATA_WIDTH,
+      TDATA_WIDTH        => IQ_WIDTH,
       TID_WIDTH          => ENCODED_CONFIG_WIDTH,
       FRAME_COUNT_WIDTH  => FRAME_COUNT_WIDTH,
       FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)

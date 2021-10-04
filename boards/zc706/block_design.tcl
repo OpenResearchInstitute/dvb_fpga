@@ -1,3 +1,4 @@
+
 ################################################################
 # This is a generated script based on design: design_1
 #
@@ -264,7 +265,10 @@ proc create_root_design { parentCell } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
-  
+    set_property -dict [ list \
+   CONFIG.INPUT_METADATA_WIDTH {32} \
+ ] $dvbs2_encoder_wrapper_0
+
   # Create instance: proc_sys_reset_0, and set properties
   set proc_sys_reset_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_0 ]
   set_property -dict [ list \
@@ -738,15 +742,12 @@ proc create_root_design { parentCell } {
 
   # Create interface connections
   connect_bd_intf_net -intf_net axi_data_fifo_AXI_STR_TXD [get_bd_intf_pins axi_data_fifo/AXI_STR_TXD] [get_bd_intf_pins dvbs2_encoder_wrapper_0/s_axis]
-  set_property SIM_ATTRIBUTE.MARK_SIM "" [get_bd_intf_nets /axi_data_fifo_AXI_STR_TXD]
   connect_bd_intf_net -intf_net axi_metadata_fifo_AXI_STR_TXD [get_bd_intf_pins axi_metadata_fifo/AXI_STR_TXD] [get_bd_intf_pins dvbs2_encoder_wrapper_0/s_metadata]
-  set_property SIM_ATTRIBUTE.MARK_SIM "" [get_bd_intf_nets /axi_metadata_fifo_AXI_STR_TXD]
   connect_bd_intf_net -intf_net dvbs2_encoder_wrapper_0_m_axis [get_bd_intf_pins axi_data_fifo/AXI_STR_RXD] [get_bd_intf_pins dvbs2_encoder_wrapper_0/m_axis]
   connect_bd_intf_net -intf_net processing_system7_0_DDR [get_bd_intf_ports DDR] [get_bd_intf_pins processing_system7_0/DDR]
   connect_bd_intf_net -intf_net processing_system7_0_FIXED_IO [get_bd_intf_ports FIXED_IO] [get_bd_intf_pins processing_system7_0/FIXED_IO]
   connect_bd_intf_net -intf_net processing_system7_0_M_AXI_GP0 [get_bd_intf_pins processing_system7_0/M_AXI_GP0] [get_bd_intf_pins ps7_0_axi_periph/S00_AXI]
   connect_bd_intf_net -intf_net ps7_0_axi_periph_M00_AXI [get_bd_intf_pins dvbs2_encoder_wrapper_0/s_axi_lite] [get_bd_intf_pins ps7_0_axi_periph/M00_AXI]
-  set_property SIM_ATTRIBUTE.MARK_SIM "" [get_bd_intf_nets /ps7_0_axi_periph_M00_AXI]
   connect_bd_intf_net -intf_net ps7_0_axi_periph_M01_AXI [get_bd_intf_pins axi_data_fifo/S_AXI] [get_bd_intf_pins ps7_0_axi_periph/M01_AXI]
   connect_bd_intf_net -intf_net ps7_0_axi_periph_M02_AXI [get_bd_intf_pins axi_metadata_fifo/S_AXI] [get_bd_intf_pins ps7_0_axi_periph/M02_AXI]
 

@@ -69,7 +69,8 @@ architecture dvbs2_encoder_tb of dvbs2_encoder_tb is
   constant configs    : config_array_t := get_test_cfg(TEST_CFG);
   constant CLK_PERIOD : time := 5 ns;
 
-  constant DATA_WIDTH                   : integer  := 32;
+  constant INPUT_DATA_WIDTH             : integer  := 32;
+  constant IQ_WIDTH                     : integer  := 32;
   constant POLYPHASE_FILTER_NUMBER_TAPS : positive := 33;
   constant POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
 
@@ -132,18 +133,18 @@ architecture dvbs2_encoder_tb of dvbs2_encoder_tb is
   signal cfg_frame_type     : frame_type_t;
   signal cfg_code_rate      : code_rate_t;
 
-  signal axi_master         : axi_stream_qualified_data_t(tdata(DATA_WIDTH - 1 downto 0),
-                                                          tkeep(DATA_WIDTH/8 - 1 downto 0),
+  signal axi_master         : axi_stream_qualified_data_t(tdata(INPUT_DATA_WIDTH - 1 downto 0),
+                                                          tkeep(INPUT_DATA_WIDTH/8 - 1 downto 0),
                                                           tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   signal m_data_valid       : std_logic;
 
   -- AXI output
-  signal axi_slave          : axi_stream_data_bus_t(tdata(DATA_WIDTH - 1 downto 0));
+  signal axi_slave          : axi_stream_data_bus_t(tdata(IQ_WIDTH - 1 downto 0));
   signal axi_slave_tvalid   : std_logic; -- Frame sizes don't match, mask off extra samples from RTL
   signal is_trailing_data   : std_logic := '0';
   signal s_data_valid       : std_logic;
 
-  signal expected_tdata     : std_logic_vector(DATA_WIDTH - 1 downto 0);
+  signal expected_tdata     : std_logic_vector(IQ_WIDTH - 1 downto 0);
   signal expected_tlast     : std_logic;
 
   signal recv_r             : complex;
@@ -158,7 +159,7 @@ begin
   input_stream_u : entity fpga_cores_sim.axi_file_reader
     generic map (
       READER_NAME => "input_stream",
-      DATA_WIDTH  => DATA_WIDTH,
+      DATA_WIDTH  => INPUT_DATA_WIDTH,
       TID_WIDTH   => ENCODED_CONFIG_WIDTH)
     port map (
       -- Usual ports
@@ -178,7 +179,8 @@ begin
 
   dut : entity work.dvbs2_encoder
     generic map (
-      DATA_WIDTH                   => DATA_WIDTH,
+      INPUT_DATA_WIDTH             => INPUT_DATA_WIDTH,
+      IQ_WIDTH                     => IQ_WIDTH,
       POLYPHASE_FILTER_NUMBER_TAPS => POLYPHASE_FILTER_NUMBER_TAPS,
       POLYPHASE_FILTER_RATE_CHANGE => POLYPHASE_FILTER_RATE_CHANGE)
     port map (
@@ -228,7 +230,7 @@ begin
   output_checker_u : entity work.axi_file_compare_complex
     generic map (
       READER_NAME         => "output_checker",
-      DATA_WIDTH          => DATA_WIDTH,
+      DATA_WIDTH          => IQ_WIDTH,
       TOLERANCE           => 64,
       SWAP_BYTE_ENDIANESS => True,
       ERROR_CNT_WIDTH     => 8,
@@ -315,8 +317,8 @@ begin
     signal bch_encoder_info  : file_compare_info_t(expected_tdata(7 downto 0));
     signal ldpc_encoder_info : file_compare_info_t(expected_tdata(7 downto 0));
 
-    signal pl_frame_expected : axi_stream_data_bus_t(tdata(DATA_WIDTH - 1 downto 0));
-    signal pl_frame          : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal pl_frame_expected : axi_stream_data_bus_t(tdata(IQ_WIDTH - 1 downto 0));
+    signal pl_frame          : axi_stream_bus_t(tdata(IQ_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
 
   begin
 
@@ -395,7 +397,7 @@ begin
     physical_layer_checker_u : entity work.axi_file_compare_complex
       generic map (
         READER_NAME         => "pl_framer_checker",
-        DATA_WIDTH          => DATA_WIDTH,
+        DATA_WIDTH          => IQ_WIDTH,
         TOLERANCE           => 1200,
         SWAP_BYTE_ENDIANESS => True,
         ERROR_CNT_WIDTH     => 8,
@@ -562,14 +564,14 @@ begin
 
     procedure write_ram ( -- {{ --------------------------------------------------------
       constant addr : in integer;
-      constant data : in std_logic_vector(DATA_WIDTH - 1 downto 0)) is
+      constant data : in std_logic_vector(IQ_WIDTH - 1 downto 0)) is
     begin
       axi_cfg_write(BIT_MAPPER_RAM_OFFSET + 4*addr, data);
     end procedure; -- }} ---------------------------------------------------------------
 
     -- Write the exact value so we know data was picked up correctly without having to
     -- convert into IQ
-    variable current_mapping_ram : std_logic_array_t(0 to 63)(DATA_WIDTH - 1 downto 0);
+    variable current_mapping_ram : std_logic_array_t(0 to 63)(IQ_WIDTH - 1 downto 0);
     procedure update_mapping_ram_if_needed ( -- {{ -----------------------------------------------
       constant initial_addr : integer;
       constant path         : string) is
@@ -578,7 +580,7 @@ begin
       variable map_i, map_q : real;
       variable addr         : integer := initial_addr;
       variable index        : unsigned(5 downto 0) := (others => '0');
-      variable mapping_ram  : std_logic_array_t(0 to 63)(DATA_WIDTH - 1 downto 0) := current_mapping_ram;
+      variable mapping_ram  : std_logic_array_t(0 to 63)(IQ_WIDTH - 1 downto 0) := current_mapping_ram;
     begin
       file_open(file_handler, path, read_mode);
       while not endfile(file_handler) loop
@@ -595,14 +597,14 @@ begin
             real'image(map_i),
             real'image(map_q),
             real'image(map_i),
-            fo(to_fixed_point(map_i, DATA_WIDTH/2)),
+            fo(to_fixed_point(map_i, IQ_WIDTH/2)),
             real'image(map_q),
-            fo(to_fixed_point(map_q, DATA_WIDTH/2))
+            fo(to_fixed_point(map_q, IQ_WIDTH/2))
           )
         );
 
-        mapping_ram(addr) := std_logic_vector(to_fixed_point(map_i, DATA_WIDTH/2)) &
-                             std_logic_vector(to_fixed_point(map_q, DATA_WIDTH/2));
+        mapping_ram(addr) := std_logic_vector(to_fixed_point(map_i, IQ_WIDTH/2)) &
+                             std_logic_vector(to_fixed_point(map_q, IQ_WIDTH/2));
 
         addr := addr + 1;
         index := index + 1;
@@ -642,7 +644,7 @@ begin
       while not endfile(file_handler) loop
         readline(file_handler, L);
         read(L, value);
-        trace(logger, sformat("Coefficient %3d: %r => %r", fo(addr), real'image(value), fo(to_fixed_point(value, DATA_WIDTH/2))));
+        trace(logger, sformat("Coefficient %3d: %r => %r", fo(addr), real'image(value), fo(to_fixed_point(value, IQ_WIDTH/2))));
         coefficients(addr) := value;
         addr := addr + 1;
       end loop;
@@ -658,8 +660,8 @@ begin
         if current_coefficients(i) /= coefficients(i) then
           axi_cfg_write(
             POLYPHASE_FILTER_COEFFICIENTS_OFFSET + 4*i, 
-            std_logic_vector(to_fixed_point(coefficients(i), DATA_WIDTH/2)) &
-            std_logic_vector(to_fixed_point(coefficients(i), DATA_WIDTH/2))
+            std_logic_vector(to_fixed_point(coefficients(i), IQ_WIDTH/2)) &
+            std_logic_vector(to_fixed_point(coefficients(i), IQ_WIDTH/2))
           );
         end if;
       end loop;

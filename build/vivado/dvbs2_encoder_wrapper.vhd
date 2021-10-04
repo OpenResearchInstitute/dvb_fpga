@@ -34,7 +34,9 @@ use work.dvb_utils_pkg.all;
 entity dvbs2_encoder_wrapper is
   generic (
     -- AXI streaming widths
-    AXIS_DATA_WIDTH : integer := 32
+    INPUT_DATA_WIDTH     : integer := 32;
+    INPUT_METADATA_WIDTH : integer := 8;  -- For ease of use only. Only bits 7:0 are needed/used
+    IQ_WIDTH             : integer := 32
   );
   port (
     -- AXI4 lite
@@ -68,18 +70,18 @@ entity dvbs2_encoder_wrapper is
     -- Input metadata for config words
     s_metadata_tvalid : in  std_logic;
     s_metadata_tready : out std_logic;
-    s_metadata_tdata  : in  std_logic_vector(31 downto 0); -- Xilinx's AXI stream FIFO is 32 bit
+    s_metadata_tdata  : in  std_logic_vector(INPUT_METADATA_WIDTH - 1 downto 0);
     -- Input data
     s_axis_tvalid     : in  std_logic;
     s_axis_tlast      : in  std_logic;
     s_axis_tready     : out std_logic;
-    s_axis_tkeep      : in  std_logic_vector(AXIS_DATA_WIDTH/8 - 1 downto 0);
-    s_axis_tdata      : in  std_logic_vector(AXIS_DATA_WIDTH - 1 downto 0);
+    s_axis_tkeep      : in  std_logic_vector(INPUT_DATA_WIDTH/8 - 1 downto 0);
+    s_axis_tdata      : in  std_logic_vector(INPUT_DATA_WIDTH - 1 downto 0);
     -- Output data
     m_axis_tvalid     : out std_logic;
     m_axis_tlast      : out std_logic;
     m_axis_tready     : in  std_logic;
-    m_axis_tdata      : out std_logic_vector(AXIS_DATA_WIDTH - 1 downto 0));
+    m_axis_tdata      : out std_logic_vector(IQ_WIDTH - 1 downto 0));
 end dvbs2_encoder_wrapper;
 
 architecture rtl of dvbs2_encoder_wrapper is
@@ -257,7 +259,10 @@ begin
   axi_tvalid    <= s_metadata_tvalid and s_axis_tvalid;
 
   encoder_u : entity work.dvbs2_encoder
-    generic map ( DATA_WIDTH => AXIS_DATA_WIDTH)
+    generic map (
+      INPUT_DATA_WIDTH => INPUT_DATA_WIDTH,
+      IQ_WIDTH         => IQ_WIDTH
+    )
     port map (
       -- Usual ports
       clk             => clk,
