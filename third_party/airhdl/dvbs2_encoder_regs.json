@@ -31,6 +31,33 @@
             "reset": 0,
             "selfClear": false,
             "enumValues": []
+          },
+          {
+            "name": "swap_input_data_byte_endianness",
+            "description": "Changes input data byte endianness. Has no effect if input data width is 8.",
+            "bitWidth": 1,
+            "bitOffset": 19,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "swap_output_data_byte_endianness",
+            "description": "",
+            "bitWidth": 1,
+            "bitOffset": 20,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          },
+          {
+            "name": "force_output_ready",
+            "description": "Ignores external m_tready and force the internal value to 1",
+            "bitWidth": 1,
+            "bitOffset": 21,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
           }
         ]
       },
@@ -1309,7 +1336,7 @@
         ]
       }
     ],
-    "revision": 292,
+    "revision": 297,
     "generateRecordPorts": true
   }
 }

@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_encoder' Register Definitions
-// Revision: 292
+// Revision: 297
 // -----------------------------------------------------------------------------
-// Generated on 2021-08-14 at 16:56 (UTC) by airhdl version 2021.06.1
+// Generated on 2021-10-18 at 20:36 (UTC) by airhdl version 2021.09.1
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -97,6 +97,9 @@ package dvbs2_encoder_regs_pkg;
         logic config_strobe; // Strobe logic for register 'config' (pulsed when the register is written from the bus)
         logic [17:0] config_physical_layer_scrambler_shift_reg_init; // Value of register 'config', field 'physical_layer_scrambler_shift_reg_init'
         logic [0:0] config_enable_dummy_frames; // Value of register 'config', field 'enable_dummy_frames'
+        logic [0:0] config_swap_input_data_byte_endianness; // Value of register 'config', field 'swap_input_data_byte_endianness'
+        logic [0:0] config_swap_output_data_byte_endianness; // Value of register 'config', field 'swap_output_data_byte_endianness'
+        logic [0:0] config_force_output_ready; // Value of register 'config', field 'force_output_ready'
         logic ldpc_fifo_status_strobe; // Strobe logic for register 'ldpc_fifo_status' (pulsed when the register is read from the bus)
         logic frames_in_transit_strobe; // Strobe logic for register 'frames_in_transit' (pulsed when the register is read from the bus)
         logic [7:0] bit_mapper_ram_addr; // read/write address for memory 'bit_mapper_ram'
@@ -173,10 +176,13 @@ package dvbs2_encoder_regs_pkg;
     } regs2user_t;
 
     // Revision number of the 'dvbs2_encoder' register map
-    localparam DVBS2_ENCODER_REVISION = 292;
+    localparam DVBS2_ENCODER_REVISION = 297;
 
     // Default base address of the 'dvbs2_encoder' register map
     localparam logic [31:0] DVBS2_ENCODER_DEFAULT_BASEADDR = 32'h00000000;
+
+    // Size of the 'dvbs2_encoder' register map, in bytes
+    localparam DVBS2_ENCODER_RANGE_BYTES = 4888;
 
     // Register 'config'
     localparam logic [31:0] CONFIG_OFFSET = 32'h00000000; // address offset of the 'config' register
@@ -188,6 +194,18 @@ package dvbs2_encoder_regs_pkg;
     localparam CONFIG_ENABLE_DUMMY_FRAMES_BIT_OFFSET = 18; // bit offset of the 'enable_dummy_frames' field
     localparam CONFIG_ENABLE_DUMMY_FRAMES_BIT_WIDTH = 1; // bit width of the 'enable_dummy_frames' field
     localparam logic [18:18] CONFIG_ENABLE_DUMMY_FRAMES_RESET = 1'b0; // reset value of the 'enable_dummy_frames' field
+    // Field 'config.swap_input_data_byte_endianness'
+    localparam CONFIG_SWAP_INPUT_DATA_BYTE_ENDIANNESS_BIT_OFFSET = 19; // bit offset of the 'swap_input_data_byte_endianness' field
+    localparam CONFIG_SWAP_INPUT_DATA_BYTE_ENDIANNESS_BIT_WIDTH = 1; // bit width of the 'swap_input_data_byte_endianness' field
+    localparam logic [19:19] CONFIG_SWAP_INPUT_DATA_BYTE_ENDIANNESS_RESET = 1'b0; // reset value of the 'swap_input_data_byte_endianness' field
+    // Field 'config.swap_output_data_byte_endianness'
+    localparam CONFIG_SWAP_OUTPUT_DATA_BYTE_ENDIANNESS_BIT_OFFSET = 20; // bit offset of the 'swap_output_data_byte_endianness' field
+    localparam CONFIG_SWAP_OUTPUT_DATA_BYTE_ENDIANNESS_BIT_WIDTH = 1; // bit width of the 'swap_output_data_byte_endianness' field
+    localparam logic [20:20] CONFIG_SWAP_OUTPUT_DATA_BYTE_ENDIANNESS_RESET = 1'b0; // reset value of the 'swap_output_data_byte_endianness' field
+    // Field 'config.force_output_ready'
+    localparam CONFIG_FORCE_OUTPUT_READY_BIT_OFFSET = 21; // bit offset of the 'force_output_ready' field
+    localparam CONFIG_FORCE_OUTPUT_READY_BIT_WIDTH = 1; // bit width of the 'force_output_ready' field
+    localparam logic [21:21] CONFIG_FORCE_OUTPUT_READY_RESET = 1'b0; // reset value of the 'force_output_ready' field
 
     // Register 'ldpc_fifo_status'
     localparam logic [31:0] LDPC_FIFO_STATUS_OFFSET = 32'h00000004; // address offset of the 'ldpc_fifo_status' register

@@ -72,14 +72,14 @@ architecture axi_plframe_header of axi_plframe_header is
   -- Constants --
   ---------------
   constant MOD_8PSK_MAP : std_logic_array_t(0 to 7)(DATA_WIDTH - 1 downto 0) := (
-    0 => std_logic_vector(cos(      MATH_PI / 4.0, DATA_WIDTH/2) & sin(      MATH_PI / 4.0, DATA_WIDTH/2)),
-    1 => std_logic_vector(cos(5.0 * MATH_PI / 4.0, DATA_WIDTH/2) & sin(5.0 * MATH_PI / 4.0, DATA_WIDTH/2)),
-    2 => std_logic_vector(cos(5.0 * MATH_PI / 4.0, DATA_WIDTH/2) & sin(      MATH_PI / 4.0, DATA_WIDTH/2)),
-    3 => std_logic_vector(cos(      MATH_PI / 4.0, DATA_WIDTH/2) & sin(5.0 * MATH_PI / 4.0, DATA_WIDTH/2)),
-    4 => std_logic_vector(cos(5.0 * MATH_PI / 4.0, DATA_WIDTH/2) & sin(      MATH_PI / 4.0, DATA_WIDTH/2)),
-    5 => std_logic_vector(cos(      MATH_PI / 4.0, DATA_WIDTH/2) & sin(5.0 * MATH_PI / 4.0, DATA_WIDTH/2)),
-    6 => std_logic_vector(cos(5.0 * MATH_PI / 4.0, DATA_WIDTH/2) & sin(5.0 * MATH_PI / 4.0, DATA_WIDTH/2)),
-    7 => std_logic_vector(cos(      MATH_PI / 4.0, DATA_WIDTH/2) & sin(      MATH_PI / 4.0, DATA_WIDTH/2))
+    0 => std_logic_vector(sin(      MATH_PI / 4.0, DATA_WIDTH/2) & cos(      MATH_PI / 4.0, DATA_WIDTH/2)),
+    1 => std_logic_vector(sin(5.0 * MATH_PI / 4.0, DATA_WIDTH/2) & cos(5.0 * MATH_PI / 4.0, DATA_WIDTH/2)),
+    2 => std_logic_vector(sin(      MATH_PI / 4.0, DATA_WIDTH/2) & cos(5.0 * MATH_PI / 4.0, DATA_WIDTH/2)),
+    3 => std_logic_vector(sin(5.0 * MATH_PI / 4.0, DATA_WIDTH/2) & cos(      MATH_PI / 4.0, DATA_WIDTH/2)),
+    4 => std_logic_vector(sin(      MATH_PI / 4.0, DATA_WIDTH/2) & cos(5.0 * MATH_PI / 4.0, DATA_WIDTH/2)),
+    5 => std_logic_vector(sin(5.0 * MATH_PI / 4.0, DATA_WIDTH/2) & cos(      MATH_PI / 4.0, DATA_WIDTH/2)),
+    6 => std_logic_vector(sin(5.0 * MATH_PI / 4.0, DATA_WIDTH/2) & cos(5.0 * MATH_PI / 4.0, DATA_WIDTH/2)),
+    7 => std_logic_vector(sin(      MATH_PI / 4.0, DATA_WIDTH/2) & cos(      MATH_PI / 4.0, DATA_WIDTH/2))
   );
 
   -- SOF is the same for all configs, so we'll only store the PLS

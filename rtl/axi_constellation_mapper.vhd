@@ -121,18 +121,19 @@ begin
 
       s_tvalid       => s_tvalid,
       s_tready       => s_tready,
-      s_tdata        => (others => '0'),
+      s_tdata        => (others => 'U'),
 
       m_tvalid       => conv_tvalid,
       m_tready       => conv_tready,
       m_tdata        => open);
 
+  -- Width converter is little endian but DVB-S2 requires mapping MSB of the data, so we
+  -- mirror data in then mirror data out
   width_converter_qpsk_u : entity fpga_cores.axi_stream_width_converter
   generic map (
     INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
     OUTPUT_DATA_WIDTH => 2,
     AXI_TID_WIDTH     => sum(CONFIG_INPUT_WIDTHS),
-    ENDIANNESS        => LEFT_FIRST,
     IGNORE_TKEEP      => True)
   port map (
     -- Usual ports
@@ -140,7 +141,7 @@ begin
     rst      => rst,
     -- AXI stream input
     s_tready => conv_tready(0),
-    s_tdata  => s_tdata,
+    s_tdata  => mirror_bits(s_tdata),
     s_tid    => s_tid_internal,
     s_tvalid => conv_tvalid(0),
     s_tlast  => s_tlast,
@@ -156,7 +157,6 @@ begin
     INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
     OUTPUT_DATA_WIDTH => 3,
     AXI_TID_WIDTH     => sum(CONFIG_INPUT_WIDTHS),
-    ENDIANNESS        => LEFT_FIRST,
     IGNORE_TKEEP      => True)
   port map (
     -- Usual ports
@@ -164,7 +164,7 @@ begin
     rst      => rst,
     -- AXI stream input
     s_tready => conv_tready(1),
-    s_tdata  => s_tdata,
+    s_tdata  => mirror_bits(s_tdata),
     s_tid    => s_tid_internal,
     s_tvalid => conv_tvalid(1),
     s_tlast  => s_tlast,
@@ -180,7 +180,6 @@ begin
     INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
     OUTPUT_DATA_WIDTH => 4,
     AXI_TID_WIDTH     => sum(CONFIG_INPUT_WIDTHS),
-    ENDIANNESS        => LEFT_FIRST,
     IGNORE_TKEEP      => True)
   port map (
     -- Usual ports
@@ -188,7 +187,7 @@ begin
     rst      => rst,
     -- AXI stream input
     s_tready => conv_tready(2),
-    s_tdata  => s_tdata,
+    s_tdata  => mirror_bits(s_tdata),
     s_tid    => s_tid_internal,
     s_tvalid => conv_tvalid(2),
     s_tlast  => s_tlast,
@@ -204,7 +203,6 @@ begin
     INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
     OUTPUT_DATA_WIDTH => 5,
     AXI_TID_WIDTH     => sum(CONFIG_INPUT_WIDTHS),
-    ENDIANNESS        => LEFT_FIRST,
     IGNORE_TKEEP      => True)
   port map (
     -- Usual ports
@@ -212,7 +210,7 @@ begin
     rst      => rst,
     -- AXI stream input
     s_tready => conv_tready(3),
-    s_tdata  => s_tdata,
+    s_tdata  => mirror_bits(s_tdata),
     s_tid    => s_tid_internal,
     s_tvalid => conv_tvalid(3),
     s_tlast  => s_tlast,
@@ -286,10 +284,13 @@ begin
 
   -- Addr CONSTELLATION_ROM offsets to the width converter output. Each table starts
   -- immediatelly after the previous
-  addr_qpsk   <= "0000" & axi_qpsk.tdata;
-  addr_8psk   <= std_logic_vector("000" & unsigned(axi_8psk.tdata) + 4);            -- 8 PSK starts after QPSK
-  addr_16apsk <= std_logic_vector( "00" & unsigned(axi_16apsk.tdata) + 4 + 8);      -- 16 APSK starts after QPSK + 8 PSK
-  addr_32apsk <= std_logic_vector(  "0" & unsigned(axi_32apsk.tdata) + 4 + 8 + 16); -- 32 APSK starts after QPSK + 8 PSK + 16 APSK
+  --
+  -- Also, a reminder that the width converter is little endian but our data is big
+  -- endian. We mirrored the data going in now need to mirror the output as well
+  addr_qpsk   <= "0000" & mirror_bits(axi_qpsk.tdata);
+  addr_8psk   <= std_logic_vector("000" & unsigned(mirror_bits(axi_8psk.tdata)) + 4);            -- 8 PSK starts after QPSK
+  addr_16apsk <= std_logic_vector( "00" & unsigned(mirror_bits(axi_16apsk.tdata)) + 4 + 8);      -- 16 APSK starts after QPSK + 8 PSK
+  addr_32apsk <= std_logic_vector(  "0" & unsigned(mirror_bits(axi_32apsk.tdata)) + 4 + 8 + 16); -- 32 APSK starts after QPSK + 8 PSK + 16 APSK
 
   -- Only one will be active at a time
   map_addr <= (addr_qpsk   and (5 downto 0 => axi_qpsk.tvalid)) or

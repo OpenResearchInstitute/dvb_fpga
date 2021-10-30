@@ -238,10 +238,10 @@ begin
     procedure check_within_tolerance (
       constant v            : std_logic_vector;
       constant ref          : std_logic_vector) is
-      constant v_rect       : complex                           := to_complex(v);
-      constant ref_rect     : complex                           := to_complex(ref);
       constant v_re         : signed(DATA_WIDTH/2 - 1 downto 0) := signed(v(DATA_WIDTH - 1 downto DATA_WIDTH/2));
       constant v_im         : signed(DATA_WIDTH/2 - 1 downto 0) := signed(v(DATA_WIDTH/2 - 1 downto 0));
+      constant v_rect       : complex                           := to_complex(v);
+      constant ref_rect     : complex                           := to_complex(ref);
       variable ref_re       : integer;
       variable ref_im       : integer;
       variable ref_re_range : fpga_cores.common_pkg.integer_vector_t(0 to 1);

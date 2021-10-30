@@ -527,11 +527,17 @@ def _getModulationTable(
             (r2 * math.cos(math.pi / 4.0), r2 * math.sin(math.pi / 4.0)),
             (r2 * math.cos(5 * math.pi / 12.0), r2 * math.sin(5 * math.pi / 12.0)),
             (r2 * math.cos(-math.pi / 4.0), r2 * math.sin(-math.pi / 4.0)),
-            (r2 * math.cos(-5 * math.pi / 12.0), r2 * math.sin(-5 * math.pi / 12.0),),
+            (
+                r2 * math.cos(-5 * math.pi / 12.0),
+                r2 * math.sin(-5 * math.pi / 12.0),
+            ),
             (r2 * math.cos(3 * math.pi / 4.0), r2 * math.sin(3 * math.pi / 4.0)),
             (r2 * math.cos(7 * math.pi / 12.0), r2 * math.sin(7 * math.pi / 12.0)),
             (r2 * math.cos(-3 * math.pi / 4.0), r2 * math.sin(-3 * math.pi / 4.0)),
-            (r2 * math.cos(-7 * math.pi / 12.0), r2 * math.sin(-7 * math.pi / 12.0),),
+            (
+                r2 * math.cos(-7 * math.pi / 12.0),
+                r2 * math.sin(-7 * math.pi / 12.0),
+            ),
             (r3 * math.cos(math.pi / 8.0), r3 * math.sin(math.pi / 8.0)),
             (r3 * math.cos(3 * math.pi / 8.0), r3 * math.sin(3 * math.pi / 8.0)),
             (r3 * math.cos(-math.pi / 4.0), r3 * math.sin(-math.pi / 4.0)),
@@ -544,9 +550,15 @@ def _getModulationTable(
             (r1 * math.cos(math.pi / 4.0), r1 * math.sin(math.pi / 4.0)),
             (r2 * math.cos(-math.pi / 12.0), r2 * math.sin(-math.pi / 12.0)),
             (r1 * math.cos(-math.pi / 4.0), r1 * math.sin(-math.pi / 4.0)),
-            (r2 * math.cos(11 * math.pi / 12.0), r2 * math.sin(11 * math.pi / 12.0),),
+            (
+                r2 * math.cos(11 * math.pi / 12.0),
+                r2 * math.sin(11 * math.pi / 12.0),
+            ),
             (r1 * math.cos(3 * math.pi / 4.0), r1 * math.sin(3 * math.pi / 4.0)),
-            (r2 * math.cos(-11 * math.pi / 12.0), r2 * math.sin(-11 * math.pi / 12.0),),
+            (
+                r2 * math.cos(-11 * math.pi / 12.0),
+                r2 * math.sin(-11 * math.pi / 12.0),
+            ),
             (r1 * math.cos(-3 * math.pi / 4.0), r1 * math.sin(-3 * math.pi / 4.0)),
             (r3 * math.cos(0.0), r3 * math.sin(0.0)),
             (r3 * math.cos(math.pi / 4.0), r3 * math.sin(math.pi / 4.0)),
@@ -693,20 +705,23 @@ def setupTests(vunit, args):
             vunit.library("lib").entity("axi_bch_encoder_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=8,
+                    test_cfg=config.getTestConfigString(),
+                    NUMBER_OF_TEST_FRAMES=8,
                 ),
             )
 
             vunit.library("lib").entity("axi_ldpc_encoder_core_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                    test_cfg=config.getTestConfigString(),
+                    NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
             vunit.library("lib").entity("axi_ldpc_table_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                    test_cfg=config.getTestConfigString(),
+                    NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
 
@@ -714,7 +729,8 @@ def setupTests(vunit, args):
             vunit.library("lib").entity("axi_constellation_mapper_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                    test_cfg=config.getTestConfigString(),
+                    NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
 
@@ -731,12 +747,16 @@ def setupTests(vunit, args):
 
         addAllConfigsTest(
             entity=vunit.library("lib").entity("axi_ldpc_encoder_core_tb"),
-            configs=_getConfigs(constellations=(ConstellationType.MOD_8PSK,),),
+            configs=_getConfigs(
+                constellations=(ConstellationType.MOD_8PSK,),
+            ),
         )
 
         addAllConfigsTest(
             entity=vunit.library("lib").entity("axi_ldpc_table_tb"),
-            configs=_getConfigs(constellations=(ConstellationType.MOD_8PSK,),),
+            configs=_getConfigs(
+                constellations=(ConstellationType.MOD_8PSK,),
+            ),
         )
 
         # Run the DVB S2 Tx testbench with a smaller sample of configs to check
@@ -745,7 +765,11 @@ def setupTests(vunit, args):
         if vunit.get_simulator_name() != "ghdl":
             addAllConfigsTest(
                 entity=vunit.library("lib").entity("dvbs2_encoder_tb"),
-                configs=PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS,
+                configs=[
+                    x
+                    for x in PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS
+                    if x.frame_type == FrameType.FECFRAME_SHORT
+                ],
             )
 
     addAllConfigsTest(
@@ -759,13 +783,15 @@ def setupTests(vunit, args):
             vunit.library("lib").entity("axi_plframe_header_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                    test_cfg=config.getTestConfigString(),
+                    NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
             vunit.library("lib").entity("axi_physical_layer_scrambler_tb").add_config(
                 name=config.name,
                 generics=dict(
-                    test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=3,
+                    test_cfg=config.getTestConfigString(),
+                    NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
         if vunit.get_simulator_name() != "ghdl":
@@ -773,7 +799,8 @@ def setupTests(vunit, args):
                 vunit.library("lib").entity("dvbs2_encoder_tb").add_config(
                     name=config.name,
                     generics=dict(
-                        test_cfg=config.getTestConfigString(), NUMBER_OF_TEST_FRAMES=2,
+                        test_cfg=config.getTestConfigString(),
+                        NUMBER_OF_TEST_FRAMES=2,
                     ),
                 )
 

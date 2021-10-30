@@ -73,7 +73,6 @@ architecture axi_physical_layer_framer_tb of axi_physical_layer_framer_tb is
 
   -- AXI input
   signal axi_master         : axi_stream_bus_t(tdata(TDATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-  signal axi_master_tdata   : std_logic_vector(TDATA_WIDTH - 1 downto 0);
   signal m_data_valid       : boolean;
 
   signal axi_slave          : axi_stream_bus_t(tdata(TDATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
@@ -128,7 +127,7 @@ begin
       s_tvalid        => axi_master.tvalid,
       s_tlast         => axi_master.tlast,
       s_tready        => axi_master.tready,
-      s_tdata         => axi_master_tdata,
+      s_tdata         => axi_master.tdata,
       s_tid           => axi_master.tuser,
       -- AXI output
       m_tready        => axi_slave.tready,
@@ -142,7 +141,7 @@ begin
       READER_NAME         => "ref_data_u",
       DATA_WIDTH          => TDATA_WIDTH,
       TOLERANCE           => 4,
-      SWAP_BYTE_ENDIANESS => True,
+      SWAP_BYTE_ENDIANESS => False,
       ERROR_CNT_WIDTH     => 8,
       REPORT_SEVERITY     => Error)
     port map (
@@ -174,9 +173,7 @@ begin
   m_data_valid <= axi_slave.tvalid = '1' and axi_slave.tready = '1';
   s_data_valid <= axi_master.tvalid = '1' and axi_master.tready = '1';
 
-  axi_master_tdata <= axi_master.tdata(23 downto 16) & axi_master.tdata(31 downto 24) & axi_master.tdata(7 downto 0) & axi_master.tdata(15 downto 8);
-
-  dbg_input    <= to_complex(axi_master_tdata) when axi_master.tvalid = '1';
+  dbg_input    <= to_complex(axi_master.tdata) when axi_master.tvalid = '1';
   dbg_recv     <= to_complex(axi_slave.tdata) when axi_slave.tvalid = '1';
   dbg_expected <= to_complex(expected_tdata) when axi_slave.tvalid and axi_slave.tready;
 

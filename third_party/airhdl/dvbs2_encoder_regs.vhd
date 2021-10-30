@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
 -- 'dvbs2_encoder' Register Component
--- Revision: 292
+-- Revision: 297
 -- -----------------------------------------------------------------------------
--- Generated on 2021-08-14 at 16:56 (UTC) by airhdl version 2021.06.1
+-- Generated on 2021-10-18 at 20:36 (UTC) by airhdl version 2021.09.1
 -- -----------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -86,6 +86,9 @@ architecture RTL of dvbs2_encoder_regs is
     signal s_config_strobe_r : std_logic;
     signal s_reg_config_physical_layer_scrambler_shift_reg_init_r : std_logic_vector(17 downto 0);
     signal s_reg_config_enable_dummy_frames_r : std_logic_vector(0 downto 0);
+    signal s_reg_config_swap_input_data_byte_endianness_r : std_logic_vector(0 downto 0);
+    signal s_reg_config_swap_output_data_byte_endianness_r : std_logic_vector(0 downto 0);
+    signal s_reg_config_force_output_ready_r : std_logic_vector(0 downto 0);
     signal s_ldpc_fifo_status_strobe_r : std_logic;
     signal s_reg_ldpc_fifo_status_ldpc_fifo_entries : std_logic_vector(13 downto 0);
     signal s_reg_ldpc_fifo_status_ldpc_fifo_empty : std_logic_vector(0 downto 0);
@@ -438,6 +441,9 @@ begin
                         v_addr_hit := true;
                         v_rdata_r(17 downto 0) := s_reg_config_physical_layer_scrambler_shift_reg_init_r;
                         v_rdata_r(18 downto 18) := s_reg_config_enable_dummy_frames_r;
+                        v_rdata_r(19 downto 19) := s_reg_config_swap_input_data_byte_endianness_r;
+                        v_rdata_r(20 downto 20) := s_reg_config_swap_output_data_byte_endianness_r;
+                        v_rdata_r(21 downto 21) := s_reg_config_force_output_ready_r;
                         v_state_r := READ_RESPONSE;
                     end if;
                     -- register 'ldpc_fifo_status' at address offset 0x4
@@ -879,6 +885,9 @@ begin
             s_config_strobe_r <= '0';
             s_reg_config_physical_layer_scrambler_shift_reg_init_r <= CONFIG_PHYSICAL_LAYER_SCRAMBLER_SHIFT_REG_INIT_RESET;
             s_reg_config_enable_dummy_frames_r <= CONFIG_ENABLE_DUMMY_FRAMES_RESET;
+            s_reg_config_swap_input_data_byte_endianness_r <= CONFIG_SWAP_INPUT_DATA_BYTE_ENDIANNESS_RESET;
+            s_reg_config_swap_output_data_byte_endianness_r <= CONFIG_SWAP_OUTPUT_DATA_BYTE_ENDIANNESS_RESET;
+            s_reg_config_force_output_ready_r <= CONFIG_FORCE_OUTPUT_READY_RESET;
             s_bit_mapper_ram_waddr_r <= (others => '0');
             s_bit_mapper_ram_wen_r <= (others => '0');
             s_bit_mapper_ram_wdata_r <= (others => '0');
@@ -1059,6 +1068,18 @@ begin
                         if s_axi_wstrb_reg_r(2) = '1' then
                             s_reg_config_enable_dummy_frames_r(0) <= s_axi_wdata_reg_r(18); -- enable_dummy_frames(0)
                         end if;
+                        -- field 'swap_input_data_byte_endianness':
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_config_swap_input_data_byte_endianness_r(0) <= s_axi_wdata_reg_r(19); -- swap_input_data_byte_endianness(0)
+                        end if;
+                        -- field 'swap_output_data_byte_endianness':
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_config_swap_output_data_byte_endianness_r(0) <= s_axi_wdata_reg_r(20); -- swap_output_data_byte_endianness(0)
+                        end if;
+                        -- field 'force_output_ready':
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_config_force_output_ready_r(0) <= s_axi_wdata_reg_r(21); -- force_output_ready(0)
+                        end if;
                     end if;
                     -- memory 'bit_mapper_ram' at address offset 0xC
                     if s_axi_awaddr_reg_r >= resize(unsigned(BASEADDR) + BIT_MAPPER_RAM_OFFSET, AXI_ADDR_WIDTH) and
@@ -1235,6 +1256,9 @@ begin
     regs2user.config_strobe <= s_config_strobe_r;
     regs2user.config_physical_layer_scrambler_shift_reg_init <= s_reg_config_physical_layer_scrambler_shift_reg_init_r;
     regs2user.config_enable_dummy_frames <= s_reg_config_enable_dummy_frames_r;
+    regs2user.config_swap_input_data_byte_endianness <= s_reg_config_swap_input_data_byte_endianness_r;
+    regs2user.config_swap_output_data_byte_endianness <= s_reg_config_swap_output_data_byte_endianness_r;
+    regs2user.config_force_output_ready <= s_reg_config_force_output_ready_r;
     regs2user.ldpc_fifo_status_strobe <= s_ldpc_fifo_status_strobe_r;
     regs2user.frames_in_transit_strobe <= s_frames_in_transit_strobe_r;
     regs2user.bit_mapper_ram_addr <= s_bit_mapper_ram_waddr_r or s_bit_mapper_ram_raddr_r; -- using wired OR as read/write address multiplexer

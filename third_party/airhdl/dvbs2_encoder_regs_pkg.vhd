@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
 -- 'dvbs2_encoder' Register Definitions
--- Revision: 292
+-- Revision: 297
 -- -----------------------------------------------------------------------------
--- Generated on 2021-08-14 at 16:56 (UTC) by airhdl version 2021.06.1
+-- Generated on 2021-10-18 at 20:36 (UTC) by airhdl version 2021.09.1
 -- -----------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -135,6 +135,9 @@ package dvbs2_encoder_regs_pkg is
         config_strobe : std_logic; -- Strobe signal for register 'config' (pulsed when the register is written from the bus}
         config_physical_layer_scrambler_shift_reg_init : std_logic_vector(17 downto 0); -- Value of register 'config', field 'physical_layer_scrambler_shift_reg_init'
         config_enable_dummy_frames : std_logic_vector(0 downto 0); -- Value of register 'config', field 'enable_dummy_frames'
+        config_swap_input_data_byte_endianness : std_logic_vector(0 downto 0); -- Value of register 'config', field 'swap_input_data_byte_endianness'
+        config_swap_output_data_byte_endianness : std_logic_vector(0 downto 0); -- Value of register 'config', field 'swap_output_data_byte_endianness'
+        config_force_output_ready : std_logic_vector(0 downto 0); -- Value of register 'config', field 'force_output_ready'
         ldpc_fifo_status_strobe : std_logic; -- Strobe signal for register 'ldpc_fifo_status' (pulsed when the register is read from the bus}
         frames_in_transit_strobe : std_logic; -- Strobe signal for register 'frames_in_transit' (pulsed when the register is read from the bus}
         bit_mapper_ram_addr : std_logic_vector(7 downto 0); -- read/write address for memory 'bit_mapper_ram'
@@ -211,10 +214,13 @@ package dvbs2_encoder_regs_pkg is
     end record;
 
     -- Revision number of the 'dvbs2_encoder' register map
-    constant DVBS2_ENCODER_REVISION : natural := 292;
+    constant DVBS2_ENCODER_REVISION : natural := 297;
 
     -- Default base address of the 'dvbs2_encoder' register map
     constant DVBS2_ENCODER_DEFAULT_BASEADDR : unsigned(31 downto 0) := unsigned'(x"00000000");
+
+    -- Size of the 'dvbs2_encoder' register map, in bytes
+    constant DVBS2_ENCODER_RANGE_BYTES : natural := 4888;
 
     -- Register 'config'
     constant CONFIG_OFFSET : unsigned(31 downto 0) := unsigned'(x"00000000"); -- address offset of the 'config' register
@@ -226,6 +232,18 @@ package dvbs2_encoder_regs_pkg is
     constant CONFIG_ENABLE_DUMMY_FRAMES_BIT_OFFSET : natural := 18; -- bit offset of the 'enable_dummy_frames' field
     constant CONFIG_ENABLE_DUMMY_FRAMES_BIT_WIDTH : natural := 1; -- bit width of the 'enable_dummy_frames' field
     constant CONFIG_ENABLE_DUMMY_FRAMES_RESET : std_logic_vector(18 downto 18) := std_logic_vector'("0"); -- reset value of the 'enable_dummy_frames' field
+    -- Field 'config.swap_input_data_byte_endianness'
+    constant CONFIG_SWAP_INPUT_DATA_BYTE_ENDIANNESS_BIT_OFFSET : natural := 19; -- bit offset of the 'swap_input_data_byte_endianness' field
+    constant CONFIG_SWAP_INPUT_DATA_BYTE_ENDIANNESS_BIT_WIDTH : natural := 1; -- bit width of the 'swap_input_data_byte_endianness' field
+    constant CONFIG_SWAP_INPUT_DATA_BYTE_ENDIANNESS_RESET : std_logic_vector(19 downto 19) := std_logic_vector'("0"); -- reset value of the 'swap_input_data_byte_endianness' field
+    -- Field 'config.swap_output_data_byte_endianness'
+    constant CONFIG_SWAP_OUTPUT_DATA_BYTE_ENDIANNESS_BIT_OFFSET : natural := 20; -- bit offset of the 'swap_output_data_byte_endianness' field
+    constant CONFIG_SWAP_OUTPUT_DATA_BYTE_ENDIANNESS_BIT_WIDTH : natural := 1; -- bit width of the 'swap_output_data_byte_endianness' field
+    constant CONFIG_SWAP_OUTPUT_DATA_BYTE_ENDIANNESS_RESET : std_logic_vector(20 downto 20) := std_logic_vector'("0"); -- reset value of the 'swap_output_data_byte_endianness' field
+    -- Field 'config.force_output_ready'
+    constant CONFIG_FORCE_OUTPUT_READY_BIT_OFFSET : natural := 21; -- bit offset of the 'force_output_ready' field
+    constant CONFIG_FORCE_OUTPUT_READY_BIT_WIDTH : natural := 1; -- bit width of the 'force_output_ready' field
+    constant CONFIG_FORCE_OUTPUT_READY_RESET : std_logic_vector(21 downto 21) := std_logic_vector'("0"); -- reset value of the 'force_output_ready' field
 
     -- Register 'ldpc_fifo_status'
     constant LDPC_FIFO_STATUS_OFFSET : unsigned(31 downto 0) := unsigned'(x"00000004"); -- address offset of the 'ldpc_fifo_status' register

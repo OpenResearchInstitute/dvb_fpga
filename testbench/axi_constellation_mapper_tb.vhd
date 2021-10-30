@@ -157,7 +157,7 @@ begin
       READER_NAME         => "output_checker",
       DATA_WIDTH          => OUTPUT_DATA_WIDTH,
       TOLERANCE           => 0,
-      SWAP_BYTE_ENDIANESS => True,
+      SWAP_BYTE_ENDIANESS => False,
       ERROR_CNT_WIDTH     => 8,
       REPORT_SEVERITY     => Error)
     port map (
@@ -266,8 +266,8 @@ begin
           )
         );
 
-        updated_mapping_ram(addr) := std_logic_vector(to_fixed_point(map_i, OUTPUT_DATA_WIDTH/2)) &
-                                     std_logic_vector(to_fixed_point(map_q, OUTPUT_DATA_WIDTH/2));
+        updated_mapping_ram(addr) := std_logic_vector(to_fixed_point(map_q, OUTPUT_DATA_WIDTH/2)) &
+                                     std_logic_vector(to_fixed_point(map_i, OUTPUT_DATA_WIDTH/2));
 
         addr := addr + 1;
         index := index + 1;

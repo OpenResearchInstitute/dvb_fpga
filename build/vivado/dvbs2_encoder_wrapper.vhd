@@ -307,7 +307,6 @@ begin
       m_tlast         => m_axis_tlast,
       m_tdata         => m_axis_tdata);
 
-
   -- Reset from the AXI Stream FIFOs are a single cycle, extend it to 16 cycles to ensure
   -- DVB encoder is properly reset
   extend_reset_block : block

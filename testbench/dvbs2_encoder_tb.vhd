@@ -69,7 +69,7 @@ architecture dvbs2_encoder_tb of dvbs2_encoder_tb is
   constant configs    : config_array_t := get_test_cfg(TEST_CFG);
   constant CLK_PERIOD : time := 5 ns;
 
-  constant INPUT_DATA_WIDTH             : integer  := 32;
+  constant INPUT_DATA_WIDTH             : integer  := 64;
   constant IQ_WIDTH                     : integer  := 32;
   constant POLYPHASE_FILTER_NUMBER_TAPS : positive := 33;
   constant POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
@@ -147,6 +147,7 @@ architecture dvbs2_encoder_tb of dvbs2_encoder_tb is
   signal expected_tdata     : std_logic_vector(IQ_WIDTH - 1 downto 0);
   signal expected_tlast     : std_logic;
 
+  signal recv_count         : integer := 0;
   signal recv_r             : complex;
   signal expected_r         : complex;
 
@@ -232,7 +233,7 @@ begin
       READER_NAME         => "output_checker",
       DATA_WIDTH          => IQ_WIDTH,
       TOLERANCE           => 64,
-      SWAP_BYTE_ENDIANESS => True,
+      SWAP_BYTE_ENDIANESS => False,
       ERROR_CNT_WIDTH     => 8,
       REPORT_SEVERITY     => Error,
       DUMP_FILE_FORMAT    => "actual_output_%d.csv")  -- Leave empty to disable
@@ -258,17 +259,21 @@ begin
   -- GNU Radio's tlast will come in before, we'll ignore data after that until dvbs2_encoder's
   -- tlast
   axi_slave_tvalid <= axi_slave.tvalid and not is_trailing_data;
+
   process(clk)
     variable words : integer;
   begin
     if rising_edge(clk) then
       if axi_slave.tvalid and axi_slave.tready then
+        recv_count <= recv_count + 1;
+
         if is_trailing_data then
           words := words + 1;
         end if;
 
         if (axi_slave.tlast xor expected_tlast) then
           if axi_slave.tlast then
+            recv_count <= 0;
             is_trailing_data <= '0';
             warning(sformat("tlast mismatch, ignored %d samples", fo(words)));
           end if;
@@ -399,7 +404,7 @@ begin
         READER_NAME         => "pl_framer_checker",
         DATA_WIDTH          => IQ_WIDTH,
         TOLERANCE           => 1200,
-        SWAP_BYTE_ENDIANESS => True,
+        SWAP_BYTE_ENDIANESS => False,
         ERROR_CNT_WIDTH     => 8,
         REPORT_SEVERITY     => Error)
       port map (
@@ -603,8 +608,8 @@ begin
           )
         );
 
-        mapping_ram(addr) := std_logic_vector(to_fixed_point(map_i, IQ_WIDTH/2)) &
-                             std_logic_vector(to_fixed_point(map_q, IQ_WIDTH/2));
+        mapping_ram(addr) := std_logic_vector(to_fixed_point(map_q, IQ_WIDTH/2)) &
+                             std_logic_vector(to_fixed_point(map_i, IQ_WIDTH/2));
 
         addr := addr + 1;
         index := index + 1;
@@ -659,7 +664,7 @@ begin
       for i in coefficients'range loop
         if current_coefficients(i) /= coefficients(i) then
           axi_cfg_write(
-            POLYPHASE_FILTER_COEFFICIENTS_OFFSET + 4*i, 
+            POLYPHASE_FILTER_COEFFICIENTS_OFFSET + 4*i,
             std_logic_vector(to_fixed_point(coefficients(i), IQ_WIDTH/2)) &
             std_logic_vector(to_fixed_point(coefficients(i), IQ_WIDTH/2))
           );

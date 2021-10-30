@@ -151,8 +151,12 @@ architecture dvbs2_encoder of dvbs2_encoder is
 
   signal mux_sel              : std_logic_vector(1 downto 0);
 
-  signal width_conv           : data_and_config_t(tdata(7 downto 0));
-  signal width_conv_dbg       : data_and_config_t(tdata(7 downto 0));
+  -- Input byte swapped endianness
+  signal s_tdata_selected     : std_logic_vector(s_tdata'range);
+  signal s_tkeep_selected     : std_logic_vector(s_tkeep'range);
+
+  signal width_conv_reg       : data_and_config_t(tdata(7 downto 0));
+  signal width_conv_reg_dbg   : data_and_config_t(tdata(7 downto 0));
   signal bb_scrambler         : data_and_config_t(tdata(7 downto 0));
   signal bb_scrambler_dbg     : data_and_config_t(tdata(7 downto 0));
   signal bch_encoder          : data_and_config_t(tdata(7 downto 0));
@@ -171,6 +175,10 @@ architecture dvbs2_encoder of dvbs2_encoder is
   signal pl_frame_dbg         : data_and_config_t(tdata(IQ_WIDTH - 1 downto 0));
   signal polyphase_filter_out : data_and_config_t(tdata(IQ_WIDTH - 1 downto 0));
 
+  -- Output byte swapped endianness
+  signal m_tdata_i            : std_logic_vector(IQ_WIDTH - 1 downto 0);
+  signal m_tready_i           : std_logic;
+
   -- User signals  :
   signal user2regs : user2regs_t;
   signal regs2user : regs2user_t;
@@ -180,31 +188,65 @@ begin
   -------------------
   -- Port mappings --
   -------------------
-  force_8_bit_u : entity fpga_cores.axi_stream_width_converter
-    generic map (
-      INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
-      OUTPUT_DATA_WIDTH => 8,
-      AXI_TID_WIDTH     => ENCODED_CONFIG_WIDTH,
-      ENDIANNESS        => LEFT_FIRST,
-      IGNORE_TKEEP      => False)
-    port map (
-      -- Usual ports
-      clk      => clk,
-      rst      => rst,
-      -- AXI stream input
-      s_tready => s_tready_i,
-      s_tdata  => s_tdata,
-      s_tkeep  => s_tkeep,
-      s_tid    => s_tid,
-      s_tvalid => s_tvalid,
-      s_tlast  => s_tlast,
-      -- AXI stream output
-      m_tready => width_conv.tready,
-      m_tdata  => width_conv.tdata,
-      m_tkeep  => open,
-      m_tid    => width_conv.tid,
-      m_tvalid => width_conv.tvalid,
-      m_tlast  => width_conv.tlast);
+  s_tdata_selected <= mirror_bytes(s_tdata) when regs2user.config_swap_input_data_byte_endianness(0) else s_tdata;
+  s_tkeep_selected <= mirror_bits(s_tkeep) when regs2user.config_swap_input_data_byte_endianness(0) else s_tkeep;
+
+  -- Width converter is little endian but our data is big endian
+  g_width_converter : block
+    signal tdata_agg_in  : std_logic_vector(ENCODED_CONFIG_WIDTH + 8 downto 0);
+    signal tdata_agg_out : std_logic_vector(ENCODED_CONFIG_WIDTH + 8 downto 0);
+    signal width_conv    : data_and_config_t(tdata(7 downto 0));
+
+  begin
+    force_8_bit_u : entity fpga_cores.axi_stream_width_converter
+      generic map (
+        INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
+        OUTPUT_DATA_WIDTH => 8,
+        AXI_TID_WIDTH     => ENCODED_CONFIG_WIDTH,
+        IGNORE_TKEEP      => False)
+      port map (
+        -- Usual ports
+        clk      => clk,
+        rst      => rst,
+        -- AXI stream input
+        s_tready => s_tready_i,
+        s_tdata  => s_tdata,
+        s_tkeep  => s_tkeep,
+        s_tid    => s_tid,
+        s_tvalid => s_tvalid,
+        s_tlast  => s_tlast,
+        -- AXI stream output
+        m_tready => width_conv.tready,
+        m_tdata  => width_conv.tdata,
+        m_tkeep  => open,
+        m_tid    => width_conv.tid,
+        m_tvalid => width_conv.tvalid,
+        m_tlast  => width_conv.tlast);
+
+    axi_output_reg_u : entity fpga_cores.axi_stream_delay
+      generic map (
+        DELAY_CYCLES => 2,
+        TDATA_WIDTH  => tdata_agg_out'length)
+      port map (
+        -- Usual ports
+        clk     => clk,
+        rst     => rst,
+        -- Write side
+        s_tvalid => width_conv.tvalid,
+        s_tready => width_conv.tready,
+        s_tdata  => tdata_agg_in,
+        -- Read side
+        m_tvalid => width_conv_reg.tvalid,
+        m_tready => width_conv_reg.tready,
+        m_tdata  => tdata_agg_out);
+
+      tdata_agg_in         <= width_conv.tlast & width_conv.tid & width_conv.tdata;
+
+      width_conv_reg.tlast <= tdata_agg_out(ENCODED_CONFIG_WIDTH + 8);
+      width_conv_reg.tid   <= tdata_agg_out(ENCODED_CONFIG_WIDTH + 7 downto 8);
+      width_conv_reg.tdata <= tdata_agg_out(7 downto 0);
+
+  end block;
 
   width_conv_dbg_u : entity fpga_cores.axi_stream_debug
     generic map (
@@ -238,17 +280,17 @@ begin
       sts.min_frame_length       => user2regs.axi_debug_input_width_converter_min_max_frame_length_min_frame_length,
       sts.max_frame_length       => user2regs.axi_debug_input_width_converter_min_max_frame_length_max_frame_length,
       -- AXI input
-      s_tready                   => width_conv.tready,
-      s_tvalid                   => width_conv.tvalid,
-      s_tlast                    => width_conv.tlast,
-      s_tdata                    => width_conv.tdata,
-      s_tid                      => width_conv.tid,
+      s_tready                   => width_conv_reg.tready,
+      s_tvalid                   => width_conv_reg.tvalid,
+      s_tlast                    => width_conv_reg.tlast,
+      s_tdata                    => width_conv_reg.tdata,
+      s_tid                      => width_conv_reg.tid,
       -- AXI output
-      m_tready                   => width_conv_dbg.tready,
-      m_tvalid                   => width_conv_dbg.tvalid,
-      m_tlast                    => width_conv_dbg.tlast,
-      m_tdata                    => width_conv_dbg.tdata,
-      m_tid                      => width_conv_dbg.tid);
+      m_tready                   => width_conv_reg_dbg.tready,
+      m_tvalid                   => width_conv_reg_dbg.tvalid,
+      m_tlast                    => width_conv_reg_dbg.tlast,
+      m_tdata                    => width_conv_reg_dbg.tdata,
+      m_tid                      => width_conv_reg_dbg.tid);
 
   bb_scrambler_u : entity work.axi_baseband_scrambler
     generic map (
@@ -259,11 +301,11 @@ begin
       clk      => clk,
       rst      => rst,
       -- AXI input
-      s_tvalid => width_conv_dbg.tvalid,
-      s_tdata  => width_conv_dbg.tdata,
-      s_tlast  => width_conv_dbg.tlast,
-      s_tready => width_conv_dbg.tready,
-      s_tid    => width_conv_dbg.tid,
+      s_tvalid => width_conv_reg_dbg.tvalid,
+      s_tdata  => width_conv_reg_dbg.tdata,
+      s_tlast  => width_conv_reg_dbg.tlast,
+      s_tready => width_conv_reg_dbg.tready,
+      s_tid    => width_conv_reg_dbg.tid,
       -- AXI output
       m_tready => bb_scrambler.tready,
       m_tvalid => bb_scrambler.tvalid,
@@ -482,7 +524,11 @@ begin
       m_tid                      => ldpc_encoder_dbg.tid);
 
 
-  mux_sel <= "10" when decode(ldpc_encoder_dbg.tid).constellation = mod_qpsk else "01";
+  -- Interface 0 of the demux connects to the bit interleaves, interface 1 connects to the
+  -- frame FIFO
+    mux_sel <= "00" when ldpc_encoder_dbg.tvalid = '0'                         else
+               "10" when decode(ldpc_encoder_dbg.tid).constellation = mod_qpsk else
+               "01";
 
   -- Bit interleaver is not needed for QPSK
   bit_interleaver_demux_u : entity fpga_cores.axi_stream_demux
@@ -848,11 +894,13 @@ begin
       s_tdata                    => polyphase_filter_out.tdata,
       s_tid                      => polyphase_filter_out.tid,
       -- AXI output
-      m_tready                   => m_tready,
+      m_tready                   => m_tready_i,
       m_tvalid                   => m_tvalid_i,
       m_tlast                    => m_tlast_i,
-      m_tdata                    => m_tdata,
+      m_tdata                    => m_tdata_i,
       m_tid                      => open);
+
+  m_tdata <= mirror_bytes(m_tdata_i) when regs2user.config_swap_output_data_byte_endianness(0) else m_tdata_i;
 
   -- Register map decoder
   regmap_block : block
@@ -909,9 +957,12 @@ begin
                    constellation => s_constellation,
                    code_rate     => s_code_rate));
 
-  m_tvalid <= m_tvalid_i;
   m_tlast  <= m_tlast_i;
   s_tready <= s_tready_i;
+
+  -- Disconnect from output for debugging
+  m_tvalid   <= m_tvalid_i and not regs2user.config_force_output_ready(0);
+  m_tready_i <= m_tready or regs2user.config_force_output_ready(0);
 
   ---------------
   -- Processes --
@@ -933,11 +984,11 @@ begin
         end if;
 
         -- Only increment if only one is active
-        if (s_tvalid and s_tready_i and s_first_word) xor (m_tvalid_i and m_tready and m_tlast_i) then
+        if (s_tvalid and s_tready_i and s_first_word) xor (m_tvalid_i and m_tready_i and m_tlast_i) then
           if (s_tvalid and s_tready_i and s_first_word) then
             frame_in_transit_i <= frame_in_transit_i + 1;
           end if;
-          if (m_tvalid_i and m_tready and m_tlast_i) then
+          if (m_tvalid_i and m_tready_i and m_tlast_i) then
             frame_in_transit_i <= frame_in_transit_i - 1;
           end if;
         end if;

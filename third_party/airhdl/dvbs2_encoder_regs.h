@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_encoder' Register Definitions
-// Revision: 292
+// Revision: 297
 // -----------------------------------------------------------------------------
-// Generated on 2021-08-14 at 16:56 (UTC) by airhdl version 2021.06.1
+// Generated on 2021-10-18 at 20:36 (UTC) by airhdl version 2021.09.1
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -21,10 +21,13 @@
 #define DVBS2_ENCODER_REGS_H
 
 /* Revision number of the 'dvbs2_encoder' register map */
-#define DVBS2_ENCODER_REVISION 292
+#define DVBS2_ENCODER_REVISION 297
 
 /* Default base address of the 'dvbs2_encoder' register map */
 #define DVBS2_ENCODER_DEFAULT_BASEADDR 0x00000000
+
+/* Size of the 'dvbs2_encoder' register map, in bytes */
+#define DVBS2_ENCODER_RANGE_BYTES 4888
 
 /* Register 'config' */
 #define CONFIG_OFFSET 0x00000000 /* address offset of the 'config' register */
@@ -40,6 +43,24 @@
 #define CONFIG_ENABLE_DUMMY_FRAMES_BIT_WIDTH 1 /* bit width of the 'enable_dummy_frames' field */
 #define CONFIG_ENABLE_DUMMY_FRAMES_BIT_MASK 0x00040000 /* bit mask of the 'enable_dummy_frames' field */
 #define CONFIG_ENABLE_DUMMY_FRAMES_RESET 0x0 /* reset value of the 'enable_dummy_frames' field */
+
+/* Field  'config.swap_input_data_byte_endianness' */
+#define CONFIG_SWAP_INPUT_DATA_BYTE_ENDIANNESS_BIT_OFFSET 19 /* bit offset of the 'swap_input_data_byte_endianness' field */
+#define CONFIG_SWAP_INPUT_DATA_BYTE_ENDIANNESS_BIT_WIDTH 1 /* bit width of the 'swap_input_data_byte_endianness' field */
+#define CONFIG_SWAP_INPUT_DATA_BYTE_ENDIANNESS_BIT_MASK 0x00080000 /* bit mask of the 'swap_input_data_byte_endianness' field */
+#define CONFIG_SWAP_INPUT_DATA_BYTE_ENDIANNESS_RESET 0x0 /* reset value of the 'swap_input_data_byte_endianness' field */
+
+/* Field  'config.swap_output_data_byte_endianness' */
+#define CONFIG_SWAP_OUTPUT_DATA_BYTE_ENDIANNESS_BIT_OFFSET 20 /* bit offset of the 'swap_output_data_byte_endianness' field */
+#define CONFIG_SWAP_OUTPUT_DATA_BYTE_ENDIANNESS_BIT_WIDTH 1 /* bit width of the 'swap_output_data_byte_endianness' field */
+#define CONFIG_SWAP_OUTPUT_DATA_BYTE_ENDIANNESS_BIT_MASK 0x00100000 /* bit mask of the 'swap_output_data_byte_endianness' field */
+#define CONFIG_SWAP_OUTPUT_DATA_BYTE_ENDIANNESS_RESET 0x0 /* reset value of the 'swap_output_data_byte_endianness' field */
+
+/* Field  'config.force_output_ready' */
+#define CONFIG_FORCE_OUTPUT_READY_BIT_OFFSET 21 /* bit offset of the 'force_output_ready' field */
+#define CONFIG_FORCE_OUTPUT_READY_BIT_WIDTH 1 /* bit width of the 'force_output_ready' field */
+#define CONFIG_FORCE_OUTPUT_READY_BIT_MASK 0x00200000 /* bit mask of the 'force_output_ready' field */
+#define CONFIG_FORCE_OUTPUT_READY_RESET 0x0 /* reset value of the 'force_output_ready' field */
 
 /* Register 'ldpc_fifo_status' */
 #define LDPC_FIFO_STATUS_OFFSET 0x00000004 /* address offset of the 'ldpc_fifo_status' register */

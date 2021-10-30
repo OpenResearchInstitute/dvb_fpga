@@ -96,10 +96,10 @@ begin
   s_tready   <= s_tready_i;
   m_tvalid   <= m_tvalid_i;
 
-  s_tdata_re <= signed(s_tdata(TDATA_WIDTH - 1 downto TDATA_WIDTH/2));
-  s_tdata_im <= signed(s_tdata(TDATA_WIDTH/2 - 1 downto 0));
+  s_tdata_im <= signed(s_tdata(TDATA_WIDTH - 1 downto TDATA_WIDTH/2));
+  s_tdata_re <= signed(s_tdata(TDATA_WIDTH/2 - 1 downto 0));
 
-  m_tdata    <= std_logic_vector(m_tdata_re & m_tdata_im) when m_tvalid_i = '1' else (others => 'U');
+  m_tdata    <= std_logic_vector(m_tdata_im & m_tdata_re) when m_tvalid_i = '1' else (others => 'U');
 
   xa <= x(15) xor x(6) xor x(4);
   xb <= x(7) xor x(0);

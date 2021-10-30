@@ -74,7 +74,6 @@ architecture axi_plframe_header_tb of axi_plframe_header_tb is
 
   signal axi_master      : axi_stream_data_bus_t(tdata(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0));
   signal axi_slave       : axi_stream_data_bus_t(tdata(DATA_WIDTH - 1 downto 0));
-  signal axi_slave_tdata : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
   signal m_data_valid    : boolean;
   signal s_data_valid    : boolean;
@@ -148,13 +147,9 @@ begin
       expected_tlast     => open,
       -- Data input
       s_tready           => axi_slave.tready,
-      s_tdata            => axi_slave_tdata,
+      s_tdata            => axi_slave.tdata,
       s_tvalid           => axi_slave.tvalid,
       s_tlast            => axi_slave.tlast);
-
-  -- FIXME: Need to check what's the correct endianess here. Hard coding for now to get
-  -- some tests passing
-  axi_slave_tdata <= axi_slave.tdata(23 downto 16) & axi_slave.tdata(31 downto 24) & axi_slave.tdata(7 downto 0) & axi_slave.tdata(15 downto 8);
 
   ------------------------------
   -- Asynchronous assignments --
