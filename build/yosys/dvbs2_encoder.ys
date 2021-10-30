@@ -68,6 +68,7 @@ ghdl --std=08                                                                  \
                     rtl/dvb_utils_pkg.vhd                                      \
                     rtl/bch_encoder_mux.vhd                                    \
                     rtl/axi_ldpc_table.vhd                                     \
+                    rtl/ldpc/ldpc_input_sync.vhd                               \
                     rtl/axi_ldpc_encoder_core.vhd                              \
                     rtl/axi_ldpc_encoder.vhd                                   \
                     rtl/axi_plframe_header.vhd                                 \

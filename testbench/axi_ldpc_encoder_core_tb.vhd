@@ -39,9 +39,7 @@ use fpga_cores.axi_pkg.all;
 use fpga_cores.common_pkg.all;
 
 library fpga_cores_sim;
-use fpga_cores_sim.axi_stream_bfm_pkg.all;
 use fpga_cores_sim.file_utils_pkg.all;
-use fpga_cores_sim.testbench_utils_pkg.all;
 
 use work.dvb_sim_utils_pkg.all;
 use work.dvb_utils_pkg.all;
@@ -69,7 +67,7 @@ architecture axi_ldpc_encoder_core_tb of axi_ldpc_encoder_core_tb is
 
   constant DATA_WIDTH        : integer := 8;
 
-  constant DBG_CHECK_FRAME_RAM_WRITES : boolean := False;
+  constant DBG_CHECK_FRAME_RAM_WRITES : boolean := True;
 
   -------------
   -- Signals --
@@ -285,6 +283,9 @@ begin
 
     test_runner_setup(runner, RUNNER_CFG);
     show(display_handler, debug);
+    hide(get_logger("file_reader_t(file_reader)"), display_handler, (trace, debug), True);
+    hide(get_logger("ldpc_table_write"), display_handler, (trace, debug), True);
+    hide(get_logger("axi_file_reader_u"), display_handler, (trace, debug), True);
     hide(get_logger("file_reader_t(file_reader)"), display_handler, debug, True);
     hide(get_logger("file_reader_t(file_checker)"), display_handler, debug, True);
 
@@ -300,7 +301,7 @@ begin
 
       walk(32);
 
-      set_timeout(runner, configs'length * 10 ms);
+      set_timeout(runner, configs'length * 20 ms);
 
       if run("back_to_back") then
         data_probability   <= 1.0;
@@ -308,11 +309,11 @@ begin
         tready_probability <= 1.0;
 
         for i in configs'range loop
-          run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
+          run_test(configs(i), number_of_frames => 2);
         end loop;
 
-      elsif run("data=0.5,table=1.0,slave=1.0") then
-        data_probability   <= 0.5;
+      elsif run("data=0.1,table=1.0,slave=1.0") then
+        data_probability   <= 0.1;
         table_probability  <= 1.0;
         tready_probability <= 1.0;
 
@@ -329,8 +330,8 @@ begin
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
 
-      elsif run("data=0.75,table=1.0,slave=0.75") then
-        data_probability   <= 0.75;
+      elsif run("data=0.1,table=1.0,slave=0.75") then
+        data_probability   <= 0.1;
         table_probability  <= 1.0;
         tready_probability <= 0.75;
 
@@ -356,8 +357,8 @@ begin
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
 
-      elsif run("data=0.8,table=0.8,slave=0.8") then
-        data_probability   <= 0.8;
+      elsif run("data=0.01,table=0.8,slave=0.8") then
+        data_probability   <= 0.01;
         table_probability  <= 0.8;
         tready_probability <= 0.8;
 
@@ -433,6 +434,8 @@ begin
         axi_table.tvalid    <= '0';
 
       end loop;
+
+      axi_table.tlast     <= '0';
 
       file_close(file_handler);
       info(logger, sformat("Finished writing '%s'", path));
@@ -770,7 +773,7 @@ begin
               error(
                 logger,
                 sformat(
-                  "[frame=%d] Detected RAM wr (addr=%4dd / %r, data=%r) but got nothing to compare to",
+                  "[frame=%d] Detected RAM wr (addr=%4d / %r, data=%r) but got nothing to compare to",
                   fo(frame_cnt),
                   fo(dut_ram_wraddr),
                   fo(dut_ram_wraddr),
@@ -787,7 +790,7 @@ begin
                 error(
                   logger,
                   sformat(
-                    "[frame=%d, word=%3d] Expected write: (addr=%4dd / %r, data=%r), got (addr=%4d / %r, data=%r)",
+                    "[frame=%d, word=%3d] Expected write: (addr=%4d / %r, data=%r), got (addr=%4d / %r, data=%r)",
                     fo(frame_cnt),
                     fo(word_cnt),
                     fo(exp_addr),
