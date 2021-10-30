@@ -130,11 +130,14 @@ set bCheckIPsPassed 1
 set bCheckIPs 1
 if { $bCheckIPs == 1 } {
    set list_check_ips "\ 
+xilinx.com:ip:axis_data_fifo:2.0\
 xilinx.com:ip:axis_dwidth_converter:1.1\
+xilinx.com:ip:axis_register_slice:1.1\
 xilinx.com:ip:axi_bram_ctrl:4.1\
 xilinx.com:ip:util_ds_buf:2.1\
 xilinx.com:ip:xdma:4.1\
 xilinx.com:ip:xlconstant:1.1\
+xilinx.com:ip:xlslice:1.0\
 "
 
    set list_ips_missing ""
@@ -244,12 +247,21 @@ proc create_root_design { parentCell } {
    CONFIG.NUM_MI {2} \
  ] $axi_mem_intercon
 
-  # Create instance: c2h_width_conv, and set properties
-  set c2h_width_conv [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_dwidth_converter:1.1 c2h_width_conv ]
+  # Create instance: axis_data_fifo_0, and set properties
+  set axis_data_fifo_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_data_fifo:2.0 axis_data_fifo_0 ]
   set_property -dict [ list \
-   CONFIG.HAS_MI_TKEEP {1} \
-   CONFIG.M_TDATA_NUM_BYTES {16} \
- ] $c2h_width_conv
+   CONFIG.FIFO_DEPTH {16} \
+   CONFIG.FIFO_MODE {2} \
+   CONFIG.HAS_RD_DATA_COUNT {1} \
+   CONFIG.HAS_TKEEP {1} \
+ ] $axis_data_fifo_0
+
+  # Create instance: axis_dwidth_converter_0, and set properties
+  set axis_dwidth_converter_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_dwidth_converter:1.1 axis_dwidth_converter_0 ]
+  set_property -dict [ list \
+   CONFIG.HAS_TKEEP {1} \
+   CONFIG.M_TDATA_NUM_BYTES {8} \
+ ] $axis_dwidth_converter_0
 
   # Create instance: dvbs2_encoder_wrapper_0, and set properties
   set block_name dvbs2_encoder_wrapper
@@ -262,9 +274,16 @@ proc create_root_design { parentCell } {
      return 1
    }
     set_property -dict [ list \
-   CONFIG.INPUT_DATA_WIDTH {128} \
-   CONFIG.INPUT_METADATA_WIDTH {128} \
+   CONFIG.INPUT_DATA_WIDTH {64} \
+   CONFIG.INPUT_METADATA_WIDTH {8} \
+   CONFIG.IQ_WIDTH {32} \
  ] $dvbs2_encoder_wrapper_0
+
+  # Create instance: m_axis_register_slice, and set properties
+  set m_axis_register_slice [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 m_axis_register_slice ]
+  set_property -dict [ list \
+   CONFIG.REG_CONFIG {8} \
+ ] $m_axis_register_slice
 
   # Create instance: pci_workaround, and set properties
   set pci_workaround [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.1 pci_workaround ]
@@ -273,6 +292,18 @@ proc create_root_design { parentCell } {
    CONFIG.PROTOCOL {AXI4LITE} \
    CONFIG.SINGLE_PORT_BRAM {1} \
  ] $pci_workaround
+
+  # Create instance: s_axis_register_slice, and set properties
+  set s_axis_register_slice [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 s_axis_register_slice ]
+  set_property -dict [ list \
+   CONFIG.REG_CONFIG {8} \
+ ] $s_axis_register_slice
+
+  # Create instance: s_metadata_register_slice, and set properties
+  set s_metadata_register_slice [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 s_metadata_register_slice ]
+  set_property -dict [ list \
+   CONFIG.TDATA_NUM_BYTES {1} \
+ ] $s_metadata_register_slice
 
   # Create instance: util_ds_buf, and set properties
   set util_ds_buf [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf:2.1 util_ds_buf ]
@@ -283,10 +314,10 @@ proc create_root_design { parentCell } {
   # Create instance: xdma_0, and set properties
   set xdma_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xdma:4.1 xdma_0 ]
   set_property -dict [ list \
-   CONFIG.PF0_DEVICE_ID_mqdma {9024} \
-   CONFIG.PF2_DEVICE_ID_mqdma {9024} \
-   CONFIG.PF3_DEVICE_ID_mqdma {9024} \
-   CONFIG.axi_data_width {128_bit} \
+   CONFIG.PF0_DEVICE_ID_mqdma {9014} \
+   CONFIG.PF2_DEVICE_ID_mqdma {9014} \
+   CONFIG.PF3_DEVICE_ID_mqdma {9014} \
+   CONFIG.axi_data_width {64_bit} \
    CONFIG.axil_master_64bit_en {true} \
    CONFIG.axil_master_prefetchable {true} \
    CONFIG.axilite_master_en {true} \
@@ -302,16 +333,16 @@ proc create_root_design { parentCell } {
    CONFIG.pf0_class_code_base {12} \
    CONFIG.pf0_class_code_interface {00} \
    CONFIG.pf0_class_code_sub {00} \
-   CONFIG.pf0_device_id {7011} \
+   CONFIG.pf0_device_id {7014} \
    CONFIG.pf0_msix_cap_pba_bir {BAR_3:2} \
    CONFIG.pf0_msix_cap_table_bir {BAR_3:2} \
    CONFIG.pf0_sub_class_interface_menu {All_currently_implemented_devices_except_VGA-compatible_devices} \
    CONFIG.pf0_subsystem_id {0} \
    CONFIG.pf0_subsystem_vendor_id {0} \
    CONFIG.pf1_msix_cap_table_size {020} \
-   CONFIG.pl_link_cap_max_link_speed {5.0_GT/s} \
+   CONFIG.pl_link_cap_max_link_speed {2.5_GT/s} \
    CONFIG.pl_link_cap_max_link_width {X4} \
-   CONFIG.plltype {QPLL1} \
+   CONFIG.plltype {CPLL} \
    CONFIG.vendor_id {10EE} \
    CONFIG.xdma_axi_intf_mm {AXI_Stream} \
    CONFIG.xdma_pcie_64bit_en {true} \
@@ -326,28 +357,42 @@ proc create_root_design { parentCell } {
    CONFIG.CONST_VAL {0} \
  ] $xlconstant_0
 
+  # Create instance: xlslice_0, and set properties
+  set xlslice_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_0 ]
+  set_property -dict [ list \
+   CONFIG.DIN_FROM {7} \
+   CONFIG.DIN_WIDTH {64} \
+   CONFIG.DOUT_WIDTH {8} \
+ ] $xlslice_0
+
   # Create interface connections
   connect_bd_intf_net -intf_net axi_mem_intercon_M00_AXI [get_bd_intf_pins axi_mem_intercon/M00_AXI] [get_bd_intf_pins pci_workaround/S_AXI]
-  connect_bd_intf_net -intf_net axi_mem_intercon_M01_AXI [get_bd_intf_pins axi_mem_intercon/M01_AXI] [get_bd_intf_pins dvbs2_encoder_wrapper_0/s_axi_lite]
-  connect_bd_intf_net -intf_net c2h_width_conv_M_AXIS [get_bd_intf_pins c2h_width_conv/M_AXIS] [get_bd_intf_pins xdma_0/S_AXIS_C2H_0]
+  connect_bd_intf_net -intf_net axis_data_fifo_0_M_AXIS [get_bd_intf_pins axis_data_fifo_0/M_AXIS] [get_bd_intf_pins xdma_0/S_AXIS_C2H_0]
   connect_bd_intf_net -intf_net diff_clock_rtl_0_1 [get_bd_intf_ports pcie_clkin] [get_bd_intf_pins util_ds_buf/CLK_IN_D]
-  connect_bd_intf_net -intf_net dvbs2_encoder_wrapper_0_m_axis [get_bd_intf_pins c2h_width_conv/S_AXIS] [get_bd_intf_pins dvbs2_encoder_wrapper_0/m_axis]
-  connect_bd_intf_net -intf_net xdma_0_M_AXIS_H2C_0 [get_bd_intf_pins dvbs2_encoder_wrapper_0/s_axis] [get_bd_intf_pins xdma_0/M_AXIS_H2C_0]
-  connect_bd_intf_net -intf_net xdma_0_M_AXIS_H2C_1 [get_bd_intf_pins dvbs2_encoder_wrapper_0/s_metadata] [get_bd_intf_pins xdma_0/M_AXIS_H2C_1]
+  connect_bd_intf_net -intf_net dvbs2_encoder_wrapper_0_m_axis [get_bd_intf_pins axis_data_fifo_0/S_AXIS] [get_bd_intf_pins axis_dwidth_converter_0/M_AXIS]
+  connect_bd_intf_net -intf_net dvbs2_encoder_wrapper_0_m_axis1 [get_bd_intf_pins dvbs2_encoder_wrapper_0/m_axis] [get_bd_intf_pins m_axis_register_slice/S_AXIS]
+  connect_bd_intf_net -intf_net m_axis_register_slice_M_AXIS [get_bd_intf_pins axis_dwidth_converter_0/S_AXIS] [get_bd_intf_pins m_axis_register_slice/M_AXIS]
+  connect_bd_intf_net -intf_net s_axi_lite [get_bd_intf_pins axi_mem_intercon/M01_AXI] [get_bd_intf_pins dvbs2_encoder_wrapper_0/s_axi_lite]
+  connect_bd_intf_net -intf_net s_axis_register_slice_M_AXIS [get_bd_intf_pins dvbs2_encoder_wrapper_0/s_axis] [get_bd_intf_pins s_axis_register_slice/M_AXIS]
+  connect_bd_intf_net -intf_net s_metadata_register_slice_M_AXIS [get_bd_intf_pins dvbs2_encoder_wrapper_0/s_metadata] [get_bd_intf_pins s_metadata_register_slice/M_AXIS]
+  connect_bd_intf_net -intf_net xdma_0_M_AXIS_H2C_0 [get_bd_intf_pins s_axis_register_slice/S_AXIS] [get_bd_intf_pins xdma_0/M_AXIS_H2C_0]
+  connect_bd_intf_net -intf_net xdma_0_M_AXIS_H2C_1 [get_bd_intf_pins s_metadata_register_slice/S_AXIS] [get_bd_intf_pins xdma_0/M_AXIS_H2C_1]
   connect_bd_intf_net -intf_net xdma_0_M_AXI_LITE [get_bd_intf_pins axi_mem_intercon/S00_AXI] [get_bd_intf_pins xdma_0/M_AXI_LITE]
   connect_bd_intf_net -intf_net xdma_0_pcie_mgt [get_bd_intf_ports pcie_mgt] [get_bd_intf_pins xdma_0/pcie_mgt]
 
   # Create port connections
-  connect_bd_net -net axi_bram_ctrl_0_bram_en_a [get_bd_pins pci_workaround/bram_en_a] [get_bd_pins pci_workaround/bram_rddata_a]
+  connect_bd_net -net axis_data_fifo_0_axis_rd_data_count [get_bd_pins axis_data_fifo_0/axis_rd_data_count] [get_bd_pins pci_workaround/bram_rddata_a]
   connect_bd_net -net pci_reset_1 [get_bd_ports pci_reset] [get_bd_pins xdma_0/sys_rst_n]
   connect_bd_net -net util_ds_buf_IBUF_OUT [get_bd_pins util_ds_buf/IBUF_OUT] [get_bd_pins xdma_0/sys_clk]
-  connect_bd_net -net xdma_0_axi_aclk [get_bd_pins axi_mem_intercon/ACLK] [get_bd_pins axi_mem_intercon/M00_ACLK] [get_bd_pins axi_mem_intercon/M01_ACLK] [get_bd_pins axi_mem_intercon/S00_ACLK] [get_bd_pins c2h_width_conv/aclk] [get_bd_pins dvbs2_encoder_wrapper_0/clk] [get_bd_pins pci_workaround/s_axi_aclk] [get_bd_pins xdma_0/axi_aclk]
-  connect_bd_net -net xdma_0_axi_aresetn [get_bd_pins axi_mem_intercon/ARESETN] [get_bd_pins axi_mem_intercon/M00_ARESETN] [get_bd_pins axi_mem_intercon/M01_ARESETN] [get_bd_pins axi_mem_intercon/S00_ARESETN] [get_bd_pins c2h_width_conv/aresetn] [get_bd_pins dvbs2_encoder_wrapper_0/rst_n] [get_bd_pins pci_workaround/s_axi_aresetn] [get_bd_pins xdma_0/axi_aresetn]
+  connect_bd_net -net xdma_0_axi_aclk [get_bd_pins axi_mem_intercon/ACLK] [get_bd_pins axi_mem_intercon/M00_ACLK] [get_bd_pins axi_mem_intercon/M01_ACLK] [get_bd_pins axi_mem_intercon/S00_ACLK] [get_bd_pins axis_data_fifo_0/s_axis_aclk] [get_bd_pins axis_dwidth_converter_0/aclk] [get_bd_pins dvbs2_encoder_wrapper_0/clk] [get_bd_pins m_axis_register_slice/aclk] [get_bd_pins pci_workaround/s_axi_aclk] [get_bd_pins s_axis_register_slice/aclk] [get_bd_pins s_metadata_register_slice/aclk] [get_bd_pins xdma_0/axi_aclk]
+  connect_bd_net -net xdma_0_axi_aresetn [get_bd_pins axi_mem_intercon/ARESETN] [get_bd_pins axi_mem_intercon/M00_ARESETN] [get_bd_pins axi_mem_intercon/M01_ARESETN] [get_bd_pins axi_mem_intercon/S00_ARESETN] [get_bd_pins axis_data_fifo_0/s_axis_aresetn] [get_bd_pins axis_dwidth_converter_0/aresetn] [get_bd_pins dvbs2_encoder_wrapper_0/rst_n] [get_bd_pins m_axis_register_slice/aresetn] [get_bd_pins pci_workaround/s_axi_aresetn] [get_bd_pins s_axis_register_slice/aresetn] [get_bd_pins s_metadata_register_slice/aresetn] [get_bd_pins xdma_0/axi_aresetn]
+  connect_bd_net -net xdma_0_m_axis_h2c_tdata_1 [get_bd_pins xdma_0/m_axis_h2c_tdata_1] [get_bd_pins xlslice_0/Din]
   connect_bd_net -net xlconstant_1_dout [get_bd_ports pcie_clkreq_l] [get_bd_pins xlconstant_0/dout]
+  connect_bd_net -net xlslice_0_Dout [get_bd_pins s_metadata_register_slice/s_axis_tdata] [get_bd_pins xlslice_0/Dout]
 
   # Create address segments
+  assign_bd_address -offset 0x00000000 -range 0x00002000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_LITE] [get_bd_addr_segs dvbs2_encoder_wrapper_0/s_axi_lite/reg0] -force
   assign_bd_address -offset 0x00002000 -range 0x00002000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_LITE] [get_bd_addr_segs pci_workaround/S_AXI/Mem0] -force
-  assign_bd_address -offset 0x44A00000 -range 0x00010000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_LITE] [get_bd_addr_segs dvbs2_encoder_wrapper_0/s_axi_lite/reg0] -force
 
 
   # Restore current instance

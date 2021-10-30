@@ -96,3 +96,4 @@ set_property BITSTREAM.CONFIG.CONFIGFALLBACK ENABLE [current_design]
 
 
 
+
