@@ -76,6 +76,7 @@ ghdl --std=08                                                                  \
                     rtl/plframe_header_pkg.vhd                                 \
                     rtl/ldpc/ldpc_pkg.vhd                                      \
                     rtl/ldpc/ldpc_tables_pkg.vhd                               \
+                    rtl/gse_encoder.vhd                                        \
                     rtl/dvbs2_encoder.vhd                                      \
                     rtl/axi_bch_encoder.vhd                                    \
   -e dvbs2_encoder
