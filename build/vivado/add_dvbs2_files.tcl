@@ -22,15 +22,24 @@
 proc add_dvbs2_files { } {
   set path_to_repo_root [ file normalize "[ file dirname [ info script ] ]/../../" ]
 
-  set_property library str_format [ add_files [ glob ${path_to_repo_root}/third_party/hdl_string_format/src/str_format_pkg.vhd ] ]
-  set_property library fpga_cores [ add_files [ glob ${path_to_repo_root}/third_party/fpga_cores/src/*.vhd ] ]
+  set str_format [ add_files [ glob ${path_to_repo_root}/third_party/hdl_string_format/src/str_format_pkg.vhd ] ]
+  set fpga_cores [ add_files [ glob ${path_to_repo_root}/third_party/fpga_cores/src/*.vhd ] ]
+  set work [                                                  \
+    add_files [                                               \
+      glob                                                    \
+        ${path_to_repo_root}/rtl/ldpc/*.vhd                   \
+        ${path_to_repo_root}/rtl/*.vhd                        \
+        ${path_to_repo_root}/third_party/airhdl/*.vhd         \
+        ${path_to_repo_root}/third_party/bch_generated/*.vhd  \
+    ]                                                         \
+  ]
 
-  add_files [ glob ${path_to_repo_root}/rtl/ldpc/*.vhd ]
-  add_files [ glob ${path_to_repo_root}/rtl/*.vhd ]
-  add_files [ glob ${path_to_repo_root}/third_party/airhdl/*.vhd ]
-  add_files [ glob ${path_to_repo_root}/third_party/bch_generated/*.vhd ]
+  set_property library str_format $str_format
+  set_property library fpga_cores $fpga_cores
+  set_property FILE_TYPE {VHDL 2008} [ get_files $fpga_cores ]
+  set_property FILE_TYPE {VHDL 2008} [ get_files $str_format ]
+  set_property FILE_TYPE {VHDL 2008} [ get_files $work ]
 
-  set_property FILE_TYPE {VHDL 2008} [ get_files *.vhd ]
   read_verilog -sv [ glob ${path_to_repo_root}/third_party/polyphase_filter/*.v ]
 }
 
