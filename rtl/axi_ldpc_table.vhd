@@ -32,7 +32,6 @@ use work.dvb_utils_pkg.all;
 use work.ldpc_pkg.all;
 use work.ldpc_tables_pkg.all;
 
-
 ------------------------
 -- Entity declaration --
 ------------------------
@@ -66,7 +65,7 @@ architecture axi_ldpc_table of axi_ldpc_table is
     0 => FRAME_TYPE_WIDTH,
     1 => CODE_RATE_WIDTH);
 
-  constant TABLE_ENTRY_WIDTH : integer := LDPC_DATA_TABLE(0)'length;
+  constant TABLE_ENTRY_WIDTH : integer := get_table_entry_width(LDPC_DATA_TABLE);
 
   -- Record with LDPC metadata as unsigned vectors
   type ldpc_metadata_unsigned_t is record
