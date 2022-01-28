@@ -33,8 +33,11 @@ proc insert_encoder { } {
   # respectively
   set_property -dict [ list                     \
       CONFIG.INPUT_DATA_WIDTH {128}             \
-      CONFIG.IQ_WIDTH {128}                     \
+      CONFIG.IQ_WIDTH {32}                      \
     ] [ get_bd_cells dvbs2_encoder_wrapper_0 ]
+
+  # DAC FIFO DMA data is originally 128, make it 32 to match with DVB Encoder's output
+  set_property -dict [list CONFIG.DMA_DATA_WIDTH {32}] [get_bd_cells axi_ad9371_dacfifo]
 
   # Set the clock properties of all interfaces to the DMA clock
   set_property CONFIG.CLK_DOMAIN system_sys_ps7_0_FCLK_CLK1 [ get_bd_pins /dvbs2_encoder_wrapper_0/clk ]
