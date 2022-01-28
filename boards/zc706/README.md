@@ -5,9 +5,9 @@ board. An [AXI Stream FIFO] is used to loop data to/from the DVB encoder.
 
 The design's block diagram is shown below
 
-| ![ZC706 test design block diagram](../../../misc/zc706_test_design.png) |
-| :---:                                                                   |
-| **ZC706 test design block diagram**                                     |
+| ![ZC706 test design block diagram](zc706_test_design.png) |
+| :---:                                                     |
+| **ZC706 test design block diagram**                       |
 
 ## Memory map
 
