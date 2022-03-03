@@ -794,111 +794,118 @@ begin
       s_tdata                    => pl_frame.tdata,
       s_tid                      => pl_frame.tid,
       -- AXI output
-      m_tready                   => pl_frame_dbg.tready,
-      m_tvalid                   => pl_frame_dbg.tvalid,
-      m_tlast                    => pl_frame_dbg.tlast,
-      m_tdata                    => pl_frame_dbg.tdata,
-      m_tid                      => pl_frame_dbg.tid);
+      -- m_tready                   => pl_frame_dbg.tready,
+      -- m_tvalid                   => pl_frame_dbg.tvalid,
+      -- m_tlast                    => pl_frame_dbg.tlast,
+      -- m_tdata                    => pl_frame_dbg.tdata,
+      -- m_tid                      => pl_frame_dbg.tid);
 
-  polyphase_filter_q : polyphase_filter
-    generic map (
-      NUMBER_TAPS          => POLYPHASE_FILTER_NUMBER_TAPS,
-      DATA_IN_WIDTH        => IQ_WIDTH/2,
-      DATA_OUT_WIDTH       => IQ_WIDTH/2,
-      COEFFICIENT_WIDTH    => IQ_WIDTH/2,
-      RATE_CHANGE          => POLYPHASE_FILTER_RATE_CHANGE,
-      DECIMATE_INTERPOLATE => 1) -- 0 => decimate, 1 => interpolate
-    port map (
-      -- input data interface
-      data_in_aclk            => clk,
-      data_in_aresetn         => rst_n,
-      data_in_tready          => pl_frame_dbg.tready,
-      data_in_tdata           => pl_frame_dbg.tdata(IQ_WIDTH/2 - 1 downto 0),
-      data_in_tlast           => pl_frame_dbg.tlast,
-      data_in_tvalid          => pl_frame_dbg.tvalid,
-      -- output data interface
-      data_out_aclk           => clk,
-      data_out_aresetn        => rst_n,
-      data_out_tready         => polyphase_filter_out.tready,
-      data_out_tdata          => polyphase_filter_out.tdata(IQ_WIDTH/2 - 1 downto 0),
-      data_out_tlast          => polyphase_filter_out.tlast,
-      data_out_tvalid         => polyphase_filter_out.tvalid,
-      -- coefficients input interface
-      coeffs_wren             => or(regs2user.polyphase_filter_coefficients_wen),
-      coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(numbits(POLYPHASE_FILTER_NUMBER_TAPS) - 1 downto 0),
-      coeffs_wdata            => regs2user.polyphase_filter_coefficients_wdata(IQ_WIDTH/2 - 1 downto 0));
-
-  polyphase_filter_i : polyphase_filter
-    generic map (
-      NUMBER_TAPS          => POLYPHASE_FILTER_NUMBER_TAPS,
-      DATA_IN_WIDTH        => IQ_WIDTH/2,
-      DATA_OUT_WIDTH       => IQ_WIDTH/2,
-      COEFFICIENT_WIDTH    => IQ_WIDTH/2,
-      RATE_CHANGE          => POLYPHASE_FILTER_RATE_CHANGE,
-      DECIMATE_INTERPOLATE => 1) -- 0 => decimate, 1 => interpolate
-    port map (
-      -- input data interface
-      data_in_aclk            => clk,
-      data_in_aresetn         => rst_n,
-      data_in_tready          => open,
-      data_in_tdata           => pl_frame_dbg.tdata(IQ_WIDTH - 1 downto IQ_WIDTH/2),
-      data_in_tlast           => pl_frame_dbg.tlast,
-      data_in_tvalid          => pl_frame_dbg.tvalid,
-      -- output data interface
-      data_out_aclk           => clk,
-      data_out_aresetn        => rst_n,
-      data_out_tready         => polyphase_filter_out.tready,
-      data_out_tdata          => polyphase_filter_out.tdata(IQ_WIDTH - 1 downto IQ_WIDTH/2),
-      data_out_tlast          => open,
-      data_out_tvalid         => open,
-      -- coefficients input interface
-      coeffs_wren             => or(regs2user.polyphase_filter_coefficients_wen),
-      coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(numbits(POLYPHASE_FILTER_NUMBER_TAPS) - 1 downto 0),
-      coeffs_wdata            => regs2user.polyphase_filter_coefficients_wdata(IQ_WIDTH - 1 downto IQ_WIDTH/2));
-
-  output_dbg_u : entity fpga_cores.axi_stream_debug
-    generic map (
-      TDATA_WIDTH        => IQ_WIDTH,
-      TID_WIDTH          => ENCODED_CONFIG_WIDTH,
-      FRAME_COUNT_WIDTH  => FRAME_COUNT_WIDTH,
-      FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
-    port map (
-      -- Usual ports
-      clk                        => clk,
-      rst                        => rst,
-      -- Control and status
-      cfg.block_data             => regs2user.axi_debug_output_cfg_block_data(0),
-      cfg.allow_word             => regs2user.axi_debug_output_cfg_allow_word(0),
-      cfg.allow_frame            => regs2user.axi_debug_output_cfg_allow_frame(0),
-
-      cfg.clear_max_frame_length => regs2user.axi_debug_output_min_max_frame_length_strobe,
-      cfg.clear_min_frame_length => regs2user.axi_debug_output_min_max_frame_length_strobe,
-      cfg.clear_s_tvalid         => regs2user.axi_debug_output_strobes_strobe,
-      cfg.clear_s_tready         => regs2user.axi_debug_output_strobes_strobe,
-      cfg.clear_m_tvalid         => regs2user.axi_debug_output_strobes_strobe,
-      cfg.clear_m_tready         => regs2user.axi_debug_output_strobes_strobe,
-
-      sts.frame_count            => user2regs.axi_debug_output_frame_count_value,
-      sts.word_count             => user2regs.axi_debug_output_word_count_value,
-      sts.s_tvalid               => user2regs.axi_debug_output_strobes_s_tvalid(0),
-      sts.s_tready               => user2regs.axi_debug_output_strobes_s_tready(0),
-      sts.m_tvalid               => user2regs.axi_debug_output_strobes_m_tvalid(0),
-      sts.m_tready               => user2regs.axi_debug_output_strobes_m_tready(0),
-      sts.last_frame_length      => user2regs.axi_debug_output_last_frame_length_value,
-      sts.min_frame_length       => user2regs.axi_debug_output_min_max_frame_length_min_frame_length,
-      sts.max_frame_length       => user2regs.axi_debug_output_min_max_frame_length_max_frame_length,
-      -- AXI input
-      s_tready                   => polyphase_filter_out.tready,
-      s_tvalid                   => polyphase_filter_out.tvalid,
-      s_tlast                    => polyphase_filter_out.tlast,
-      s_tdata                    => polyphase_filter_out.tdata,
-      s_tid                      => polyphase_filter_out.tid,
-      -- AXI output
       m_tready                   => m_tready_i,
       m_tvalid                   => m_tvalid_i,
       m_tlast                    => m_tlast_i,
       m_tdata                    => m_tdata_i,
       m_tid                      => open);
+
+
+  -- polyphase_filter_q : polyphase_filter
+  --   generic map (
+  --     NUMBER_TAPS          => POLYPHASE_FILTER_NUMBER_TAPS,
+  --     DATA_IN_WIDTH        => IQ_WIDTH/2,
+  --     DATA_OUT_WIDTH       => IQ_WIDTH/2,
+  --     COEFFICIENT_WIDTH    => IQ_WIDTH/2,
+  --     RATE_CHANGE          => POLYPHASE_FILTER_RATE_CHANGE,
+  --     DECIMATE_INTERPOLATE => 1) -- 0 => decimate, 1 => interpolate
+  --   port map (
+  --     -- input data interface
+  --     data_in_aclk            => clk,
+  --     data_in_aresetn         => rst_n,
+  --     data_in_tready          => pl_frame_dbg.tready,
+  --     data_in_tdata           => pl_frame_dbg.tdata(IQ_WIDTH/2 - 1 downto 0),
+  --     data_in_tlast           => pl_frame_dbg.tlast,
+  --     data_in_tvalid          => pl_frame_dbg.tvalid,
+  --     -- output data interface
+  --     data_out_aclk           => clk,
+  --     data_out_aresetn        => rst_n,
+  --     data_out_tready         => polyphase_filter_out.tready,
+  --     data_out_tdata          => polyphase_filter_out.tdata(IQ_WIDTH/2 - 1 downto 0),
+  --     data_out_tlast          => polyphase_filter_out.tlast,
+  --     data_out_tvalid         => polyphase_filter_out.tvalid,
+  --     -- coefficients input interface
+  --     coeffs_wren             => or(regs2user.polyphase_filter_coefficients_wen),
+  --     coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(numbits(POLYPHASE_FILTER_NUMBER_TAPS) - 1 downto 0),
+  --     coeffs_wdata            => regs2user.polyphase_filter_coefficients_wdata(IQ_WIDTH/2 - 1 downto 0));
+  --
+  -- polyphase_filter_i : polyphase_filter
+  --   generic map (
+  --     NUMBER_TAPS          => POLYPHASE_FILTER_NUMBER_TAPS,
+  --     DATA_IN_WIDTH        => IQ_WIDTH/2,
+  --     DATA_OUT_WIDTH       => IQ_WIDTH/2,
+  --     COEFFICIENT_WIDTH    => IQ_WIDTH/2,
+  --     RATE_CHANGE          => POLYPHASE_FILTER_RATE_CHANGE,
+  --     DECIMATE_INTERPOLATE => 1) -- 0 => decimate, 1 => interpolate
+  --   port map (
+  --     -- input data interface
+  --     data_in_aclk            => clk,
+  --     data_in_aresetn         => rst_n,
+  --     data_in_tready          => open,
+  --     data_in_tdata           => pl_frame_dbg.tdata(IQ_WIDTH - 1 downto IQ_WIDTH/2),
+  --     data_in_tlast           => pl_frame_dbg.tlast,
+  --     data_in_tvalid          => pl_frame_dbg.tvalid,
+  --     -- output data interface
+  --     data_out_aclk           => clk,
+  --     data_out_aresetn        => rst_n,
+  --     data_out_tready         => polyphase_filter_out.tready,
+  --     data_out_tdata          => polyphase_filter_out.tdata(IQ_WIDTH - 1 downto IQ_WIDTH/2),
+  --     data_out_tlast          => open,
+  --     data_out_tvalid         => open,
+  --     -- coefficients input interface
+  --     coeffs_wren             => or(regs2user.polyphase_filter_coefficients_wen),
+  --     coeffs_addr             => regs2user.polyphase_filter_coefficients_addr(numbits(POLYPHASE_FILTER_NUMBER_TAPS) - 1 downto 0),
+  --     coeffs_wdata            => regs2user.polyphase_filter_coefficients_wdata(IQ_WIDTH - 1 downto IQ_WIDTH/2));
+  --
+  -- output_dbg_u : entity fpga_cores.axi_stream_debug
+  --   generic map (
+  --     TDATA_WIDTH        => IQ_WIDTH,
+  --     TID_WIDTH          => ENCODED_CONFIG_WIDTH,
+  --     FRAME_COUNT_WIDTH  => FRAME_COUNT_WIDTH,
+  --     FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
+  --   port map (
+  --     -- Usual ports
+  --     clk                        => clk,
+  --     rst                        => rst,
+  --     -- Control and status
+  --     cfg.block_data             => regs2user.axi_debug_output_cfg_block_data(0),
+  --     cfg.allow_word             => regs2user.axi_debug_output_cfg_allow_word(0),
+  --     cfg.allow_frame            => regs2user.axi_debug_output_cfg_allow_frame(0),
+  --
+  --     cfg.clear_max_frame_length => regs2user.axi_debug_output_min_max_frame_length_strobe,
+  --     cfg.clear_min_frame_length => regs2user.axi_debug_output_min_max_frame_length_strobe,
+  --     cfg.clear_s_tvalid         => regs2user.axi_debug_output_strobes_strobe,
+  --     cfg.clear_s_tready         => regs2user.axi_debug_output_strobes_strobe,
+  --     cfg.clear_m_tvalid         => regs2user.axi_debug_output_strobes_strobe,
+  --     cfg.clear_m_tready         => regs2user.axi_debug_output_strobes_strobe,
+  --
+  --     sts.frame_count            => user2regs.axi_debug_output_frame_count_value,
+  --     sts.word_count             => user2regs.axi_debug_output_word_count_value,
+  --     sts.s_tvalid               => user2regs.axi_debug_output_strobes_s_tvalid(0),
+  --     sts.s_tready               => user2regs.axi_debug_output_strobes_s_tready(0),
+  --     sts.m_tvalid               => user2regs.axi_debug_output_strobes_m_tvalid(0),
+  --     sts.m_tready               => user2regs.axi_debug_output_strobes_m_tready(0),
+  --     sts.last_frame_length      => user2regs.axi_debug_output_last_frame_length_value,
+  --     sts.min_frame_length       => user2regs.axi_debug_output_min_max_frame_length_min_frame_length,
+  --     sts.max_frame_length       => user2regs.axi_debug_output_min_max_frame_length_max_frame_length,
+  --     -- AXI input
+  --     s_tready                   => polyphase_filter_out.tready,
+  --     s_tvalid                   => polyphase_filter_out.tvalid,
+  --     s_tlast                    => polyphase_filter_out.tlast,
+  --     s_tdata                    => polyphase_filter_out.tdata,
+  --     s_tid                      => polyphase_filter_out.tid,
+  --     -- AXI output
+  --     m_tready                   => m_tready_i,
+  --     m_tvalid                   => m_tvalid_i,
+  --     m_tlast                    => m_tlast_i,
+  --     m_tdata                    => m_tdata_i,
+  --     m_tid                      => open);
 
   m_tdata <= mirror_bytes(m_tdata_i) when regs2user.config_swap_output_data_byte_endianness(0) else m_tdata_i;
 
