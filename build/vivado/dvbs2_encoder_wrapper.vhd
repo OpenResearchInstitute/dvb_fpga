@@ -35,7 +35,6 @@ entity dvbs2_encoder_wrapper is
   generic (
     -- AXI streaming widths
     INPUT_DATA_WIDTH     : integer := 32;
-    INPUT_METADATA_WIDTH : integer := 8;  -- For ease of use only. Only bits 7:0 are needed/used
     IQ_WIDTH             : integer := 32
   );
   port (
@@ -67,10 +66,6 @@ entity dvbs2_encoder_wrapper is
     s_axi_bvalid      : out std_logic;
     s_axi_bready      : in  std_logic;
     s_axi_bresp       : out std_logic_vector(1 downto 0);
-    -- Input metadata for config words
-    s_metadata_tvalid : in  std_logic;
-    s_metadata_tready : out std_logic;
-    s_metadata_tdata  : in  std_logic_vector(INPUT_METADATA_WIDTH - 1 downto 0);
     -- Input data
     s_axis_tvalid     : in  std_logic;
     s_axis_tlast      : in  std_logic;
@@ -138,9 +133,15 @@ architecture rtl of dvbs2_encoder_wrapper is
   ATTRIBUTE X_INTERFACE_PARAMETER of m_axis_tready     : SIGNAL is "CLK_DOMAIN clk";
   ATTRIBUTE X_INTERFACE_PARAMETER of m_axis_tdata      : SIGNAL is "CLK_DOMAIN clk";
 
-  ATTRIBUTE X_INTERFACE_PARAMETER of s_metadata_tvalid : SIGNAL is "CLK_DOMAIN clk";
-  ATTRIBUTE X_INTERFACE_PARAMETER of s_metadata_tready : SIGNAL is "CLK_DOMAIN clk";
-  ATTRIBUTE X_INTERFACE_PARAMETER of s_metadata_tdata  : SIGNAL is "CLK_DOMAIN clk";
+  -- ATTRIBUTE X_INTERFACE_PARAMETER of s_metadata_tvalid : SIGNAL is "CLK_DOMAIN clk";
+  -- ATTRIBUTE X_INTERFACE_PARAMETER of s_metadata_tready : SIGNAL is "CLK_DOMAIN clk";
+  -- ATTRIBUTE X_INTERFACE_PARAMETER of s_metadata_tdata  : SIGNAL is "CLK_DOMAIN clk";
+
+    constant INPUT_METADATA_WIDTH : integer := 8;  -- For ease of use only. Only bits 7:0 are needed/used
+    -- Input metadata for config words
+    signal s_metadata_tvalid : std_logic := '1';
+    signal s_metadata_tready : std_logic;
+    signal s_metadata_tdata  : std_logic_vector(INPUT_METADATA_WIDTH - 1 downto 0) := x"00";
 
   -- Follow modcodes for the physical layer framer
   function decode_tid ( constant v : std_logic_vector(7 downto 0) ) return config_tuple_t is
