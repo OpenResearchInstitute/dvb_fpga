@@ -141,7 +141,8 @@ architecture rtl of dvbs2_encoder_wrapper is
     -- Input metadata for config words
     signal s_metadata_tvalid : std_logic := '1';
     signal s_metadata_tready : std_logic;
-    signal s_metadata_tdata  : std_logic_vector(INPUT_METADATA_WIDTH - 1 downto 0) := x"00";
+      -- when 16#31# => cfg := (frame_type => fecframe_normal, constellation => mod_qpsk, code_rate => C2_3);
+    signal s_metadata_tdata  : std_logic_vector(INPUT_METADATA_WIDTH - 1 downto 0) := x"31";
 
   -- Follow modcodes for the physical layer framer
   function decode_tid ( constant v : std_logic_vector(7 downto 0) ) return config_tuple_t is
