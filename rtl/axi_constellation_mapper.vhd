@@ -75,6 +75,72 @@ architecture axi_constellation_mapper of axi_constellation_mapper is
 
   constant TUSER_WIDTH : integer := sum(CONFIG_INPUT_WIDTHS);
 
+  constant MAPPING_TABLE : std_logic_array_t(0 to 63)(OUTPUT_DATA_WIDTH - 1 downto 0) := (
+    0 => x"5A825A82",
+    1 => x"A57E5A82",
+    2 => x"5A82A57E",
+    3 => x"A57EA57E",
+
+    4 => x"5A825A82",
+    5 => x"00007FFF",
+    6 => x"00008000",
+    7 => x"A57EA57E",
+    8 => x"7FFF0000",
+    9 => x"A57E5A82",
+    10 => x"5A82A57E",
+    11 => x"80000000",
+    12 => x"5A825A82",
+
+    13 => x"A57E5A82",
+    14 => x"5A82A57E",
+    15 => x"A57EA57E",
+    16 => x"21217BA3",
+    17 => x"DEDF7BA3",
+    18 => x"2121845D",
+    19 => x"DEDF845D",
+    20 => x"7BA32121",
+    21 => x"845D2121",
+    22 => x"7BA3DEDF",
+    23 => x"845DDEDF",
+    24 => x"1CBC1CBC",
+    25 => x"E3441CBC",
+    26 => x"1CBCE344",
+    27 => x"E344E344",
+    28 => x"35183518",
+    29 => x"4887136F",
+    30 => x"CAE83518",
+    31 => x"B779136F",
+    32 => x"3518CAE8",
+    33 => x"4887EC91",
+    34 => x"CAE8CAE8",
+    35 => x"B779EC91",
+    36 => x"30FC7642",
+    37 => x"764230FC",
+    38 => x"A57E5A82",
+    39 => x"80000000",
+    40 => x"5A82A57E",
+    41 => x"7FFF0000",
+    42 => x"CF0489BE",
+    43 => x"89BECF04",
+    44 => x"136F4887",
+    45 => x"14E714E7",
+    46 => x"EC914887",
+    47 => x"EB1914E7",
+    48 => x"136FB779",
+    49 => x"14E7EB19",
+    50 => x"EC91B779",
+    51 => x"EB19EB19",
+    52 => x"00007FFF",
+    53 => x"5A825A82",
+    54 => x"CF047642",
+    55 => x"89BE30FC",
+    56 => x"30FC89BE",
+    57 => x"7642CF04",
+    58 => x"00008000",
+    59 => x"A57EA57E",
+    others => (others => 'U')
+  );
+
   -------------
   -- Signals --
   -------------
@@ -95,6 +161,7 @@ architecture axi_constellation_mapper of axi_constellation_mapper is
 
   signal map_addr             : std_logic_vector(5 downto 0);
   signal map_data             : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+  signal map_data_ram         : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
   signal map_cfg              : std_logic_vector(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0);
 
   -- ROM side config, so won't need to wait until an entire frame goes through
@@ -242,7 +309,18 @@ begin
       clk_b     => clk,
       clken_b   => '1',
       addr_b    => map_addr,
-      rddata_b  => map_data);
+      rddata_b  => map_data_ram);
+
+  mapping_table_rom_u : entity fpga_cores.rom_inference
+    generic map (
+      ROM_DATA     => MAPPING_TABLE,
+      ROM_TYPE     => auto,
+      OUTPUT_DELAY => 1)
+    port map (
+      clk    => clk,
+      clken  => '1',
+      addr   =>  map_addr,
+      rddata =>  map_data);
 
   output_adapter_block : block
     signal agg_data_in : std_logic_vector(TID_WIDTH + OUTPUT_DATA_WIDTH - 1 downto 0);
@@ -320,6 +398,16 @@ begin
   process(clk)
   begin
     if rising_edge(clk) then
+
+      if axi_qpsk.tvalid
+      or axi_8psk.tvalid
+      or axi_16apsk.tvalid
+      or axi_32apsk.tvalid then
+        assert map_data = map_data_ram
+          report "ROM should behave the same!"
+          severity Warning;
+      end if;
+
       adapter_wr_en   <= '0';
       adapter_wr_last <= '0';
       egress_tid_reg  <= egress_tid;
