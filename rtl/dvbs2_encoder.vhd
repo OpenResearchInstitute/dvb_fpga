@@ -157,6 +157,7 @@ architecture dvbs2_encoder of dvbs2_encoder is
 
   signal width_conv_reg       : data_and_config_t(tdata(7 downto 0));
   signal width_conv_reg_dbg   : data_and_config_t(tdata(7 downto 0));
+  signal frame_resize         : data_and_config_t(tdata(7 downto 0));
   signal bb_scrambler         : data_and_config_t(tdata(7 downto 0));
   signal bb_scrambler_dbg     : data_and_config_t(tdata(7 downto 0));
   signal bch_encoder          : data_and_config_t(tdata(7 downto 0));
@@ -292,6 +293,32 @@ begin
       m_tdata                    => width_conv_reg_dbg.tdata,
       m_tid                      => width_conv_reg_dbg.tid);
 
+  -- TODO: Add debug after resizing and plug it into the register map
+  frame_resize_u : entity work.axi_bbframe_length_enforcer
+    generic map (
+      TDATA_WIDTH => 8,
+      TUSER_WIDTH => ENCODED_CONFIG_WIDTH)
+    port map (
+      -- Usual ports
+      clk          => clk,
+      rst          => rst,
+
+      s_frame_type => decode(width_conv_reg_dbg.tid).frame_type,
+      s_code_rate  => decode(width_conv_reg_dbg.tid).code_rate,
+
+      s_tvalid     => width_conv_reg_dbg.tvalid,
+      s_tlast      => width_conv_reg_dbg.tlast,
+      s_tready     => width_conv_reg_dbg.tready,
+      s_tdata      => width_conv_reg_dbg.tdata,
+      s_tuser      => width_conv_reg_dbg.tid,
+      -- AXI output
+      m_tready     => frame_resize.tready,
+      m_tvalid     => frame_resize.tvalid,
+      m_tlast      => frame_resize.tlast,
+      m_tdata      => frame_resize.tdata,
+      m_tuser      => frame_resize.tid);
+
+
   bb_scrambler_u : entity work.axi_baseband_scrambler
     generic map (
       TDATA_WIDTH => 8,
@@ -301,11 +328,11 @@ begin
       clk      => clk,
       rst      => rst,
       -- AXI input
-      s_tvalid => width_conv_reg_dbg.tvalid,
-      s_tdata  => width_conv_reg_dbg.tdata,
-      s_tlast  => width_conv_reg_dbg.tlast,
-      s_tready => width_conv_reg_dbg.tready,
-      s_tid    => width_conv_reg_dbg.tid,
+      s_tvalid => frame_resize.tvalid,
+      s_tdata  => frame_resize.tdata,
+      s_tlast  => frame_resize.tlast,
+      s_tready => frame_resize.tready,
+      s_tid    => frame_resize.tid,
       -- AXI output
       m_tready => bb_scrambler.tready,
       m_tvalid => bb_scrambler.tvalid,
