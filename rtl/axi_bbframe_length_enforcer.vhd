@@ -113,7 +113,7 @@ architecture axi_bbframe_length_enforcer of axi_bbframe_length_enforcer is
     return std_logic_vector(to_unsigned(v / TDATA_WIDTH, ROM_DATA_WIDTH));
   end function;
 
-  constant FRAME_LENGTH_ROM : std_logic_array_t(open)(ROM_DATA_WIDTH - 1 downto 0) := (
+  constant FRAME_LENGTH_ROM : std_logic_array_t(0 to 20)(ROM_DATA_WIDTH - 1 downto 0) := (
     0  => get_value_for_rom(3_072),
     1  => get_value_for_rom(5_232),
     2  => get_value_for_rom(6_312),
