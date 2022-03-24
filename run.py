@@ -19,8 +19,6 @@
 # source, You must maintain the Source Location visible on the external case of
 # the DVB Encoder or other products you make using this source."VUnit test runner for DVB FPGA"
 
-# pylint: disable=bad-continuation
-
 import logging
 import math
 import os
@@ -188,11 +186,15 @@ def _runGnuRadio(config):
         os.makedirs(config.test_files_path)
 
     try:
-        subp.check_call(command, cwd=config.test_files_path, stderr=subp.PIPE)
+        subp.check_output(command, cwd=config.test_files_path, stderr=subp.PIPE)
         with open(config.timestamp, "w") as fd:
             fd.write(time.asctime())
-    except subp.CalledProcessError:
-        _logger.exception("Failed to run %s", command)
+    except subp.CalledProcessError as exc:
+        _logger.error(
+            'Failed to generate GUN Radio data. Command used: "%s"\nResult:\n%s',
+            " ".join(map(str, command)),
+            exc.stderr.decode(),
+        )
         raise
 
 
