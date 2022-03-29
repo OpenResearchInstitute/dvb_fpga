@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #
 # DVB FPGA
 #
@@ -18,12 +19,18 @@
 # source, You must maintain the Source Location visible on the external case of
 # the DVB Encoder or other products you make using this source.
 
-FROM alpine:edge
+set -e
 
-RUN echo https://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories
-RUN apk add --no-cache     \
-    gnuradio=3.9.4.0-r3    \
-    py3-pip=21.3.1-r0   && \
-    pip install --no-cache-dir vunit-hdl==4.6.0
+PATH_TO_REPO=$(git rev-parse --show-toplevel)
+CONTAINER="suoto/gnuradio:3.9"
 
-WORKDIR /project
+# Alpine has no HOME set and that causes GNU Radio to fail, so we need to set
+# HOME to somewhere with write permissions
+docker run                       \
+  --rm                           \
+  --user "$(id -u)":"$(id -g)"   \
+  -it                            \
+  -v "${PATH_TO_REPO}":/project  \
+  $CONTAINER                     \
+  /bin/sh -c "HOME=/tmp/ ./run.py --list"
+
