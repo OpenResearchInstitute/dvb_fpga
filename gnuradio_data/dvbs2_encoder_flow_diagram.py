@@ -89,6 +89,31 @@ PLFRAME_SLOT_NUMBER = {
     (dtv.FECFRAME_NORMAL, dtv.MOD_32APSK): 144,
 }
 
+MODULATOR_OUTPUT_SCALING_FACTOR = {
+    (dtv.FECFRAME_NORMAL, dtv.MOD_16APSK, dtv.C2_3): 1.1357805960496432,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_16APSK, dtv.C3_4): 1.1317122612043418,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_16APSK, dtv.C3_5): 1.1408944401668009,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_16APSK, dtv.C4_5): 1.130064093262531,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_16APSK, dtv.C5_6): 1.1291735004211465,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_16APSK, dtv.C8_9): 1.127242960381356,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_16APSK, dtv.C9_10): 1.126621516078321,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_32APSK, dtv.C3_4): 1.2768096671118951,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_32APSK, dtv.C4_5): 1.2677026999872547,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_32APSK, dtv.C5_6): 1.2626890498906358,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_32APSK, dtv.C8_9): 1.2542139595410673,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_32APSK, dtv.C9_10): 1.253354710666101,
+    (dtv.FECFRAME_SHORT, dtv.MOD_16APSK, dtv.C2_3): 1.1357805960496432,
+    (dtv.FECFRAME_SHORT, dtv.MOD_16APSK, dtv.C3_4): 1.1317122612043418,
+    (dtv.FECFRAME_SHORT, dtv.MOD_16APSK, dtv.C3_5): 1.1408944401668009,
+    (dtv.FECFRAME_SHORT, dtv.MOD_16APSK, dtv.C4_5): 1.130064093262531,
+    (dtv.FECFRAME_SHORT, dtv.MOD_16APSK, dtv.C5_6): 1.1291735004211465,
+    (dtv.FECFRAME_SHORT, dtv.MOD_16APSK, dtv.C8_9): 1.127242960381356,
+    (dtv.FECFRAME_SHORT, dtv.MOD_32APSK, dtv.C3_4): 1.2768096671118951,
+    (dtv.FECFRAME_SHORT, dtv.MOD_32APSK, dtv.C4_5): 1.2677026999872547,
+    (dtv.FECFRAME_SHORT, dtv.MOD_32APSK, dtv.C5_6): 1.2626890498906358,
+    (dtv.FECFRAME_SHORT, dtv.MOD_32APSK, dtv.C8_9): 1.2542139595410673,
+}
+
 
 def get_ratio(constellation):
     ratio = None
@@ -163,7 +188,6 @@ class dvbs2_encoder(gr.top_block):
         self.plframe_pilots_on_no_stuffing = blocks.keep_m_in_n(
             gr.sizeof_gr_complex, 1, 2, 0
         )
-        self.organize = blocks.multiply_const_vcc((1,))
         self.ldpc_encoder_input = blocks.file_sink(
             gr.sizeof_char * 1, "ldpc_encoder_input.bin", False
         )
@@ -288,12 +312,24 @@ class dvbs2_encoder(gr.top_block):
         self.connect((self.ldpc_encoder, 0), (self.bit_interleaver, 0))
         self.connect((self.bit_interleaver, 0), (self.bit_interleaver_output, 0))
         self.connect((self.bit_interleaver, 0), (self.dtv_dvbs2_modulator_bc_0, 0))
+
+        # In GNU Radio 3.8 and later, the DVB-S2 modulator bit mapping produces
+        # values above 1.0 but in the encoder the constellation mapping uses
+        # [-1, 1) so we rescale the output to fit that range
+        modulator_scaling_factor = MODULATOR_OUTPUT_SCALING_FACTOR.get(
+            (self.frame_type, self.constellation, code_rate), 1.0
+        )
+        modulator_scaled_output = blocks.multiply_const_vcc(
+            (1.0 / modulator_scaling_factor,)
+        )
+
+        self.connect((self.dtv_dvbs2_modulator_bc_0, 0), (modulator_scaled_output, 0))
+
         self.dumpComplexAndFixedPoint(
-            source=self.dtv_dvbs2_modulator_bc_0,
+            source=modulator_scaled_output,
             basename="bit_mapper_output",
             size=gr.sizeof_short,
         )
-        self.connect((self.dtv_dvbs2_modulator_bc_0, 0), (self.organize, 0))
         self.connect(
             (self.physical_layer_framer_pilots_off, 0),
             (self.plframe_pilots_off_no_stuffing, 0),
@@ -302,8 +338,12 @@ class dvbs2_encoder(gr.top_block):
             (self.physical_layer_framer_pilots_on, 0),
             (self.plframe_pilots_on_no_stuffing, 0),
         )
-        self.connect((self.organize, 0), (self.physical_layer_framer_pilots_off, 0))
-        self.connect((self.organize, 0), (self.physical_layer_framer_pilots_on, 0))
+        self.connect(
+            (modulator_scaled_output, 0), (self.physical_layer_framer_pilots_off, 0)
+        )
+        self.connect(
+            (modulator_scaled_output, 0), (self.physical_layer_framer_pilots_on, 0)
+        )
         self.connect(
             (self.plframe_pilots_off_no_stuffing, 0),
             (self.plframe_header_pilots_off, 0),

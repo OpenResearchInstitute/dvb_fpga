@@ -84,25 +84,20 @@ class CodeRate(Enum):
     C9_10 = "9/10"
 
 
-class TestDefinition(
-    NamedTuple(
-        "TestDefinition",
-        [
-            ("name", str),
-            ("test_files_path", str),
-            ("code_rate", CodeRate),
-            ("frame_type", FrameType),
-            ("constellation", ConstellationType),
-        ],
-    )
-):
+class TestDefinition(NamedTuple):
     """
     Placeholder for a test config
     """
 
-    def __init__(self, *args, **kwargs):  # pylint: disable=unused-argument
-        super(TestDefinition, self).__init__()
-        self.timestamp = p.join(self.test_files_path, "timestamp")
+    name: str
+    test_files_path: str
+    code_rate: CodeRate
+    frame_type: FrameType
+    constellation: ConstellationType
+
+    @property
+    def timestamp(self):
+        return p.join(self.test_files_path, "timestamp")
 
     @staticmethod
     def fromConfigTuple(frame_type, constellation, code_rate):
@@ -131,12 +126,17 @@ class TestDefinition(
         """
         Returns the value for the 'test_cfg' string of the testbench
         """
+        # For some reason, double backslashes are stripped out on Windows, so
+        # replace them with regular forward slashes
+        test_files_path = self.test_files_path
+        if sys.platform == "win32":
+            test_files_path = test_files_path.replace("\\", "/")
         return ",".join(
             [
                 self.constellation.name,
                 self.frame_type.name,
                 self.code_rate.name,
-                self.test_files_path,
+                test_files_path,
             ]
         )
 
@@ -170,7 +170,7 @@ def _runGnuRadio(config):
     for not importing and running locally is to allow GNI Radio's Python
     environment to be independent of VUnit's Python env.
     """
-    print("Generating data for %s" % config.name)
+    print(f"Generating data for {config.name}")
 
     command = [
         p.join(ROOT, "gnuradio_data", "dvbs2_encoder_flow_diagram.py"),
@@ -187,7 +187,7 @@ def _runGnuRadio(config):
 
     try:
         subp.check_output(command, cwd=config.test_files_path, stderr=subp.PIPE)
-        with open(config.timestamp, "w") as fd:
+        with open(config.timestamp, "w", encoding="utf8") as fd:
             fd.write(time.asctime())
     except subp.CalledProcessError as exc:
         _logger.error(
@@ -208,12 +208,9 @@ def _generateGnuRadioData():
         if not p.exists(config.timestamp):
             configs += [config]
 
-    #  list(map(_runGnuRadio, configs))
     # Generate needed data on a process pool to speed up things
-    pool = Pool()
-    pool.map(_runGnuRadio, configs)
-    pool.close()
-    pool.join()
+    with Pool() as pool:
+        pool.map(_runGnuRadio, configs)
 
 
 LDPC_Q = {
@@ -384,7 +381,8 @@ def _populateLdpcTable(config: TestDefinition):  # pylint: disable=too-many-loca
         f'Binary data will be written to "{config.test_files_path}"',
     )
 
-    table = [x.split(",") for x in open(csv_table, "r").read().split("\n") if x]
+    with open(csv_table, "r", encoding="utf8") as fd:
+        table = [x.split(",") for x in fd.read().split("\n") if x]
 
     table_q = LDPC_Q[(config.frame_type, config.code_rate)]
     table_length = LDPC_LENGTH[(config.frame_type, config.code_rate)]
@@ -424,10 +422,9 @@ def _getModulationTable(
     frame_type: FrameType, constellation: ConstellationType, code_rate: CodeRate
 ):
     """
-    Returns the modulation table for a given config. Please note we're scaling the
-    constellation radius according to the old implementation of GNU Radio.  Once the CI's
-    GNU Radio version is updated to include
-    https://github.com/gnuradio/gnuradio/commit/efe3e6c1 we'll need to change here as well
+    Returns the modulation table for a given config. Please note we're scaling
+    the constellation radius according to GNU Radio 3.8+, so previous versions
+    of GNU Radio will fail!
     """
     # pylint: disable=invalid-name
     if constellation == ConstellationType.MOD_QPSK:
@@ -474,11 +471,15 @@ def _getModulationTable(
                 CodeRate.C3_5: r2 / 3.70,
             }.get(code_rate, 0.0)
 
-        # TODO: Include this when changing CI's GNU Radio version to a version
-        # that includes https://github.com/gnuradio/gnuradio/commit/efe3e6c1
-        #  r0 = math.sqrt(4.0 / ((r1 * r1) + 3.0 * (r2 * r2)))
-        #  r1 = r0 * r1
-        #  r2 = r0 * r2
+        # Needed since GNU Radio 3.8 (see https://github.com/gnuradio/gnuradio/commit/efe3e6c1)
+        r0 = math.sqrt(4.0 / ((r1 * r1) + 3.0 * (r2 * r2)))
+        r1 = r0 * r1
+        r2 = r0 * r2
+
+        scaling = max(r0, r1, r2)
+        r0 = r0 / scaling
+        r1 = r1 / scaling
+        r2 = r2 / scaling
 
         return (
             (r2 * math.cos(math.pi / 4.0), r2 * math.sin(math.pi / 4.0)),
@@ -519,12 +520,18 @@ def _getModulationTable(
             CodeRate.C9_10: r1 * 2.53,
         }.get(code_rate, 0.0)
 
-        # TODO: Include this when changing CI's GNU Radio version to a version
-        # that includes https://github.com/gnuradio/gnuradio/commit/efe3e6c1
-        #  r0 = math.sqrt(8.0 / ((r1 * r1) + 3.0 * (r2 * r2) + 4.0 * (r3 * r3)))
-        #  r1 *= r0
-        #  r2 *= r0
-        #  r3 *= r0
+        # Needed since GNU Radio 3.8 (see https://github.com/gnuradio/gnuradio/commit/efe3e6c1)
+        r0 = math.sqrt(8.0 / ((r1 * r1) + 3.0 * (r2 * r2) + 4.0 * (r3 * r3)))
+        r1 *= r0
+        r2 *= r0
+        r3 *= r0
+
+        scaling = max(r0, r1, r2, r3)
+        r0 = r0 / scaling
+        r1 = r1 / scaling
+        r2 = r2 / scaling
+        r3 = r3 / scaling
+
         return (
             (r2 * math.cos(math.pi / 4.0), r2 * math.sin(math.pi / 4.0)),
             (r2 * math.cos(5 * math.pi / 12.0), r2 * math.sin(5 * math.pi / 12.0)),
@@ -617,13 +624,9 @@ def _createAuxiliaryTables():
     """
     Creates the binary LDPC table files if they don't already exist
     """
-    pool = Pool()
-
-    pool.map_async(_populateLdpcTable, TEST_CONFIGS)
-    pool.map_async(_createModulationTable, CONSTELLATION_MAPPER_CONFIGS)
-
-    pool.close()
-    pool.join()
+    with Pool() as pool:
+        pool.map(_populateLdpcTable, TEST_CONFIGS)
+        pool.map(_createModulationTable, CONSTELLATION_MAPPER_CONFIGS)
 
 
 class GhdlPragmaHandler:
