@@ -707,7 +707,7 @@ begin
         file_reader_msg        := new_msg;
         file_reader_msg.sender := self;
 
-        read_file(net, input_stream, data_path & "/bb_header_output_packed.bin", encode(config_tuple));
+        read_file(net, input_stream, data_path & "/input_data_packed.bin", encode(config_tuple));
         read_file(net, output_checker, data_path & "/modulated_pilots_off_fixed_point.bin");
 
         -- ghdl translate_off
