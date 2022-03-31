@@ -26,7 +26,6 @@ CONTAINER="suoto/dvb_fpga_ci:3.8"
 docker run                       \
   --rm                           \
   --user "$(id -u)":"$(id -g)"   \
-  -it                            \
   -v "${PATH_TO_REPO}":/project  \
   $CONTAINER                     \
   /bin/sh -c "cd /project && HOME=/tmp/ ./run.py $*"
