@@ -534,10 +534,11 @@ def _getModulationTable(
         r2 *= r0
         r3 *= r0
 
-        scaling = max(r0, r1, r2)
+        scaling = max(r0, r1, r2, r3)
         r0 = r0 / scaling
         r1 = r1 / scaling
         r2 = r2 / scaling
+        r3 = r3 / scaling
 
         return (
             (r2 * math.cos(math.pi / 4.0), r2 * math.sin(math.pi / 4.0)),
