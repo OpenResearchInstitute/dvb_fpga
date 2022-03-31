@@ -17,7 +17,6 @@
 # As per CERN-OHL-W v2 section 4.1, should You produce hardware based on this
 # source, You must maintain the Source Location visible on the external case of
 # the DVB Encoder or other products you make using this source.
-
 FROM alpine:edge
 
 RUN echo https://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories

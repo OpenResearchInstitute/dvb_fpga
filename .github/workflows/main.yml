@@ -16,8 +16,14 @@ jobs:
       - uses: actions/checkout@v1
       - name: Get submodules
         run: git submodule update --init --recursive
-      - name: Get Docker image
-        run: docker pull suoto/dvb_fpga_ci
+      - name: Get GNU Radio docker image
+        run: docker pull suoto/gnuradio:3.9
+      - name: Get GHDL docker image
+        run: docker pull ghdl/vunit:llvm
+
+      - name: Generate GNU Radio test vectors
+        run: misc/run_gnuradio.sh
+
       - name: Run unit tests
         run: misc/run_tests.sh --num-threads 4
 
