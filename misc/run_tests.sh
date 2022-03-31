@@ -21,7 +21,7 @@
 set -e
 
 PATH_TO_REPO=$(git rev-parse --show-toplevel)
-CONTAINER="ghdl/vunit:llvm"
+CONTAINER="suoto/dvb_fpga_ci:3.8"
 
 docker run                       \
   --rm                           \
@@ -29,4 +29,4 @@ docker run                       \
   -it                            \
   -v "${PATH_TO_REPO}":/project  \
   $CONTAINER                     \
-  /bin/sh -c "cd /project && ./run.py $*"
+  /bin/sh -c "cd /project && HOME=/tmp/ ./run.py $*"
