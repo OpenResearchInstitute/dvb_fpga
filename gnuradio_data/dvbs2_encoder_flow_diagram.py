@@ -142,6 +142,7 @@ class UnknownFrameLength(Exception):
 
         self.frame_type = frame_type
         self.code_rate = code_rate
+        super().__init__()
 
     def __str__(self):
         return "Could not get frame length for {}, {}".format(
@@ -161,7 +162,7 @@ class dvbs2_encoder(gr.top_block):
         assert (
             int(frame_length) == 1.0 * frame_length
         ), f"Frame length {frame_length} won't work because {frame_length}/8 = {frame_length/8}!"
-        frame_length = int(frame_length)
+        frame_length = 4 * int(frame_length)
         self.frame_length = frame_length
 
         bits_per_input, bits_per_output = get_ratio(constellation)

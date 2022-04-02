@@ -686,15 +686,12 @@ def setupSources(vunit):
     library.add_source_files(p.join(ROOT, "rtl", "ldpc", "*.vhd"))
     library.add_source_files(p.join(ROOT, "third_party", "bch_generated", "*.vhd"))
     library.add_source_files(p.join(ROOT, "third_party", "airhdl", "*.vhd"))
-    testbench_files = glob(p.join(ROOT, "testbench", "*.vhd"))
+    library.add_source_files(p.join(ROOT, "testbench", "*.vhd"))
 
+    # Polyphase filter was removed from dvbs2_encoder, need to add it back
+    # somewhere
     if vunit.get_simulator_name() != "ghdl":
-        library.add_source_files(testbench_files)
         library.add_source_files(p.join(ROOT, "third_party", "polyphase_filter", "*.v"))
-    else:
-        library.add_source_files(
-            [x for x in testbench_files if p.basename(x) != "dvbs2_encoder_tb.vhd"]
-        )
 
     vunit.add_library("str_format").add_source_files(
         p.join(ROOT, "third_party", "hdl_string_format", "src", "*.vhd")
@@ -775,15 +772,10 @@ def setupTests(vunit, args):
         # Run the DVB S2 Tx testbench with a smaller sample of configs to check
         # integration, otherwise sim takes way too long. Note that when
         # --individual-config-runs is passed, all configs are added
-        if vunit.get_simulator_name() != "ghdl":
-            addAllConfigsTest(
-                entity=vunit.library("lib").entity("dvbs2_encoder_tb"),
-                configs=[
-                    x
-                    for x in PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS
-                    if x.frame_type == FrameType.FECFRAME_SHORT
-                ],
-            )
+        addAllConfigsTest(
+            entity=vunit.library("lib").entity("dvbs2_encoder_tb"),
+            configs=PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS,
+        )
 
     addAllConfigsTest(
         entity=vunit.library("lib").entity("axi_baseband_scrambler_tb"),
@@ -807,15 +799,14 @@ def setupTests(vunit, args):
                     NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
-        if vunit.get_simulator_name() != "ghdl":
-            for config in PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS:
-                vunit.library("lib").entity("dvbs2_encoder_tb").add_config(
-                    name=config.name,
-                    generics=dict(
-                        test_cfg=config.getTestConfigString(),
-                        NUMBER_OF_TEST_FRAMES=2,
-                    ),
-                )
+        for config in PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS:
+            vunit.library("lib").entity("dvbs2_encoder_tb").add_config(
+                name=config.name,
+                generics=dict(
+                    test_cfg=config.getTestConfigString(),
+                    NUMBER_OF_TEST_FRAMES=1,
+                ),
+            )
 
     else:
         addAllConfigsTest(

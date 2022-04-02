@@ -71,8 +71,8 @@ architecture dvbs2_encoder_tb of dvbs2_encoder_tb is
 
   constant INPUT_DATA_WIDTH             : integer  := 64;
   constant IQ_WIDTH                     : integer  := 32;
-  constant POLYPHASE_FILTER_NUMBER_TAPS : positive := 33;
-  constant POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
+  -- constant POLYPHASE_FILTER_NUMBER_TAPS : positive := 33;
+  -- constant POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
 
   type axi_checker_t is record
     axi             : axi_stream_data_bus_t;
@@ -147,7 +147,6 @@ architecture dvbs2_encoder_tb of dvbs2_encoder_tb is
   signal expected_tdata     : std_logic_vector(IQ_WIDTH - 1 downto 0);
   signal expected_tlast     : std_logic;
 
-  signal recv_count         : integer := 0;
   signal recv_r             : complex;
   signal expected_r         : complex;
 
@@ -180,10 +179,10 @@ begin
 
   dut : entity work.dvbs2_encoder
     generic map (
-      INPUT_DATA_WIDTH             => INPUT_DATA_WIDTH,
-      IQ_WIDTH                     => IQ_WIDTH,
-      POLYPHASE_FILTER_NUMBER_TAPS => POLYPHASE_FILTER_NUMBER_TAPS,
-      POLYPHASE_FILTER_RATE_CHANGE => POLYPHASE_FILTER_RATE_CHANGE)
+      INPUT_DATA_WIDTH => INPUT_DATA_WIDTH,
+      IQ_WIDTH         => IQ_WIDTH)
+      -- POLYPHASE_FILTER_NUMBER_TAPS => POLYPHASE_FILTER_NUMBER_TAPS,
+      -- POLYPHASE_FILTER_RATE_CHANGE => POLYPHASE_FILTER_RATE_CHANGE)
     port map (
       -- Usual ports
       clk             => clk,
@@ -251,8 +250,8 @@ begin
       -- Data input
       s_tready           => axi_slave.tready,
       s_tdata            => axi_slave.tdata,
-      s_tvalid           => axi_slave_tvalid,
-      s_tlast            => expected_tlast);
+      s_tvalid           => axi_slave.tvalid,
+      s_tlast            => expected_tlast); --axi_slave.tlast);
 
   -- DUT AXI tready is always set to high in this sim
   axi_slave.tready <= '1';
@@ -260,29 +259,25 @@ begin
   -- tlast
   axi_slave_tvalid <= axi_slave.tvalid and not is_trailing_data;
 
-  process(clk)
-    variable words : integer;
+  process
+    constant logger      : logger_t := get_logger("output monitor");
+    variable frame_count : integer  := 0;
+    variable word_count  : integer  := 0;
   begin
-    if rising_edge(clk) then
-      if axi_slave.tvalid and axi_slave.tready then
-        recv_count <= recv_count + 1;
-
-        if is_trailing_data then
-          words := words + 1;
-        end if;
-
-        if (axi_slave.tlast xor expected_tlast) then
-          if axi_slave.tlast then
-            recv_count <= 0;
-            is_trailing_data <= '0';
-            warning(sformat("tlast mismatch, ignored %d samples", fo(words)));
-          end if;
-          if expected_tlast then
-            is_trailing_data <= '1';
-            words            := 0;
-          end if;
-        end if;
-      end if;
+    wait until rising_edge(clk) and axi_slave.tvalid = '1' and axi_slave.tready = '1';
+    word_count := word_count + 1;
+    if axi_slave.tlast then
+      info(
+        logger,
+        sformat(
+          "Frame %d, length=%d words (%d bytes)",
+          fo(frame_count),
+          fo(word_count),
+          fo(axi_slave.tdata'length*word_count / 8)
+        )
+      );
+      word_count := 0;
+      frame_count := frame_count + 1;
     end if;
   end process;
 
@@ -300,12 +295,12 @@ begin
   cfg_frame_type    <= decode(axi_master.tuser).frame_type;
   cfg_code_rate     <= decode(axi_master.tuser).code_rate;
 
-  recv_r     <= to_complex(axi_slave.tdata) when axi_slave_tvalid = '1';
+  recv_r     <= to_complex(axi_slave.tdata) when axi_slave.tvalid = '1';
   expected_r <= to_complex(expected_tdata);
 
   -- Inspect inner buses if running on ModelSim
   -- ghdl translate_off
-    signal_spy_block : block -- {{ -------------------------------------------------------
+  signal_spy_block : block -- {{ -------------------------------------------------------
     type file_compare_info_t is record
       tdata_error_cnt : std_logic_vector(7 downto 0);
       tlast_error_cnt : std_logic_vector(7 downto 0);
@@ -322,8 +317,9 @@ begin
     signal bch_encoder_info  : file_compare_info_t(expected_tdata(7 downto 0));
     signal ldpc_encoder_info : file_compare_info_t(expected_tdata(7 downto 0));
 
-    signal pl_frame_expected : axi_stream_data_bus_t(tdata(IQ_WIDTH - 1 downto 0));
-    signal pl_frame          : axi_stream_bus_t(tdata(IQ_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    -- signal pl_frame_expected       : axi_stream_data_bus_t(tdata(IQ_WIDTH - 1 downto 0));
+    -- signal pl_frame                : axi_stream_bus_t(tdata(IQ_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    -- signal pl_frame_expected_tlast : std_logic;
 
   begin
 
@@ -349,7 +345,7 @@ begin
         s_tready           => open,
         s_tdata            => bb_scrambler.tdata,
         s_tvalid           => bb_scrambler.tvalid and bb_scrambler.tready,
-        s_tlast            => bb_scrambler.tlast);
+        s_tlast            => bb_scrambler_info.expected_tlast); --bb_scrambler.tlast);
 
     bch_encoder_checker_u : entity fpga_cores_sim.axi_file_compare
       generic map (
@@ -373,7 +369,7 @@ begin
         s_tready           => open,
         s_tdata            => bch_encoder.tdata,
         s_tvalid           => bch_encoder.tvalid and bch_encoder.tready,
-        s_tlast            => bch_encoder.tlast);
+        s_tlast            => bch_encoder_info.expected_tlast); --bch_encoder.tlast);
 
     ldpc_encoder_checker_u : entity fpga_cores_sim.axi_file_compare
       generic map (
@@ -397,33 +393,33 @@ begin
         s_tready           => open,
         s_tdata            => ldpc_encoder.tdata,
         s_tvalid           => ldpc_encoder.tvalid and ldpc_encoder.tready,
-        s_tlast            => ldpc_encoder.tlast);
+        s_tlast            => ldpc_encoder_info.expected_tlast);--ldpc_encoder.tlast);
 
-    physical_layer_checker_u : entity work.axi_file_compare_complex
-      generic map (
-        READER_NAME         => "pl_framer_checker",
-        DATA_WIDTH          => IQ_WIDTH,
-        TOLERANCE           => 1200,
-        SWAP_BYTE_ENDIANESS => False,
-        ERROR_CNT_WIDTH     => 8,
-        REPORT_SEVERITY     => Error)
-      port map (
-        -- Usual ports
-        clk                => clk,
-        rst                => rst,
-        -- Config and status
-        tdata_error_cnt    => open,
-        tlast_error_cnt    => open,
-        error_cnt          => open,
-        -- Debug stuff
-        expected_tdata     => open,
-        expected_tlast     => open,
-        -- Data input
-        s_tready           => pl_frame.tready,
-        s_tdata            => pl_frame.tdata,
-        s_tvalid           => pl_frame.tvalid,
-        s_tlast            => pl_frame.tlast);
-
+    -- physical_layer_checker_u : entity work.axi_file_compare_complex
+    --   generic map (
+    --     READER_NAME         => "pl_framer_checker",
+    --     DATA_WIDTH          => IQ_WIDTH,
+    --     TOLERANCE           => 1200,
+    --     SWAP_BYTE_ENDIANESS => False,
+    --     ERROR_CNT_WIDTH     => 8,
+    --     REPORT_SEVERITY     => Error)
+    --   port map (
+    --     -- Usual ports
+    --     clk                => clk,
+    --     rst                => rst,
+    --     -- Config and status
+    --     tdata_error_cnt    => open,
+    --     tlast_error_cnt    => open,
+    --     error_cnt          => open,
+    --     -- Debug stuff
+    --     expected_tdata     => open,
+    --     expected_tlast     => pl_frame_expected_tlast,
+    --     -- Data input
+    --     s_tready           => pl_frame.tready,
+    --     s_tdata            => pl_frame.tdata,
+    --     s_tvalid           => pl_frame.tvalid,
+    --     s_tlast            => pl_frame_expected_tlast); --pl_frame.tlast);
+    --
     process
       procedure mirror_signal ( constant source, dest : string) is
       begin
@@ -437,7 +433,7 @@ begin
       mirror_signal("/dvbs2_encoder_tb/dut/bb_scrambler", "/dvbs2_encoder_tb/signal_spy_block/bb_scrambler");
       mirror_signal("/dvbs2_encoder_tb/dut/bch_encoder", "/dvbs2_encoder_tb/signal_spy_block/bch_encoder");
       mirror_signal("/dvbs2_encoder_tb/dut/ldpc_encoder", "/dvbs2_encoder_tb/signal_spy_block/ldpc_encoder");
-      mirror_signal("/dvbs2_encoder_tb/dut/pl_frame", "/dvbs2_encoder_tb/signal_spy_block/pl_frame");
+      -- mirror_signal("/dvbs2_encoder_tb/dut/pl_frame", "/dvbs2_encoder_tb/signal_spy_block/pl_frame");
       wait;
     end process;
   end block signal_spy_block; -- }} ----------------------------------------------------
@@ -637,42 +633,6 @@ begin
       current_mapping_ram := mapping_ram;
     end procedure; -- }} ---------------------------------------------------------------
 
-    variable current_coefficients : real_vector(0 to POLYPHASE_FILTER_NUMBER_TAPS - 1);
-    procedure update_coefficients ( constant path : string ) is -- {{ ------------------
-      file file_handler     : text;
-      variable L            : line;
-      variable addr         : integer := 0;
-      variable value        : real;
-      variable coefficients : real_vector(0 to POLYPHASE_FILTER_NUMBER_TAPS - 1) := current_coefficients;
-    begin
-      file_open(file_handler, path, read_mode);
-      while not endfile(file_handler) loop
-        readline(file_handler, L);
-        read(L, value);
-        trace(logger, sformat("Coefficient %3d: %r => %r", fo(addr), real'image(value), fo(to_fixed_point(value, IQ_WIDTH/2))));
-        coefficients(addr) := value;
-        addr := addr + 1;
-      end loop;
-
-      if current_coefficients = coefficients then
-        return;
-      end if;
-
-      wait_for_completion;
-      info(logger, sformat("Updating polyphase coefficients from '%s'", fo(path)));
-
-      for i in coefficients'range loop
-        if current_coefficients(i) /= coefficients(i) then
-          axi_cfg_write(
-            POLYPHASE_FILTER_COEFFICIENTS_OFFSET + 4*i,
-            std_logic_vector(to_fixed_point(coefficients(i), IQ_WIDTH/2)) &
-            std_logic_vector(to_fixed_point(coefficients(i), IQ_WIDTH/2))
-          );
-        end if;
-      end loop;
-      current_coefficients := coefficients;
-    end procedure; -- }} ---------------------------------------------------------------
-
     procedure run_test ( -- {{ ---------------------------------------------------------
       constant config           : config_t;
       constant number_of_frames : in positive) is
@@ -691,8 +651,6 @@ begin
       info(logger, " - code_rate      : " & code_rate_t'image(config.code_rate));
       info(logger, " - data path      : " & data_path);
 
-      update_coefficients(data_path & "/polyphase_coefficients.bin");
-
       -- Only update the mapping RAM if the config actually requires that
       case config.constellation is
         when mod_qpsk => initial_addr := 0;
@@ -708,13 +666,13 @@ begin
         file_reader_msg.sender := self;
 
         read_file(net, input_stream, data_path & "/input_data_packed.bin", encode(config_tuple));
-        read_file(net, output_checker, data_path & "/modulated_pilots_off_fixed_point.bin");
+        -- read_file(net, output_checker, data_path & "/modulated_pilots_off_fixed_point.bin");
+        read_file(net, output_checker, data_path & "/plframe_pilots_off_fixed_point.bin");
 
         -- ghdl translate_off
         read_file(net, bb_scrambler_checker, data_path & "/bb_scrambler_output_packed.bin");
         read_file(net, bch_encoder_checker, data_path & "/bch_encoder_output_packed.bin");
         read_file(net, ldpc_encoder_checker, data_path & "/ldpc_output_packed.bin");
-        read_file(net, pl_framer_checker, data_path & "/plframe_pilots_off_fixed_point.bin");
         -- ghdl translate_on
       end loop;
       wait_for_completion;
