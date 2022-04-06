@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_encoder' Register Definitions
-// Revision: 297
+// Revision: 298
 // -----------------------------------------------------------------------------
-// Generated on 2021-10-18 at 20:36 (UTC) by airhdl version 2021.09.1
+// Generated on 2022-04-06 at 18:22 (UTC) by airhdl version 2022.03.1-114
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -26,7 +26,6 @@ package dvbs2_encoder_regs_pkg;
         logic [0:0] ldpc_fifo_status_ldpc_fifo_full; // Value of register 'ldpc_fifo_status', field 'ldpc_fifo_full'
         logic [7:0] frames_in_transit_value; // Value of register 'frames_in_transit', field 'value'
         logic [31:0] bit_mapper_ram_rdata; // read data for memory 'bit_mapper_ram'
-        logic [31:0] polyphase_filter_coefficients_rdata; // read data for memory 'polyphase_filter_coefficients'
         logic [15:0] axi_debug_input_width_converter_frame_count_value; // Value of register 'axi_debug_input_width_converter_frame_count', field 'value'
         logic [15:0] axi_debug_input_width_converter_last_frame_length_value; // Value of register 'axi_debug_input_width_converter_last_frame_length', field 'value'
         logic [15:0] axi_debug_input_width_converter_min_max_frame_length_min_frame_length; // Value of register 'axi_debug_input_width_converter_min_max_frame_length', field 'min_frame_length'
@@ -106,10 +105,6 @@ package dvbs2_encoder_regs_pkg;
         logic [31:0] bit_mapper_ram_wdata; // write data for memory 'bit_mapper_ram'
         logic [3:0] bit_mapper_ram_wen; // byte-wide write-enable for memory 'bit_mapper_ram'
         logic bit_mapper_ram_ren; // read-enable for memory 'bit_mapper_ram'
-        logic [8:0] polyphase_filter_coefficients_addr; // read/write address for memory 'polyphase_filter_coefficients'
-        logic [31:0] polyphase_filter_coefficients_wdata; // write data for memory 'polyphase_filter_coefficients'
-        logic [3:0] polyphase_filter_coefficients_wen; // byte-wide write-enable for memory 'polyphase_filter_coefficients'
-        logic polyphase_filter_coefficients_ren; // read-enable for memory 'polyphase_filter_coefficients'
         logic axi_debug_input_width_converter_cfg_strobe; // Strobe logic for register 'axi_debug_input_width_converter_cfg' (pulsed when the register is written from the bus)
         logic [0:0] axi_debug_input_width_converter_cfg_block_data; // Value of register 'axi_debug_input_width_converter_cfg', field 'block_data'
         logic [0:0] axi_debug_input_width_converter_cfg_allow_word; // Value of register 'axi_debug_input_width_converter_cfg', field 'allow_word'
@@ -176,7 +171,7 @@ package dvbs2_encoder_regs_pkg;
     } regs2user_t;
 
     // Revision number of the 'dvbs2_encoder' register map
-    localparam DVBS2_ENCODER_REVISION = 297;
+    localparam DVBS2_ENCODER_REVISION = 298;
 
     // Default base address of the 'dvbs2_encoder' register map
     localparam logic [31:0] DVBS2_ENCODER_DEFAULT_BASEADDR = 32'h00000000;
@@ -237,15 +232,6 @@ package dvbs2_encoder_regs_pkg;
     localparam BIT_MAPPER_RAM_DATA_BIT_OFFSET = 0; // bit offset of the 'data' field
     localparam BIT_MAPPER_RAM_DATA_BIT_WIDTH = 32; // bit width of the 'data' field
     localparam logic [31:0] BIT_MAPPER_RAM_DATA_RESET = 32'b00000000000000000000000000000000; // reset value of the 'data' field
-
-    // Register 'polyphase_filter_coefficients'
-    localparam logic [31:0] POLYPHASE_FILTER_COEFFICIENTS_OFFSET = 32'h000003CC; // address offset of the 'polyphase_filter_coefficients' register
-    localparam POLYPHASE_FILTER_COEFFICIENTS_DEPTH = 512; // depth of the 'polyphase_filter_coefficients' memory, in elements
-    localparam POLYPHASE_FILTER_COEFFICIENTS_READ_LATENCY = 1; // read latency of the 'polyphase_filter_coefficients' memory, in clock cycles
-    // Field 'polyphase_filter_coefficients.value'
-    localparam POLYPHASE_FILTER_COEFFICIENTS_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
-    localparam POLYPHASE_FILTER_COEFFICIENTS_VALUE_BIT_WIDTH = 32; // bit width of the 'value' field
-    localparam logic [31:0] POLYPHASE_FILTER_COEFFICIENTS_VALUE_RESET = 32'b00000000000000000000000000000000; // reset value of the 'value' field
 
     // Register 'axi_debug_input_width_converter_cfg'
     localparam logic [31:0] AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET = 32'h00000D00; // address offset of the 'axi_debug_input_width_converter_cfg' register

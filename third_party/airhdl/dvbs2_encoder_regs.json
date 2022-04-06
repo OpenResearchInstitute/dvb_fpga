@@ -5,6 +5,7 @@
     "description": "",
     "width": 32,
     "baseAddress": 0,
+    "addrWidthBits": 32,
     "registers": [
       {
         "type": "Register",
@@ -130,27 +131,6 @@
           {
             "name": "data",
             "description": "- 0x00 - 0x03: QPSK map\r\n- 0x04 - 0x0B: 8PSK map\r\n- 0x0C - 0x1B: 16APSK map\r\n- 0x1C - 0x3B: 32APSK map",
-            "bitWidth": 32,
-            "bitOffset": 0,
-            "reset": 0,
-            "selfClear": false,
-            "enumValues": []
-          }
-        ]
-      },
-      {
-        "type": "Memory",
-        "depth": 512,
-        "readLatency": 1,
-        "name": "polyphase_filter_coefficients",
-        "description": "Depth needs to match polyphase_filter\u0027s NUMBER_TAPS",
-        "access": "READ_WRITE",
-        "addressOffset": 972,
-        "size": 32,
-        "fields": [
-          {
-            "name": "value",
-            "description": "Depth needs to match polyphase_filter\u0027s NUMBER_TAPS",
             "bitWidth": 32,
             "bitOffset": 0,
             "reset": 0,
@@ -1336,7 +1316,7 @@
         ]
       }
     ],
-    "revision": 297,
+    "revision": 298,
     "generateRecordPorts": true
   }
 }

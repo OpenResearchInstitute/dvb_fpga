@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_encoder' Register Definitions
-// Revision: 297
+// Revision: 298
 // -----------------------------------------------------------------------------
-// Generated on 2021-10-18 at 20:36 (UTC) by airhdl version 2021.09.1
+// Generated on 2022-04-06 at 18:22 (UTC) by airhdl version 2022.03.1-114
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -28,7 +28,7 @@ namespace dvbs2_encoder_regs {
     static const std::string name = "dvbs2_encoder";
 
     /* Revision number of the 'dvbs2_encoder' register map */
-    static const std::uint32_t REVISION = 297;
+    static const std::uint32_t REVISION = 298;
 
     /* Default base address of the 'dvbs2_encoder' register map */
     static const std::uint32_t BASE_ADDRESS = 0x00000000;
@@ -108,16 +108,6 @@ namespace dvbs2_encoder_regs {
     static const int BIT_MAPPER_RAM_DATA_BIT_WIDTH = 32; /* bit width of the 'data' field */
     static const std::uint32_t BIT_MAPPER_RAM_DATA_BIT_MASK = 0xFFFFFFFF; /* bit mask of the 'data' field */
     static const std::uint32_t BIT_MAPPER_RAM_DATA_RESET = 0x0; /* reset value of the 'data' field */
-
-    /* Register 'polyphase_filter_coefficients' */
-    static const std::uint32_t POLYPHASE_FILTER_COEFFICIENTS_OFFSET = 0x000003CC; /* address offset of the 'polyphase_filter_coefficients' register */
-    static const int POLYPHASE_FILTER_COEFFICIENTS_DEPTH = 512; /* depth of the 'polyphase_filter_coefficients' memory, in elements */
-
-    /* Field 'polyphase_filter_coefficients.value' */
-    static const int POLYPHASE_FILTER_COEFFICIENTS_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
-    static const int POLYPHASE_FILTER_COEFFICIENTS_VALUE_BIT_WIDTH = 32; /* bit width of the 'value' field */
-    static const std::uint32_t POLYPHASE_FILTER_COEFFICIENTS_VALUE_BIT_MASK = 0xFFFFFFFF; /* bit mask of the 'value' field */
-    static const std::uint32_t POLYPHASE_FILTER_COEFFICIENTS_VALUE_RESET = 0x0; /* reset value of the 'value' field */
 
     /* Register 'axi_debug_input_width_converter_cfg' */
     static const std::uint32_t AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET = 0x00000D00; /* address offset of the 'axi_debug_input_width_converter_cfg' register */

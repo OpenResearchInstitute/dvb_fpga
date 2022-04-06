@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
 -- 'dvbs2_encoder' Register Definitions
--- Revision: 297
+-- Revision: 298
 -- -----------------------------------------------------------------------------
--- Generated on 2021-10-18 at 20:36 (UTC) by airhdl version 2021.09.1
+-- Generated on 2022-04-06 at 18:22 (UTC) by airhdl version 2022.03.1-114
 -- -----------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -64,7 +64,6 @@ package dvbs2_encoder_regs_pkg is
         ldpc_fifo_status_ldpc_fifo_full : std_logic_vector(0 downto 0); -- value of register 'ldpc_fifo_status', field 'ldpc_fifo_full'
         frames_in_transit_value : std_logic_vector(7 downto 0); -- value of register 'frames_in_transit', field 'value'
         bit_mapper_ram_rdata : std_logic_vector(31 downto 0); -- read data for memory 'bit_mapper_ram'
-        polyphase_filter_coefficients_rdata : std_logic_vector(31 downto 0); -- read data for memory 'polyphase_filter_coefficients'
         axi_debug_input_width_converter_frame_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_input_width_converter_frame_count', field 'value'
         axi_debug_input_width_converter_last_frame_length_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_input_width_converter_last_frame_length', field 'value'
         axi_debug_input_width_converter_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_input_width_converter_min_max_frame_length', field 'min_frame_length'
@@ -144,10 +143,6 @@ package dvbs2_encoder_regs_pkg is
         bit_mapper_ram_wdata : std_logic_vector(31 downto 0); -- write data for memory 'bit_mapper_ram'
         bit_mapper_ram_wen : std_logic_vector(3 downto 0); -- byte-wide write-enable for memory 'bit_mapper_ram'
         bit_mapper_ram_ren : std_logic; -- read-enable for memory 'bit_mapper_ram'
-        polyphase_filter_coefficients_addr : std_logic_vector(8 downto 0); -- read/write address for memory 'polyphase_filter_coefficients'
-        polyphase_filter_coefficients_wdata : std_logic_vector(31 downto 0); -- write data for memory 'polyphase_filter_coefficients'
-        polyphase_filter_coefficients_wen : std_logic_vector(3 downto 0); -- byte-wide write-enable for memory 'polyphase_filter_coefficients'
-        polyphase_filter_coefficients_ren : std_logic; -- read-enable for memory 'polyphase_filter_coefficients'
         axi_debug_input_width_converter_cfg_strobe : std_logic; -- Strobe signal for register 'axi_debug_input_width_converter_cfg' (pulsed when the register is written from the bus}
         axi_debug_input_width_converter_cfg_block_data : std_logic_vector(0 downto 0); -- Value of register 'axi_debug_input_width_converter_cfg', field 'block_data'
         axi_debug_input_width_converter_cfg_allow_word : std_logic_vector(0 downto 0); -- Value of register 'axi_debug_input_width_converter_cfg', field 'allow_word'
@@ -214,7 +209,7 @@ package dvbs2_encoder_regs_pkg is
     end record;
 
     -- Revision number of the 'dvbs2_encoder' register map
-    constant DVBS2_ENCODER_REVISION : natural := 297;
+    constant DVBS2_ENCODER_REVISION : natural := 298;
 
     -- Default base address of the 'dvbs2_encoder' register map
     constant DVBS2_ENCODER_DEFAULT_BASEADDR : unsigned(31 downto 0) := unsigned'(x"00000000");
@@ -275,15 +270,6 @@ package dvbs2_encoder_regs_pkg is
     constant BIT_MAPPER_RAM_DATA_BIT_OFFSET : natural := 0; -- bit offset of the 'data' field
     constant BIT_MAPPER_RAM_DATA_BIT_WIDTH : natural := 32; -- bit width of the 'data' field
     constant BIT_MAPPER_RAM_DATA_RESET : std_logic_vector(31 downto 0) := std_logic_vector'("00000000000000000000000000000000"); -- reset value of the 'data' field
-
-    -- Register 'polyphase_filter_coefficients'
-    constant POLYPHASE_FILTER_COEFFICIENTS_OFFSET : unsigned(31 downto 0) := unsigned'(x"000003CC"); -- address offset of the 'polyphase_filter_coefficients' register
-    constant POLYPHASE_FILTER_COEFFICIENTS_DEPTH : natural := 512; -- depth of the 'polyphase_filter_coefficients' memory, in elements
-    constant POLYPHASE_FILTER_COEFFICIENTS_READ_LATENCY : natural := 1; -- read latency of the 'polyphase_filter_coefficients' memory, in clock cycles
-    -- Field 'polyphase_filter_coefficients.value'
-    constant POLYPHASE_FILTER_COEFFICIENTS_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field
-    constant POLYPHASE_FILTER_COEFFICIENTS_VALUE_BIT_WIDTH : natural := 32; -- bit width of the 'value' field
-    constant POLYPHASE_FILTER_COEFFICIENTS_VALUE_RESET : std_logic_vector(31 downto 0) := std_logic_vector'("00000000000000000000000000000000"); -- reset value of the 'value' field
 
     -- Register 'axi_debug_input_width_converter_cfg'
     constant AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET : unsigned(31 downto 0) := unsigned'(x"00000D00"); -- address offset of the 'axi_debug_input_width_converter_cfg' register
