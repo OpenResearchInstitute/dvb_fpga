@@ -28,6 +28,8 @@ use ieee.numeric_std.all;
 
 use work.dvb_utils_pkg.all;
 
+library fpga_cores;
+
 ------------------------
 -- Entity declaration --
 ------------------------
@@ -35,7 +37,6 @@ entity dvbs2_encoder_wrapper is
   generic (
     -- AXI streaming widths
     INPUT_DATA_WIDTH     : integer := 32;
-    INPUT_METADATA_WIDTH : integer := 8;  -- For ease of use only. Only bits 7:0 are needed/used
     IQ_WIDTH             : integer := 32
   );
   port (
@@ -67,10 +68,6 @@ entity dvbs2_encoder_wrapper is
     s_axi_bvalid      : out std_logic;
     s_axi_bready      : in  std_logic;
     s_axi_bresp       : out std_logic_vector(1 downto 0);
-    -- Input metadata for config words
-    s_metadata_tvalid : in  std_logic;
-    s_metadata_tready : out std_logic;
-    s_metadata_tdata  : in  std_logic_vector(INPUT_METADATA_WIDTH - 1 downto 0);
     -- Input data
     s_axis_tvalid     : in  std_logic;
     s_axis_tlast      : in  std_logic;
@@ -137,10 +134,6 @@ architecture rtl of dvbs2_encoder_wrapper is
   ATTRIBUTE X_INTERFACE_PARAMETER of m_axis_tlast      : SIGNAL is "CLK_DOMAIN clk";
   ATTRIBUTE X_INTERFACE_PARAMETER of m_axis_tready     : SIGNAL is "CLK_DOMAIN clk";
   ATTRIBUTE X_INTERFACE_PARAMETER of m_axis_tdata      : SIGNAL is "CLK_DOMAIN clk";
-
-  ATTRIBUTE X_INTERFACE_PARAMETER of s_metadata_tvalid : SIGNAL is "CLK_DOMAIN clk";
-  ATTRIBUTE X_INTERFACE_PARAMETER of s_metadata_tready : SIGNAL is "CLK_DOMAIN clk";
-  ATTRIBUTE X_INTERFACE_PARAMETER of s_metadata_tdata  : SIGNAL is "CLK_DOMAIN clk";
 
   -- Follow modcodes for the physical layer framer
   function decode_tid ( constant v : std_logic_vector(7 downto 0) ) return config_tuple_t is
@@ -242,25 +235,117 @@ architecture rtl of dvbs2_encoder_wrapper is
     return cfg;
   end function;
 
-  signal cfg        : config_tuple_t;
-  signal rst        : std_logic;
+  signal cfg             : config_tuple_t;
+  signal rst             : std_logic;
 
-  signal axi_tvalid : std_logic;
-  signal axi_tready : std_logic;
+  signal axi_tvalid      : std_logic;
+  signal axi_tlast       : std_logic;
+  signal axi_tready      : std_logic;
+  signal axi_tkeep       : std_logic_vector(IQ_WIDTH/8 - 1 downto 0);
+  signal axi_tdata       : std_logic_vector(IQ_WIDTH - 1 downto 0);
+
+  signal metadata_tvalid : std_logic;
+  signal metadata_tdata  : std_logic_vector(IQ_WIDTH - 1 downto 0);
+
+  signal data_tvalid     : std_logic;
+  signal data_tready     : std_logic;
+  signal data_tdata      : std_logic_vector(IQ_WIDTH - 1 downto 0);
+  signal data_tkeep      : std_logic_vector(IQ_WIDTH/8 - 1 downto 0);
+  signal data_tlast      : std_logic;
 
 begin
 
-  cfg <= decode_tid(s_metadata_tdata(7 downto 0));
+  -- Metadata takes 1 IQ_WIDTH word, so we force input data to IQ_WIDTH first to make it
+  -- easier to select only the first word. The encoder will further convert the stream to
+  -- 8 bits so we're not losing anything by the way.
+  metadata_width_converter_u : entity fpga_cores.axi_stream_width_converter
+    generic map (
+      INPUT_DATA_WIDTH    => INPUT_DATA_WIDTH,
+      OUTPUT_DATA_WIDTH   => IQ_WIDTH,
+      AXI_TID_WIDTH       => 0,
+      IGNORE_TKEEP        => False)
+    port map (
+      -- Usual ports
+      clk      => clk,
+      rst      => rst,
+      -- AXI stream input
+      s_tready => s_axis_tready,
+      s_tdata  => s_axis_tdata,
+      s_tkeep  => s_axis_tkeep,
+      s_tvalid => s_axis_tvalid,
+      s_tlast  => s_axis_tlast,
 
-  s_metadata_tready <= axi_tvalid and axi_tready and s_axis_tlast;
+      -- AXI stream output
+      m_tready => axi_tready,
+      m_tdata  => axi_tdata,
+      m_tkeep  => axi_tkeep,
+      m_tvalid => axi_tvalid,
+      m_tlast  => axi_tlast);
 
-  -- Use metadata_tvalid as a "has data flag". We only accept data when metadata has data
-  s_axis_tready <= s_metadata_tvalid and axi_tready;
-  axi_tvalid    <= s_metadata_tvalid and s_axis_tvalid;
+  demux_block : block
+    signal axi_first_word : std_logic;
+
+    signal tdata_add_in   : std_logic_vector(IQ_WIDTH + IQ_WIDTH/8 downto 0);
+    signal tdata0_agg_out : std_logic_vector(IQ_WIDTH + IQ_WIDTH/8 downto 0);
+    signal tdata1_agg_out : std_logic_vector(IQ_WIDTH + IQ_WIDTH/8 downto 0);
+  begin
+
+    demux_interface_selection_p : process(clk, rst)
+    begin
+      if rst = '1' then
+        axi_first_word <= '1';
+      elsif rising_edge(clk) then
+        if axi_tvalid = '1' and axi_tready = '1' then
+          axi_first_word <= s_axis_tlast;
+        end if;
+      end if;
+    end process;
+
+    tdata_add_in <= axi_tlast & axi_tkeep & axi_tdata;
+
+    data_tdata   <= tdata1_agg_out(IQ_WIDTH - 1 downto 0);
+    data_tkeep   <= tdata1_agg_out(IQ_WIDTH/8 + IQ_WIDTH - 1 downto IQ_WIDTH);
+    data_tlast   <= tdata1_agg_out(IQ_WIDTH/8 + IQ_WIDTH);
+
+    metadata_tdata <= tdata0_agg_out(IQ_WIDTH - 1 downto 0);
+
+    metadata_demux_u : entity fpga_cores.axi_stream_demux
+      generic map (
+        INTERFACES => 2,
+        DATA_WIDTH => IQ_WIDTH + IQ_WIDTH/8 + 1)
+      port map (
+        selection_mask(0) => axi_first_word,
+        selection_mask(1) => not axi_first_word,
+
+        s_tvalid    => axi_tvalid,
+        s_tready    => axi_tready,
+        s_tdata     => tdata_add_in,
+
+        m_tvalid(0) => metadata_tvalid,
+        m_tvalid(1) => data_tvalid,
+        m_tready(0) => '1', -- metadata as an input exists only in the wrapper, there's
+                            -- no backpressure from the encoder
+        m_tready(1) => data_tready,
+
+        m_tdata(0)  => tdata0_agg_out,
+        m_tdata(1)  => tdata1_agg_out
+      );
+  end block;
+
+  metadata_ff : process(clk, rst)
+  begin
+    if rst = '1' then
+      cfg <= (not_set, not_set, not_set);
+    elsif rising_edge(clk) then
+      if metadata_tvalid = '1' then
+        cfg <= decode_tid(metadata_tdata(7 downto 0));
+      end if;
+    end if;
+  end process;
 
   encoder_u : entity work.dvbs2_encoder
     generic map (
-      INPUT_DATA_WIDTH => INPUT_DATA_WIDTH,
+      INPUT_DATA_WIDTH => IQ_WIDTH,
       IQ_WIDTH         => IQ_WIDTH
     )
     port map (
@@ -269,7 +354,7 @@ begin
       rst             => rst,
 
       -- AXI4 lite
-      --write address channel
+      -- write address channel
       s_axi_awvalid   => s_axi_awvalid,
       s_axi_awready   => s_axi_awready,
       s_axi_awaddr    => s_axi_awaddr,
@@ -296,11 +381,11 @@ begin
       s_constellation => cfg.constellation,
       s_frame_type    => cfg.frame_type,
       s_code_rate     => cfg.code_rate,
-      s_tvalid        => axi_tvalid,
-      s_tdata         => s_axis_tdata,
-      s_tkeep         => s_axis_tkeep,
-      s_tlast         => s_axis_tlast,
-      s_tready        => axi_tready,
+      s_tvalid        => data_tvalid,
+      s_tdata         => data_tdata,
+      s_tkeep         => data_tkeep,
+      s_tlast         => data_tlast,
+      s_tready        => data_tready,
       -- AXI output
       m_tready        => m_axis_tready,
       m_tvalid        => m_axis_tvalid,
