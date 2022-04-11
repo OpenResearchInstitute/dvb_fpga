@@ -19,8 +19,6 @@
 # source, You must maintain the Source Location visible on the external case of
 # the DVB Encoder or other products you make using this source."VUnit test runner for DVB FPGA"
 
-# pylint: disable=bad-continuation
-
 import logging
 import math
 import os
@@ -133,12 +131,17 @@ class TestDefinition(
         """
         Returns the value for the 'test_cfg' string of the testbench
         """
+        # For some reason, double backslashes are stripped out on Windows, so
+        # replace them with regular forward slashes
+        test_files_path = self.test_files_path
+        if sys.platform == "win32":
+            test_files_path = test_files_path.replace("\\", "/")
         return ",".join(
             [
                 self.constellation.name,
                 self.frame_type.name,
                 self.code_rate.name,
-                self.test_files_path,
+                test_files_path,
             ]
         )
 
@@ -188,11 +191,15 @@ def _runGnuRadio(config):
         os.makedirs(config.test_files_path)
 
     try:
-        subp.check_call(command, cwd=config.test_files_path, stderr=subp.PIPE)
+        subp.check_output(command, cwd=config.test_files_path, stderr=subp.PIPE)
         with open(config.timestamp, "w") as fd:
             fd.write(time.asctime())
-    except subp.CalledProcessError:
-        _logger.exception("Failed to run %s", command)
+    except subp.CalledProcessError as exc:
+        _logger.error(
+            'Failed to generate GUN Radio data. Command used: "%s"\nResult:\n%s',
+            " ".join(map(str, command)),
+            exc.stderr.decode(),
+        )
         raise
 
 
@@ -472,11 +479,15 @@ def _getModulationTable(
                 CodeRate.C3_5: r2 / 3.70,
             }.get(code_rate, 0.0)
 
-        # TODO: Include this when changing CI's GNU Radio version to a version
-        # that includes https://github.com/gnuradio/gnuradio/commit/efe3e6c1
-        #  r0 = math.sqrt(4.0 / ((r1 * r1) + 3.0 * (r2 * r2)))
-        #  r1 = r0 * r1
-        #  r2 = r0 * r2
+        # Needed since GNU Radio 3.8 (see https://github.com/gnuradio/gnuradio/commit/efe3e6c1)
+        r0 = math.sqrt(4.0 / ((r1 * r1) + 3.0 * (r2 * r2)))
+        r1 = r0 * r1
+        r2 = r0 * r2
+
+        scaling = max(r0, r1, r2)
+        r0 = r0 / scaling
+        r1 = r1 / scaling
+        r2 = r2 / scaling
 
         return (
             (r2 * math.cos(math.pi / 4.0), r2 * math.sin(math.pi / 4.0)),
@@ -517,12 +528,18 @@ def _getModulationTable(
             CodeRate.C9_10: r1 * 2.53,
         }.get(code_rate, 0.0)
 
-        # TODO: Include this when changing CI's GNU Radio version to a version
-        # that includes https://github.com/gnuradio/gnuradio/commit/efe3e6c1
-        #  r0 = math.sqrt(8.0 / ((r1 * r1) + 3.0 * (r2 * r2) + 4.0 * (r3 * r3)))
-        #  r1 *= r0
-        #  r2 *= r0
-        #  r3 *= r0
+        # Needed since GNU Radio 3.8 (see https://github.com/gnuradio/gnuradio/commit/efe3e6c1)
+        r0 = math.sqrt(8.0 / ((r1 * r1) + 3.0 * (r2 * r2) + 4.0 * (r3 * r3)))
+        r1 *= r0
+        r2 *= r0
+        r3 *= r0
+
+        scaling = max(r0, r1, r2, r3)
+        r0 = r0 / scaling
+        r1 = r1 / scaling
+        r2 = r2 / scaling
+        r3 = r3 / scaling
+
         return (
             (r2 * math.cos(math.pi / 4.0), r2 * math.sin(math.pi / 4.0)),
             (r2 * math.cos(5 * math.pi / 12.0), r2 * math.sin(5 * math.pi / 12.0)),
@@ -615,13 +632,9 @@ def _createAuxiliaryTables():
     """
     Creates the binary LDPC table files if they don't already exist
     """
-    pool = Pool()
-
-    pool.map_async(_populateLdpcTable, TEST_CONFIGS)
-    pool.map_async(_createModulationTable, CONSTELLATION_MAPPER_CONFIGS)
-
-    pool.close()
-    pool.join()
+    with Pool() as pool:
+        pool.map(_populateLdpcTable, TEST_CONFIGS)
+        pool.map(_createModulationTable, CONSTELLATION_MAPPER_CONFIGS)
 
 
 class GhdlPragmaHandler:
@@ -673,15 +686,12 @@ def setupSources(vunit):
     library.add_source_files(p.join(ROOT, "rtl", "ldpc", "*.vhd"))
     library.add_source_files(p.join(ROOT, "third_party", "bch_generated", "*.vhd"))
     library.add_source_files(p.join(ROOT, "third_party", "airhdl", "*.vhd"))
-    testbench_files = glob(p.join(ROOT, "testbench", "*.vhd"))
+    library.add_source_files(p.join(ROOT, "testbench", "*.vhd"))
 
+    # Polyphase filter was removed from dvbs2_encoder, need to add it back
+    # somewhere
     if vunit.get_simulator_name() != "ghdl":
-        library.add_source_files(testbench_files)
         library.add_source_files(p.join(ROOT, "third_party", "polyphase_filter", "*.v"))
-    else:
-        library.add_source_files(
-            [x for x in testbench_files if p.basename(x) != "dvbs2_encoder_tb.vhd"]
-        )
 
     vunit.add_library("str_format").add_source_files(
         p.join(ROOT, "third_party", "hdl_string_format", "src", "*.vhd")
@@ -762,15 +772,10 @@ def setupTests(vunit, args):
         # Run the DVB S2 Tx testbench with a smaller sample of configs to check
         # integration, otherwise sim takes way too long. Note that when
         # --individual-config-runs is passed, all configs are added
-        if vunit.get_simulator_name() != "ghdl":
-            addAllConfigsTest(
-                entity=vunit.library("lib").entity("dvbs2_encoder_tb"),
-                configs=[
-                    x
-                    for x in PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS
-                    if x.frame_type == FrameType.FECFRAME_SHORT
-                ],
-            )
+        addAllConfigsTest(
+            entity=vunit.library("lib").entity("dvbs2_encoder_tb"),
+            configs=PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS,
+        )
 
     addAllConfigsTest(
         entity=vunit.library("lib").entity("axi_baseband_scrambler_tb"),
@@ -794,15 +799,14 @@ def setupTests(vunit, args):
                     NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
-        if vunit.get_simulator_name() != "ghdl":
-            for config in PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS:
-                vunit.library("lib").entity("dvbs2_encoder_tb").add_config(
-                    name=config.name,
-                    generics=dict(
-                        test_cfg=config.getTestConfigString(),
-                        NUMBER_OF_TEST_FRAMES=2,
-                    ),
-                )
+        for config in PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS:
+            vunit.library("lib").entity("dvbs2_encoder_tb").add_config(
+                name=config.name,
+                generics=dict(
+                    test_cfg=config.getTestConfigString(),
+                    NUMBER_OF_TEST_FRAMES=1,
+                ),
+            )
 
     else:
         addAllConfigsTest(

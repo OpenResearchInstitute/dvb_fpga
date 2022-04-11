@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_encoder' Register Component
-// Revision: 297
+// Revision: 298
 // -----------------------------------------------------------------------------
-// Generated on 2021-10-18 at 20:36 (UTC) by airhdl version 2021.09.1
+// Generated on 2022-04-06 at 18:22 (UTC) by airhdl version 2022.03.1-114
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -98,12 +98,6 @@ module dvbs2_encoder_regs #(
     logic [7:0] s_bit_mapper_ram_waddr_r;
     logic [3:0] s_bit_mapper_ram_wen_r;
     logic [31:0] s_bit_mapper_ram_wdata_r;
-    logic [8:0] s_polyphase_filter_coefficients_raddr_r;
-    logic s_polyphase_filter_coefficients_ren_r;
-    logic [31:0] s_polyphase_filter_coefficients_rdata;
-    logic [8:0] s_polyphase_filter_coefficients_waddr_r;
-    logic [3:0] s_polyphase_filter_coefficients_wen_r;
-    logic [31:0] s_polyphase_filter_coefficients_wdata_r;
     logic s_axi_debug_input_width_converter_cfg_strobe_r;
     logic [0:0] s_reg_axi_debug_input_width_converter_cfg_block_data_r;
     logic [0:0] s_reg_axi_debug_input_width_converter_cfg_allow_word_r;
@@ -239,7 +233,6 @@ module dvbs2_encoder_regs #(
     assign s_reg_ldpc_fifo_status_ldpc_fifo_full = user2regs.ldpc_fifo_status_ldpc_fifo_full;
     assign s_reg_frames_in_transit_value = user2regs.frames_in_transit_value;
     assign s_bit_mapper_ram_rdata = user2regs.bit_mapper_ram_rdata;
-    assign s_polyphase_filter_coefficients_rdata = user2regs.polyphase_filter_coefficients_rdata;
     assign s_reg_axi_debug_input_width_converter_frame_count_value = user2regs.axi_debug_input_width_converter_frame_count_value;
     assign s_reg_axi_debug_input_width_converter_last_frame_length_value = user2regs.axi_debug_input_width_converter_last_frame_length_value;
     assign s_reg_axi_debug_input_width_converter_min_max_frame_length_min_frame_length = user2regs.axi_debug_input_width_converter_min_max_frame_length_min_frame_length;
@@ -340,8 +333,6 @@ module dvbs2_encoder_regs #(
             s_frames_in_transit_strobe_r <= '0;
             s_bit_mapper_ram_raddr_r <= '0;
             s_bit_mapper_ram_ren_r <= 0;
-            s_polyphase_filter_coefficients_raddr_r <= '0;
-            s_polyphase_filter_coefficients_ren_r <= 0;
             s_axi_debug_input_width_converter_frame_count_strobe_r <= '0;
             s_axi_debug_input_width_converter_last_frame_length_strobe_r <= '0;
             s_axi_debug_input_width_converter_min_max_frame_length_strobe_r <= '0;
@@ -383,7 +374,6 @@ module dvbs2_encoder_regs #(
             s_ldpc_fifo_status_strobe_r <= '0;
             s_frames_in_transit_strobe_r <= '0;
             s_bit_mapper_ram_raddr_r <= '0;
-            s_polyphase_filter_coefficients_raddr_r <= '0;
             s_axi_debug_input_width_converter_frame_count_strobe_r <= '0;
             s_axi_debug_input_width_converter_last_frame_length_strobe_r <= '0;
             s_axi_debug_input_width_converter_min_max_frame_length_strobe_r <= '0;
@@ -473,17 +463,6 @@ module dvbs2_encoder_regs #(
                         s_bit_mapper_ram_raddr_r <= v_mem_addr[9:2]; // output address has 4-byte granularity
                         s_bit_mapper_ram_ren_r <= 1;
                         v_mem_wait_count_r <= dvbs2_encoder_regs_pkg::BIT_MAPPER_RAM_READ_LATENCY;
-                        v_state_r <= WAIT_MEMORY_RDATA;
-                    end
-                    // memory 'polyphase_filter_coefficients' at address offset 0x3CC
-                    if (s_axi_araddr_reg_r >= BASEADDR + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET &&
-                        s_axi_araddr_reg_r < BASEADDR + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_DEPTH * 4) begin
-                        v_addr_hit = 1'b1;
-                        // generate memory read address:
-                        v_mem_addr = s_axi_araddr_reg_r - BASEADDR - dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET;
-                        s_polyphase_filter_coefficients_raddr_r <= v_mem_addr[10:2]; // output address has 4-byte granularity
-                        s_polyphase_filter_coefficients_ren_r <= 1;
-                        v_mem_wait_count_r <= dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_READ_LATENCY;
                         v_state_r <= WAIT_MEMORY_RDATA;
                     end
                     // register 'axi_debug_input_width_converter_cfg' at address offset 0xD00
@@ -835,12 +814,6 @@ module dvbs2_encoder_regs #(
                             v_rdata_r[31:0] <= s_bit_mapper_ram_rdata[31:0];
                             s_bit_mapper_ram_ren_r <= 0;
                         end
-                        // memory 'polyphase_filter_coefficients' at address offset 0x3CC
-                        if (s_axi_araddr_reg_r >= BASEADDR + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET &&
-                            s_axi_araddr_reg_r < BASEADDR + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_DEPTH * 4) begin
-                            v_rdata_r[31:0] <= s_polyphase_filter_coefficients_rdata[31:0];
-                            s_polyphase_filter_coefficients_ren_r <= 0;
-                        end
                         v_state_r <= READ_RESPONSE;
                     end else begin
                         v_mem_wait_count_r <= v_mem_wait_count_r - 1;
@@ -905,9 +878,6 @@ module dvbs2_encoder_regs #(
             s_bit_mapper_ram_waddr_r <= '0;
             s_bit_mapper_ram_wen_r <= '0;
             s_bit_mapper_ram_wdata_r <= '0;
-            s_polyphase_filter_coefficients_waddr_r <= '0;
-            s_polyphase_filter_coefficients_wen_r <= '0;
-            s_polyphase_filter_coefficients_wdata_r <= '0;
             s_axi_debug_input_width_converter_cfg_strobe_r <= '0;
             s_reg_axi_debug_input_width_converter_cfg_block_data_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_BLOCK_DATA_RESET;
             s_reg_axi_debug_input_width_converter_cfg_allow_word_r <= dvbs2_encoder_regs_pkg::AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_ALLOW_WORD_RESET;
@@ -944,8 +914,6 @@ module dvbs2_encoder_regs #(
             s_config_strobe_r <= '0;
             s_bit_mapper_ram_waddr_r <= '0; // always reset to zero because of wired OR
             s_bit_mapper_ram_wen_r <= '0;
-            s_polyphase_filter_coefficients_waddr_r <= '0; // always reset to zero because of wired OR
-            s_polyphase_filter_coefficients_wen_r <= '0;
             s_axi_debug_input_width_converter_cfg_strobe_r <= '0;
             s_axi_debug_bb_scrambler_cfg_strobe_r <= '0;
             s_axi_debug_bch_encoder_cfg_strobe_r <= '0;
@@ -1109,16 +1077,6 @@ module dvbs2_encoder_regs #(
                         s_bit_mapper_ram_waddr_r <= v_mem_addr[9:2]; // output address has 4-byte granularity
                         s_bit_mapper_ram_wen_r <= s_axi_wstrb_reg_r;
                         s_bit_mapper_ram_wdata_r <= s_axi_wdata_reg_r;
-                    end
-
-                    // memory 'polyphase_filter_coefficients' at address offset 0x3CC
-                    if (s_axi_awaddr_reg_r >= BASEADDR + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET &&
-                        s_axi_awaddr_reg_r < BASEADDR + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET + dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_DEPTH * 4) begin
-                        v_addr_hit = 1'b1;
-                        v_mem_addr = s_axi_awaddr_reg_r - BASEADDR - dvbs2_encoder_regs_pkg::POLYPHASE_FILTER_COEFFICIENTS_OFFSET;
-                        s_polyphase_filter_coefficients_waddr_r <= v_mem_addr[10:2]; // output address has 4-byte granularity
-                        s_polyphase_filter_coefficients_wen_r <= s_axi_wstrb_reg_r;
-                        s_polyphase_filter_coefficients_wdata_r <= s_axi_wdata_reg_r;
                     end
 
                     // register 'axi_debug_input_width_converter_cfg' at address offset 0xD00
@@ -1328,10 +1286,6 @@ module dvbs2_encoder_regs #(
     assign regs2user.bit_mapper_ram_wen = s_bit_mapper_ram_wen_r;
     assign regs2user.bit_mapper_ram_wdata = s_bit_mapper_ram_wdata_r;
     assign regs2user.bit_mapper_ram_ren = s_bit_mapper_ram_ren_r;
-    assign regs2user.polyphase_filter_coefficients_addr = s_polyphase_filter_coefficients_waddr_r | s_polyphase_filter_coefficients_raddr_r; // using wired OR as read/write address multiplexer
-    assign regs2user.polyphase_filter_coefficients_wen = s_polyphase_filter_coefficients_wen_r;
-    assign regs2user.polyphase_filter_coefficients_wdata = s_polyphase_filter_coefficients_wdata_r;
-    assign regs2user.polyphase_filter_coefficients_ren = s_polyphase_filter_coefficients_ren_r;
     assign regs2user.axi_debug_input_width_converter_cfg_strobe = s_axi_debug_input_width_converter_cfg_strobe_r;
     assign regs2user.axi_debug_input_width_converter_cfg_block_data = s_reg_axi_debug_input_width_converter_cfg_block_data_r;
     assign regs2user.axi_debug_input_width_converter_cfg_allow_word = s_reg_axi_debug_input_width_converter_cfg_allow_word_r;

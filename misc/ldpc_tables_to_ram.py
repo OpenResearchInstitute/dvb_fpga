@@ -17,7 +17,8 @@
 #
 # As per CERN-OHL-W v2 section 4.1, should You produce hardware based on this
 # source, You must maintain the Source Location visible on the external case of
-# the DVB Encoder or other products you make using this source."""
+# the DVB Encoder or other products you make using this source.
+"""
 Simple script to generate a VHDL package with the LDPC tables. Used tables from
 https://github.com/aicodix/tables
 """

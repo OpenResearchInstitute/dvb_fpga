@@ -27,12 +27,13 @@
                 <dl class="dl-horizontal">
                     <dt><strong>Description</strong></dt><dd>n/a</dd>
                     <dt><strong>Default base address</strong></dt><dd style="font-family:monospace;">0x0</dd>
-                    <dt><strong>Register Width</strong></dt><dd>32 bits</dd>
-                    <dt><strong>Register Count</strong></dt><dd>47</dd>
+                    <dt><strong>Register width</strong></dt><dd>32 bits</dd>
+                    <dt><strong>Default address width</strong></dt><dd>32 bits</dd>
+                    <dt><strong>Register count</strong></dt><dd>46</dd>
                     <dt>Range</dt>
                     <dd>4888 bytes
                     </dd>
-                    <dt><strong>Revision</strong></dt><dd>297</dd>
+                    <dt><strong>Revision</strong></dt><dd>298</dd>
                 </dl>
 <a id="OVERVIEW"></a>
                 <h3 class="page-header">Overview</h3>
@@ -76,12 +77,6 @@
 - 0x0C - 0x1B: 16APSK map
 - 0x1C - 0x3B: 32APSK map</td>
                             <td style="font-family: monospace;">MEM[240]</td>
-                        </tr>
-                        <tr onclick="window.location='#REG@polyphase_filter_coefficients';">
-                            <td style="font-family: monospace; padding-left: 2em;">0x3CC</td>
-                            <td>polyphase_filter_coefficients</td>
-                            <td>Depth needs to match polyphase_filter&#39;s NUMBER_TAPS</td>
-                            <td style="font-family: monospace;">MEM[512]</td>
                         </tr>
                         <tr onclick="window.location='#REG@axi_debug_input_width_converter_cfg';">
                             <td style="font-family: monospace; padding-left: 2em;">0xD00</td>
@@ -499,32 +494,6 @@
 <li>0x0C - 0x1B: 16APSK map</li>
 <li>0x1C - 0x3B: 32APSK map</li>
 </ul>
-
-                        </td>
-                        <td>
-                            &nbsp;
-                        </td>
-                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                        </td>
-                    </tr>
-                </table>
-</div>
-<a id="REG@polyphase_filter_coefficients"></a>
-<div class="panel panel-default">
-                <table class="table">
-                    <tr class="active">
-                        <td colspan="3"><span class="lead"><strong>polyphase_filter_coefficients&nbsp;</span></strong><br/>Depth needs to match polyphase_filter&#39;s NUMBER_TAPS</td>
-                        <td colspan="2" style="font-family:monospace;">
-                            Memory
-                            (depth: 512, read latency: 1)
-                            <br/>Offset: 0x3CC
-                            <br/>Access: READ_WRITE
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-right" style="font-family:monospace; width:4em;">[31:0]</td>
-                        <td><strong>value</strong><br/>
-                        <p>Depth needs to match polyphase_filter's NUMBER_TAPS</p>
 
                         </td>
                         <td>
@@ -1981,7 +1950,7 @@
         </div>
         <div class="row">
             <div class="col-md-offset-3 col-md-6">
-                <p class="text-center" style="padding-top:1em; color:#888;">Generated on 2021-10-18 at 20:36 (UTC) by airhdl version 2021.09.1</p>
+                <p class="text-center" style="padding-top:1em; color:#888;">Generated on 2022-04-06 at 18:22 (UTC) by airhdl version 2022.03.1-114</p>
             </div>
         </div>
     </body>

@@ -170,10 +170,11 @@ begin
   -- Processes --
   ---------------
   main : process
-    constant self           : actor_t := new_actor("main");
-    variable file_reader    : file_reader_t := new_file_reader("axi_file_reader_u");
-    variable file_checker   : file_reader_t := new_file_reader("axi_file_compare_u");
-    variable tid_rand_gen   : RandomPType;
+    constant self         : actor_t := new_actor("main");
+    variable file_reader  : file_reader_t := new_file_reader("axi_file_reader_u");
+    variable file_checker : file_reader_t := new_file_reader("axi_file_compare_u");
+    variable tid_rand_gen : RandomPType;
+    variable rand         : RandomPType;
     ------------------------------------------------------------------------------------
     procedure walk(constant steps : natural) is
     begin
@@ -195,7 +196,7 @@ begin
       info(" - data path      : " & data_path);
 
       for i in 0 to number_of_frames - 1 loop
-        read_file(net, file_reader, data_path & "/bb_header_output_packed.bin", tid => tid_rand_gen.RandSlv(TID_WIDTH));
+        read_file(net, file_reader, data_path & "/input_data_packed.bin", tid => tid_rand_gen.RandSlv(TID_WIDTH));
         read_file(net, file_checker, data_path & "/bb_scrambler_output_packed.bin");
       end loop;
 
@@ -237,28 +238,26 @@ begin
         wait_for_transfers;
 
       elsif run("slow_master") then
-        tvalid_probability <= 0.5;
-        tready_probability <= 1.0;
-
         for i in configs'range loop
+          tvalid_probability <= rand.RandReal(0.1, 0.9);
+          tready_probability <= 1.0;
+
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
         wait_for_transfers;
 
       elsif run("slow_slave") then
-        tvalid_probability <= 1.0;
-        tready_probability <= 0.5;
-
         for i in configs'range loop
+          tvalid_probability <= 1.0;
+          tready_probability <= rand.RandReal(0.1, 0.9);
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
         wait_for_transfers;
 
       elsif run("both_slow") then
-        tvalid_probability <= 0.75;
-        tready_probability <= 0.75;
-
         for i in configs'range loop
+          tvalid_probability <= rand.RandReal(0.5, 0.9);
+          tready_probability <= rand.RandReal(0.5, 0.9);
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
         wait_for_transfers;

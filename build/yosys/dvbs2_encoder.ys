@@ -25,6 +25,8 @@ ghdl --std=08                                                                  \
                     third_party/fpga_cores/src/synchronizer.vhd                \
                     third_party/fpga_cores/src/axi_pkg.vhd                     \
                     third_party/fpga_cores/src/axi_stream_debug.vhd            \
+                    third_party/fpga_cores/src/axi_stream_frame_slicer.vhd     \
+                    third_party/fpga_cores/src/axi_stream_frame_padder.vhd     \
                     third_party/fpga_cores/src/sr_delay.vhd                    \
                     third_party/fpga_cores/src/skidbuffer.vhd                  \
                     third_party/fpga_cores/src/ram_inference_dport.vhd         \
@@ -65,6 +67,7 @@ ghdl --std=08                                                                  \
                     rtl/axi_constellation_mapper.vhd                           \
                     rtl/axi_physical_layer_framer.vhd                          \
                     rtl/axi_physical_layer_scrambler.vhd                       \
+                    rtl/axi_bbframe_length_enforcer.vhd                        \
                     rtl/dvb_utils_pkg.vhd                                      \
                     rtl/bch_encoder_mux.vhd                                    \
                     rtl/axi_ldpc_table.vhd                                     \

@@ -17,7 +17,7 @@ jobs:
       - name: Get submodules
         run: git submodule update --init --recursive
       - name: Get Docker image
-        run: docker pull suoto/dvb_fpga_ci
+        run: docker pull suoto/dvb_fpga_ci:3.8
       - name: Run unit tests
         run: misc/run_tests.sh --num-threads 4
 

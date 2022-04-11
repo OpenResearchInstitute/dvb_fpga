@@ -17,12 +17,12 @@
 # As per CERN-OHL-W v2 section 4.1, should You produce hardware based on this
 # source, You must maintain the Source Location visible on the external case of
 # the DVB Encoder or other products you make using this source.
-FROM ghdl/vunit:llvm
+FROM alpine:edge
 
-ENV DEBIAN_FRONTEND noninteractive
+RUN echo https://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories
+RUN apk add --no-cache     \
+    gnuradio=3.9.4.0-r3    \
+    py3-pip=21.3.1-r0   && \
+    pip install --no-cache-dir vunit-hdl==4.6.0
 
-RUN apt-get update -qq                                                && \
-    apt-get install -y --no-install-recommends gnuradio=3.7.13.4-4+b1 && \
-    apt-get clean                                                     && \
-    apt-get autoclean                                                 && \
-    rm -rf /var/lib/apt/lists/*
+WORKDIR /project

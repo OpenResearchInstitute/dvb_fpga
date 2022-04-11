@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # DVB FPGA
@@ -26,14 +26,12 @@
 ##################################################
 
 
-from optparse import OptionParser
-
-import numpy
+from argparse import ArgumentParser
 
 # pylint: disable=import-error
 import gnuradio  # type: ignore
+import numpy  # type: ignore
 from gnuradio import blocks, dtv, gr  # type: ignore
-from gnuradio.eng_option import eng_option  # type: ignore
 
 # pylint: enable=import-error
 
@@ -91,6 +89,31 @@ PLFRAME_SLOT_NUMBER = {
     (dtv.FECFRAME_NORMAL, dtv.MOD_32APSK): 144,
 }
 
+MODULATOR_OUTPUT_SCALING_FACTOR = {
+    (dtv.FECFRAME_NORMAL, dtv.MOD_16APSK, dtv.C2_3): 1.1357805960496432,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_16APSK, dtv.C3_4): 1.1317122612043418,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_16APSK, dtv.C3_5): 1.1408944401668009,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_16APSK, dtv.C4_5): 1.130064093262531,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_16APSK, dtv.C5_6): 1.1291735004211465,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_16APSK, dtv.C8_9): 1.127242960381356,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_16APSK, dtv.C9_10): 1.126621516078321,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_32APSK, dtv.C3_4): 1.2768096671118951,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_32APSK, dtv.C4_5): 1.2677026999872547,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_32APSK, dtv.C5_6): 1.2626890498906358,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_32APSK, dtv.C8_9): 1.2542139595410673,
+    (dtv.FECFRAME_NORMAL, dtv.MOD_32APSK, dtv.C9_10): 1.253354710666101,
+    (dtv.FECFRAME_SHORT, dtv.MOD_16APSK, dtv.C2_3): 1.1357805960496432,
+    (dtv.FECFRAME_SHORT, dtv.MOD_16APSK, dtv.C3_4): 1.1317122612043418,
+    (dtv.FECFRAME_SHORT, dtv.MOD_16APSK, dtv.C3_5): 1.1408944401668009,
+    (dtv.FECFRAME_SHORT, dtv.MOD_16APSK, dtv.C4_5): 1.130064093262531,
+    (dtv.FECFRAME_SHORT, dtv.MOD_16APSK, dtv.C5_6): 1.1291735004211465,
+    (dtv.FECFRAME_SHORT, dtv.MOD_16APSK, dtv.C8_9): 1.127242960381356,
+    (dtv.FECFRAME_SHORT, dtv.MOD_32APSK, dtv.C3_4): 1.2768096671118951,
+    (dtv.FECFRAME_SHORT, dtv.MOD_32APSK, dtv.C4_5): 1.2677026999872547,
+    (dtv.FECFRAME_SHORT, dtv.MOD_32APSK, dtv.C5_6): 1.2626890498906358,
+    (dtv.FECFRAME_SHORT, dtv.MOD_32APSK, dtv.C8_9): 1.2542139595410673,
+}
+
 
 def get_ratio(constellation):
     ratio = None
@@ -119,6 +142,7 @@ class UnknownFrameLength(Exception):
 
         self.frame_type = frame_type
         self.code_rate = code_rate
+        super().__init__()
 
     def __str__(self):
         return "Could not get frame length for {}, {}".format(
@@ -133,21 +157,12 @@ class dvbs2_encoder(gr.top_block):
         ##################################################
         # Parameters
         ##################################################
-        # Header is 10 bytes
-        try:
-            frame_length = 1.0 * BBFRAME_LENGTH[frame_type][code_rate] - 80
-        except KeyError:
-            raise UnknownFrameLength(frame_type, code_rate)
-
-        #  print("Base frame length: %s" % frame_length)
+        frame_length = 1.0 * BBFRAME_LENGTH[frame_type][code_rate]
         frame_length /= 8
-        #  print("Base frame length: %s" % frame_length)
         assert (
             int(frame_length) == 1.0 * frame_length
-        ), "Frame length {0} won't work because {0}/8 = {1}!".format(
-            frame_length, frame_length / 8.0
-        )
-        frame_length = int(frame_length)
+        ), f"Frame length {frame_length} won't work because {frame_length}/8 = {frame_length/8}!"
+        frame_length = 4 * int(frame_length)
         self.frame_length = frame_length
 
         bits_per_input, bits_per_output = get_ratio(constellation)
@@ -161,9 +176,6 @@ class dvbs2_encoder(gr.top_block):
         self.taps = taps = 32
         self.samp_rate = samp_rate = symbol_rate * 2
         self.rolloff = rolloff = 0.2
-        self.noise = noise = 0
-        self.gain = gain = 1
-        self.center_freq = center_freq = 1280e6
 
         self.physical_layer_gold_code = physical_layer_gold_code = 0
         self.physical_layer_header_length = physical_layer_header_length = 90
@@ -177,7 +189,6 @@ class dvbs2_encoder(gr.top_block):
         self.plframe_pilots_on_no_stuffing = blocks.keep_m_in_n(
             gr.sizeof_gr_complex, 1, 2, 0
         )
-        self.organize = blocks.multiply_const_vcc((1,))
         self.ldpc_encoder_input = blocks.file_sink(
             gr.sizeof_char * 1, "ldpc_encoder_input.bin", False
         )
@@ -235,16 +246,6 @@ class dvbs2_encoder(gr.top_block):
         self.baseband_scrambler = dtv.dvb_bbscrambler_bb(
             dtv.STANDARD_DVBS2, frame_type, code_rate
         )
-        self.baseband_header = dtv.dvb_bbheader_bb(
-            dtv.STANDARD_DVBS2,
-            frame_type,
-            code_rate,
-            dtv.RO_0_20,
-            dtv.INPUTMODE_NORMAL,
-            dtv.INBAND_OFF,
-            168,
-            4000000,
-        )
         self.bit_interleaver_output = blocks.file_sink(
             gr.sizeof_char * 1, "bit_interleaver_output.bin", False
         )
@@ -257,13 +258,21 @@ class dvbs2_encoder(gr.top_block):
             gr.sizeof_char * 1, "bch_encoder_input.bin", False
         )
         self.bch_encoder_input.set_unbuffered(False)
-        self.bb_scrambler_input_0 = blocks.file_sink(
-            gr.sizeof_char * 1, "bb_scrambler_input.bin", False
+
+        self.input_data_packed_sink = blocks.file_sink(
+            gr.sizeof_char * 1, "input_data_packed.bin", False
         )
-        self.bb_scrambler_input_0.set_unbuffered(False)
+        self.input_data_packed_sink.set_unbuffered(False)
+
+        self.input_data_unpacked_sink = blocks.file_sink(
+            gr.sizeof_char * 1, "input_data_unpacked.bin", False
+        )
+        self.input_data_unpacked_sink.set_unbuffered(False)
+
         self.analog_random_source_x_0 = blocks.vector_source_b(
-            map(int, numpy.random.randint(0, 255, self.frame_length)), False
+            list(map(int, numpy.random.randint(0, 255, self.frame_length))), False
         )
+
         # Create filter coefficients and apply to the FIR filters. We'll also
         # dump that into a file so the VHDL sim picks it up
         filter_coefficients = list(
@@ -272,11 +281,11 @@ class dvbs2_encoder(gr.top_block):
             )
         )
         self.fft_filter_pilots_on = gnuradio.filter.fft_filter_ccc(
-            1, filter_coefficients, 1,
+            1, filter_coefficients, 1
         )
         self.fft_filter_pilots_on.declare_sample_delay(0)
         self.fft_filter_pilots_off = gnuradio.filter.fft_filter_ccc(
-            1, filter_coefficients, 1,
+            1, filter_coefficients, 1
         )
         self.fft_filter_pilots_off.declare_sample_delay(0)
 
@@ -285,23 +294,43 @@ class dvbs2_encoder(gr.top_block):
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.analog_random_source_x_0, 0), (self.baseband_header, 0))
-        self.connect((self.baseband_header, 0), (self.bb_scrambler_input_0, 0))
-        self.connect((self.baseband_header, 0), (self.baseband_scrambler, 0))
+        input_data_repack = blocks.repack_bits_bb(8, 1, "", False, gr.GR_MSB_FIRST)
+        self.connect((self.analog_random_source_x_0, 0), (input_data_repack, 0))
+        self.connect(
+            (self.analog_random_source_x_0, 0),
+            (self.input_data_packed_sink, 0),
+        )
+
+        self.connect((input_data_repack, 0), (self.baseband_scrambler, 0))
+        self.connect((input_data_repack, 0), (self.input_data_unpacked_sink, 0))
+
         self.connect((self.baseband_scrambler, 0), (self.bch_encoder_input, 0))
         self.connect((self.baseband_scrambler, 0), (self.bch_encoder, 0))
+
         self.connect((self.bch_encoder, 0), (self.ldpc_encoder, 0))
         self.connect((self.bch_encoder, 0), (self.ldpc_encoder_input, 0))
         self.connect((self.ldpc_encoder, 0), (self.bit_interleaver_input, 0))
         self.connect((self.ldpc_encoder, 0), (self.bit_interleaver, 0))
         self.connect((self.bit_interleaver, 0), (self.bit_interleaver_output, 0))
         self.connect((self.bit_interleaver, 0), (self.dtv_dvbs2_modulator_bc_0, 0))
+
+        # In GNU Radio 3.8 and later, the DVB-S2 modulator bit mapping produces
+        # values above 1.0 but in the encoder the constellation mapping uses
+        # [-1, 1) so we rescale the output to fit that range
+        modulator_scaling_factor = MODULATOR_OUTPUT_SCALING_FACTOR.get(
+            (self.frame_type, self.constellation, code_rate), 1.0
+        )
+        modulator_scaled_output = blocks.multiply_const_vcc(
+            (1.0 / modulator_scaling_factor,)
+        )
+
+        self.connect((self.dtv_dvbs2_modulator_bc_0, 0), (modulator_scaled_output, 0))
+
         self.dumpComplexAndFixedPoint(
-            source=self.dtv_dvbs2_modulator_bc_0,
+            source=modulator_scaled_output,
             basename="bit_mapper_output",
             size=gr.sizeof_short,
         )
-        self.connect((self.dtv_dvbs2_modulator_bc_0, 0), (self.organize, 0))
         self.connect(
             (self.physical_layer_framer_pilots_off, 0),
             (self.plframe_pilots_off_no_stuffing, 0),
@@ -310,8 +339,12 @@ class dvbs2_encoder(gr.top_block):
             (self.physical_layer_framer_pilots_on, 0),
             (self.plframe_pilots_on_no_stuffing, 0),
         )
-        self.connect((self.organize, 0), (self.physical_layer_framer_pilots_off, 0))
-        self.connect((self.organize, 0), (self.physical_layer_framer_pilots_on, 0))
+        self.connect(
+            (modulator_scaled_output, 0), (self.physical_layer_framer_pilots_off, 0)
+        )
+        self.connect(
+            (modulator_scaled_output, 0), (self.physical_layer_framer_pilots_on, 0)
+        )
         self.connect(
             (self.plframe_pilots_off_no_stuffing, 0),
             (self.plframe_header_pilots_off, 0),
@@ -321,20 +354,22 @@ class dvbs2_encoder(gr.top_block):
             (self.plframe_payload_pilots_off, 0),
         )
         self.connect(
-            (self.plframe_pilots_on_no_stuffing, 0), (self.plframe_header_pilots_on, 0),
+            (self.plframe_pilots_on_no_stuffing, 0),
+            (self.plframe_header_pilots_on, 0),
         )
         self.connect(
             (self.plframe_pilots_on_no_stuffing, 0),
             (self.plframe_payload_pilots_on, 0),
         )
         self.connect(
-            (self.physical_layer_framer_pilots_on, 0), (self.fft_filter_pilots_on, 0),
+            (self.physical_layer_framer_pilots_on, 0),
+            (self.fft_filter_pilots_on, 0),
         )
         self.connect(
-            (self.physical_layer_framer_pilots_off, 0), (self.fft_filter_pilots_off, 0),
+            (self.physical_layer_framer_pilots_off, 0),
+            (self.fft_filter_pilots_off, 0),
         )
 
-        self.repackAndDump(self.baseband_header, "bb_header_output_packed.bin", (1, 8))
         self.repackAndDump(
             self.baseband_scrambler, "bb_scrambler_output_packed.bin", (1, 8)
         )
@@ -440,24 +475,6 @@ class dvbs2_encoder(gr.top_block):
             return length + ((slots - 1) // 16)
         return length
 
-    def get_noise(self):
-        return self.noise
-
-    def set_noise(self, noise):
-        self.noise = noise
-
-    def get_gain(self):
-        return self.gain
-
-    def set_gain(self, gain):
-        self.gain = gain
-
-    def get_center_freq(self):
-        return self.center_freq
-
-    def set_center_freq(self, center_freq):
-        self.center_freq = center_freq
-
     def dumpComplexAndFixedPoint(self, source, basename, size):
         sink_complex = blocks.file_sink(
             gr.sizeof_gr_complex * 1, basename + "_floating_point.bin", False
@@ -493,18 +510,18 @@ class dvbs2_encoder(gr.top_block):
 
 
 def argument_parser():
-    parser = OptionParser(usage="%prog: [options]", option_class=eng_option)
-    parser.add_option(
+    parser = ArgumentParser()
+    parser.add_argument(
         "--frame-type",
         default="FECFRAME_NORMAL",
         choices=("FECFRAME_NORMAL", "FECFRAME_SHORT"),
     )
-    parser.add_option(
+    parser.add_argument(
         "--constellation",
         default="MOD_8PSK",
         choices=("MOD_QPSK", "MOD_8PSK", "MOD_16APSK", "MOD_32APSK"),
     )
-    parser.add_option(
+    parser.add_argument(
         "--code-rate",
         default="C1_2",
         choices=(
@@ -522,7 +539,7 @@ def argument_parser():
         ),
     )
 
-    args, _ = parser.parse_args()
+    args = parser.parse_args()
 
     args.frame_type = getattr(dtv, args.frame_type)
     args.constellation = getattr(dtv, args.constellation)
@@ -540,7 +557,6 @@ def writeCoefficientsToFile(data):
 def main(top_block_cls=dvbs2_encoder, options=None):
     args = argument_parser()
 
-    #  def __init__(self, constellation, frame_type, code_rate):
     tb = top_block_cls(
         constellation=args.constellation,
         frame_type=args.frame_type,

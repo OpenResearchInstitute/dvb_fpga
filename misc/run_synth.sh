@@ -23,36 +23,11 @@ set -e
 PATH_TO_REPO=$(git rev-parse --show-toplevel)
 CONTAINER="ghdl/synth:beta"
 
-# This will be run inside the container
-RUN_COMMAND="
-set -e
-
-PATH_TO_THIS_SCRIPT=\$(readlink -f \"\$(dirname \$0)\")
-
-pushd \$PATH_TO_THIS_SCRIPT/..
-
-addgroup $USER --gid $(id -g) > /dev/null 2>&1
-
-adduser --disabled-password \
-  --gid $(id -g)            \
-  --uid $UID                \
-  --home /home/$USER $USER > /dev/null 2>&1
-
-# Run test with GHDL
-su -l $USER -c \"                                                 \
-  cd /project                                                  && \
-  echo \\\"$ yosys -m ghdl build/yosys/dvbs2_encoder.ys $*\\\" && \
-  yosys -m ghdl build/yosys/dvbs2_encoder.ys $*\"
-"
-
-# Need to add some variables so that uploading coverage from witihin the
-# container to codecov works
-docker run                                                 \
-  --rm                                                     \
-  --mount type=bind,source="$PATH_TO_REPO",target=/project \
-  --net=host                                               \
-  --env="TERM"                                             \
-  --env="DISPLAY"                                          \
-  --volume="$HOME/.Xauthority:/root/.Xauthority:rw"        \
-  $CONTAINER /bin/bash -c "$RUN_COMMAND"
-
+docker run                                                    \
+  --rm                                                        \
+  --user "$(id -u)":"$(id -g)"                                \
+  -v "${PATH_TO_REPO}":/project                               \
+  $CONTAINER                                                  \
+  /bin/sh -c "cd /project                                  && \
+  echo \"$ yosys -m ghdl build/yosys/dvbs2_encoder.ys $*\" && \
+  yosys -m ghdl build/yosys/dvbs2_encoder.ys $*"

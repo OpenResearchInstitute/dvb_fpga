@@ -341,8 +341,8 @@ begin
             "TLAST error in frame %d, word %d: Expected %r but got %r",
             fo(frame_cnt),
             fo(word_cnt),
-            fo(to_boolean(m_tlast)),
-            fo(to_boolean(s_tlast))
+            std_logic'image(m_tlast),
+            std_logic'image(s_tlast)
           )
         );
         tlast_error_cnt_i <= tlast_error_cnt_i + 1;
