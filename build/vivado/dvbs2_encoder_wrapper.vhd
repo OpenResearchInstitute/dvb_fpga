@@ -229,7 +229,10 @@ architecture rtl of dvbs2_encoder_wrapper is
       when 16#55# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C5_6);
       when 16#56# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C8_9);
       when 16#57# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C9_10);
-      when others => cfg := (frame_type => not_set, constellation => not_set, code_rate => not_set);
+      when others =>
+        cfg := (not_set, not_set, not_set);
+        report "Unable to decode TID: " & integer'image(to_integer(unsigned(v)))
+        severity Failure;
     end case;
 
     return cfg;
@@ -296,7 +299,7 @@ begin
         axi_first_word <= '1';
       elsif rising_edge(clk) then
         if axi_tvalid = '1' and axi_tready = '1' then
-          axi_first_word <= s_axis_tlast;
+          axi_first_word <= axi_tlast;
         end if;
       end if;
     end process;
