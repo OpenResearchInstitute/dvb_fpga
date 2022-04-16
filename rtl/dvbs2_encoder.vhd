@@ -141,7 +141,6 @@ architecture dvbs2_encoder of dvbs2_encoder is
   signal arbiter_out          : data_and_config_t(tdata(7 downto 0));
   signal constellation_mapper : data_and_config_t(tdata(IQ_WIDTH - 1 downto 0));
   signal pl_frame             : data_and_config_t(tdata(IQ_WIDTH - 1 downto 0));
-  signal pl_frame_dbg         : data_and_config_t(tdata(IQ_WIDTH - 1 downto 0));
 
   -- Output byte swapped endianness
   signal m_tdata_i            : std_logic_vector(IQ_WIDTH - 1 downto 0);
@@ -787,50 +786,6 @@ begin
       s_tlast                    => pl_frame.tlast,
       s_tdata                    => pl_frame.tdata,
       s_tid                      => pl_frame.tid,
-      -- AXI output
-      m_tready                   => pl_frame_dbg.tready,
-      m_tvalid                   => pl_frame_dbg.tvalid,
-      m_tlast                    => pl_frame_dbg.tlast,
-      m_tdata                    => pl_frame_dbg.tdata,
-      m_tid                      => pl_frame_dbg.tid);
-
-  output_dbg_u : entity fpga_cores.axi_stream_debug
-    generic map (
-      TDATA_WIDTH        => IQ_WIDTH,
-      TID_WIDTH          => ENCODED_CONFIG_WIDTH,
-      FRAME_COUNT_WIDTH  => FRAME_COUNT_WIDTH,
-      FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
-    port map (
-      -- Usual ports
-      clk                        => clk,
-      rst                        => rst,
-      -- Control and status
-      cfg.block_data             => regs2user.axi_debug_output_cfg_block_data(0),
-      cfg.allow_word             => regs2user.axi_debug_output_cfg_allow_word(0),
-      cfg.allow_frame            => regs2user.axi_debug_output_cfg_allow_frame(0),
-
-      cfg.clear_max_frame_length => regs2user.axi_debug_output_min_max_frame_length_strobe,
-      cfg.clear_min_frame_length => regs2user.axi_debug_output_min_max_frame_length_strobe,
-      cfg.clear_s_tvalid         => regs2user.axi_debug_output_strobes_strobe,
-      cfg.clear_s_tready         => regs2user.axi_debug_output_strobes_strobe,
-      cfg.clear_m_tvalid         => regs2user.axi_debug_output_strobes_strobe,
-      cfg.clear_m_tready         => regs2user.axi_debug_output_strobes_strobe,
-
-      sts.frame_count            => user2regs.axi_debug_output_frame_count_value,
-      sts.word_count             => user2regs.axi_debug_output_word_count_value,
-      sts.s_tvalid               => user2regs.axi_debug_output_strobes_s_tvalid(0),
-      sts.s_tready               => user2regs.axi_debug_output_strobes_s_tready(0),
-      sts.m_tvalid               => user2regs.axi_debug_output_strobes_m_tvalid(0),
-      sts.m_tready               => user2regs.axi_debug_output_strobes_m_tready(0),
-      sts.last_frame_length      => user2regs.axi_debug_output_last_frame_length_value,
-      sts.min_frame_length       => user2regs.axi_debug_output_min_max_frame_length_min_frame_length,
-      sts.max_frame_length       => user2regs.axi_debug_output_min_max_frame_length_max_frame_length,
-      -- AXI input
-      s_tready                   => pl_frame_dbg.tready,
-      s_tvalid                   => pl_frame_dbg.tvalid,
-      s_tlast                    => pl_frame_dbg.tlast,
-      s_tdata                    => pl_frame_dbg.tdata,
-      s_tid                      => pl_frame_dbg.tid,
       -- AXI output
       m_tready                   => m_tready_i,
       m_tvalid                   => m_tvalid_i,
