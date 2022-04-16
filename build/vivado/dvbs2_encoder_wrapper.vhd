@@ -317,8 +317,7 @@ begin
         INTERFACES => 2,
         DATA_WIDTH => IQ_WIDTH + IQ_WIDTH/8 + 1)
       port map (
-        selection_mask(0) => axi_first_word,
-        selection_mask(1) => not axi_first_word,
+        selection_mask => not axi_first_word & axi_first_word,
 
         s_tvalid    => axi_tvalid,
         s_tready    => axi_tready,
