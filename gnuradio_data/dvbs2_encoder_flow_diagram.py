@@ -162,7 +162,7 @@ class dvbs2_encoder(gr.top_block):
         assert (
             int(frame_length) == 1.0 * frame_length
         ), f"Frame length {frame_length} won't work because {frame_length}/8 = {frame_length/8}!"
-        frame_length = 4 * int(frame_length)
+        frame_length = int(frame_length)
         self.frame_length = frame_length
 
         bits_per_input, bits_per_output = get_ratio(constellation)
