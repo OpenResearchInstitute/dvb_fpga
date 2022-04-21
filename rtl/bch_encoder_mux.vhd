@@ -217,10 +217,10 @@ begin
   process(clk, rst)
   begin
     if rst = '1' then
-      cfg_frame_type_0 <= not_set;
-      cfg_frame_type_1 <= not_set;
-      cfg_code_rate_0  <= not_set;
-      cfg_code_rate_1  <= not_set;
+      cfg_frame_type_0 <= unknown;
+      cfg_frame_type_1 <= unknown;
+      cfg_code_rate_0  <= unknown;
+      cfg_code_rate_1  <= unknown;
     elsif rising_edge(clk) then
       -- Sample the input code whenever the first word is written
       if wr_en = '1' and first_word = '1' then

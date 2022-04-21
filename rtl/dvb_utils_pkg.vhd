@@ -32,13 +32,13 @@ package dvb_utils_pkg is
   -- Sizes
   constant DVB_N_LDPC : integer_vector_t := (FECFRAME_SHORT_BIT_LENGTH, FECFRAME_NORMAL_BIT_LENGTH);
 
-  type frame_type_t is (not_set, fecframe_normal, fecframe_short);
+  type frame_type_t is (unknown, fecframe_normal, fecframe_short);
 
-  type constellation_t is ( not_set, mod_qpsk, mod_8psk, mod_16apsk, mod_32apsk);
+  type constellation_t is ( unknown, mod_qpsk, mod_8psk, mod_16apsk, mod_32apsk);
 
   -- Enum like type for LDPC codes
   type code_rate_t is (
-    not_set, -- Only for sim, to allow setting an invalid value
+    unknown, -- Only for sim, to allow setting an invalid value
     C1_4, C1_3, C2_5, C1_2, C3_5, C2_3, C3_4, C4_5,
     C5_6, C8_9, C9_10);
 
@@ -147,7 +147,7 @@ package body dvb_utils_pkg is
 
   function encode( constant v : frame_type_t ) return std_logic_vector is
   begin
-    if v = not_set then
+    if v = unknown then
       return (FRAME_TYPE_WIDTH - 1 downto 0 => 'U');
     end if;
     return std_logic_vector(to_unsigned(frame_type_t'pos(v), FRAME_TYPE_WIDTH));
@@ -155,7 +155,7 @@ package body dvb_utils_pkg is
 
   function encode( constant v : constellation_t ) return std_logic_vector is
   begin
-    if v = not_set then
+    if v = unknown then
       return (CONSTELLATION_WIDTH - 1 downto 0 => 'U');
     end if;
     return std_logic_vector(to_unsigned(constellation_t'pos(v), CONSTELLATION_WIDTH));
@@ -163,7 +163,7 @@ package body dvb_utils_pkg is
 
   function encode( constant v : code_rate_t ) return std_logic_vector is
   begin
-    if v = not_set then
+    if v = unknown then
       return (CODE_RATE_WIDTH - 1 downto 0 => 'U');
     end if;
     return std_logic_vector(to_unsigned(code_rate_t'pos(v), CODE_RATE_WIDTH));
@@ -182,7 +182,7 @@ package body dvb_utils_pkg is
   function decode( constant v : std_logic_vector ) return frame_type_t is
   begin
     if not is_01(v) then
-      return not_set;
+      return unknown;
     end if;
     return frame_type_t'val(to_integer(unsigned(v)));
   end;
@@ -190,7 +190,7 @@ package body dvb_utils_pkg is
   function decode( constant v : std_logic_vector ) return constellation_t is
   begin
     if not is_01(v) then
-      return not_set;
+      return unknown;
     end if;
     return constellation_t 'val(to_integer(unsigned(v)));
   end;
@@ -198,7 +198,7 @@ package body dvb_utils_pkg is
   function decode( constant v : std_logic_vector ) return code_rate_t is
   begin
     if not is_01(v) then
-      return not_set;
+      return unknown;
     end if;
     return code_rate_t'val(to_integer(unsigned(v)));
   end;

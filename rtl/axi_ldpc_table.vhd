@@ -223,8 +223,8 @@ begin
       table_length    <= (others => '1');
 
       table_addr      <= (others => 'U');
-      cfg_frame_type  <= not_set;
-      cfg_code_rate   <= not_set;
+      cfg_frame_type  <= unknown;
+      cfg_code_rate   <= unknown;
       metadata        <= (addr          => (others => 'U'),
                           q             => (others => 'U'),
                           stage_0_loops => (others => 'U'),

@@ -234,7 +234,7 @@ package body plframe_header_pkg is
     if addr = -1 then
       return -1;
     end if;
-    if frame_type = not_set then
+    if frame_type = unknown then
       return -1;
     end if;
     if frame_type = fecframe_short then

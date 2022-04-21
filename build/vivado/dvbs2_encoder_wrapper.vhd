@@ -137,7 +137,7 @@ architecture rtl of dvbs2_encoder_wrapper is
 
   -- Follow modcodes for the physical layer framer
   function decode_tid ( constant v : std_logic_vector(7 downto 0) ) return config_tuple_t is
-    variable cfg : config_tuple_t := (not_set, not_set, not_set);
+    variable cfg : config_tuple_t := (unknown, unknown, unknown);
   begin
 
     case to_integer(unsigned(v)) is
@@ -230,7 +230,7 @@ architecture rtl of dvbs2_encoder_wrapper is
       when 16#56# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C8_9);
       when 16#57# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C9_10);
       when others =>
-        cfg := (not_set, not_set, not_set);
+        cfg := (unknown, unknown, unknown);
         report "Unable to decode TID: " & integer'image(to_integer(unsigned(v)))
         severity Failure;
     end case;
@@ -337,7 +337,7 @@ begin
   metadata_ff : process(clk, rst)
   begin
     if rst = '1' then
-      cfg <= (not_set, not_set, not_set);
+      cfg <= (unknown, unknown, unknown);
     elsif rising_edge(clk) then
       if metadata_tvalid = '1' then
         cfg <= decode_tid(metadata_tdata(7 downto 0));
