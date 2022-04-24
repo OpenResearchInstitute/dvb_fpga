@@ -87,8 +87,8 @@ architecture dummy_frame_generator of dummy_frame_generator is
   constant PAYLOAD_LENGTH     : integer := 36*90;
   constant DUMMY_FRAME_LENGTH : integer := ENCODED_HEADER_ROM'length + PAYLOAD_LENGTH;
   constant PAYLOAD_DATA       : std_logic_vector(TDATA_WIDTH - 1 downto 0) := std_logic_vector(
-    to_fixed_point(1.0 / MATH_SQRT_2, TDATA_WIDTH/2) &
-    to_fixed_point(1.0 / MATH_SQRT_2, TDATA_WIDTH/2)
+    to_signed_fixed_point(1.0 / MATH_SQRT_2, TDATA_WIDTH/2) &
+    to_signed_fixed_point(1.0 / MATH_SQRT_2, TDATA_WIDTH/2)
   );
 
   -------------

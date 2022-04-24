@@ -72,7 +72,8 @@ architecture axi_ldpc_encoder_core of axi_ldpc_encoder_core is
   constant DATA_WIDTH           : natural := 8;
   constant ROM_DATA_WIDTH       : natural := numbits(max(DVB_N_LDPC));
   constant FRAME_RAM_DATA_WIDTH : natural := 16;
-  constant FRAME_RAM_ADDR_WIDTH : natural := numbits((max(DVB_N_LDPC) + FRAME_RAM_DATA_WIDTH - 1) / FRAME_RAM_DATA_WIDTH);
+  constant FRAME_RAM_DEPTH      : natural := (max(DVB_N_LDPC) + FRAME_RAM_DATA_WIDTH - 1) / FRAME_RAM_DATA_WIDTH;
+  constant FRAME_RAM_ADDR_WIDTH : natural := numbits(FRAME_RAM_DEPTH);
 
   type ldpc_data_t is record
     tready     : std_logic;
@@ -259,7 +260,7 @@ begin
 
   frame_ram_u : entity fpga_cores.pipeline_context_ram
     generic map (
-      ADDR_WIDTH => FRAME_RAM_ADDR_WIDTH,
+      DEPTH      => FRAME_RAM_DEPTH,
       DATA_WIDTH => FRAME_RAM_DATA_WIDTH,
       RAM_TYPE   => bram)
     port map (

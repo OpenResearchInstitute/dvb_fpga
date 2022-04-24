@@ -85,9 +85,11 @@ package dvb_utils_pkg is
     constant frame_type : in  frame_type_t;
     constant code_rate  : in  code_rate_t) return positive;
 
-  function to_fixed_point (constant x : real; constant width : positive) return signed;
+  function to_signed_fixed_point (constant x : real; constant width : positive) return signed;
   function cos (constant x : real; constant width : positive) return signed;
   function sin (constant x : real; constant width : positive) return signed;
+
+  function to_unsigned_fixed_point (constant x : real; constant width : positive) return unsigned;
 
 end dvb_utils_pkg;
 
@@ -203,7 +205,7 @@ package body dvb_utils_pkg is
     return code_rate_t'val(to_integer(unsigned(v)));
   end;
 
-  function to_fixed_point (constant x : real; constant width : positive) return signed is
+  function to_signed_fixed_point (constant x : real; constant width : positive) return signed is
     variable int : integer := integer(ieee.math_real.round(x * real(2**(width - 1))));
   begin
     if x = 1.0 then
@@ -214,12 +216,21 @@ package body dvb_utils_pkg is
 
   function cos (constant x : real; constant width : positive) return signed is
   begin
-    return to_fixed_point(ieee.math_real.cos(x), width);
+    return to_signed_fixed_point(ieee.math_real.cos(x), width);
   end;
 
   function sin (constant x : real; constant width : positive) return signed is
   begin
-    return to_fixed_point(ieee.math_real.sin(x), width);
+    return to_signed_fixed_point(ieee.math_real.sin(x), width);
+  end;
+
+  function to_unsigned_fixed_point (constant x : real; constant width : positive) return unsigned is
+    variable int : integer := integer(ieee.math_real.round(x * real(2**width)));
+  begin
+    if x = 1.0 then
+      return to_unsigned(integer(int) - 1, width);
+    end if;
+    return to_unsigned(integer(int), width);
   end;
 
 end package body;

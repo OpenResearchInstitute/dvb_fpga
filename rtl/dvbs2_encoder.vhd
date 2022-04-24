@@ -704,12 +704,14 @@ begin
       rst             => rst,
       -- Mapping RAM config
       ram_wren        => or(regs2user.bit_mapper_ram_wen),
-      ram_addr        => regs2user.bit_mapper_ram_addr(5 downto 0), -- register map addresses bytes
+      ram_addr        => regs2user.bit_mapper_ram_addr(6 downto 0), -- register map addresses bytes
       ram_wdata       => regs2user.bit_mapper_ram_wdata(IQ_WIDTH - 1 downto 0),
       ram_rdata       => user2regs.bit_mapper_ram_rdata(IQ_WIDTH - 1 downto 0),
       -- Per frame config input
       -- AXI input
+      s_frame_type    => decode(arbiter_out.tid).frame_type,
       s_constellation => decode(arbiter_out.tid).constellation,
+      s_code_rate     => decode(arbiter_out.tid).code_rate,
       s_tvalid        => arbiter_out.tvalid,
       s_tlast         => arbiter_out.tlast,
       s_tready        => arbiter_out.tready,

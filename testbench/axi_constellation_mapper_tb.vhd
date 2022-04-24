@@ -80,7 +80,7 @@ architecture axi_constellation_mapper_tb of axi_constellation_mapper_tb is
 
   -- Mapping RAM config
   signal ram_wren               : std_logic;
-  signal ram_addr               : std_logic_vector(5 downto 0);
+  signal ram_addr               : std_logic_vector(6 downto 0);
   signal ram_wdata              : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
   signal ram_rdata              : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
 
@@ -136,7 +136,9 @@ begin
       ram_wdata       => ram_wdata,
       ram_rdata       => ram_rdata,
 
+      s_frame_type    => decode(axi_master.tuser).frame_type,
       s_constellation => decode(axi_master.tuser).constellation,
+      s_code_rate     => decode(axi_master.tuser).code_rate,
 
       -- AXI input
       s_tvalid        => axi_master.tvalid,
@@ -156,7 +158,7 @@ begin
     generic map (
       READER_NAME         => "output_checker",
       DATA_WIDTH          => OUTPUT_DATA_WIDTH,
-      TOLERANCE           => 0,
+      TOLERANCE           => 4,
       SWAP_BYTE_ENDIANESS => False,
       ERROR_CNT_WIDTH     => 8,
       REPORT_SEVERITY     => Error)
@@ -222,72 +224,12 @@ begin
       constant data : in std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0)) is
     begin
       ram_wren  <= '1';
-      ram_addr  <= std_logic_vector(to_unsigned(addr, 6));
+      ram_addr  <= std_logic_vector(to_unsigned(addr, 7));
       ram_wdata <= data;
       walk(1);
       ram_wren  <= '0';
       ram_addr  <= (others => 'U');
       ram_wdata <= (others => 'U');
-    end procedure; -- }} ---------------------------------------------------------------
-
-    -- Write the exact value so we know data was picked up correctly without having to
-    -- convert into IQ
-    variable current_mapping_ram : std_logic_array_t(0 to 63)(OUTPUT_DATA_WIDTH - 1 downto 0);
-    procedure update_mapping_ram_if_needed ( -- {{ -----------------------------------------------
-      constant initial_addr        : integer;
-      constant path                : string) is
-      file file_handler            : text;
-      variable L                   : line;
-      variable map_i, map_q        : real;
-      variable addr                : integer := initial_addr;
-      variable index               : unsigned(5 downto 0) := (others => '0');
-      variable updated_mapping_ram : std_logic_array_t(0 to 63)(OUTPUT_DATA_WIDTH - 1 downto 0) := current_mapping_ram;
-    begin
-      info(logger, sformat("Updating mapping RAM from '%s' (initial address is %d)", fo(path), fo(initial_addr)));
-
-      file_open(file_handler, path, read_mode);
-      while not endfile(file_handler) loop
-        readline(file_handler, L);
-        read(L, map_i);
-        readline(file_handler, L);
-        read(L, map_q);
-        debug(
-          logger,
-          sformat(
-            "[%b] Writing RAM: %2d => (%13s, %13s) => %13s (%r) / %13s (%r)",
-            fo(index),
-            fo(addr),
-            real'image(map_i),
-            real'image(map_q),
-            real'image(map_i),
-            fo(to_fixed_point(map_i, OUTPUT_DATA_WIDTH/2)),
-            real'image(map_q),
-            fo(to_fixed_point(map_q, OUTPUT_DATA_WIDTH/2))
-          )
-        );
-
-        updated_mapping_ram(addr) := std_logic_vector(to_fixed_point(map_q, OUTPUT_DATA_WIDTH/2)) &
-                                     std_logic_vector(to_fixed_point(map_i, OUTPUT_DATA_WIDTH/2));
-
-        addr := addr + 1;
-        index := index + 1;
-      end loop;
-      file_close(file_handler);
-      if index = 0 then
-        failure(logger, "Failed to update RAM from file");
-      end if;
-
-      -- Only update if the tables are different
-      if current_mapping_ram /= updated_mapping_ram then
-        wait_for_completion;
-        for i in updated_mapping_ram'range loop
-          -- Only update entries that changed
-          if current_mapping_ram(i) /= updated_mapping_ram(i) then
-            write_ram(i, updated_mapping_ram(i));
-          end if;
-        end loop;
-      end if;
-
     end procedure; -- }} ---------------------------------------------------------------
 
     procedure run_test ( -- {{ ---------------------------------------------------------
@@ -314,7 +256,6 @@ begin
         when mod_32apsk => initial_addr := 28;
         when others => null;
       end case;
-      update_mapping_ram_if_needed(initial_addr, data_path & "/modulation_table.bin");
 
       for i in 0 to number_of_frames - 1 loop
         debug(logger, "Setting up frame #" & to_string(i));

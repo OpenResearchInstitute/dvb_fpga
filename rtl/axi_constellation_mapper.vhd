@@ -27,6 +27,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
 
 library fpga_cores;
 use fpga_cores.common_pkg.all;
@@ -49,11 +50,13 @@ entity axi_constellation_mapper is
     rst             : in  std_logic;
     -- Mapping RAM config
     ram_wren        : in  std_logic;
-    ram_addr        : in  std_logic_vector(5 downto 0);
+    ram_addr        : in  std_logic_vector(6 downto 0);
     ram_wdata       : in  std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
     ram_rdata       : out std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
     -- AXI data input
+    s_frame_type    : in  frame_type_t;
     s_constellation : in  constellation_t;
+    s_code_rate     : in  code_rate_t;
     s_tready        : out std_logic;
     s_tvalid        : in  std_logic;
     s_tlast         : in  std_logic;
@@ -69,116 +72,214 @@ end axi_constellation_mapper;
 
 architecture axi_constellation_mapper of axi_constellation_mapper is
 
-  constant CONFIG_INPUT_WIDTHS: fpga_cores.common_pkg.integer_vector_t := (
-    0 => CONSTELLATION_WIDTH,
-    1 => TID_WIDTH);
+  constant BASE_OFFSET_QPSK   : integer := 0;
+  constant BASE_OFFSET_8PSK   : integer := BASE_OFFSET_QPSK + 4;
+  constant BASE_OFFSET_16APSK : integer := BASE_OFFSET_8PSK + 8;
+  constant BASE_OFFSET_32APSK : integer := BASE_OFFSET_16APSK + 16;
 
-  constant TUSER_WIDTH : integer := sum(CONFIG_INPUT_WIDTHS);
+  -- Small helpers to reduce footprint of calling this over and over
+  impure function get_iq_pair (constant x : real) return std_logic_vector is
+    variable result : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+  begin
+    return std_logic_vector(cos(x, OUTPUT_DATA_WIDTH/2) & sin(x, OUTPUT_DATA_WIDTH/2));
+  end function get_iq_pair;
 
-  constant MAPPING_TABLE : std_logic_array_t(0 to 63)(OUTPUT_DATA_WIDTH - 1 downto 0) := (
-    0 => x"5A825A82",
-    1 => x"A57E5A82",
-    2 => x"5A82A57E",
-    3 => x"A57EA57E",
+  constant MAPPING_TABLE : std_logic_array_t(0 to 59)(OUTPUT_DATA_WIDTH - 1 downto 0) := (
+    -- QPSK
+    0 => get_iq_pair(        MATH_PI /  4.0),
+    1 => get_iq_pair(  7.0 * MATH_PI /  4.0),
+    2 => get_iq_pair(  3.0 * MATH_PI /  4.0),
+    3 => get_iq_pair(  5.0 * MATH_PI /  4.0),
 
-    4 => x"5A825A82",
-    5 => x"00007FFF",
-    6 => x"00008000",
-    7 => x"A57EA57E",
-    8 => x"7FFF0000",
-    9 => x"A57E5A82",
-    10 => x"5A82A57E",
-    11 => x"80000000",
-    12 => x"5A825A82",
+    -- 8PSK
+    4  => get_iq_pair(        MATH_PI /  4.0),
+    5  => get_iq_pair(  0.0),
+    6  => get_iq_pair(  4.0 * MATH_PI /  4.0),
+    7  => get_iq_pair(  5.0 * MATH_PI /  4.0),
+    8  => get_iq_pair(  2.0 * MATH_PI /  4.0),
+    9  => get_iq_pair(  7.0 * MATH_PI /  4.0),
+    10 => get_iq_pair(  3.0 * MATH_PI /  4.0),
+    11 => get_iq_pair(  6.0 * MATH_PI /  4.0),
 
-    13 => x"A57E5A82",
-    14 => x"5A82A57E",
-    15 => x"A57EA57E",
-    16 => x"21217BA3",
-    17 => x"DEDF7BA3",
-    18 => x"2121845D",
-    19 => x"DEDF845D",
-    20 => x"7BA32121",
-    21 => x"845D2121",
-    22 => x"7BA3DEDF",
-    23 => x"845DDEDF",
-    24 => x"1CBC1CBC",
-    25 => x"E3441CBC",
-    26 => x"1CBCE344",
-    27 => x"E344E344",
-    28 => x"35183518",
-    29 => x"4887136F",
-    30 => x"CAE83518",
-    31 => x"B779136F",
-    32 => x"3518CAE8",
-    33 => x"4887EC91",
-    34 => x"CAE8CAE8",
-    35 => x"B779EC91",
-    36 => x"30FC7642",
-    37 => x"764230FC",
-    38 => x"A57E5A82",
-    39 => x"80000000",
-    40 => x"5A82A57E",
-    41 => x"7FFF0000",
-    42 => x"CF0489BE",
-    43 => x"89BECF04",
-    44 => x"136F4887",
-    45 => x"14E714E7",
-    46 => x"EC914887",
-    47 => x"EB1914E7",
-    48 => x"136FB779",
-    49 => x"14E7EB19",
-    50 => x"EC91B779",
-    51 => x"EB19EB19",
-    52 => x"00007FFF",
-    53 => x"5A825A82",
-    54 => x"CF047642",
-    55 => x"89BE30FC",
-    56 => x"30FC89BE",
-    57 => x"7642CF04",
-    58 => x"00008000",
-    59 => x"A57EA57E",
-    others => (others => 'U')
+    -- 16APSK (although here we only have the the PSK part)
+    12 => get_iq_pair(        MATH_PI /  4.0),
+    13 => get_iq_pair(       -MATH_PI /  4.0),
+    14 => get_iq_pair(  3.0 * MATH_PI /  4.0),
+    15 => get_iq_pair( -3.0 * MATH_PI /  4.0),
+    16 => get_iq_pair(        MATH_PI / 12.0),
+    17 => get_iq_pair(       -MATH_PI / 12.0),
+    18 => get_iq_pair( 11.0 * MATH_PI / 12.0),
+    19 => get_iq_pair(-11.0 * MATH_PI / 12.0),
+    20 => get_iq_pair(  5.0 * MATH_PI / 12.0),
+    21 => get_iq_pair( -5.0 * MATH_PI / 12.0),
+    22 => get_iq_pair(  7.0 * MATH_PI / 12.0),
+    23 => get_iq_pair( -7.0 * MATH_PI / 12.0),
+    24 => get_iq_pair(        MATH_PI /  4.0),
+    25 => get_iq_pair(       -MATH_PI /  4.0),
+    26 => get_iq_pair(  3.0 * MATH_PI /  4.0),
+    27 => get_iq_pair( -3.0 * MATH_PI /  4.0),
+
+    -- 32APSK (although here we only have the the PSK part)
+    28 => get_iq_pair(        MATH_PI /  4.0),
+    29 => get_iq_pair(  5.0 * MATH_PI / 12.0),
+    30 => get_iq_pair(       -MATH_PI /  4.0),
+    31 => get_iq_pair( -5.0 * MATH_PI / 12.0),
+    32 => get_iq_pair(  3.0 * MATH_PI /  4.0),
+    33 => get_iq_pair(  7.0 * MATH_PI / 12.0),
+    34 => get_iq_pair( -3.0 * MATH_PI /  4.0),
+    35 => get_iq_pair( -7.0 * MATH_PI / 12.0),
+    36 => get_iq_pair(        MATH_PI /  8.0),
+    37 => get_iq_pair(  3.0 * MATH_PI /  8.0),
+    38 => get_iq_pair(       -MATH_PI /  4.0),
+    39 => get_iq_pair(       -MATH_PI /  2.0),
+    40 => get_iq_pair(  3.0 * MATH_PI /  4.0),
+    41 => get_iq_pair(        MATH_PI /  2.0),
+    42 => get_iq_pair( -7.0 * MATH_PI /  8.0),
+    43 => get_iq_pair( -5.0 * MATH_PI /  8.0),
+    44 => get_iq_pair(        MATH_PI / 12.0),
+    45 => get_iq_pair(        MATH_PI /  4.0),
+    46 => get_iq_pair(       -MATH_PI / 12.0),
+    47 => get_iq_pair(       -MATH_PI /  4.0),
+    48 => get_iq_pair( 11.0 * MATH_PI / 12.0),
+    49 => get_iq_pair(  3.0 * MATH_PI /  4.0),
+    50 => get_iq_pair(-11.0 * MATH_PI / 12.0),
+    51 => get_iq_pair( -3.0 * MATH_PI /  4.0),
+    52 => get_iq_pair(  0.0),
+    53 => get_iq_pair(        MATH_PI /  4.0),
+    54 => get_iq_pair(       -MATH_PI /  8.0),
+    55 => get_iq_pair( -3.0 * MATH_PI /  8.0),
+    56 => get_iq_pair(  7.0 * MATH_PI /  8.0),
+    57 => get_iq_pair(  5.0 * MATH_PI /  8.0),
+    58 => get_iq_pair(        MATH_PI),
+    59 => get_iq_pair( -3.0 * MATH_PI /  4.0)
   );
+
+  -- Radius table addresses
+  constant RADIUS_OTHERS              : integer := 0;
+
+  constant RADIUS_SHORT_16APSK_C2_3   : integer := 1;
+  constant RADIUS_SHORT_16APSK_C3_4   : integer := 2;
+  constant RADIUS_SHORT_16APSK_C3_5   : integer := 3;
+  constant RADIUS_SHORT_16APSK_C4_5   : integer := 4;
+  constant RADIUS_SHORT_16APSK_C5_6   : integer := 5;
+  constant RADIUS_SHORT_16APSK_C8_9   : integer := 6;
+
+  constant RADIUS_NORMAL_16APSK_C2_3  : integer := 7;
+  constant RADIUS_NORMAL_16APSK_C3_4  : integer := 8;
+  constant RADIUS_NORMAL_16APSK_C3_5  : integer := 9;
+  constant RADIUS_NORMAL_16APSK_C4_5  : integer := 10;
+  constant RADIUS_NORMAL_16APSK_C5_6  : integer := 11;
+  constant RADIUS_NORMAL_16APSK_C8_9  : integer := 12;
+  constant RADIUS_NORMAL_16APSK_C9_10 : integer := 13;
+
+  constant RADIUS_SHORT_32APSK_C3_4   : integer := 14;
+  constant RADIUS_SHORT_32APSK_C4_5   : integer := 15;
+  constant RADIUS_SHORT_32APSK_C5_6   : integer := 16;
+  constant RADIUS_SHORT_32APSK_C8_9   : integer := 17;
+
+  constant RADIUS_NORMAL_32APSK_C3_4  : integer := 18;
+  constant RADIUS_NORMAL_32APSK_C4_5  : integer := 19;
+  constant RADIUS_NORMAL_32APSK_C5_6  : integer := 20;
+  constant RADIUS_NORMAL_32APSK_C8_9  : integer := 21;
+  constant RADIUS_NORMAL_32APSK_C9_10 : integer := 22;
+
+  function get_row_content ( constant r0, r1 : real ) return std_logic_vector is
+    constant r0_uns : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0) := to_signed_fixed_point(r0, OUTPUT_DATA_WIDTH/2);
+    constant r1_uns : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0) := to_signed_fixed_point(r1, OUTPUT_DATA_WIDTH/2);
+  begin
+      return std_logic_vector(r0_uns) & std_logic_vector(r1_uns);
+  end function get_row_content;
+
+  constant UNIT_RADIUS : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0) := to_signed_fixed_point(1.0, OUTPUT_DATA_WIDTH/2);
+
+  constant RADIUS_COEFFICIENT_TABLE : std_logic_array_t(0 to 22)(OUTPUT_DATA_WIDTH - 1 downto 0) := (
+    RADIUS_OTHERS              => get_row_content(r0 => 1.0,                 r1 => 1.0),
+
+    RADIUS_SHORT_16APSK_C2_3   => get_row_content(r0 => 0.31746031746031744, r1 => 1.0),
+    RADIUS_SHORT_16APSK_C3_4   => get_row_content(r0 => 0.3508771929824561,  r1 => 1.0),
+    RADIUS_SHORT_16APSK_C3_5   => get_row_content(r0 => 0.27027027027027023, r1 => 1.0),
+    RADIUS_SHORT_16APSK_C4_5   => get_row_content(r0 => 0.36363636363636365, r1 => 1.0),
+    RADIUS_SHORT_16APSK_C5_6   => get_row_content(r0 => 0.37037037037037035, r1 => 1.0),
+    RADIUS_SHORT_16APSK_C8_9   => get_row_content(r0 => 0.3846153846153846,  r1 => 1.0),
+
+    RADIUS_NORMAL_16APSK_C2_3  => get_row_content(r0 => 0.31746031746031744, r1 => 1.0),
+    RADIUS_NORMAL_16APSK_C3_4  => get_row_content(r0 => 0.3508771929824561,  r1 => 1.0),
+    RADIUS_NORMAL_16APSK_C3_5  => get_row_content(r0 => 0.27027027027027023, r1 => 1.0),
+    RADIUS_NORMAL_16APSK_C4_5  => get_row_content(r0 => 0.36363636363636365, r1 => 1.0),
+    RADIUS_NORMAL_16APSK_C5_6  => get_row_content(r0 => 0.37037037037037035, r1 => 1.0),
+    RADIUS_NORMAL_16APSK_C8_9  => get_row_content(r0 => 0.3846153846153846,  r1 => 1.0),
+    RADIUS_NORMAL_16APSK_C9_10 => get_row_content(r0 => 0.38910505836575876, r1 => 1.0),
+
+    RADIUS_SHORT_32APSK_C3_4   => get_row_content(r0 => 0.18975332068311196, r1 => 0.538899430740038),
+    RADIUS_SHORT_32APSK_C4_5   => get_row_content(r0 => 0.20533880903490762, r1 => 0.5585215605749487),
+    RADIUS_SHORT_32APSK_C5_6   => get_row_content(r0 => 0.21551724137931036, r1 => 0.5689655172413793),
+    RADIUS_SHORT_32APSK_C8_9   => get_row_content(r0 => 0.23094688221709006, r1 => 0.5866050808314087),
+
+    RADIUS_NORMAL_32APSK_C3_4  => get_row_content(r0 => 0.18975332068311196, r1 => 0.538899430740038),
+    RADIUS_NORMAL_32APSK_C4_5  => get_row_content(r0 => 0.20533880903490762, r1 => 0.5585215605749487),
+    RADIUS_NORMAL_32APSK_C5_6  => get_row_content(r0 => 0.21551724137931036, r1 => 0.5689655172413793),
+    RADIUS_NORMAL_32APSK_C8_9  => get_row_content(r0 => 0.23094688221709006, r1 => 0.5866050808314087),
+    RADIUS_NORMAL_32APSK_C9_10 => get_row_content(r0 => 0.23255813953488372, r1 => 0.5883720930232558)
+  );
+
+  constant TUSER_WIDTH : integer := TID_WIDTH + ENCODED_CONFIG_WIDTH;
 
   -------------
   -- Signals --
   -------------
-  signal s_tid_internal       : std_logic_vector(TUSER_WIDTH - 1 downto 0);
-  signal mux_sel              : std_logic_vector(3 downto 0);
-  signal conv_tready          : std_logic_vector(3 downto 0);
-  signal conv_tvalid          : std_logic_vector(3 downto 0);
+  -- IQ and radius RAM interface
+  signal iq_ram_wren       : std_logic;
+  signal iq_ram_rdata      : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+  signal radius_ram_wren   : std_logic;
+  signal radius_ram_rdata  : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
 
-  signal axi_qpsk             : axi_stream_bus_t(tdata(1 downto 0), tuser(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0));
-  signal axi_8psk             : axi_stream_bus_t(tdata(2 downto 0), tuser(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0));
-  signal axi_16apsk           : axi_stream_bus_t(tdata(3 downto 0), tuser(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0));
-  signal axi_32apsk           : axi_stream_bus_t(tdata(4 downto 0), tuser(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0));
+  signal mux_sel           : std_logic_vector(3 downto 0);
+  signal width_conv_tready : std_logic_vector(3 downto 0);
+  signal width_conv_tvalid : std_logic_vector(3 downto 0);
 
-  signal addr_qpsk            : std_logic_vector(5 downto 0);
-  signal addr_8psk            : std_logic_vector(5 downto 0);
-  signal addr_16apsk          : std_logic_vector(5 downto 0);
-  signal addr_32apsk          : std_logic_vector(5 downto 0);
+  signal s_cfg             : config_tuple_t;
+  signal s_tid_internal    : std_logic_vector(TUSER_WIDTH - 1 downto 0);
+  signal axi_qpsk          : axi_stream_bus_t(tdata(1 downto 0), tuser(TUSER_WIDTH - 1 downto 0));
+  signal axi_8psk          : axi_stream_bus_t(tdata(2 downto 0), tuser(TUSER_WIDTH - 1 downto 0));
+  signal axi_16apsk        : axi_stream_bus_t(tdata(3 downto 0), tuser(TUSER_WIDTH - 1 downto 0));
+  signal axi_32apsk        : axi_stream_bus_t(tdata(4 downto 0), tuser(TUSER_WIDTH - 1 downto 0));
 
-  signal map_addr             : std_logic_vector(5 downto 0);
-  signal map_data             : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
-  signal map_data_ram         : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
-  signal map_cfg              : std_logic_vector(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0);
+  signal addr_qpsk         : std_logic_vector(5 downto 0);
+  signal addr_8psk         : std_logic_vector(5 downto 0);
+  signal addr_16apsk       : std_logic_vector(5 downto 0);
+  signal addr_32apsk       : std_logic_vector(5 downto 0);
 
-  -- ROM side config, so won't need to wait until an entire frame goes through
-  signal egress_constellation : constellation_t;
-  signal egress_tid           : std_logic_vector(TID_WIDTH - 1 downto 0);
-  signal egress_tid_reg       : std_logic_vector(TID_WIDTH - 1 downto 0);
+  signal axi_out           : axi_stream_bus_t(tdata(5 downto 0), tuser(TUSER_WIDTH - 1 downto 0));
+  signal axi_out_cfg       : config_tuple_t;
 
-  signal adapter_wr_en        : std_logic;
-  signal adapter_full         : std_logic;
-  signal adapter_wr_last      : std_logic;
+  signal ram_out           : axi_stream_bus_t(tdata(OUTPUT_DATA_WIDTH - 1 downto 0), tuser(TID_WIDTH - 1 downto 0));
+  signal ram_out_addr      : std_logic_vector(5 downto 0);
+  signal ram_out_offset    : unsigned(5 downto 0);
+  signal ram_out_i         : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0);
+  signal ram_out_q         : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0);
+
+  signal radius_rd_addr    : unsigned(numbits(RADIUS_COEFFICIENT_TABLE'length) - 1 downto 0);
+
+  signal radius_0          : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0);
+  signal radius_1          : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0);
+
+  signal radius_out_cfg    : config_tuple_t;
+
+  signal output_multiplier : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0);
+  signal output_i          : signed(OUTPUT_DATA_WIDTH - 1 downto 0);
+  signal output_q          : signed(OUTPUT_DATA_WIDTH - 1 downto 0);
 
 begin
 
-  -------------------
-  -- Port mappings --
-  -------------------
   -- Mux the input data stream to the appropriate width converter
+  mux_sel(0) <= '1' when s_constellation = mod_qpsk or s_constellation = unknown else '0';
+  mux_sel(1) <= '1' when s_constellation = mod_8psk or s_constellation = unknown else '0';
+  mux_sel(2) <= '1' when s_constellation = mod_16apsk or s_constellation = unknown else '0';
+  mux_sel(3) <= '1' when s_constellation = mod_32apsk or s_constellation = unknown else '0';
+
+  s_cfg          <= (frame_type => s_frame_type, constellation => s_constellation, code_rate => s_code_rate);
+  s_tid_internal <= s_tid & encode(s_cfg);
+
   input_mux_u : entity fpga_cores.axi_stream_demux
     generic map (
       INTERFACES => 4,
@@ -190,233 +291,362 @@ begin
       s_tready       => s_tready,
       s_tdata        => (others => 'U'),
 
-      m_tvalid       => conv_tvalid,
-      m_tready       => conv_tready,
+      m_tvalid       => width_conv_tvalid,
+      m_tready       => width_conv_tready,
       m_tdata        => open);
 
   -- Width converter is little endian but DVB-S2 requires mapping MSB of the data, so we
   -- mirror data in then mirror data out
   width_converter_qpsk_u : entity fpga_cores.axi_stream_width_converter
-  generic map (
-    INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
-    OUTPUT_DATA_WIDTH => 2,
-    AXI_TID_WIDTH     => sum(CONFIG_INPUT_WIDTHS),
-    IGNORE_TKEEP      => True)
-  port map (
-    -- Usual ports
-    clk      => clk,
-    rst      => rst,
-    -- AXI stream input
-    s_tready => conv_tready(0),
-    s_tdata  => mirror_bits(s_tdata),
-    s_tid    => s_tid_internal,
-    s_tvalid => conv_tvalid(0),
-    s_tlast  => s_tlast,
-    -- AXI stream output
-    m_tready => axi_qpsk.tready,
-    m_tdata  => axi_qpsk.tdata,
-    m_tid    => axi_qpsk.tuser,
-    m_tvalid => axi_qpsk.tvalid,
-    m_tlast  => axi_qpsk.tlast);
+    generic map (
+      INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
+      OUTPUT_DATA_WIDTH => 2,
+      AXI_TID_WIDTH     => TUSER_WIDTH,
+      IGNORE_TKEEP      => True)
+    port map (
+      -- Usual ports
+      clk      => clk,
+      rst      => rst,
+      -- AXI stream input
+      s_tready => width_conv_tready(0),
+      s_tdata  => mirror_bits(s_tdata),
+      s_tid    => s_tid_internal,
+      s_tvalid => width_conv_tvalid(0),
+      s_tlast  => s_tlast,
+      -- AXI stream output
+      m_tready => axi_qpsk.tready,
+      m_tdata  => axi_qpsk.tdata,
+      m_tid    => axi_qpsk.tuser,
+      m_tvalid => axi_qpsk.tvalid,
+      m_tlast  => axi_qpsk.tlast);
 
   width_converter_8psk_u : entity fpga_cores.axi_stream_width_converter
-  generic map (
-    INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
-    OUTPUT_DATA_WIDTH => 3,
-    AXI_TID_WIDTH     => sum(CONFIG_INPUT_WIDTHS),
-    IGNORE_TKEEP      => True)
-  port map (
-    -- Usual ports
-    clk      => clk,
-    rst      => rst,
-    -- AXI stream input
-    s_tready => conv_tready(1),
-    s_tdata  => mirror_bits(s_tdata),
-    s_tid    => s_tid_internal,
-    s_tvalid => conv_tvalid(1),
-    s_tlast  => s_tlast,
-    -- AXI stream output
-    m_tready => axi_8psk.tready,
-    m_tdata  => axi_8psk.tdata,
-    m_tid    => axi_8psk.tuser,
-    m_tvalid => axi_8psk.tvalid,
-    m_tlast  => axi_8psk.tlast);
+    generic map (
+      INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
+      OUTPUT_DATA_WIDTH => 3,
+      AXI_TID_WIDTH     => TUSER_WIDTH,
+      IGNORE_TKEEP      => True)
+    port map (
+      -- Usual ports
+      clk      => clk,
+      rst      => rst,
+      -- AXI stream input
+      s_tready => width_conv_tready(1),
+      s_tdata  => mirror_bits(s_tdata),
+      s_tid    => s_tid_internal,
+      s_tvalid => width_conv_tvalid(1),
+      s_tlast  => s_tlast,
+      -- AXI stream output
+      m_tready => axi_8psk.tready,
+      m_tdata  => axi_8psk.tdata,
+      m_tid    => axi_8psk.tuser,
+      m_tvalid => axi_8psk.tvalid,
+      m_tlast  => axi_8psk.tlast);
 
   width_converter_16apsk_u : entity fpga_cores.axi_stream_width_converter
-  generic map (
-    INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
-    OUTPUT_DATA_WIDTH => 4,
-    AXI_TID_WIDTH     => sum(CONFIG_INPUT_WIDTHS),
-    IGNORE_TKEEP      => True)
-  port map (
-    -- Usual ports
-    clk      => clk,
-    rst      => rst,
-    -- AXI stream input
-    s_tready => conv_tready(2),
-    s_tdata  => mirror_bits(s_tdata),
-    s_tid    => s_tid_internal,
-    s_tvalid => conv_tvalid(2),
-    s_tlast  => s_tlast,
-    -- AXI stream output
-    m_tready => axi_16apsk.tready,
-    m_tdata  => axi_16apsk.tdata,
-    m_tid    => axi_16apsk.tuser,
-    m_tvalid => axi_16apsk.tvalid,
-    m_tlast  => axi_16apsk.tlast);
+    generic map (
+      INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
+      OUTPUT_DATA_WIDTH => 4,
+      AXI_TID_WIDTH     => TUSER_WIDTH,
+      IGNORE_TKEEP      => True)
+    port map (
+      -- Usual ports
+      clk      => clk,
+      rst      => rst,
+      -- AXI stream input
+      s_tready => width_conv_tready(2),
+      s_tdata  => mirror_bits(s_tdata),
+      s_tid    => s_tid_internal,
+      s_tvalid => width_conv_tvalid(2),
+      s_tlast  => s_tlast,
+      -- AXI stream output
+      m_tready => axi_16apsk.tready,
+      m_tdata  => axi_16apsk.tdata,
+      m_tid    => axi_16apsk.tuser,
+      m_tvalid => axi_16apsk.tvalid,
+      m_tlast  => axi_16apsk.tlast);
 
   width_converter_32apsk_u : entity fpga_cores.axi_stream_width_converter
-  generic map (
-    INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
-    OUTPUT_DATA_WIDTH => 5,
-    AXI_TID_WIDTH     => sum(CONFIG_INPUT_WIDTHS),
-    IGNORE_TKEEP      => True)
-  port map (
-    -- Usual ports
-    clk      => clk,
-    rst      => rst,
-    -- AXI stream input
-    s_tready => conv_tready(3),
-    s_tdata  => mirror_bits(s_tdata),
-    s_tid    => s_tid_internal,
-    s_tvalid => conv_tvalid(3),
-    s_tlast  => s_tlast,
-    -- AXI stream output
-    m_tready => axi_32apsk.tready,
-    m_tdata  => axi_32apsk.tdata,
-    m_tid    => axi_32apsk.tuser,
-    m_tvalid => axi_32apsk.tvalid,
-    m_tlast  => axi_32apsk.tlast);
-
-  -- QPSK and 8 PSK values are constant but 16 APSK and 32 APSK depend on the coding
-  -- rate. Currently we're supporting any number of QPSK and/or 8 PSK streams, but 16 APSK
-  -- and 32 APSK are both limited to a single stream
-  mapping_table_u : entity fpga_cores.ram_inference
     generic map (
-      ADDR_WIDTH   => 6,
-      DATA_WIDTH   => OUTPUT_DATA_WIDTH,
-      RAM_TYPE     => auto,
-      OUTPUT_DELAY => 1)
+      INPUT_DATA_WIDTH  => INPUT_DATA_WIDTH,
+      OUTPUT_DATA_WIDTH => 5,
+      AXI_TID_WIDTH     => TUSER_WIDTH,
+      IGNORE_TKEEP      => True)
     port map (
-      -- Port A
-      clk_a     => clk,
-      clken_a   => '1',
-      wren_a    => ram_wren,
-      addr_a    => ram_addr,
-      wrdata_a  => ram_wdata,
-      rddata_a  => ram_rdata,
-      -- Port B
-      clk_b     => clk,
-      clken_b   => '1',
-      addr_b    => map_addr,
-      rddata_b  => map_data_ram);
-
-  mapping_table_rom_u : entity fpga_cores.rom_inference
-    generic map (
-      ROM_DATA     => MAPPING_TABLE,
-      ROM_TYPE     => auto,
-      OUTPUT_DELAY => 1)
-    port map (
-      clk    => clk,
-      clken  => '1',
-      addr   =>  map_addr,
-      rddata =>  map_data);
-
-  output_adapter_block : block
-    signal agg_data_in : std_logic_vector(TID_WIDTH + OUTPUT_DATA_WIDTH - 1 downto 0);
-    signal agg_data_out : std_logic_vector(TID_WIDTH + OUTPUT_DATA_WIDTH - 1 downto 0);
-  begin
-    -- map data comes with 1 cycle of latency, compensate for that
-    output_adapter_u : entity fpga_cores.axi_stream_master_adapter
-      generic map (
-        MAX_SKEW_CYCLES => 1,
-        TDATA_WIDTH     => OUTPUT_DATA_WIDTH + TID_WIDTH)
-      port map (
-        -- Usual ports
-        clk      => clk,
-        reset    => rst,
-        -- wanna-be AXI interface
-        wr_en    => adapter_wr_en,
-        wr_full  => adapter_full,
-        wr_empty => open,
-        wr_data  => agg_data_in,
-        wr_last  => adapter_wr_last,
-        -- AXI master
-        m_tvalid => m_tvalid,
-        m_tready => m_tready,
-        m_tdata  => agg_data_out,
-        m_tlast  => m_tlast);
-
-    agg_data_in <= egress_tid_reg & map_data;
-    m_tdata     <= agg_data_out(OUTPUT_DATA_WIDTH - 1 downto 0);
-    m_tid       <= agg_data_out(OUTPUT_DATA_WIDTH + TID_WIDTH - 1 downto OUTPUT_DATA_WIDTH);
-  end block;
-
-  ------------------------------
-  -- Asynchronous assignments --
-  ------------------------------
-  mux_sel(0) <= '1' when s_constellation = mod_qpsk or s_constellation = not_set else '0';
-  mux_sel(1) <= '1' when s_constellation = mod_8psk or s_constellation = not_set else '0';
-  mux_sel(2) <= '1' when s_constellation = mod_16apsk or s_constellation = not_set else '0';
-  mux_sel(3) <= '1' when s_constellation = mod_32apsk or s_constellation = not_set else '0';
+      -- Usual ports
+      clk      => clk,
+      rst      => rst,
+      -- AXI stream input
+      s_tready => width_conv_tready(3),
+      s_tdata  => mirror_bits(s_tdata),
+      s_tid    => s_tid_internal,
+      s_tvalid => width_conv_tvalid(3),
+      s_tlast  => s_tlast,
+      -- AXI stream output
+      m_tready => axi_32apsk.tready,
+      m_tdata  => axi_32apsk.tdata,
+      m_tid    => axi_32apsk.tuser,
+      m_tvalid => axi_32apsk.tvalid,
+      m_tlast  => axi_32apsk.tlast);
 
   -- Addr CONSTELLATION_ROM offsets to the width converter output. Each table starts
   -- immediatelly after the previous
   --
   -- Also, a reminder that the width converter is little endian but our data is big
   -- endian. We mirrored the data going in now need to mirror the output as well
-  addr_qpsk   <= "0000" & mirror_bits(axi_qpsk.tdata);
-  addr_8psk   <= std_logic_vector("000" & unsigned(mirror_bits(axi_8psk.tdata)) + 4);            -- 8 PSK starts after QPSK
-  addr_16apsk <= std_logic_vector( "00" & unsigned(mirror_bits(axi_16apsk.tdata)) + 4 + 8);      -- 16 APSK starts after QPSK + 8 PSK
-  addr_32apsk <= std_logic_vector(  "0" & unsigned(mirror_bits(axi_32apsk.tdata)) + 4 + 8 + 16); -- 32 APSK starts after QPSK + 8 PSK + 16 APSK
+  addr_qpsk   <= std_logic_vector("0000" & unsigned(mirror_bits(axi_qpsk.tdata)) + BASE_OFFSET_QPSK);
+  addr_8psk   <= std_logic_vector( "000" & unsigned(mirror_bits(axi_8psk.tdata)) + BASE_OFFSET_8PSK);            -- 8 PSK starts after QPSK
+  addr_16apsk <= std_logic_vector(  "00" & unsigned(mirror_bits(axi_16apsk.tdata)) + BASE_OFFSET_16APSK);      -- 16 APSK starts after QPSK + 8 PSK
+  addr_32apsk <= std_logic_vector(   "0" & unsigned(mirror_bits(axi_32apsk.tdata)) + BASE_OFFSET_32APSK); -- 32 APSK starts after QPSK + 8 PSK + 16 APSK
 
-  -- Only one will be active at a time
-  map_addr <= (addr_qpsk   and (5 downto 0 => axi_qpsk.tvalid)) or
-              (addr_8psk   and (5 downto 0 => axi_8psk.tvalid)) or
-              (addr_16apsk and (5 downto 0 => axi_16apsk.tvalid)) or
-              (addr_32apsk and (5 downto 0 => axi_32apsk.tvalid));
-
-  -- Select the config from the active channel (only one will be writing at a time)
-  map_cfg <= (axi_qpsk.tuser   and (sum(CONFIG_INPUT_WIDTHS) - 1 downto 0 => axi_qpsk.tvalid)) or
-             (axi_8psk.tuser   and (sum(CONFIG_INPUT_WIDTHS) - 1 downto 0 => axi_8psk.tvalid)) or
-             (axi_16apsk.tuser and (sum(CONFIG_INPUT_WIDTHS) - 1 downto 0 => axi_16apsk.tvalid)) or
-             (axi_32apsk.tuser and (sum(CONFIG_INPUT_WIDTHS) - 1 downto 0 => axi_32apsk.tvalid));
-
-  egress_constellation <= decode(get_field(map_cfg, 0, CONFIG_INPUT_WIDTHS));
-  egress_tid           <= get_field(map_cfg, 1, CONFIG_INPUT_WIDTHS);
-
-  axi_qpsk.tready      <= not adapter_full when egress_constellation = mod_qpsk else '0';
-  axi_8psk.tready      <= not adapter_full when egress_constellation = mod_8psk else '0';
-  axi_16apsk.tready    <= not adapter_full when egress_constellation = mod_16apsk else '0';
-  axi_32apsk.tready    <= not adapter_full when egress_constellation = mod_32apsk else '0';
-
-  s_tid_internal    <= s_tid & encode(s_constellation);
-
-  ---------------
-  -- Processes --
-  ---------------
-  process(clk)
+  -- Arbitrate between the outputs of all the width converters
+  arbiter_block : block
+    signal tdata_agg_in  : std_logic_array_t(3 downto 0)(6 + TUSER_WIDTH - 1 downto 0);
+    signal tdata_agg_out : std_logic_vector(TUSER_WIDTH + 6 - 1 downto 0);
   begin
-    if rising_edge(clk) then
 
-      if axi_qpsk.tvalid
-      or axi_8psk.tvalid
-      or axi_16apsk.tvalid
-      or axi_32apsk.tvalid then
-        assert map_data = map_data_ram
-          report "ROM should behave the same!"
-          severity Warning;
+    tdata_agg_in(0) <= axi_qpsk.tuser & addr_qpsk;
+    tdata_agg_in(1) <= axi_8psk.tuser & addr_8psk;
+    tdata_agg_in(2) <= axi_16apsk.tuser & addr_16apsk;
+    tdata_agg_in(3) <= axi_32apsk.tuser & addr_32apsk;
+
+    arbiter_u : entity fpga_cores.axi_stream_arbiter
+      generic map (
+        MODE            => "ROUND_ROBIN",
+        INTERFACES      => 4,
+        DATA_WIDTH      => TUSER_WIDTH + 6,
+        REGISTER_INPUTS => False)
+      port map (
+        -- Usual ports
+        clk              => clk,
+        rst              => rst,
+
+        selected         => open,
+        selected_encoded => open,
+
+        -- AXI slave input
+        s_tvalid(0)      => axi_qpsk.tvalid,
+        s_tvalid(1)      => axi_8psk.tvalid,
+        s_tvalid(2)      => axi_16apsk.tvalid,
+        s_tvalid(3)      => axi_32apsk.tvalid,
+
+        s_tready(0)      => axi_qpsk.tready,
+        s_tready(1)      => axi_8psk.tready,
+        s_tready(2)      => axi_16apsk.tready,
+        s_tready(3)      => axi_32apsk.tready,
+
+        s_tlast(0)       => axi_qpsk.tlast,
+        s_tlast(1)       => axi_8psk.tlast,
+        s_tlast(2)       => axi_16apsk.tlast,
+        s_tlast(3)       => axi_32apsk.tlast,
+
+        s_tdata          => tdata_agg_in,
+
+        -- AXI master output
+        m_tvalid         => axi_out.tvalid,
+        m_tready         => axi_out.tready,
+        m_tdata          => tdata_agg_out,
+        m_tlast          => axi_out.tlast);
+
+      axi_out.tdata <= tdata_agg_out(5 downto 0);
+      axi_out.tuser <= tdata_agg_out(axi_out.tuser'length + 6 - 1 downto 6);
+
+  end block;
+
+  axi_out_cfg        <= decode(axi_out.tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+
+  -- Read the appropriate address of the radius RAM
+  radius_rd_addr <=
+    (others => 'U')                                                when axi_out_cfg.constellation = mod_qpsk             else
+    (others => 'U')                                                when axi_out_cfg.constellation = mod_8psk             else
+    to_unsigned(RADIUS_SHORT_16APSK_C2_3, radius_rd_addr'length)   when axi_out_cfg = (MOD_16APSK, FECFRAME_SHORT, C2_3) else
+    to_unsigned(RADIUS_SHORT_16APSK_C3_4, radius_rd_addr'length)   when axi_out_cfg = (MOD_16APSK, FECFRAME_SHORT, C3_4) else
+    to_unsigned(RADIUS_SHORT_16APSK_C3_5, radius_rd_addr'length)   when axi_out_cfg = (MOD_16APSK, FECFRAME_SHORT, C3_5) else
+    to_unsigned(RADIUS_SHORT_16APSK_C4_5, radius_rd_addr'length)   when axi_out_cfg = (MOD_16APSK, FECFRAME_SHORT, C4_5) else
+    to_unsigned(RADIUS_SHORT_16APSK_C5_6, radius_rd_addr'length)   when axi_out_cfg = (MOD_16APSK, FECFRAME_SHORT, C5_6) else
+    to_unsigned(RADIUS_SHORT_16APSK_C8_9, radius_rd_addr'length)   when axi_out_cfg = (MOD_16APSK, FECFRAME_SHORT, C8_9) else
+
+    to_unsigned(RADIUS_SHORT_32APSK_C3_4, radius_rd_addr'length)   when axi_out_cfg = (MOD_32APSK, FECFRAME_SHORT, C3_4) else
+    to_unsigned(RADIUS_SHORT_32APSK_C4_5, radius_rd_addr'length)   when axi_out_cfg = (MOD_32APSK, FECFRAME_SHORT, C4_5) else
+    to_unsigned(RADIUS_SHORT_32APSK_C5_6, radius_rd_addr'length)   when axi_out_cfg = (MOD_32APSK, FECFRAME_SHORT, C5_6) else
+    to_unsigned(RADIUS_SHORT_32APSK_C8_9, radius_rd_addr'length)   when axi_out_cfg = (MOD_32APSK, FECFRAME_SHORT, C8_9) else
+
+    to_unsigned(RADIUS_NORMAL_16APSK_C2_3 , radius_rd_addr'length) when axi_out_cfg = (MOD_16APSK, FECFRAME_NORMAL, C2_3) else
+    to_unsigned(RADIUS_NORMAL_16APSK_C3_4 , radius_rd_addr'length) when axi_out_cfg = (MOD_16APSK, FECFRAME_NORMAL, C3_4) else
+    to_unsigned(RADIUS_NORMAL_16APSK_C3_5 , radius_rd_addr'length) when axi_out_cfg = (MOD_16APSK, FECFRAME_NORMAL, C3_5) else
+    to_unsigned(RADIUS_NORMAL_16APSK_C4_5 , radius_rd_addr'length) when axi_out_cfg = (MOD_16APSK, FECFRAME_NORMAL, C4_5) else
+    to_unsigned(RADIUS_NORMAL_16APSK_C5_6 , radius_rd_addr'length) when axi_out_cfg = (MOD_16APSK, FECFRAME_NORMAL, C5_6) else
+    to_unsigned(RADIUS_NORMAL_16APSK_C8_9 , radius_rd_addr'length) when axi_out_cfg = (MOD_16APSK, FECFRAME_NORMAL, C8_9) else
+    to_unsigned(RADIUS_NORMAL_16APSK_C9_10, radius_rd_addr'length) when axi_out_cfg = (MOD_16APSK, FECFRAME_NORMAL, C9_10) else
+
+    to_unsigned(RADIUS_NORMAL_32APSK_C3_4 , radius_rd_addr'length) when axi_out_cfg = (MOD_32APSK, FECFRAME_NORMAL, C3_4) else
+    to_unsigned(RADIUS_NORMAL_32APSK_C4_5 , radius_rd_addr'length) when axi_out_cfg = (MOD_32APSK, FECFRAME_NORMAL, C4_5) else
+    to_unsigned(RADIUS_NORMAL_32APSK_C5_6 , radius_rd_addr'length) when axi_out_cfg = (MOD_32APSK, FECFRAME_NORMAL, C5_6) else
+    to_unsigned(RADIUS_NORMAL_32APSK_C8_9 , radius_rd_addr'length) when axi_out_cfg = (MOD_32APSK, FECFRAME_NORMAL, C8_9) else
+    to_unsigned(RADIUS_NORMAL_32APSK_C9_10, radius_rd_addr'length) when axi_out_cfg = (MOD_32APSK, FECFRAME_NORMAL, C9_10) else
+
+    (others => 'U');
+
+  -- Split the RAM write port
+  iq_ram_wren     <= ram_wren and not ram_addr(6);
+  radius_ram_wren <= ram_wren and ram_addr(6);
+
+  ram_rdata       <= iq_ram_rdata when ram_addr(6) = '0' else
+                     radius_ram_rdata;
+  ram_block : block
+    signal tag_agg_in     : std_logic_vector(TID_WIDTH downto 0);
+    signal tag_agg_out    : std_logic_vector(TID_WIDTH downto 0);
+    signal radius_agg     : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+    signal radius_in_tag  : std_logic_vector(ENCODED_CONFIG_WIDTH - 1 downto 0);
+    signal radius_out_tag : std_logic_vector(ENCODED_CONFIG_WIDTH - 1 downto 0);
+  begin
+    -- Remove the encoded code rate from tuser here, we'll use it to address the radius RAM
+    tag_agg_in    <= axi_out.tlast & axi_out.tuser(TID_WIDTH - 1 downto 0);
+
+    ram_out.tuser <= tag_agg_out(TID_WIDTH - 1 downto 0);
+    ram_out.tlast <= tag_agg_out(TID_WIDTH);
+
+    iq_map_ram_u : entity fpga_cores.axi_stream_ram
+      generic map (
+        DEPTH         => MAPPING_TABLE'length,
+        DATA_WIDTH    => OUTPUT_DATA_WIDTH,
+        INITIAL_VALUE => MAPPING_TABLE,
+        TAG_WIDTH     => TID_WIDTH + 1,
+        RAM_TYPE      => auto)
+      port map (
+        clk           => clk,
+        rst           => rst,
+        -- Write side
+        wr_tready     => open,
+        wr_tvalid     => iq_ram_wren,
+        wr_addr       => ram_addr(numbits(MAPPING_TABLE'length) - 1 downto 0),
+        wr_data_in    => ram_wdata,
+        wr_data_out   => iq_ram_rdata,
+
+        -- Read request side
+        rd_in_tready  => axi_out.tready,
+        rd_in_tvalid  => axi_out.tvalid,
+        rd_in_addr    => axi_out.tdata,
+        rd_in_tag     => tag_agg_in,
+
+        -- Read response side
+        rd_out_tready => ram_out.tready,
+        rd_out_tvalid => ram_out.tvalid,
+        rd_out_addr   => ram_out_addr,
+        rd_out_data   => ram_out.tdata,
+        rd_out_tag    => tag_agg_out);
+
+    radius_in_tag  <= encode(axi_out_cfg);
+    radius_out_cfg <= decode(radius_out_tag);
+
+    radius_ram_u : entity fpga_cores.axi_stream_ram
+      generic map (
+        DEPTH         => RADIUS_COEFFICIENT_TABLE'length,
+        DATA_WIDTH    => OUTPUT_DATA_WIDTH,
+        INITIAL_VALUE => RADIUS_COEFFICIENT_TABLE,
+        TAG_WIDTH     => ENCODED_CONFIG_WIDTH,
+        RAM_TYPE      => auto)
+      port map (
+        clk           => clk,
+        rst           => rst,
+        -- Write side
+        wr_tready     => open,
+        wr_tvalid     => radius_ram_wren,
+        wr_addr       => ram_addr(numbits(RADIUS_COEFFICIENT_TABLE'length) - 1 downto 0),
+        wr_data_in    => ram_wdata,
+        wr_data_out   => radius_ram_rdata,
+
+        -- Read request side
+        rd_in_tready  => open,
+        rd_in_tvalid  => axi_out.tvalid,
+        rd_in_addr    => std_logic_vector(radius_rd_addr),
+        rd_in_tag     => radius_in_tag,
+
+        -- Read response side
+        rd_out_tready => ram_out.tready,
+        rd_out_tvalid => open,
+        rd_out_addr   => open,
+        rd_out_data   => radius_agg,
+        rd_out_tag    => radius_out_tag);
+
+      radius_0 <= signed(radius_agg(OUTPUT_DATA_WIDTH/2 - 1 downto 0));
+      radius_1 <= signed(radius_agg(OUTPUT_DATA_WIDTH - 1 downto OUTPUT_DATA_WIDTH/2));
+  end block;
+
+  ram_out.tready <= m_tready;
+
+  -- Need the raw offset for 16APSK and 32APSK to determine which radius we should use
+  ram_out_offset <= unsigned(ram_out_addr) - BASE_OFFSET_16APSK when radius_out_cfg.constellation = mod_16apsk else
+                    unsigned(ram_out_addr) - BASE_OFFSET_32APSK when radius_out_cfg.constellation = mod_32apsk else
+                    (others => 'U');
+
+  -- Select the correct multiplier based on frame length/constellation/code rate *AND*
+  -- wether the address is outer, middle or inner radius
+  output_multiplier <= UNIT_RADIUS      when radius_out_cfg.constellation = mod_qpsk or radius_out_cfg.constellation = mod_8psk else
+                       radius_0         when radius_out_cfg.constellation = mod_16apsk and ram_out_offset < 12 else
+                       radius_1         when radius_out_cfg.constellation = mod_16apsk and ram_out_offset >= 12 else
+                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 0 else
+                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 1 else
+                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 2 else
+                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 3 else
+                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 4 else
+                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 5 else
+                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 6 else
+                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 7 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 8 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 9 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 10 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 11 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 12 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 13 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 14 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 15 else
+                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 16 else
+                       radius_1         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 17 else
+                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 18 else
+                       radius_1         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 19 else
+                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 20 else
+                       radius_1         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 21 else
+                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 22 else
+                       radius_1         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 23 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 24 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 25 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 26 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 27 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 28 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 29 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 30 else
+                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 31 else
+                       (others => 'U');
+
+  -- Separate IQ components to make multipliying easier
+  ram_out_i <= signed(ram_out.tdata(OUTPUT_DATA_WIDTH/2 - 1 downto 0));
+  ram_out_q <= signed(ram_out.tdata(OUTPUT_DATA_WIDTH - 1 downto OUTPUT_DATA_WIDTH/2));
+
+  -- Use RAM and radius outputs to make up the final IQ values
+  output_i <= ram_out_i * output_multiplier;
+  output_q <= ram_out_q * output_multiplier;
+
+  -- Add a FF at the output so that the multiplier doesn't cause timing issues
+  process(clk, rst)
+  begin
+    if rst then
+      m_tvalid <= '0';
+    elsif rising_edge(clk) then
+      if m_tready then
+        m_tvalid <= '0';
+        m_tid    <= (others => 'U');
+        m_tlast  <= 'U';
+        m_tdata  <= (others => 'U');
       end if;
 
-      adapter_wr_en   <= '0';
-      adapter_wr_last <= '0';
-      egress_tid_reg  <= egress_tid;
-      if not adapter_full then
-        adapter_wr_en   <= (axi_qpsk.tvalid or axi_8psk.tvalid or axi_16apsk.tvalid or axi_32apsk.tvalid)
-                       and (axi_qpsk.tready or axi_8psk.tready or axi_16apsk.tready or axi_32apsk.tready);
-        adapter_wr_last <= axi_qpsk.tlast or axi_8psk.tlast or axi_16apsk.tlast or axi_32apsk.tlast;
+      if ram_out.tvalid then
+        m_tvalid <= '1';
+        m_tid    <= ram_out.tuser;
+        m_tlast  <= ram_out.tlast;
+        m_tdata  <= std_logic_vector(output_i(OUTPUT_DATA_WIDTH - 2 downto OUTPUT_DATA_WIDTH/2 - 1)) &
+                    std_logic_vector(output_q(OUTPUT_DATA_WIDTH - 2 downto OUTPUT_DATA_WIDTH/2 - 1));
       end if;
-
     end if;
   end process;
 
