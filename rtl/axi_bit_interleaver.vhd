@@ -226,7 +226,7 @@ begin
 
     ram : entity fpga_cores.ram_inference
       generic map (
-        DEPTH        => 2*MAX_ROWS,
+        DEPTH        => 2**numbits(2*MAX_ROWS), -- Round up the nearest power of 2 depth
         DATA_WIDTH   => TDATA_WIDTH,
         RAM_TYPE     => auto,
         -- TODO: Adjust the pipeline to handle OUTPUT_DELAY = 2 to get better timing on
