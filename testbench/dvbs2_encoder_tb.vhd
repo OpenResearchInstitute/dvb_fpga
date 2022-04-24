@@ -309,17 +309,17 @@ begin
       expected_tlast  : std_logic;
     end record;
 
-    signal bb_scrambler      : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-    signal bch_encoder       : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-    signal ldpc_encoder      : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal bb_scrambler              : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal bch_encoder               : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal ldpc_encoder              : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal bit_interleaver           : axi_stream_bus_t(tdata(7 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+    signal constellation_mapper      : axi_stream_bus_t(tdata(IQ_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
 
-    signal bb_scrambler_info : file_compare_info_t(expected_tdata(7 downto 0));
-    signal bch_encoder_info  : file_compare_info_t(expected_tdata(7 downto 0));
-    signal ldpc_encoder_info : file_compare_info_t(expected_tdata(7 downto 0));
-
-    -- signal pl_frame_expected       : axi_stream_data_bus_t(tdata(IQ_WIDTH - 1 downto 0));
-    -- signal pl_frame                : axi_stream_bus_t(tdata(IQ_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-    -- signal pl_frame_expected_tlast : std_logic;
+    signal bb_scrambler_info         : file_compare_info_t(expected_tdata(7 downto 0));
+    signal bch_encoder_info          : file_compare_info_t(expected_tdata(7 downto 0));
+    signal ldpc_encoder_info         : file_compare_info_t(expected_tdata(7 downto 0));
+    signal bit_interleaver_info      : file_compare_info_t(expected_tdata(7 downto 0));
+    signal constellation_mapper_info : file_compare_info_t(expected_tdata(IQ_WIDTH - 1 downto 0));
 
   begin
 
@@ -393,33 +393,58 @@ begin
         s_tready           => open,
         s_tdata            => ldpc_encoder.tdata,
         s_tvalid           => ldpc_encoder.tvalid and ldpc_encoder.tready,
-        s_tlast            => ldpc_encoder_info.expected_tlast);--ldpc_encoder.tlast);
+        s_tlast            => ldpc_encoder_info.expected_tlast);
 
-    -- physical_layer_checker_u : entity work.axi_file_compare_complex
-    --   generic map (
-    --     READER_NAME         => "pl_framer_checker",
-    --     DATA_WIDTH          => IQ_WIDTH,
-    --     TOLERANCE           => 1200,
-    --     SWAP_BYTE_ENDIANESS => False,
-    --     ERROR_CNT_WIDTH     => 8,
-    --     REPORT_SEVERITY     => Error)
-    --   port map (
-    --     -- Usual ports
-    --     clk                => clk,
-    --     rst                => rst,
-    --     -- Config and status
-    --     tdata_error_cnt    => open,
-    --     tlast_error_cnt    => open,
-    --     error_cnt          => open,
-    --     -- Debug stuff
-    --     expected_tdata     => open,
-    --     expected_tlast     => pl_frame_expected_tlast,
-    --     -- Data input
-    --     s_tready           => pl_frame.tready,
-    --     s_tdata            => pl_frame.tdata,
-    --     s_tvalid           => pl_frame.tvalid,
-    --     s_tlast            => pl_frame_expected_tlast); --pl_frame.tlast);
-    --
+    bit_interleaver_checker_u : entity fpga_cores_sim.axi_file_compare
+      generic map (
+        READER_NAME     => "bit_interleaver",
+        ERROR_CNT_WIDTH => 8,
+        REPORT_SEVERITY => Error,
+        DATA_WIDTH      => 8)
+      port map (
+        -- Usual ports
+        clk                => clk,
+        rst                => rst,
+        -- Config and status
+        tdata_error_cnt    => bit_interleaver_info.tdata_error_cnt,
+        tlast_error_cnt    => bit_interleaver_info.tlast_error_cnt,
+        error_cnt          => bit_interleaver_info.error_cnt,
+        tready_probability => 1.0,
+        -- Debug stuff
+        expected_tdata     => bit_interleaver_info.expected_tdata,
+        expected_tlast     => bit_interleaver_info.expected_tlast,
+        -- Data input
+        s_tready           => open,
+        s_tdata            => bit_interleaver.tdata,
+        s_tvalid           => bit_interleaver.tvalid and bit_interleaver.tready,
+        s_tlast            => bit_interleaver_info.expected_tlast);
+
+    constellation_mapper_checker_u : entity work.axi_file_compare_complex
+      generic map (
+        READER_NAME     => "constellation_mapper",
+      TOLERANCE         => 64,
+        ERROR_CNT_WIDTH => 8,
+        REPORT_SEVERITY => Error,
+        DATA_WIDTH      => IQ_WIDTH)
+      port map (
+        -- Usual ports
+        clk                => clk,
+        rst                => rst,
+        -- Config and status
+        tdata_error_cnt    => constellation_mapper_info.tdata_error_cnt,
+        tlast_error_cnt    => constellation_mapper_info.tlast_error_cnt,
+        error_cnt          => constellation_mapper_info.error_cnt,
+        -- tready_probability => 1.0,
+        -- Debug stuff
+        expected_tdata     => constellation_mapper_info.expected_tdata,
+        expected_tlast     => constellation_mapper_info.expected_tlast,
+        -- Data input
+        -- s_tready           => open,
+        s_tready           => constellation_mapper.tready,
+        s_tdata            => constellation_mapper.tdata,
+        s_tvalid           => constellation_mapper.tvalid and constellation_mapper.tready,
+        s_tlast            => constellation_mapper_info.expected_tlast);
+
     process
       procedure mirror_signal ( constant source, dest : string) is
       begin
@@ -430,10 +455,11 @@ begin
         init_signal_spy(source & ".tready", dest & ".tready",  0);
       end procedure;
     begin
-      mirror_signal("/dvbs2_encoder_tb/dut/bb_scrambler", "/dvbs2_encoder_tb/signal_spy_block/bb_scrambler");
-      mirror_signal("/dvbs2_encoder_tb/dut/bch_encoder", "/dvbs2_encoder_tb/signal_spy_block/bch_encoder");
-      mirror_signal("/dvbs2_encoder_tb/dut/ldpc_encoder", "/dvbs2_encoder_tb/signal_spy_block/ldpc_encoder");
-      -- mirror_signal("/dvbs2_encoder_tb/dut/pl_frame", "/dvbs2_encoder_tb/signal_spy_block/pl_frame");
+      mirror_signal("/dvbs2_encoder_tb/dut/encoder_u/bb_scrambler", "/dvbs2_encoder_tb/signal_spy_block/bb_scrambler");
+      mirror_signal("/dvbs2_encoder_tb/dut/encoder_u/bch_encoder", "/dvbs2_encoder_tb/signal_spy_block/bch_encoder");
+      mirror_signal("/dvbs2_encoder_tb/dut/encoder_u/ldpc_encoder", "/dvbs2_encoder_tb/signal_spy_block/ldpc_encoder");
+      mirror_signal("/dvbs2_encoder_tb/dut/encoder_u/bit_interleaver", "/dvbs2_encoder_tb/signal_spy_block/bit_interleaver");
+      mirror_signal("/dvbs2_encoder_tb/dut/encoder_u/constellation_mapper", "/dvbs2_encoder_tb/signal_spy_block/constellation_mapper");
       wait;
     end process;
   end block signal_spy_block; -- }} ----------------------------------------------------
@@ -448,12 +474,13 @@ begin
     variable input_stream         : file_reader_t := new_file_reader("input_stream");
     variable output_checker       : file_reader_t := new_file_reader("output_checker");
 
-      -- ghdl translate_off
-    variable bb_scrambler_checker : file_reader_t := new_file_reader("bb_scrambler");
-    variable bch_encoder_checker  : file_reader_t := new_file_reader("bch_encoder");
-    variable ldpc_encoder_checker : file_reader_t := new_file_reader("ldpc_encoder");
-    variable pl_framer_checker    : file_reader_t := new_file_reader("pl_framer_checker");
-      -- ghdl translate_on
+    -- ghdl translate_off
+    variable bb_scrambler_checker         : file_reader_t := new_file_reader("bb_scrambler");
+    variable bch_encoder_checker          : file_reader_t := new_file_reader("bch_encoder");
+    variable ldpc_encoder_checker         : file_reader_t := new_file_reader("ldpc_encoder");
+    variable bit_interleaver_checker      : file_reader_t := new_file_reader("bit_interleaver");
+    variable constellation_mapper_checker : file_reader_t := new_file_reader("constellation_mapper");
+    -- ghdl translate_on
 
     procedure walk(constant steps : natural) is -- {{ ----------------------------------
     begin
@@ -556,82 +583,13 @@ begin
       wait_all_read(net, bb_scrambler_checker);
       wait_all_read(net, bch_encoder_checker);
       wait_all_read(net, ldpc_encoder_checker);
-      wait_all_read(net, pl_framer_checker);
+      wait_all_read(net, bit_interleaver_checker);
+      wait_all_read(net, constellation_mapper_checker);
       -- ghdl translate_on
       wait until rising_edge(clk) and axi_slave.tvalid = '0' for 1 ms;
       walk(1);
       info(logger, "All BFMs have now completed");
     end procedure wait_for_completion; -- }} -------------------------------------------
-
-    procedure write_ram ( -- {{ --------------------------------------------------------
-      constant addr : in integer;
-      constant data : in std_logic_vector(IQ_WIDTH - 1 downto 0)) is
-    begin
-      axi_cfg_write(BIT_MAPPER_RAM_OFFSET + 4*addr, data);
-    end procedure; -- }} ---------------------------------------------------------------
-
-    -- Write the exact value so we know data was picked up correctly without having to
-    -- convert into IQ
-    variable current_mapping_ram : std_logic_array_t(0 to 63)(IQ_WIDTH - 1 downto 0);
-    procedure update_mapping_ram_if_needed ( -- {{ -----------------------------------------------
-      constant initial_addr : integer;
-      constant path         : string) is
-      file file_handler     : text;
-      variable L            : line;
-      variable map_i, map_q : real;
-      variable addr         : integer := initial_addr;
-      variable index        : unsigned(5 downto 0) := (others => '0');
-      variable mapping_ram  : std_logic_array_t(0 to 63)(IQ_WIDTH - 1 downto 0) := current_mapping_ram;
-    begin
-      file_open(file_handler, path, read_mode);
-      while not endfile(file_handler) loop
-        readline(file_handler, L);
-        read(L, map_i);
-        readline(file_handler, L);
-        read(L, map_q);
-        trace(
-          logger,
-          sformat(
-            "[%b] Writing RAM: %2d => (%13s, %13s) => %13s (%r) / %13s (%r)",
-            fo(index),
-            fo(addr),
-            real'image(map_i),
-            real'image(map_q),
-            real'image(map_i),
-            fo(to_fixed_point(map_i, IQ_WIDTH/2)),
-            real'image(map_q),
-            fo(to_fixed_point(map_q, IQ_WIDTH/2))
-          )
-        );
-
-        mapping_ram(addr) := std_logic_vector(to_fixed_point(map_q, IQ_WIDTH/2)) &
-                             std_logic_vector(to_fixed_point(map_i, IQ_WIDTH/2));
-
-        addr := addr + 1;
-        index := index + 1;
-      end loop;
-      file_close(file_handler);
-      if index = 0 then
-        failure(logger, "Failed to update RAM from file");
-      end if;
-
-      -- Only update if the tables are different
-      if current_mapping_ram = mapping_ram then
-        return;
-      end if;
-
-      wait_for_completion;
-      info(logger, sformat("Updating mapping RAM from '%s' (initial address is %d)", fo(path), fo(initial_addr)));
-
-      for i in mapping_ram'range loop
-        -- Only update entries that changed
-        if current_mapping_ram(i) /= mapping_ram(i) then
-          write_ram(i, mapping_ram(i));
-        end if;
-      end loop;
-
-      current_mapping_ram := mapping_ram;
-    end procedure; -- }} ---------------------------------------------------------------
 
     procedure run_test ( -- {{ ---------------------------------------------------------
       constant config           : config_t;
@@ -659,23 +617,25 @@ begin
         when mod_32apsk => initial_addr := 28;
         when others => null;
       end case;
-      update_mapping_ram_if_needed(initial_addr, data_path & "/modulation_table.bin");
 
       for i in 0 to number_of_frames - 1 loop
         file_reader_msg        := new_msg;
         file_reader_msg.sender := self;
 
         read_file(net, input_stream, data_path & "/input_data_packed.bin", encode(config_tuple));
-        -- read_file(net, output_checker, data_path & "/modulated_pilots_off_fixed_point.bin");
         read_file(net, output_checker, data_path & "/plframe_pilots_off_fixed_point.bin");
 
         -- ghdl translate_off
         read_file(net, bb_scrambler_checker, data_path & "/bb_scrambler_output_packed.bin");
         read_file(net, bch_encoder_checker, data_path & "/bch_encoder_output_packed.bin");
         read_file(net, ldpc_encoder_checker, data_path & "/ldpc_output_packed.bin");
+        if config.constellation /= mod_qpsk then
+          read_file(net, bit_interleaver_checker, data_path & "/bit_interleaver_output_packed.bin");
+        end if;
+        read_file(net, constellation_mapper_checker, data_path & "/bit_mapper_output_fixed_point.bin");
         -- ghdl translate_on
       end loop;
-      wait_for_completion;
+      info(logger, "Test has been set up, waiting for completion");
     end procedure run_test; -- }} ------------------------------------------------------
 
   begin
@@ -705,6 +665,10 @@ begin
         for i in configs'range loop
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
+
+        info(logger, "Setup completed for all configurations, waiting for files to be consumed");
+        wait_for_completion;
+
       end if;
 
       walk(32);
