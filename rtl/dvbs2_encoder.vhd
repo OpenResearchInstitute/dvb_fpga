@@ -117,8 +117,6 @@ architecture dvbs2_encoder of dvbs2_encoder is
   signal m_tlast_i                : std_logic;
   signal s_tready_i               : std_logic;
 
-  signal mux_sel                  : std_logic_vector(1 downto 0);
-
   signal s_tdata_selected         : std_logic_vector(s_tdata'range);
   signal s_tkeep_selected         : std_logic_vector(s_tkeep'range);
 
@@ -132,9 +130,8 @@ architecture dvbs2_encoder of dvbs2_encoder is
   signal ldpc_encoder             : data_and_config_t(tdata(7 downto 0));
   signal ldpc_encoder_reg         : data_and_config_t(tdata(7 downto 0));
   signal ldpc_encoder_dbg         : data_and_config_t(tdata(7 downto 0));
-  signal ldpc_fifo                : data_and_config_t(tdata(7 downto 0));
   signal fork_bit_interleaver     : axi_stream_ctrl_t;
-  signal fork_ldpc_fifo           : axi_stream_ctrl_t;
+  signal fork_constellation_mapper: axi_stream_ctrl_t;
   signal bit_interleaver          : data_and_config_t(tdata(7 downto 0));
   signal bit_interleaver_dbg      : data_and_config_t(tdata(7 downto 0));
   signal arbiter_out              : data_and_config_t(tdata(7 downto 0));
@@ -515,31 +512,64 @@ begin
       m_tid                      => ldpc_encoder_dbg.tid);
 
 
-  -- Interface 0 of the demux connects to the bit interleaves, interface 1 connects to the
-  -- frame FIFO
-    mux_sel <= "00" when ldpc_encoder_dbg.tvalid = '0'                         else
-               "10" when decode(ldpc_encoder_dbg.tid).constellation = mod_qpsk else
-               "01";
+  bit_interleaver_flow_control : block
+    signal demux_sel         : std_logic_vector(1 downto 0);
+    signal demux_sel_reg     : std_logic_vector(1 downto 0);
+    signal frames_in_transit : unsigned(2 downto 0); -- Shouldn't really exceed 2 but it's cheap to leave some margin
+    signal frame_in          : std_logic;
+    signal frame_out         : std_logic;
+  begin
 
-  -- Bit interleaver is not needed for QPSK
-  bit_interleaver_demux_u : entity fpga_cores.axi_stream_demux
-    generic map (
-      INTERFACES => 2,
-      DATA_WIDTH => 8)
-    port map (
-      selection_mask => mux_sel,
+    frame_in  <= fork_bit_interleaver.tvalid and fork_bit_interleaver.tready and ldpc_encoder_dbg.tlast;
+    frame_out <= bit_interleaver.tvalid and bit_interleaver.tready and bit_interleaver.tlast;
 
-      s_tvalid       => ldpc_encoder_dbg.tvalid,
-      s_tready       => ldpc_encoder_dbg.tready,
-      s_tdata        => ldpc_encoder_dbg.tdata,
+    process(clk, rst)
+    begin
+      if rst then
+        frames_in_transit  <= (others => '0');
+        demux_sel_reg      <= (others => 'U');
+      elsif rising_edge(clk) then
+        demux_sel_reg <= demux_sel;
 
-      m_tvalid(0)    => fork_bit_interleaver.tvalid,
-      m_tvalid(1)    => fork_ldpc_fifo.tvalid,
+        -- Count frames in transit through the bit interleaver
+        if frame_in and not frame_out then
+          frames_in_transit <= frames_in_transit + 1;
+        elsif not frame_in and frame_out then
+          frames_in_transit <= frames_in_transit - 1;
+        end if;
 
-      m_tready(0)    => fork_bit_interleaver.tready,
-      m_tready(1)    => fork_ldpc_fifo.tready,
+      end if;
+    end process;
 
-      m_tdata        => open);
+    -- Interface 0 of the demux connects to the bit interleaver, interface 1 connects to
+    -- the frame FIFO
+    demux_sel <= "00" when frames_in_transit > 0 and decode(ldpc_encoder_dbg.tid).constellation = mod_qpsk else
+                 "10" when decode(ldpc_encoder_dbg.tid).constellation = mod_qpsk else
+                 "01" when decode(ldpc_encoder_dbg.tid).constellation = mod_8psk else
+                 "01" when decode(ldpc_encoder_dbg.tid).constellation = mod_16apsk else
+                 "01" when decode(ldpc_encoder_dbg.tid).constellation = mod_32apsk else
+                 demux_sel_reg;
+
+    -- Bit interleaver is not needed for QPSK
+    bit_interleaver_demux_u : entity fpga_cores.axi_stream_demux
+      generic map (
+        INTERFACES => 2,
+        DATA_WIDTH => 8)
+      port map (
+        selection_mask => demux_sel,
+
+        s_tvalid       => ldpc_encoder_dbg.tvalid,
+        s_tready       => ldpc_encoder_dbg.tready,
+        s_tdata        => ldpc_encoder_dbg.tdata,
+
+        m_tvalid(0)    => fork_bit_interleaver.tvalid,
+        m_tvalid(1)    => fork_constellation_mapper.tvalid,
+
+        m_tready(0)    => fork_bit_interleaver.tready,
+        m_tready(1)    => fork_constellation_mapper.tready,
+
+        m_tdata        => open);
+  end block bit_interleaver_flow_control;
 
   bit_interleaver_u : entity work.axi_bit_interleaver
     generic map (
@@ -610,46 +640,13 @@ begin
       m_tdata                    => bit_interleaver_dbg.tdata,
       m_tid                      => bit_interleaver_dbg.tid);
 
-  ldpc_fifo_block : block
-    signal tdata_agg_in  : std_logic_vector(ENCODED_CONFIG_WIDTH + 7 downto 0);
-    signal tdata_agg_out : std_logic_vector(ENCODED_CONFIG_WIDTH + 7 downto 0);
-  begin
-    ldpc_fifo_u : entity fpga_cores.axi_stream_frame_fifo
-      generic map (
-        FIFO_DEPTH => max(DVB_N_LDPC) / 8,
-        DATA_WIDTH => ENCODED_CONFIG_WIDTH + 8,
-        RAM_TYPE   => auto)
-      port map (
-        -- Usual ports
-        clk     => clk,
-        rst     => rst,
-        -- status
-        entries  => user2regs.ldpc_fifo_status_ldpc_fifo_entries,
-        empty    => user2regs.ldpc_fifo_status_ldpc_fifo_empty(0),
-        full     => user2regs.ldpc_fifo_status_ldpc_fifo_full(0),
-        -- Write side
-        s_tvalid => fork_ldpc_fifo.tvalid,
-        s_tready => fork_ldpc_fifo.tready,
-        s_tdata  => tdata_agg_in,
-        s_tlast  => ldpc_encoder_dbg.tlast,
-        -- Read side
-        m_tvalid => ldpc_fifo.tvalid,
-        m_tready => ldpc_fifo.tready,
-        m_tdata  => tdata_agg_out,
-        m_tlast  => ldpc_fifo.tlast);
-
-    tdata_agg_in    <= ldpc_encoder_dbg.tid & ldpc_encoder_dbg.tdata;
-    ldpc_fifo.tdata <= tdata_agg_out(7 downto 0);
-    ldpc_fifo.tid   <= tdata_agg_out(ENCODED_CONFIG_WIDTH + 7 downto 8);
-  end block;
-
   pre_constellaion_mapper_arbiter_block : block
     signal tdata_in0 : std_logic_vector(8 + ENCODED_CONFIG_WIDTH - 1 downto 0);
     signal tdata_in1 : std_logic_vector(8 + ENCODED_CONFIG_WIDTH - 1 downto 0);
     signal tdata_out : std_logic_vector(8 + ENCODED_CONFIG_WIDTH - 1 downto 0);
   begin
 
-    tdata_in0 <= ldpc_fifo.tid & ldpc_fifo.tdata;
+    tdata_in0 <= ldpc_encoder_dbg.tid & ldpc_encoder_dbg.tdata;
     tdata_in1 <= bit_interleaver_dbg.tid & bit_interleaver_dbg.tdata;
 
     arbiter_out.tdata <= tdata_out(8 - 1 downto 0);
@@ -671,13 +668,13 @@ begin
         selected_encoded => open,
 
         -- AXI slave input
-        s_tvalid(0)      => ldpc_fifo.tvalid,
+        s_tvalid(0)      => fork_constellation_mapper.tvalid,
         s_tvalid(1)      => bit_interleaver_dbg.tvalid,
 
-        s_tready(0)      => ldpc_fifo.tready,
+        s_tready(0)      => fork_constellation_mapper.tready,
         s_tready(1)      => bit_interleaver_dbg.tready,
 
-        s_tlast(0)       => ldpc_fifo.tlast,
+        s_tlast(0)       => ldpc_encoder_dbg.tlast,
         s_tlast(1)       => bit_interleaver_dbg.tlast,
 
         s_tdata(0)       => tdata_in0,
