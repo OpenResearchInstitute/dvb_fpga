@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_encoder' Register Definitions
-// Revision: 298
+// Revision: 326
 // -----------------------------------------------------------------------------
-// Generated on 2022-04-06 at 18:22 (UTC) by airhdl version 2022.03.1-114
+// Generated on 2022-04-24 at 21:50 (UTC) by airhdl version 2022.04.1-116
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -28,7 +28,7 @@ namespace dvbs2_encoder_regs {
     static const std::string name = "dvbs2_encoder";
 
     /* Revision number of the 'dvbs2_encoder' register map */
-    static const std::uint32_t REVISION = 298;
+    static const std::uint32_t REVISION = 326;
 
     /* Default base address of the 'dvbs2_encoder' register map */
     static const std::uint32_t BASE_ADDRESS = 0x00000000;
@@ -89,6 +89,12 @@ namespace dvbs2_encoder_regs {
     static const int LDPC_FIFO_STATUS_LDPC_FIFO_FULL_BIT_WIDTH = 1; /* bit width of the 'ldpc_fifo_full' field */
     static const std::uint32_t LDPC_FIFO_STATUS_LDPC_FIFO_FULL_BIT_MASK = 0x00020000; /* bit mask of the 'ldpc_fifo_full' field */
     static const std::uint32_t LDPC_FIFO_STATUS_LDPC_FIFO_FULL_RESET = 0x0; /* reset value of the 'ldpc_fifo_full' field */
+
+    /* Field 'ldpc_fifo_status.arbiter_selected' */
+    static const int LDPC_FIFO_STATUS_ARBITER_SELECTED_BIT_OFFSET = 20; /* bit offset of the 'arbiter_selected' field */
+    static const int LDPC_FIFO_STATUS_ARBITER_SELECTED_BIT_WIDTH = 2; /* bit width of the 'arbiter_selected' field */
+    static const std::uint32_t LDPC_FIFO_STATUS_ARBITER_SELECTED_BIT_MASK = 0x00300000; /* bit mask of the 'arbiter_selected' field */
+    static const std::uint32_t LDPC_FIFO_STATUS_ARBITER_SELECTED_RESET = 0x0; /* reset value of the 'arbiter_selected' field */
 
     /* Register 'frames_in_transit' */
     static const std::uint32_t FRAMES_IN_TRANSIT_OFFSET = 0x00000008; /* address offset of the 'frames_in_transit' register */
@@ -559,8 +565,98 @@ namespace dvbs2_encoder_regs {
     static const std::uint32_t AXI_DEBUG_BIT_INTERLEAVER_STROBES_M_TREADY_BIT_MASK = 0x00000008; /* bit mask of the 'm_tready' field */
     static const std::uint32_t AXI_DEBUG_BIT_INTERLEAVER_STROBES_M_TREADY_RESET = 0x0; /* reset value of the 'm_tready' field */
 
+    /* Register 'axi_debug_constellation_mapper_cfg' */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_CFG_OFFSET = 0x00001200; /* address offset of the 'axi_debug_constellation_mapper_cfg' register */
+
+    /* Field 'axi_debug_constellation_mapper_cfg.block_data' */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_CFG_BLOCK_DATA_BIT_OFFSET = 0; /* bit offset of the 'block_data' field */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_CFG_BLOCK_DATA_BIT_WIDTH = 1; /* bit width of the 'block_data' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_CFG_BLOCK_DATA_BIT_MASK = 0x00000001; /* bit mask of the 'block_data' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_CFG_BLOCK_DATA_RESET = 0x0; /* reset value of the 'block_data' field */
+
+    /* Field 'axi_debug_constellation_mapper_cfg.allow_word' */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_CFG_ALLOW_WORD_BIT_OFFSET = 1; /* bit offset of the 'allow_word' field */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_CFG_ALLOW_WORD_BIT_WIDTH = 1; /* bit width of the 'allow_word' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_CFG_ALLOW_WORD_BIT_MASK = 0x00000002; /* bit mask of the 'allow_word' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_CFG_ALLOW_WORD_RESET = 0x0; /* reset value of the 'allow_word' field */
+
+    /* Field 'axi_debug_constellation_mapper_cfg.allow_frame' */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_CFG_ALLOW_FRAME_BIT_OFFSET = 2; /* bit offset of the 'allow_frame' field */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_CFG_ALLOW_FRAME_BIT_WIDTH = 1; /* bit width of the 'allow_frame' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_CFG_ALLOW_FRAME_BIT_MASK = 0x00000004; /* bit mask of the 'allow_frame' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_CFG_ALLOW_FRAME_RESET = 0x0; /* reset value of the 'allow_frame' field */
+
+    /* Register 'axi_debug_constellation_mapper_frame_count' */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_FRAME_COUNT_OFFSET = 0x00001204; /* address offset of the 'axi_debug_constellation_mapper_frame_count' register */
+
+    /* Field 'axi_debug_constellation_mapper_frame_count.value' */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_FRAME_COUNT_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_FRAME_COUNT_VALUE_BIT_WIDTH = 16; /* bit width of the 'value' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_FRAME_COUNT_VALUE_BIT_MASK = 0x0000FFFF; /* bit mask of the 'value' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_FRAME_COUNT_VALUE_RESET = 0x0; /* reset value of the 'value' field */
+
+    /* Register 'axi_debug_constellation_mapper_last_frame_length' */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_LAST_FRAME_LENGTH_OFFSET = 0x00001208; /* address offset of the 'axi_debug_constellation_mapper_last_frame_length' register */
+
+    /* Field 'axi_debug_constellation_mapper_last_frame_length.value' */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_LAST_FRAME_LENGTH_VALUE_BIT_WIDTH = 16; /* bit width of the 'value' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_LAST_FRAME_LENGTH_VALUE_BIT_MASK = 0x0000FFFF; /* bit mask of the 'value' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_LAST_FRAME_LENGTH_VALUE_RESET = 0x0; /* reset value of the 'value' field */
+
+    /* Register 'axi_debug_constellation_mapper_min_max_frame_length' */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_OFFSET = 0x0000120C; /* address offset of the 'axi_debug_constellation_mapper_min_max_frame_length' register */
+
+    /* Field 'axi_debug_constellation_mapper_min_max_frame_length.min_frame_length' */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET = 0; /* bit offset of the 'min_frame_length' field */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_WIDTH = 16; /* bit width of the 'min_frame_length' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_MASK = 0x0000FFFF; /* bit mask of the 'min_frame_length' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_RESET = 0x0; /* reset value of the 'min_frame_length' field */
+
+    /* Field 'axi_debug_constellation_mapper_min_max_frame_length.max_frame_length' */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_OFFSET = 16; /* bit offset of the 'max_frame_length' field */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_WIDTH = 16; /* bit width of the 'max_frame_length' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_MASK = 0xFFFF0000; /* bit mask of the 'max_frame_length' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET = 0x0; /* reset value of the 'max_frame_length' field */
+
+    /* Register 'axi_debug_constellation_mapper_word_count' */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_WORD_COUNT_OFFSET = 0x00001210; /* address offset of the 'axi_debug_constellation_mapper_word_count' register */
+
+    /* Field 'axi_debug_constellation_mapper_word_count.value' */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_WORD_COUNT_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_WORD_COUNT_VALUE_BIT_WIDTH = 16; /* bit width of the 'value' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_WORD_COUNT_VALUE_BIT_MASK = 0x0000FFFF; /* bit mask of the 'value' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_WORD_COUNT_VALUE_RESET = 0x0; /* reset value of the 'value' field */
+
+    /* Register 'axi_debug_constellation_mapper_strobes' */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_OFFSET = 0x00001214; /* address offset of the 'axi_debug_constellation_mapper_strobes' register */
+
+    /* Field 'axi_debug_constellation_mapper_strobes.s_tvalid' */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_S_TVALID_BIT_OFFSET = 0; /* bit offset of the 's_tvalid' field */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_S_TVALID_BIT_WIDTH = 1; /* bit width of the 's_tvalid' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_S_TVALID_BIT_MASK = 0x00000001; /* bit mask of the 's_tvalid' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_S_TVALID_RESET = 0x0; /* reset value of the 's_tvalid' field */
+
+    /* Field 'axi_debug_constellation_mapper_strobes.s_tready' */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_S_TREADY_BIT_OFFSET = 1; /* bit offset of the 's_tready' field */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_S_TREADY_BIT_WIDTH = 1; /* bit width of the 's_tready' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_S_TREADY_BIT_MASK = 0x00000002; /* bit mask of the 's_tready' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_S_TREADY_RESET = 0x0; /* reset value of the 's_tready' field */
+
+    /* Field 'axi_debug_constellation_mapper_strobes.m_tvalid' */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_M_TVALID_BIT_OFFSET = 2; /* bit offset of the 'm_tvalid' field */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_M_TVALID_BIT_WIDTH = 1; /* bit width of the 'm_tvalid' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_M_TVALID_BIT_MASK = 0x00000004; /* bit mask of the 'm_tvalid' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_M_TVALID_RESET = 0x0; /* reset value of the 'm_tvalid' field */
+
+    /* Field 'axi_debug_constellation_mapper_strobes.m_tready' */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_M_TREADY_BIT_OFFSET = 3; /* bit offset of the 'm_tready' field */
+    static const int AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_M_TREADY_BIT_WIDTH = 1; /* bit width of the 'm_tready' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_M_TREADY_BIT_MASK = 0x00000008; /* bit mask of the 'm_tready' field */
+    static const std::uint32_t AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_M_TREADY_RESET = 0x0; /* reset value of the 'm_tready' field */
+
     /* Register 'axi_debug_plframe_cfg' */
-    static const std::uint32_t AXI_DEBUG_PLFRAME_CFG_OFFSET = 0x00001200; /* address offset of the 'axi_debug_plframe_cfg' register */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_CFG_OFFSET = 0x00001300; /* address offset of the 'axi_debug_plframe_cfg' register */
 
     /* Field 'axi_debug_plframe_cfg.block_data' */
     static const int AXI_DEBUG_PLFRAME_CFG_BLOCK_DATA_BIT_OFFSET = 0; /* bit offset of the 'block_data' field */
@@ -581,7 +677,7 @@ namespace dvbs2_encoder_regs {
     static const std::uint32_t AXI_DEBUG_PLFRAME_CFG_ALLOW_FRAME_RESET = 0x0; /* reset value of the 'allow_frame' field */
 
     /* Register 'axi_debug_plframe_frame_count' */
-    static const std::uint32_t AXI_DEBUG_PLFRAME_FRAME_COUNT_OFFSET = 0x00001204; /* address offset of the 'axi_debug_plframe_frame_count' register */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_FRAME_COUNT_OFFSET = 0x00001304; /* address offset of the 'axi_debug_plframe_frame_count' register */
 
     /* Field 'axi_debug_plframe_frame_count.value' */
     static const int AXI_DEBUG_PLFRAME_FRAME_COUNT_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
@@ -590,7 +686,7 @@ namespace dvbs2_encoder_regs {
     static const std::uint32_t AXI_DEBUG_PLFRAME_FRAME_COUNT_VALUE_RESET = 0x0; /* reset value of the 'value' field */
 
     /* Register 'axi_debug_plframe_last_frame_length' */
-    static const std::uint32_t AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_OFFSET = 0x00001208; /* address offset of the 'axi_debug_plframe_last_frame_length' register */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_OFFSET = 0x00001308; /* address offset of the 'axi_debug_plframe_last_frame_length' register */
 
     /* Field 'axi_debug_plframe_last_frame_length.value' */
     static const int AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
@@ -599,7 +695,7 @@ namespace dvbs2_encoder_regs {
     static const std::uint32_t AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_VALUE_RESET = 0x0; /* reset value of the 'value' field */
 
     /* Register 'axi_debug_plframe_min_max_frame_length' */
-    static const std::uint32_t AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_OFFSET = 0x0000120C; /* address offset of the 'axi_debug_plframe_min_max_frame_length' register */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_OFFSET = 0x0000130C; /* address offset of the 'axi_debug_plframe_min_max_frame_length' register */
 
     /* Field 'axi_debug_plframe_min_max_frame_length.min_frame_length' */
     static const int AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET = 0; /* bit offset of the 'min_frame_length' field */
@@ -614,7 +710,7 @@ namespace dvbs2_encoder_regs {
     static const std::uint32_t AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET = 0x0; /* reset value of the 'max_frame_length' field */
 
     /* Register 'axi_debug_plframe_word_count' */
-    static const std::uint32_t AXI_DEBUG_PLFRAME_WORD_COUNT_OFFSET = 0x00001210; /* address offset of the 'axi_debug_plframe_word_count' register */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_WORD_COUNT_OFFSET = 0x00001310; /* address offset of the 'axi_debug_plframe_word_count' register */
 
     /* Field 'axi_debug_plframe_word_count.value' */
     static const int AXI_DEBUG_PLFRAME_WORD_COUNT_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
@@ -623,7 +719,7 @@ namespace dvbs2_encoder_regs {
     static const std::uint32_t AXI_DEBUG_PLFRAME_WORD_COUNT_VALUE_RESET = 0x0; /* reset value of the 'value' field */
 
     /* Register 'axi_debug_plframe_strobes' */
-    static const std::uint32_t AXI_DEBUG_PLFRAME_STROBES_OFFSET = 0x00001214; /* address offset of the 'axi_debug_plframe_strobes' register */
+    static const std::uint32_t AXI_DEBUG_PLFRAME_STROBES_OFFSET = 0x00001314; /* address offset of the 'axi_debug_plframe_strobes' register */
 
     /* Field 'axi_debug_plframe_strobes.s_tvalid' */
     static const int AXI_DEBUG_PLFRAME_STROBES_S_TVALID_BIT_OFFSET = 0; /* bit offset of the 's_tvalid' field */
@@ -648,96 +744,6 @@ namespace dvbs2_encoder_regs {
     static const int AXI_DEBUG_PLFRAME_STROBES_M_TREADY_BIT_WIDTH = 1; /* bit width of the 'm_tready' field */
     static const std::uint32_t AXI_DEBUG_PLFRAME_STROBES_M_TREADY_BIT_MASK = 0x00000008; /* bit mask of the 'm_tready' field */
     static const std::uint32_t AXI_DEBUG_PLFRAME_STROBES_M_TREADY_RESET = 0x0; /* reset value of the 'm_tready' field */
-
-    /* Register 'axi_debug_output_cfg' */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_OFFSET = 0x00001300; /* address offset of the 'axi_debug_output_cfg' register */
-
-    /* Field 'axi_debug_output_cfg.block_data' */
-    static const int AXI_DEBUG_OUTPUT_CFG_BLOCK_DATA_BIT_OFFSET = 0; /* bit offset of the 'block_data' field */
-    static const int AXI_DEBUG_OUTPUT_CFG_BLOCK_DATA_BIT_WIDTH = 1; /* bit width of the 'block_data' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_BLOCK_DATA_BIT_MASK = 0x00000001; /* bit mask of the 'block_data' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_BLOCK_DATA_RESET = 0x0; /* reset value of the 'block_data' field */
-
-    /* Field 'axi_debug_output_cfg.allow_word' */
-    static const int AXI_DEBUG_OUTPUT_CFG_ALLOW_WORD_BIT_OFFSET = 1; /* bit offset of the 'allow_word' field */
-    static const int AXI_DEBUG_OUTPUT_CFG_ALLOW_WORD_BIT_WIDTH = 1; /* bit width of the 'allow_word' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_ALLOW_WORD_BIT_MASK = 0x00000002; /* bit mask of the 'allow_word' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_ALLOW_WORD_RESET = 0x0; /* reset value of the 'allow_word' field */
-
-    /* Field 'axi_debug_output_cfg.allow_frame' */
-    static const int AXI_DEBUG_OUTPUT_CFG_ALLOW_FRAME_BIT_OFFSET = 2; /* bit offset of the 'allow_frame' field */
-    static const int AXI_DEBUG_OUTPUT_CFG_ALLOW_FRAME_BIT_WIDTH = 1; /* bit width of the 'allow_frame' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_ALLOW_FRAME_BIT_MASK = 0x00000004; /* bit mask of the 'allow_frame' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_CFG_ALLOW_FRAME_RESET = 0x0; /* reset value of the 'allow_frame' field */
-
-    /* Register 'axi_debug_output_frame_count' */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_FRAME_COUNT_OFFSET = 0x00001304; /* address offset of the 'axi_debug_output_frame_count' register */
-
-    /* Field 'axi_debug_output_frame_count.value' */
-    static const int AXI_DEBUG_OUTPUT_FRAME_COUNT_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
-    static const int AXI_DEBUG_OUTPUT_FRAME_COUNT_VALUE_BIT_WIDTH = 16; /* bit width of the 'value' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_FRAME_COUNT_VALUE_BIT_MASK = 0x0000FFFF; /* bit mask of the 'value' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_FRAME_COUNT_VALUE_RESET = 0x0; /* reset value of the 'value' field */
-
-    /* Register 'axi_debug_output_last_frame_length' */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_OFFSET = 0x00001308; /* address offset of the 'axi_debug_output_last_frame_length' register */
-
-    /* Field 'axi_debug_output_last_frame_length.value' */
-    static const int AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
-    static const int AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_VALUE_BIT_WIDTH = 16; /* bit width of the 'value' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_VALUE_BIT_MASK = 0x0000FFFF; /* bit mask of the 'value' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_VALUE_RESET = 0x0; /* reset value of the 'value' field */
-
-    /* Register 'axi_debug_output_min_max_frame_length' */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_OFFSET = 0x0000130C; /* address offset of the 'axi_debug_output_min_max_frame_length' register */
-
-    /* Field 'axi_debug_output_min_max_frame_length.min_frame_length' */
-    static const int AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET = 0; /* bit offset of the 'min_frame_length' field */
-    static const int AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_WIDTH = 16; /* bit width of the 'min_frame_length' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_MASK = 0x0000FFFF; /* bit mask of the 'min_frame_length' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_RESET = 0x0; /* reset value of the 'min_frame_length' field */
-
-    /* Field 'axi_debug_output_min_max_frame_length.max_frame_length' */
-    static const int AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_OFFSET = 16; /* bit offset of the 'max_frame_length' field */
-    static const int AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_WIDTH = 16; /* bit width of the 'max_frame_length' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_MASK = 0xFFFF0000; /* bit mask of the 'max_frame_length' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET = 0x0; /* reset value of the 'max_frame_length' field */
-
-    /* Register 'axi_debug_output_word_count' */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_WORD_COUNT_OFFSET = 0x00001310; /* address offset of the 'axi_debug_output_word_count' register */
-
-    /* Field 'axi_debug_output_word_count.value' */
-    static const int AXI_DEBUG_OUTPUT_WORD_COUNT_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
-    static const int AXI_DEBUG_OUTPUT_WORD_COUNT_VALUE_BIT_WIDTH = 16; /* bit width of the 'value' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_WORD_COUNT_VALUE_BIT_MASK = 0x0000FFFF; /* bit mask of the 'value' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_WORD_COUNT_VALUE_RESET = 0x0; /* reset value of the 'value' field */
-
-    /* Register 'axi_debug_output_strobes' */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_STROBES_OFFSET = 0x00001314; /* address offset of the 'axi_debug_output_strobes' register */
-
-    /* Field 'axi_debug_output_strobes.s_tvalid' */
-    static const int AXI_DEBUG_OUTPUT_STROBES_S_TVALID_BIT_OFFSET = 0; /* bit offset of the 's_tvalid' field */
-    static const int AXI_DEBUG_OUTPUT_STROBES_S_TVALID_BIT_WIDTH = 1; /* bit width of the 's_tvalid' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_STROBES_S_TVALID_BIT_MASK = 0x00000001; /* bit mask of the 's_tvalid' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_STROBES_S_TVALID_RESET = 0x0; /* reset value of the 's_tvalid' field */
-
-    /* Field 'axi_debug_output_strobes.s_tready' */
-    static const int AXI_DEBUG_OUTPUT_STROBES_S_TREADY_BIT_OFFSET = 1; /* bit offset of the 's_tready' field */
-    static const int AXI_DEBUG_OUTPUT_STROBES_S_TREADY_BIT_WIDTH = 1; /* bit width of the 's_tready' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_STROBES_S_TREADY_BIT_MASK = 0x00000002; /* bit mask of the 's_tready' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_STROBES_S_TREADY_RESET = 0x0; /* reset value of the 's_tready' field */
-
-    /* Field 'axi_debug_output_strobes.m_tvalid' */
-    static const int AXI_DEBUG_OUTPUT_STROBES_M_TVALID_BIT_OFFSET = 2; /* bit offset of the 'm_tvalid' field */
-    static const int AXI_DEBUG_OUTPUT_STROBES_M_TVALID_BIT_WIDTH = 1; /* bit width of the 'm_tvalid' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_STROBES_M_TVALID_BIT_MASK = 0x00000004; /* bit mask of the 'm_tvalid' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_STROBES_M_TVALID_RESET = 0x0; /* reset value of the 'm_tvalid' field */
-
-    /* Field 'axi_debug_output_strobes.m_tready' */
-    static const int AXI_DEBUG_OUTPUT_STROBES_M_TREADY_BIT_OFFSET = 3; /* bit offset of the 'm_tready' field */
-    static const int AXI_DEBUG_OUTPUT_STROBES_M_TREADY_BIT_WIDTH = 1; /* bit width of the 'm_tready' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_STROBES_M_TREADY_BIT_MASK = 0x00000008; /* bit mask of the 'm_tready' field */
-    static const std::uint32_t AXI_DEBUG_OUTPUT_STROBES_M_TREADY_RESET = 0x0; /* reset value of the 'm_tready' field */
 
 }
 

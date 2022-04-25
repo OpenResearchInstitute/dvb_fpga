@@ -111,44 +111,42 @@ architecture dvbs2_encoder of dvbs2_encoder is
   -------------
   -- Signals --
   -------------
-  signal rst_n                : std_logic;
-  signal s_tid                : std_logic_vector(ENCODED_CONFIG_WIDTH - 1 downto 0);
-  signal m_tvalid_i           : std_logic;
-  signal m_tlast_i            : std_logic;
-  signal s_tready_i           : std_logic;
+  signal rst_n                    : std_logic;
+  signal s_tid                    : std_logic_vector(ENCODED_CONFIG_WIDTH - 1 downto 0);
+  signal m_tvalid_i               : std_logic;
+  signal m_tlast_i                : std_logic;
+  signal s_tready_i               : std_logic;
 
-  signal mux_sel              : std_logic_vector(1 downto 0);
+  signal mux_sel                  : std_logic_vector(1 downto 0);
 
-  -- Input byte swapped endianness
-  signal s_tdata_selected     : std_logic_vector(s_tdata'range);
-  signal s_tkeep_selected     : std_logic_vector(s_tkeep'range);
+  signal s_tdata_selected         : std_logic_vector(s_tdata'range);
+  signal s_tkeep_selected         : std_logic_vector(s_tkeep'range);
 
-  signal width_conv_reg       : data_and_config_t(tdata(7 downto 0));
-  signal width_conv_reg_dbg   : data_and_config_t(tdata(7 downto 0));
-  signal frame_resize         : data_and_config_t(tdata(7 downto 0));
-  signal bb_scrambler         : data_and_config_t(tdata(7 downto 0));
-  signal bb_scrambler_dbg     : data_and_config_t(tdata(7 downto 0));
-  signal bch_encoder          : data_and_config_t(tdata(7 downto 0));
-  signal bch_encoder_dbg      : data_and_config_t(tdata(7 downto 0));
-  signal ldpc_encoder         : data_and_config_t(tdata(7 downto 0));
-  signal ldpc_encoder_reg     : data_and_config_t(tdata(7 downto 0));
-  signal ldpc_encoder_dbg     : data_and_config_t(tdata(7 downto 0));
-  signal ldpc_fifo            : data_and_config_t(tdata(7 downto 0));
-  signal fork_bit_interleaver : axi_stream_ctrl_t;
-  signal fork_ldpc_fifo       : axi_stream_ctrl_t;
-  signal bit_interleaver      : data_and_config_t(tdata(7 downto 0));
-  signal bit_interleaver_dbg  : data_and_config_t(tdata(7 downto 0));
-  signal arbiter_out          : data_and_config_t(tdata(7 downto 0));
-  signal constellation_mapper : data_and_config_t(tdata(IQ_WIDTH - 1 downto 0));
-  signal pl_frame             : data_and_config_t(tdata(IQ_WIDTH - 1 downto 0));
+  signal width_conv_reg           : data_and_config_t(tdata(7 downto 0));
+  signal width_conv_reg_dbg       : data_and_config_t(tdata(7 downto 0));
+  signal frame_resize             : data_and_config_t(tdata(7 downto 0));
+  signal bb_scrambler             : data_and_config_t(tdata(7 downto 0));
+  signal bb_scrambler_dbg         : data_and_config_t(tdata(7 downto 0));
+  signal bch_encoder              : data_and_config_t(tdata(7 downto 0));
+  signal bch_encoder_dbg          : data_and_config_t(tdata(7 downto 0));
+  signal ldpc_encoder             : data_and_config_t(tdata(7 downto 0));
+  signal ldpc_encoder_reg         : data_and_config_t(tdata(7 downto 0));
+  signal ldpc_encoder_dbg         : data_and_config_t(tdata(7 downto 0));
+  signal ldpc_fifo                : data_and_config_t(tdata(7 downto 0));
+  signal fork_bit_interleaver     : axi_stream_ctrl_t;
+  signal fork_ldpc_fifo           : axi_stream_ctrl_t;
+  signal bit_interleaver          : data_and_config_t(tdata(7 downto 0));
+  signal bit_interleaver_dbg      : data_and_config_t(tdata(7 downto 0));
+  signal arbiter_out              : data_and_config_t(tdata(7 downto 0));
+  signal constellation_mapper     : data_and_config_t(tdata(IQ_WIDTH - 1 downto 0));
+  signal constellation_mapper_dbg : data_and_config_t(tdata(IQ_WIDTH - 1 downto 0));
+  signal pl_frame                 : data_and_config_t(tdata(IQ_WIDTH - 1 downto 0));
 
-  -- Output byte swapped endianness
-  signal m_tdata_i            : std_logic_vector(IQ_WIDTH - 1 downto 0);
-  signal m_tready_i           : std_logic;
+  signal m_tdata_i                : std_logic_vector(IQ_WIDTH - 1 downto 0);
+  signal m_tready_i               : std_logic;
 
-  -- User signals  :
-  signal user2regs : user2regs_t;
-  signal regs2user : regs2user_t;
+  signal user2regs                : user2regs_t;
+  signal regs2user                : regs2user_t;
 
 begin
 
@@ -642,7 +640,7 @@ begin
 
     tdata_agg_in    <= ldpc_encoder_dbg.tid & ldpc_encoder_dbg.tdata;
     ldpc_fifo.tdata <= tdata_agg_out(7 downto 0);
-    ldpc_fifo.tid <= tdata_agg_out(ENCODED_CONFIG_WIDTH + 7 downto 8);
+    ldpc_fifo.tid   <= tdata_agg_out(ENCODED_CONFIG_WIDTH + 7 downto 8);
   end block;
 
   pre_constellaion_mapper_arbiter_block : block
@@ -660,7 +658,7 @@ begin
     -- Merge LDPC encoder and bit interleaver streams to feed into the constellation mapper
     pre_constellaion_mapper_arbiter_u : entity fpga_cores.axi_stream_arbiter
       generic map (
-        MODE            => "ROUND_ROBIN", -- ROUND_ROBIN, INTERLEAVED, ABSOLUTE
+        MODE            => "ROUND_ROBIN",
         INTERFACES      => 2,
         DATA_WIDTH      => 8 + ENCODED_CONFIG_WIDTH,
         REGISTER_INPUTS => True)
@@ -669,7 +667,7 @@ begin
         clk              => clk,
         rst              => rst,
 
-        selected         => open,
+        selected         => user2regs.ldpc_fifo_status_arbiter_selected,
         selected_encoded => open,
 
         -- AXI slave input
@@ -724,6 +722,50 @@ begin
       m_tdata         => constellation_mapper.tdata,
       m_tid           => constellation_mapper.tid);
 
+  constellation_mapper_dbg_u : entity fpga_cores.axi_stream_debug
+    generic map (
+      TDATA_WIDTH        => IQ_WIDTH,
+      TID_WIDTH          => ENCODED_CONFIG_WIDTH,
+      FRAME_COUNT_WIDTH  => FRAME_COUNT_WIDTH,
+      FRAME_LENGTH_WIDTH => FRAME_LENGTH_WIDTH)
+    port map (
+      -- Usual ports
+      clk                        => clk,
+      rst                        => rst,
+      -- Control and status
+      cfg.block_data             => regs2user.axi_debug_constellation_mapper_cfg_block_data(0),
+      cfg.allow_word             => regs2user.axi_debug_constellation_mapper_cfg_allow_word(0),
+      cfg.allow_frame            => regs2user.axi_debug_constellation_mapper_cfg_allow_frame(0),
+
+      cfg.clear_max_frame_length => regs2user.axi_debug_constellation_mapper_min_max_frame_length_strobe,
+      cfg.clear_min_frame_length => regs2user.axi_debug_constellation_mapper_min_max_frame_length_strobe,
+      cfg.clear_s_tvalid         => regs2user.axi_debug_constellation_mapper_strobes_strobe,
+      cfg.clear_s_tready         => regs2user.axi_debug_constellation_mapper_strobes_strobe,
+      cfg.clear_m_tvalid         => regs2user.axi_debug_constellation_mapper_strobes_strobe,
+      cfg.clear_m_tready         => regs2user.axi_debug_constellation_mapper_strobes_strobe,
+
+      sts.frame_count            => user2regs.axi_debug_constellation_mapper_frame_count_value,
+      sts.word_count             => user2regs.axi_debug_constellation_mapper_word_count_value,
+      sts.s_tvalid               => user2regs.axi_debug_constellation_mapper_strobes_s_tvalid(0),
+      sts.s_tready               => user2regs.axi_debug_constellation_mapper_strobes_s_tready(0),
+      sts.m_tvalid               => user2regs.axi_debug_constellation_mapper_strobes_m_tvalid(0),
+      sts.m_tready               => user2regs.axi_debug_constellation_mapper_strobes_m_tready(0),
+      sts.last_frame_length      => user2regs.axi_debug_constellation_mapper_last_frame_length_value,
+      sts.min_frame_length       => user2regs.axi_debug_constellation_mapper_min_max_frame_length_min_frame_length,
+      sts.max_frame_length       => user2regs.axi_debug_constellation_mapper_min_max_frame_length_max_frame_length,
+      -- AXI input
+      s_tready                   => constellation_mapper.tready,
+      s_tvalid                   => constellation_mapper.tvalid,
+      s_tlast                    => constellation_mapper.tlast,
+      s_tdata                    => constellation_mapper.tdata,
+      s_tid                      => constellation_mapper.tid,
+      -- AXI output
+      m_tready                   => constellation_mapper_dbg.tready,
+      m_tvalid                   => constellation_mapper_dbg.tvalid,
+      m_tlast                    => constellation_mapper_dbg.tlast,
+      m_tdata                    => constellation_mapper_dbg.tdata,
+      m_tid                      => constellation_mapper_dbg.tid);
+
   physical_layer_framer_u : entity work.axi_physical_layer_framer
     generic map (
       TDATA_WIDTH => IQ_WIDTH,
@@ -736,14 +778,14 @@ begin
       cfg_shift_reg_init      => regs2user.config_physical_layer_scrambler_shift_reg_init,
       cfg_enable_dummy_frames => regs2user.config_enable_dummy_frames(0),
       -- AXI input
-      s_constellation   => decode(constellation_mapper.tid).constellation,
-      s_frame_type      => decode(constellation_mapper.tid).frame_type,
-      s_code_rate       => decode(constellation_mapper.tid).code_rate,
-      s_tvalid          => constellation_mapper.tvalid,
-      s_tlast           => constellation_mapper.tlast,
-      s_tready          => constellation_mapper.tready,
-      s_tdata           => constellation_mapper.tdata,
-      s_tid             => constellation_mapper.tid,
+      s_constellation   => decode(constellation_mapper_dbg.tid).constellation,
+      s_frame_type      => decode(constellation_mapper_dbg.tid).frame_type,
+      s_code_rate       => decode(constellation_mapper_dbg.tid).code_rate,
+      s_tvalid          => constellation_mapper_dbg.tvalid,
+      s_tlast           => constellation_mapper_dbg.tlast,
+      s_tready          => constellation_mapper_dbg.tready,
+      s_tdata           => constellation_mapper_dbg.tdata,
+      s_tid             => constellation_mapper_dbg.tid,
       -- AXI output
       m_tready          => pl_frame.tready,
       m_tvalid          => pl_frame.tvalid,

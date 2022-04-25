@@ -96,6 +96,15 @@
             "reset": 0,
             "selfClear": false,
             "enumValues": []
+          },
+          {
+            "name": "arbiter_selected",
+            "description": "",
+            "bitWidth": 2,
+            "bitOffset": 20,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
           }
         ]
       },
@@ -130,7 +139,7 @@
         "fields": [
           {
             "name": "data",
-            "description": "- 0x00 - 0x03: QPSK map\r\n- 0x04 - 0x0B: 8PSK map\r\n- 0x0C - 0x1B: 16APSK map\r\n- 0x1C - 0x3B: 32APSK map",
+            "description": "Raw IQ value pairs\n- 0x00 - 0x03: QPSK map\n- 0x04 - 0x0B: 8PSK map\n- 0x0C - 0x1B: 16APSK map\n- 0x1C - 0x3B: 32APSK map",
             "bitWidth": 32,
             "bitOffset": 0,
             "reset": 0,
@@ -981,7 +990,7 @@
       },
       {
         "type": "Register",
-        "name": "axi_debug_plframe_cfg",
+        "name": "axi_debug_constellation_mapper_cfg",
         "description": "",
         "access": "READ_WRITE",
         "addressOffset": 4608,
@@ -1018,7 +1027,7 @@
       },
       {
         "type": "Register",
-        "name": "axi_debug_plframe_frame_count",
+        "name": "axi_debug_constellation_mapper_frame_count",
         "description": "",
         "access": "READ_ONLY",
         "addressOffset": 4612,
@@ -1037,7 +1046,7 @@
       },
       {
         "type": "Register",
-        "name": "axi_debug_plframe_last_frame_length",
+        "name": "axi_debug_constellation_mapper_last_frame_length",
         "description": "",
         "access": "READ_ONLY",
         "addressOffset": 4616,
@@ -1056,7 +1065,7 @@
       },
       {
         "type": "Register",
-        "name": "axi_debug_plframe_min_max_frame_length",
+        "name": "axi_debug_constellation_mapper_min_max_frame_length",
         "description": "",
         "access": "READ_ONLY",
         "addressOffset": 4620,
@@ -1084,7 +1093,7 @@
       },
       {
         "type": "Register",
-        "name": "axi_debug_plframe_word_count",
+        "name": "axi_debug_constellation_mapper_word_count",
         "description": "",
         "access": "READ_ONLY",
         "addressOffset": 4624,
@@ -1103,7 +1112,7 @@
       },
       {
         "type": "Register",
-        "name": "axi_debug_plframe_strobes",
+        "name": "axi_debug_constellation_mapper_strobes",
         "description": "",
         "access": "READ_ONLY",
         "addressOffset": 4628,
@@ -1149,7 +1158,7 @@
       },
       {
         "type": "Register",
-        "name": "axi_debug_output_cfg",
+        "name": "axi_debug_plframe_cfg",
         "description": "",
         "access": "READ_WRITE",
         "addressOffset": 4864,
@@ -1186,7 +1195,7 @@
       },
       {
         "type": "Register",
-        "name": "axi_debug_output_frame_count",
+        "name": "axi_debug_plframe_frame_count",
         "description": "",
         "access": "READ_ONLY",
         "addressOffset": 4868,
@@ -1205,7 +1214,7 @@
       },
       {
         "type": "Register",
-        "name": "axi_debug_output_last_frame_length",
+        "name": "axi_debug_plframe_last_frame_length",
         "description": "",
         "access": "READ_ONLY",
         "addressOffset": 4872,
@@ -1224,7 +1233,7 @@
       },
       {
         "type": "Register",
-        "name": "axi_debug_output_min_max_frame_length",
+        "name": "axi_debug_plframe_min_max_frame_length",
         "description": "",
         "access": "READ_ONLY",
         "addressOffset": 4876,
@@ -1252,7 +1261,7 @@
       },
       {
         "type": "Register",
-        "name": "axi_debug_output_word_count",
+        "name": "axi_debug_plframe_word_count",
         "description": "",
         "access": "READ_ONLY",
         "addressOffset": 4880,
@@ -1271,7 +1280,7 @@
       },
       {
         "type": "Register",
-        "name": "axi_debug_output_strobes",
+        "name": "axi_debug_plframe_strobes",
         "description": "",
         "access": "READ_ONLY",
         "addressOffset": 4884,
@@ -1316,7 +1325,7 @@
         ]
       }
     ],
-    "revision": 298,
+    "revision": 326,
     "generateRecordPorts": true
   }
 }

@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
 -- 'dvbs2_encoder' Register Component
--- Revision: 298
+-- Revision: 326
 -- -----------------------------------------------------------------------------
--- Generated on 2022-04-06 at 18:22 (UTC) by airhdl version 2022.03.1-114
+-- Generated on 2022-04-24 at 21:50 (UTC) by airhdl version 2022.04.1-116
 -- -----------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE

@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
 -- 'dvbs2_encoder' Register Definitions
--- Revision: 298
+-- Revision: 326
 -- -----------------------------------------------------------------------------
--- Generated on 2022-04-06 at 18:22 (UTC) by airhdl version 2022.03.1-114
+-- Generated on 2022-04-24 at 21:50 (UTC) by airhdl version 2022.04.1-116
 -- -----------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -62,6 +62,7 @@ package dvbs2_encoder_regs_pkg is
         ldpc_fifo_status_ldpc_fifo_entries : std_logic_vector(13 downto 0); -- value of register 'ldpc_fifo_status', field 'ldpc_fifo_entries'
         ldpc_fifo_status_ldpc_fifo_empty : std_logic_vector(0 downto 0); -- value of register 'ldpc_fifo_status', field 'ldpc_fifo_empty'
         ldpc_fifo_status_ldpc_fifo_full : std_logic_vector(0 downto 0); -- value of register 'ldpc_fifo_status', field 'ldpc_fifo_full'
+        ldpc_fifo_status_arbiter_selected : std_logic_vector(1 downto 0); -- value of register 'ldpc_fifo_status', field 'arbiter_selected'
         frames_in_transit_value : std_logic_vector(7 downto 0); -- value of register 'frames_in_transit', field 'value'
         bit_mapper_ram_rdata : std_logic_vector(31 downto 0); -- read data for memory 'bit_mapper_ram'
         axi_debug_input_width_converter_frame_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_input_width_converter_frame_count', field 'value'
@@ -109,6 +110,15 @@ package dvbs2_encoder_regs_pkg is
         axi_debug_bit_interleaver_strobes_s_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_bit_interleaver_strobes', field 's_tready'
         axi_debug_bit_interleaver_strobes_m_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_bit_interleaver_strobes', field 'm_tvalid'
         axi_debug_bit_interleaver_strobes_m_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_bit_interleaver_strobes', field 'm_tready'
+        axi_debug_constellation_mapper_frame_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_constellation_mapper_frame_count', field 'value'
+        axi_debug_constellation_mapper_last_frame_length_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_constellation_mapper_last_frame_length', field 'value'
+        axi_debug_constellation_mapper_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_constellation_mapper_min_max_frame_length', field 'min_frame_length'
+        axi_debug_constellation_mapper_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_constellation_mapper_min_max_frame_length', field 'max_frame_length'
+        axi_debug_constellation_mapper_word_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_constellation_mapper_word_count', field 'value'
+        axi_debug_constellation_mapper_strobes_s_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_constellation_mapper_strobes', field 's_tvalid'
+        axi_debug_constellation_mapper_strobes_s_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_constellation_mapper_strobes', field 's_tready'
+        axi_debug_constellation_mapper_strobes_m_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_constellation_mapper_strobes', field 'm_tvalid'
+        axi_debug_constellation_mapper_strobes_m_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_constellation_mapper_strobes', field 'm_tready'
         axi_debug_plframe_frame_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_plframe_frame_count', field 'value'
         axi_debug_plframe_last_frame_length_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_plframe_last_frame_length', field 'value'
         axi_debug_plframe_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_plframe_min_max_frame_length', field 'min_frame_length'
@@ -118,15 +128,6 @@ package dvbs2_encoder_regs_pkg is
         axi_debug_plframe_strobes_s_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_plframe_strobes', field 's_tready'
         axi_debug_plframe_strobes_m_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_plframe_strobes', field 'm_tvalid'
         axi_debug_plframe_strobes_m_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_plframe_strobes', field 'm_tready'
-        axi_debug_output_frame_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_output_frame_count', field 'value'
-        axi_debug_output_last_frame_length_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_output_last_frame_length', field 'value'
-        axi_debug_output_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_output_min_max_frame_length', field 'min_frame_length'
-        axi_debug_output_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_output_min_max_frame_length', field 'max_frame_length'
-        axi_debug_output_word_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_output_word_count', field 'value'
-        axi_debug_output_strobes_s_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_output_strobes', field 's_tvalid'
-        axi_debug_output_strobes_s_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_output_strobes', field 's_tready'
-        axi_debug_output_strobes_m_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_output_strobes', field 'm_tvalid'
-        axi_debug_output_strobes_m_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_output_strobes', field 'm_tready'
     end record;
 
     -- User-logic ports (from register file to user-logic)
@@ -188,6 +189,15 @@ package dvbs2_encoder_regs_pkg is
         axi_debug_bit_interleaver_min_max_frame_length_strobe : std_logic; -- Strobe signal for register 'axi_debug_bit_interleaver_min_max_frame_length' (pulsed when the register is read from the bus}
         axi_debug_bit_interleaver_word_count_strobe : std_logic; -- Strobe signal for register 'axi_debug_bit_interleaver_word_count' (pulsed when the register is read from the bus}
         axi_debug_bit_interleaver_strobes_strobe : std_logic; -- Strobe signal for register 'axi_debug_bit_interleaver_strobes' (pulsed when the register is read from the bus}
+        axi_debug_constellation_mapper_cfg_strobe : std_logic; -- Strobe signal for register 'axi_debug_constellation_mapper_cfg' (pulsed when the register is written from the bus}
+        axi_debug_constellation_mapper_cfg_block_data : std_logic_vector(0 downto 0); -- Value of register 'axi_debug_constellation_mapper_cfg', field 'block_data'
+        axi_debug_constellation_mapper_cfg_allow_word : std_logic_vector(0 downto 0); -- Value of register 'axi_debug_constellation_mapper_cfg', field 'allow_word'
+        axi_debug_constellation_mapper_cfg_allow_frame : std_logic_vector(0 downto 0); -- Value of register 'axi_debug_constellation_mapper_cfg', field 'allow_frame'
+        axi_debug_constellation_mapper_frame_count_strobe : std_logic; -- Strobe signal for register 'axi_debug_constellation_mapper_frame_count' (pulsed when the register is read from the bus}
+        axi_debug_constellation_mapper_last_frame_length_strobe : std_logic; -- Strobe signal for register 'axi_debug_constellation_mapper_last_frame_length' (pulsed when the register is read from the bus}
+        axi_debug_constellation_mapper_min_max_frame_length_strobe : std_logic; -- Strobe signal for register 'axi_debug_constellation_mapper_min_max_frame_length' (pulsed when the register is read from the bus}
+        axi_debug_constellation_mapper_word_count_strobe : std_logic; -- Strobe signal for register 'axi_debug_constellation_mapper_word_count' (pulsed when the register is read from the bus}
+        axi_debug_constellation_mapper_strobes_strobe : std_logic; -- Strobe signal for register 'axi_debug_constellation_mapper_strobes' (pulsed when the register is read from the bus}
         axi_debug_plframe_cfg_strobe : std_logic; -- Strobe signal for register 'axi_debug_plframe_cfg' (pulsed when the register is written from the bus}
         axi_debug_plframe_cfg_block_data : std_logic_vector(0 downto 0); -- Value of register 'axi_debug_plframe_cfg', field 'block_data'
         axi_debug_plframe_cfg_allow_word : std_logic_vector(0 downto 0); -- Value of register 'axi_debug_plframe_cfg', field 'allow_word'
@@ -197,19 +207,10 @@ package dvbs2_encoder_regs_pkg is
         axi_debug_plframe_min_max_frame_length_strobe : std_logic; -- Strobe signal for register 'axi_debug_plframe_min_max_frame_length' (pulsed when the register is read from the bus}
         axi_debug_plframe_word_count_strobe : std_logic; -- Strobe signal for register 'axi_debug_plframe_word_count' (pulsed when the register is read from the bus}
         axi_debug_plframe_strobes_strobe : std_logic; -- Strobe signal for register 'axi_debug_plframe_strobes' (pulsed when the register is read from the bus}
-        axi_debug_output_cfg_strobe : std_logic; -- Strobe signal for register 'axi_debug_output_cfg' (pulsed when the register is written from the bus}
-        axi_debug_output_cfg_block_data : std_logic_vector(0 downto 0); -- Value of register 'axi_debug_output_cfg', field 'block_data'
-        axi_debug_output_cfg_allow_word : std_logic_vector(0 downto 0); -- Value of register 'axi_debug_output_cfg', field 'allow_word'
-        axi_debug_output_cfg_allow_frame : std_logic_vector(0 downto 0); -- Value of register 'axi_debug_output_cfg', field 'allow_frame'
-        axi_debug_output_frame_count_strobe : std_logic; -- Strobe signal for register 'axi_debug_output_frame_count' (pulsed when the register is read from the bus}
-        axi_debug_output_last_frame_length_strobe : std_logic; -- Strobe signal for register 'axi_debug_output_last_frame_length' (pulsed when the register is read from the bus}
-        axi_debug_output_min_max_frame_length_strobe : std_logic; -- Strobe signal for register 'axi_debug_output_min_max_frame_length' (pulsed when the register is read from the bus}
-        axi_debug_output_word_count_strobe : std_logic; -- Strobe signal for register 'axi_debug_output_word_count' (pulsed when the register is read from the bus}
-        axi_debug_output_strobes_strobe : std_logic; -- Strobe signal for register 'axi_debug_output_strobes' (pulsed when the register is read from the bus}
     end record;
 
     -- Revision number of the 'dvbs2_encoder' register map
-    constant DVBS2_ENCODER_REVISION : natural := 298;
+    constant DVBS2_ENCODER_REVISION : natural := 326;
 
     -- Default base address of the 'dvbs2_encoder' register map
     constant DVBS2_ENCODER_DEFAULT_BASEADDR : unsigned(31 downto 0) := unsigned'(x"00000000");
@@ -254,6 +255,10 @@ package dvbs2_encoder_regs_pkg is
     constant LDPC_FIFO_STATUS_LDPC_FIFO_FULL_BIT_OFFSET : natural := 17; -- bit offset of the 'ldpc_fifo_full' field
     constant LDPC_FIFO_STATUS_LDPC_FIFO_FULL_BIT_WIDTH : natural := 1; -- bit width of the 'ldpc_fifo_full' field
     constant LDPC_FIFO_STATUS_LDPC_FIFO_FULL_RESET : std_logic_vector(17 downto 17) := std_logic_vector'("0"); -- reset value of the 'ldpc_fifo_full' field
+    -- Field 'ldpc_fifo_status.arbiter_selected'
+    constant LDPC_FIFO_STATUS_ARBITER_SELECTED_BIT_OFFSET : natural := 20; -- bit offset of the 'arbiter_selected' field
+    constant LDPC_FIFO_STATUS_ARBITER_SELECTED_BIT_WIDTH : natural := 2; -- bit width of the 'arbiter_selected' field
+    constant LDPC_FIFO_STATUS_ARBITER_SELECTED_RESET : std_logic_vector(21 downto 20) := std_logic_vector'("00"); -- reset value of the 'arbiter_selected' field
 
     -- Register 'frames_in_transit'
     constant FRAMES_IN_TRANSIT_OFFSET : unsigned(31 downto 0) := unsigned'(x"00000008"); -- address offset of the 'frames_in_transit' register
@@ -601,8 +606,74 @@ package dvbs2_encoder_regs_pkg is
     constant AXI_DEBUG_BIT_INTERLEAVER_STROBES_M_TREADY_BIT_WIDTH : natural := 1; -- bit width of the 'm_tready' field
     constant AXI_DEBUG_BIT_INTERLEAVER_STROBES_M_TREADY_RESET : std_logic_vector(3 downto 3) := std_logic_vector'("0"); -- reset value of the 'm_tready' field
 
+    -- Register 'axi_debug_constellation_mapper_cfg'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_CFG_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001200"); -- address offset of the 'axi_debug_constellation_mapper_cfg' register
+    -- Field 'axi_debug_constellation_mapper_cfg.block_data'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_CFG_BLOCK_DATA_BIT_OFFSET : natural := 0; -- bit offset of the 'block_data' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_CFG_BLOCK_DATA_BIT_WIDTH : natural := 1; -- bit width of the 'block_data' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_CFG_BLOCK_DATA_RESET : std_logic_vector(0 downto 0) := std_logic_vector'("0"); -- reset value of the 'block_data' field
+    -- Field 'axi_debug_constellation_mapper_cfg.allow_word'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_CFG_ALLOW_WORD_BIT_OFFSET : natural := 1; -- bit offset of the 'allow_word' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_CFG_ALLOW_WORD_BIT_WIDTH : natural := 1; -- bit width of the 'allow_word' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_CFG_ALLOW_WORD_RESET : std_logic_vector(1 downto 1) := std_logic_vector'("0"); -- reset value of the 'allow_word' field
+    -- Field 'axi_debug_constellation_mapper_cfg.allow_frame'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_CFG_ALLOW_FRAME_BIT_OFFSET : natural := 2; -- bit offset of the 'allow_frame' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_CFG_ALLOW_FRAME_BIT_WIDTH : natural := 1; -- bit width of the 'allow_frame' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_CFG_ALLOW_FRAME_RESET : std_logic_vector(2 downto 2) := std_logic_vector'("0"); -- reset value of the 'allow_frame' field
+
+    -- Register 'axi_debug_constellation_mapper_frame_count'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_FRAME_COUNT_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001204"); -- address offset of the 'axi_debug_constellation_mapper_frame_count' register
+    -- Field 'axi_debug_constellation_mapper_frame_count.value'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_FRAME_COUNT_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_FRAME_COUNT_VALUE_BIT_WIDTH : natural := 16; -- bit width of the 'value' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_FRAME_COUNT_VALUE_RESET : std_logic_vector(15 downto 0) := std_logic_vector'("0000000000000000"); -- reset value of the 'value' field
+
+    -- Register 'axi_debug_constellation_mapper_last_frame_length'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_LAST_FRAME_LENGTH_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001208"); -- address offset of the 'axi_debug_constellation_mapper_last_frame_length' register
+    -- Field 'axi_debug_constellation_mapper_last_frame_length.value'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_LAST_FRAME_LENGTH_VALUE_BIT_WIDTH : natural := 16; -- bit width of the 'value' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_LAST_FRAME_LENGTH_VALUE_RESET : std_logic_vector(15 downto 0) := std_logic_vector'("0000000000000000"); -- reset value of the 'value' field
+
+    -- Register 'axi_debug_constellation_mapper_min_max_frame_length'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_OFFSET : unsigned(31 downto 0) := unsigned'(x"0000120C"); -- address offset of the 'axi_debug_constellation_mapper_min_max_frame_length' register
+    -- Field 'axi_debug_constellation_mapper_min_max_frame_length.min_frame_length'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET : natural := 0; -- bit offset of the 'min_frame_length' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_WIDTH : natural := 16; -- bit width of the 'min_frame_length' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_RESET : std_logic_vector(15 downto 0) := std_logic_vector'("0000000000000000"); -- reset value of the 'min_frame_length' field
+    -- Field 'axi_debug_constellation_mapper_min_max_frame_length.max_frame_length'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_OFFSET : natural := 16; -- bit offset of the 'max_frame_length' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_WIDTH : natural := 16; -- bit width of the 'max_frame_length' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET : std_logic_vector(31 downto 16) := std_logic_vector'("0000000000000000"); -- reset value of the 'max_frame_length' field
+
+    -- Register 'axi_debug_constellation_mapper_word_count'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_WORD_COUNT_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001210"); -- address offset of the 'axi_debug_constellation_mapper_word_count' register
+    -- Field 'axi_debug_constellation_mapper_word_count.value'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_WORD_COUNT_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_WORD_COUNT_VALUE_BIT_WIDTH : natural := 16; -- bit width of the 'value' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_WORD_COUNT_VALUE_RESET : std_logic_vector(15 downto 0) := std_logic_vector'("0000000000000000"); -- reset value of the 'value' field
+
+    -- Register 'axi_debug_constellation_mapper_strobes'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001214"); -- address offset of the 'axi_debug_constellation_mapper_strobes' register
+    -- Field 'axi_debug_constellation_mapper_strobes.s_tvalid'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_S_TVALID_BIT_OFFSET : natural := 0; -- bit offset of the 's_tvalid' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_S_TVALID_BIT_WIDTH : natural := 1; -- bit width of the 's_tvalid' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_S_TVALID_RESET : std_logic_vector(0 downto 0) := std_logic_vector'("0"); -- reset value of the 's_tvalid' field
+    -- Field 'axi_debug_constellation_mapper_strobes.s_tready'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_S_TREADY_BIT_OFFSET : natural := 1; -- bit offset of the 's_tready' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_S_TREADY_BIT_WIDTH : natural := 1; -- bit width of the 's_tready' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_S_TREADY_RESET : std_logic_vector(1 downto 1) := std_logic_vector'("0"); -- reset value of the 's_tready' field
+    -- Field 'axi_debug_constellation_mapper_strobes.m_tvalid'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_M_TVALID_BIT_OFFSET : natural := 2; -- bit offset of the 'm_tvalid' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_M_TVALID_BIT_WIDTH : natural := 1; -- bit width of the 'm_tvalid' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_M_TVALID_RESET : std_logic_vector(2 downto 2) := std_logic_vector'("0"); -- reset value of the 'm_tvalid' field
+    -- Field 'axi_debug_constellation_mapper_strobes.m_tready'
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_M_TREADY_BIT_OFFSET : natural := 3; -- bit offset of the 'm_tready' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_M_TREADY_BIT_WIDTH : natural := 1; -- bit width of the 'm_tready' field
+    constant AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_M_TREADY_RESET : std_logic_vector(3 downto 3) := std_logic_vector'("0"); -- reset value of the 'm_tready' field
+
     -- Register 'axi_debug_plframe_cfg'
-    constant AXI_DEBUG_PLFRAME_CFG_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001200"); -- address offset of the 'axi_debug_plframe_cfg' register
+    constant AXI_DEBUG_PLFRAME_CFG_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001300"); -- address offset of the 'axi_debug_plframe_cfg' register
     -- Field 'axi_debug_plframe_cfg.block_data'
     constant AXI_DEBUG_PLFRAME_CFG_BLOCK_DATA_BIT_OFFSET : natural := 0; -- bit offset of the 'block_data' field
     constant AXI_DEBUG_PLFRAME_CFG_BLOCK_DATA_BIT_WIDTH : natural := 1; -- bit width of the 'block_data' field
@@ -617,21 +688,21 @@ package dvbs2_encoder_regs_pkg is
     constant AXI_DEBUG_PLFRAME_CFG_ALLOW_FRAME_RESET : std_logic_vector(2 downto 2) := std_logic_vector'("0"); -- reset value of the 'allow_frame' field
 
     -- Register 'axi_debug_plframe_frame_count'
-    constant AXI_DEBUG_PLFRAME_FRAME_COUNT_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001204"); -- address offset of the 'axi_debug_plframe_frame_count' register
+    constant AXI_DEBUG_PLFRAME_FRAME_COUNT_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001304"); -- address offset of the 'axi_debug_plframe_frame_count' register
     -- Field 'axi_debug_plframe_frame_count.value'
     constant AXI_DEBUG_PLFRAME_FRAME_COUNT_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field
     constant AXI_DEBUG_PLFRAME_FRAME_COUNT_VALUE_BIT_WIDTH : natural := 16; -- bit width of the 'value' field
     constant AXI_DEBUG_PLFRAME_FRAME_COUNT_VALUE_RESET : std_logic_vector(15 downto 0) := std_logic_vector'("0000000000000000"); -- reset value of the 'value' field
 
     -- Register 'axi_debug_plframe_last_frame_length'
-    constant AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001208"); -- address offset of the 'axi_debug_plframe_last_frame_length' register
+    constant AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001308"); -- address offset of the 'axi_debug_plframe_last_frame_length' register
     -- Field 'axi_debug_plframe_last_frame_length.value'
     constant AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field
     constant AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_VALUE_BIT_WIDTH : natural := 16; -- bit width of the 'value' field
     constant AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_VALUE_RESET : std_logic_vector(15 downto 0) := std_logic_vector'("0000000000000000"); -- reset value of the 'value' field
 
     -- Register 'axi_debug_plframe_min_max_frame_length'
-    constant AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_OFFSET : unsigned(31 downto 0) := unsigned'(x"0000120C"); -- address offset of the 'axi_debug_plframe_min_max_frame_length' register
+    constant AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_OFFSET : unsigned(31 downto 0) := unsigned'(x"0000130C"); -- address offset of the 'axi_debug_plframe_min_max_frame_length' register
     -- Field 'axi_debug_plframe_min_max_frame_length.min_frame_length'
     constant AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET : natural := 0; -- bit offset of the 'min_frame_length' field
     constant AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_WIDTH : natural := 16; -- bit width of the 'min_frame_length' field
@@ -642,14 +713,14 @@ package dvbs2_encoder_regs_pkg is
     constant AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET : std_logic_vector(31 downto 16) := std_logic_vector'("0000000000000000"); -- reset value of the 'max_frame_length' field
 
     -- Register 'axi_debug_plframe_word_count'
-    constant AXI_DEBUG_PLFRAME_WORD_COUNT_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001210"); -- address offset of the 'axi_debug_plframe_word_count' register
+    constant AXI_DEBUG_PLFRAME_WORD_COUNT_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001310"); -- address offset of the 'axi_debug_plframe_word_count' register
     -- Field 'axi_debug_plframe_word_count.value'
     constant AXI_DEBUG_PLFRAME_WORD_COUNT_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field
     constant AXI_DEBUG_PLFRAME_WORD_COUNT_VALUE_BIT_WIDTH : natural := 16; -- bit width of the 'value' field
     constant AXI_DEBUG_PLFRAME_WORD_COUNT_VALUE_RESET : std_logic_vector(15 downto 0) := std_logic_vector'("0000000000000000"); -- reset value of the 'value' field
 
     -- Register 'axi_debug_plframe_strobes'
-    constant AXI_DEBUG_PLFRAME_STROBES_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001214"); -- address offset of the 'axi_debug_plframe_strobes' register
+    constant AXI_DEBUG_PLFRAME_STROBES_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001314"); -- address offset of the 'axi_debug_plframe_strobes' register
     -- Field 'axi_debug_plframe_strobes.s_tvalid'
     constant AXI_DEBUG_PLFRAME_STROBES_S_TVALID_BIT_OFFSET : natural := 0; -- bit offset of the 's_tvalid' field
     constant AXI_DEBUG_PLFRAME_STROBES_S_TVALID_BIT_WIDTH : natural := 1; -- bit width of the 's_tvalid' field
@@ -666,71 +737,5 @@ package dvbs2_encoder_regs_pkg is
     constant AXI_DEBUG_PLFRAME_STROBES_M_TREADY_BIT_OFFSET : natural := 3; -- bit offset of the 'm_tready' field
     constant AXI_DEBUG_PLFRAME_STROBES_M_TREADY_BIT_WIDTH : natural := 1; -- bit width of the 'm_tready' field
     constant AXI_DEBUG_PLFRAME_STROBES_M_TREADY_RESET : std_logic_vector(3 downto 3) := std_logic_vector'("0"); -- reset value of the 'm_tready' field
-
-    -- Register 'axi_debug_output_cfg'
-    constant AXI_DEBUG_OUTPUT_CFG_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001300"); -- address offset of the 'axi_debug_output_cfg' register
-    -- Field 'axi_debug_output_cfg.block_data'
-    constant AXI_DEBUG_OUTPUT_CFG_BLOCK_DATA_BIT_OFFSET : natural := 0; -- bit offset of the 'block_data' field
-    constant AXI_DEBUG_OUTPUT_CFG_BLOCK_DATA_BIT_WIDTH : natural := 1; -- bit width of the 'block_data' field
-    constant AXI_DEBUG_OUTPUT_CFG_BLOCK_DATA_RESET : std_logic_vector(0 downto 0) := std_logic_vector'("0"); -- reset value of the 'block_data' field
-    -- Field 'axi_debug_output_cfg.allow_word'
-    constant AXI_DEBUG_OUTPUT_CFG_ALLOW_WORD_BIT_OFFSET : natural := 1; -- bit offset of the 'allow_word' field
-    constant AXI_DEBUG_OUTPUT_CFG_ALLOW_WORD_BIT_WIDTH : natural := 1; -- bit width of the 'allow_word' field
-    constant AXI_DEBUG_OUTPUT_CFG_ALLOW_WORD_RESET : std_logic_vector(1 downto 1) := std_logic_vector'("0"); -- reset value of the 'allow_word' field
-    -- Field 'axi_debug_output_cfg.allow_frame'
-    constant AXI_DEBUG_OUTPUT_CFG_ALLOW_FRAME_BIT_OFFSET : natural := 2; -- bit offset of the 'allow_frame' field
-    constant AXI_DEBUG_OUTPUT_CFG_ALLOW_FRAME_BIT_WIDTH : natural := 1; -- bit width of the 'allow_frame' field
-    constant AXI_DEBUG_OUTPUT_CFG_ALLOW_FRAME_RESET : std_logic_vector(2 downto 2) := std_logic_vector'("0"); -- reset value of the 'allow_frame' field
-
-    -- Register 'axi_debug_output_frame_count'
-    constant AXI_DEBUG_OUTPUT_FRAME_COUNT_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001304"); -- address offset of the 'axi_debug_output_frame_count' register
-    -- Field 'axi_debug_output_frame_count.value'
-    constant AXI_DEBUG_OUTPUT_FRAME_COUNT_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field
-    constant AXI_DEBUG_OUTPUT_FRAME_COUNT_VALUE_BIT_WIDTH : natural := 16; -- bit width of the 'value' field
-    constant AXI_DEBUG_OUTPUT_FRAME_COUNT_VALUE_RESET : std_logic_vector(15 downto 0) := std_logic_vector'("0000000000000000"); -- reset value of the 'value' field
-
-    -- Register 'axi_debug_output_last_frame_length'
-    constant AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001308"); -- address offset of the 'axi_debug_output_last_frame_length' register
-    -- Field 'axi_debug_output_last_frame_length.value'
-    constant AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field
-    constant AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_VALUE_BIT_WIDTH : natural := 16; -- bit width of the 'value' field
-    constant AXI_DEBUG_OUTPUT_LAST_FRAME_LENGTH_VALUE_RESET : std_logic_vector(15 downto 0) := std_logic_vector'("0000000000000000"); -- reset value of the 'value' field
-
-    -- Register 'axi_debug_output_min_max_frame_length'
-    constant AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_OFFSET : unsigned(31 downto 0) := unsigned'(x"0000130C"); -- address offset of the 'axi_debug_output_min_max_frame_length' register
-    -- Field 'axi_debug_output_min_max_frame_length.min_frame_length'
-    constant AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_OFFSET : natural := 0; -- bit offset of the 'min_frame_length' field
-    constant AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_BIT_WIDTH : natural := 16; -- bit width of the 'min_frame_length' field
-    constant AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MIN_FRAME_LENGTH_RESET : std_logic_vector(15 downto 0) := std_logic_vector'("0000000000000000"); -- reset value of the 'min_frame_length' field
-    -- Field 'axi_debug_output_min_max_frame_length.max_frame_length'
-    constant AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_OFFSET : natural := 16; -- bit offset of the 'max_frame_length' field
-    constant AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_BIT_WIDTH : natural := 16; -- bit width of the 'max_frame_length' field
-    constant AXI_DEBUG_OUTPUT_MIN_MAX_FRAME_LENGTH_MAX_FRAME_LENGTH_RESET : std_logic_vector(31 downto 16) := std_logic_vector'("0000000000000000"); -- reset value of the 'max_frame_length' field
-
-    -- Register 'axi_debug_output_word_count'
-    constant AXI_DEBUG_OUTPUT_WORD_COUNT_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001310"); -- address offset of the 'axi_debug_output_word_count' register
-    -- Field 'axi_debug_output_word_count.value'
-    constant AXI_DEBUG_OUTPUT_WORD_COUNT_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field
-    constant AXI_DEBUG_OUTPUT_WORD_COUNT_VALUE_BIT_WIDTH : natural := 16; -- bit width of the 'value' field
-    constant AXI_DEBUG_OUTPUT_WORD_COUNT_VALUE_RESET : std_logic_vector(15 downto 0) := std_logic_vector'("0000000000000000"); -- reset value of the 'value' field
-
-    -- Register 'axi_debug_output_strobes'
-    constant AXI_DEBUG_OUTPUT_STROBES_OFFSET : unsigned(31 downto 0) := unsigned'(x"00001314"); -- address offset of the 'axi_debug_output_strobes' register
-    -- Field 'axi_debug_output_strobes.s_tvalid'
-    constant AXI_DEBUG_OUTPUT_STROBES_S_TVALID_BIT_OFFSET : natural := 0; -- bit offset of the 's_tvalid' field
-    constant AXI_DEBUG_OUTPUT_STROBES_S_TVALID_BIT_WIDTH : natural := 1; -- bit width of the 's_tvalid' field
-    constant AXI_DEBUG_OUTPUT_STROBES_S_TVALID_RESET : std_logic_vector(0 downto 0) := std_logic_vector'("0"); -- reset value of the 's_tvalid' field
-    -- Field 'axi_debug_output_strobes.s_tready'
-    constant AXI_DEBUG_OUTPUT_STROBES_S_TREADY_BIT_OFFSET : natural := 1; -- bit offset of the 's_tready' field
-    constant AXI_DEBUG_OUTPUT_STROBES_S_TREADY_BIT_WIDTH : natural := 1; -- bit width of the 's_tready' field
-    constant AXI_DEBUG_OUTPUT_STROBES_S_TREADY_RESET : std_logic_vector(1 downto 1) := std_logic_vector'("0"); -- reset value of the 's_tready' field
-    -- Field 'axi_debug_output_strobes.m_tvalid'
-    constant AXI_DEBUG_OUTPUT_STROBES_M_TVALID_BIT_OFFSET : natural := 2; -- bit offset of the 'm_tvalid' field
-    constant AXI_DEBUG_OUTPUT_STROBES_M_TVALID_BIT_WIDTH : natural := 1; -- bit width of the 'm_tvalid' field
-    constant AXI_DEBUG_OUTPUT_STROBES_M_TVALID_RESET : std_logic_vector(2 downto 2) := std_logic_vector'("0"); -- reset value of the 'm_tvalid' field
-    -- Field 'axi_debug_output_strobes.m_tready'
-    constant AXI_DEBUG_OUTPUT_STROBES_M_TREADY_BIT_OFFSET : natural := 3; -- bit offset of the 'm_tready' field
-    constant AXI_DEBUG_OUTPUT_STROBES_M_TREADY_BIT_WIDTH : natural := 1; -- bit width of the 'm_tready' field
-    constant AXI_DEBUG_OUTPUT_STROBES_M_TREADY_RESET : std_logic_vector(3 downto 3) := std_logic_vector'("0"); -- reset value of the 'm_tready' field
 
 end dvbs2_encoder_regs_pkg;

@@ -8,7 +8,7 @@
 | **Default address width** | 32 bits |
 | **Register count** | 46 |
 | **Range** | 4888 bytes |
-| **Revision** | 298 |
+| **Revision** | 326 |
 
 ## Overview
 
@@ -48,18 +48,18 @@
 | `0x110C` | axi_debug_bit_interleaver_min_max_frame_length |  | REG |
 | `0x1110` | axi_debug_bit_interleaver_word_count |  | REG |
 | `0x1114` | axi_debug_bit_interleaver_strobes |  | REG |
-| `0x1200` | axi_debug_plframe_cfg |  | REG |
-| `0x1204` | axi_debug_plframe_frame_count |  | REG |
-| `0x1208` | axi_debug_plframe_last_frame_length |  | REG |
-| `0x120C` | axi_debug_plframe_min_max_frame_length |  | REG |
-| `0x1210` | axi_debug_plframe_word_count |  | REG |
-| `0x1214` | axi_debug_plframe_strobes |  | REG |
-| `0x1300` | axi_debug_output_cfg |  | REG |
-| `0x1304` | axi_debug_output_frame_count |  | REG |
-| `0x1308` | axi_debug_output_last_frame_length |  | REG |
-| `0x130C` | axi_debug_output_min_max_frame_length |  | REG |
-| `0x1310` | axi_debug_output_word_count |  | REG |
-| `0x1314` | axi_debug_output_strobes |  | REG |
+| `0x1200` | axi_debug_constellation_mapper_cfg |  | REG |
+| `0x1204` | axi_debug_constellation_mapper_frame_count |  | REG |
+| `0x1208` | axi_debug_constellation_mapper_last_frame_length |  | REG |
+| `0x120C` | axi_debug_constellation_mapper_min_max_frame_length |  | REG |
+| `0x1210` | axi_debug_constellation_mapper_word_count |  | REG |
+| `0x1214` | axi_debug_constellation_mapper_strobes |  | REG |
+| `0x1300` | axi_debug_plframe_cfg |  | REG |
+| `0x1304` | axi_debug_plframe_frame_count |  | REG |
+| `0x1308` | axi_debug_plframe_last_frame_length |  | REG |
+| `0x130C` | axi_debug_plframe_min_max_frame_length |  | REG |
+| `0x1310` | axi_debug_plframe_word_count |  | REG |
+| `0x1314` | axi_debug_plframe_strobes |  | REG |
 
 ## Registers
 
@@ -75,10 +75,11 @@
 |        |  [13:0] ldpc_fifo_entries |  |  |  |  | `0x0` |
 |        |  [16] ldpc_fifo_empty |  |  |  |  | `0x0` |
 |        |  [17] ldpc_fifo_full |  |  |  |  | `0x0` |
+|        |  [21:20] arbiter_selected |  |  |  |  | `0x0` |
 | `0x8` | frames_in_transit | | REG | R |  | `0x0` |
 |        |  [7:0] value |  |  |  |  | `0x0` |
 | `0xC` | bit_mapper_ram |- 0x00 - 0x03: QPSK map- 0x04 - 0x0B: 8PSK map- 0x0C - 0x1B: 16APSK map- 0x1C - 0x3B: 32APSK map | MEM[240] | R/W | read latency: 1 | `0x0` |
-|        |  [31:0] data | - 0x00 - 0x03: QPSK map- 0x04 - 0x0B: 8PSK map- 0x0C - 0x1B: 16APSK map- 0x1C - 0x3B: 32APSK map |  |  |  | `0x0` |
+|        |  [31:0] data | Raw IQ value pairs- 0x00 - 0x03: QPSK map- 0x04 - 0x0B: 8PSK map- 0x0C - 0x1B: 16APSK map- 0x1C - 0x3B: 32APSK map |  |  |  | `0x0` |
 | `0xD00` | axi_debug_input_width_converter_cfg | | REG | R/W |  | `0x0` |
 |        |  [0] block_data | Disables data from passing through |  |  |  | `0x0` |
 |        |  [1] allow_word | Allows a single word to pass through. Needs `block_data` to be set before setting this. |  |  | self-clearing | `0x0` |
@@ -169,41 +170,41 @@
 |        |  [1] s_tready |  |  |  |  | `0x0` |
 |        |  [2] m_tvalid |  |  |  |  | `0x0` |
 |        |  [3] m_tready |  |  |  |  | `0x0` |
-| `0x1200` | axi_debug_plframe_cfg | | REG | R/W |  | `0x0` |
+| `0x1200` | axi_debug_constellation_mapper_cfg | | REG | R/W |  | `0x0` |
 |        |  [0] block_data | Disables data from passing through |  |  |  | `0x0` |
 |        |  [1] allow_word | Allows a single word to pass through. Needs `block_data` to be set before setting this. |  |  | self-clearing | `0x0` |
 |        |  [2] allow_frame | Allow a single frame to complete. Needs `block_data` to be set before setting this. |  |  | self-clearing | `0x0` |
-| `0x1204` | axi_debug_plframe_frame_count | | REG | R |  | `0x0` |
+| `0x1204` | axi_debug_constellation_mapper_frame_count | | REG | R |  | `0x0` |
 |        |  [15:0] value |  |  |  |  | `0x0` |
-| `0x1208` | axi_debug_plframe_last_frame_length | | REG | R |  | `0x0` |
+| `0x1208` | axi_debug_constellation_mapper_last_frame_length | | REG | R |  | `0x0` |
 |        |  [15:0] value |  |  |  |  | `0x0` |
-| `0x120C` | axi_debug_plframe_min_max_frame_length | | REG | R |  | `0x0` |
+| `0x120C` | axi_debug_constellation_mapper_min_max_frame_length | | REG | R |  | `0x0` |
 |        |  [15:0] min_frame_length |  |  |  |  | `0x0` |
 |        |  [31:16] max_frame_length |  |  |  |  | `0x0` |
-| `0x1210` | axi_debug_plframe_word_count | | REG | R |  | `0x0` |
+| `0x1210` | axi_debug_constellation_mapper_word_count | | REG | R |  | `0x0` |
 |        |  [15:0] value |  |  |  |  | `0x0` |
-| `0x1214` | axi_debug_plframe_strobes | | REG | R |  | `0x0` |
+| `0x1214` | axi_debug_constellation_mapper_strobes | | REG | R |  | `0x0` |
 |        |  [0] s_tvalid |  |  |  |  | `0x0` |
 |        |  [1] s_tready |  |  |  |  | `0x0` |
 |        |  [2] m_tvalid |  |  |  |  | `0x0` |
 |        |  [3] m_tready |  |  |  |  | `0x0` |
-| `0x1300` | axi_debug_output_cfg | | REG | R/W |  | `0x0` |
+| `0x1300` | axi_debug_plframe_cfg | | REG | R/W |  | `0x0` |
 |        |  [0] block_data | Disables data from passing through |  |  |  | `0x0` |
 |        |  [1] allow_word | Allows a single word to pass through. Needs `block_data` to be set before setting this. |  |  | self-clearing | `0x0` |
 |        |  [2] allow_frame | Allow a single frame to complete. Needs `block_data` to be set before setting this. |  |  | self-clearing | `0x0` |
-| `0x1304` | axi_debug_output_frame_count | | REG | R |  | `0x0` |
+| `0x1304` | axi_debug_plframe_frame_count | | REG | R |  | `0x0` |
 |        |  [15:0] value |  |  |  |  | `0x0` |
-| `0x1308` | axi_debug_output_last_frame_length | | REG | R |  | `0x0` |
+| `0x1308` | axi_debug_plframe_last_frame_length | | REG | R |  | `0x0` |
 |        |  [15:0] value |  |  |  |  | `0x0` |
-| `0x130C` | axi_debug_output_min_max_frame_length | | REG | R |  | `0x0` |
+| `0x130C` | axi_debug_plframe_min_max_frame_length | | REG | R |  | `0x0` |
 |        |  [15:0] min_frame_length |  |  |  |  | `0x0` |
 |        |  [31:16] max_frame_length |  |  |  |  | `0x0` |
-| `0x1310` | axi_debug_output_word_count | | REG | R |  | `0x0` |
+| `0x1310` | axi_debug_plframe_word_count | | REG | R |  | `0x0` |
 |        |  [15:0] value |  |  |  |  | `0x0` |
-| `0x1314` | axi_debug_output_strobes | | REG | R |  | `0x0` |
+| `0x1314` | axi_debug_plframe_strobes | | REG | R |  | `0x0` |
 |        |  [0] s_tvalid |  |  |  |  | `0x0` |
 |        |  [1] s_tready |  |  |  |  | `0x0` |
 |        |  [2] m_tvalid |  |  |  |  | `0x0` |
 |        |  [3] m_tready |  |  |  |  | `0x0` |
 
-_Generated on 2022-04-06 at 18:22 (UTC) by airhdl version 2022.03.1-114_
+_Generated on 2022-04-24 at 21:50 (UTC) by airhdl version 2022.04.1-116_
