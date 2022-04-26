@@ -18,7 +18,9 @@
 # As per CERN-OHL-W v2 section 4.1, should You produce hardware based on this
 # source, You must maintain the Source Location visible on the external case of
 # the DVB Encoder or other products you make using this source."VUnit test runner for DVB FPGA"
+"""Main unit test entry point"""
 
+# pylint: disable=unspecified-encoding
 import logging
 import math
 import os
@@ -29,9 +31,8 @@ import subprocess as subp
 import sys
 import time
 from enum import Enum
-from glob import glob
 from multiprocessing import Pool
-from typing import NamedTuple
+from typing import List, NamedTuple
 
 from vunit.ui import VUnit  # type: ignore
 from vunit.vunit_cli import VUnitCLI  # type: ignore
@@ -101,7 +102,7 @@ class TestDefinition(
     """
 
     def __init__(self, *args, **kwargs):  # pylint: disable=unused-argument
-        super(TestDefinition, self).__init__()
+        super().__init__()
         self.timestamp = p.join(self.test_files_path, "timestamp")
 
     @staticmethod
@@ -168,6 +169,97 @@ def _getConfigs(
 
 TEST_CONFIGS = set(_getConfigs())
 
+METADATA_MAP = {
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C1_4): 0x00,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C1_3): 0x01,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C2_5): 0x02,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C1_2): 0x03,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C3_5): 0x04,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C2_3): 0x05,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C3_4): 0x06,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C4_5): 0x07,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C5_6): 0x08,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C8_9): 0x09,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C9_10): 0x0A,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C1_4): 0x0B,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C1_3): 0x0C,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C2_5): 0x0D,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C1_2): 0x0E,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C3_5): 0x0F,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C2_3): 0x10,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C3_4): 0x11,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C4_5): 0x12,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C5_6): 0x13,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C8_9): 0x14,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C9_10): 0x15,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C1_4): 0x16,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C1_3): 0x17,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C2_5): 0x18,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C1_2): 0x19,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C3_5): 0x1A,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C2_3): 0x1B,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C3_4): 0x1C,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C4_5): 0x1D,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C5_6): 0x1E,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C8_9): 0x1F,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C9_10): 0x20,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C1_4): 0x21,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C1_3): 0x22,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C2_5): 0x23,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C1_2): 0x24,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C3_5): 0x25,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C2_3): 0x26,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C3_4): 0x27,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C4_5): 0x28,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C5_6): 0x29,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C8_9): 0x2A,
+    (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C9_10): 0x2B,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C1_4): 0x2C,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C1_3): 0x2D,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C2_5): 0x2E,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C1_2): 0x2F,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C3_5): 0x30,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C2_3): 0x31,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C3_4): 0x32,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C4_5): 0x33,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C5_6): 0x34,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C8_9): 0x35,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C9_10): 0x36,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C1_4): 0x37,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C1_3): 0x38,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C2_5): 0x39,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C1_2): 0x3A,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C3_5): 0x3B,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C2_3): 0x3C,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C3_4): 0x3D,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C4_5): 0x3E,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C5_6): 0x3F,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C8_9): 0x40,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C9_10): 0x41,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C1_4): 0x42,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C1_3): 0x43,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C2_5): 0x44,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C1_2): 0x45,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C3_5): 0x46,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C2_3): 0x47,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C3_4): 0x48,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C4_5): 0x49,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C5_6): 0x4A,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C8_9): 0x4B,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C9_10): 0x4C,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C1_4): 0x4D,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C1_3): 0x4E,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C2_5): 0x4F,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C1_2): 0x50,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C3_5): 0x51,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C2_3): 0x52,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C3_4): 0x53,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C4_5): 0x54,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C5_6): 0x55,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C8_9): 0x56,
+    (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C9_10): 0x57,
+}
+
 
 def _runGnuRadio(config):
     """
@@ -175,7 +267,7 @@ def _runGnuRadio(config):
     for not importing and running locally is to allow GNI Radio's Python
     environment to be independent of VUnit's Python env.
     """
-    print("Generating data for %s" % config.name)
+    print(f"Generating data for {config.name}")
 
     command = [
         p.join(ROOT, "gnuradio_data", "dvbs2_encoder_flow_diagram.py"),
@@ -202,6 +294,29 @@ def _runGnuRadio(config):
         )
         raise
 
+    # Generate the dvbs2_encoder_wrapper test files by inserting the metadata
+    # into the data stream
+    _addModcodToInputData(
+        METADATA_MAP[(config.frame_type, config.constellation, config.code_rate)],
+        p.join(config.test_files_path, "input_data_packed.bin"),
+    )
+
+
+def _addModcodToInputData(metadata: int, source: str):
+    """
+    DVBS2 Wrapper assumes the first byte determines the frame config, followed
+    by 3 bytes of zeros then the actual data
+    """
+    target = source.replace("input_data_packed", "input_data_with_metadata")
+
+    with open(target, "wb") as target_fd:
+        target_fd.write(b"%c" % metadata)
+        target_fd.write(b"%c" % 0)
+        target_fd.write(b"%c" % 0)
+        target_fd.write(b"%c" % 0)
+        with open(source, "rb") as source_fd:
+            target_fd.write(source_fd.read())
+
 
 def _generateGnuRadioData():
     """
@@ -213,12 +328,9 @@ def _generateGnuRadioData():
         if not p.exists(config.timestamp):
             configs += [config]
 
-    #  list(map(_runGnuRadio, configs))
     # Generate needed data on a process pool to speed up things
-    pool = Pool()
-    pool.map(_runGnuRadio, configs)
-    pool.close()
-    pool.join()
+    with Pool() as pool:
+        pool.map(_runGnuRadio, configs)
 
 
 LDPC_Q = {
@@ -370,10 +482,10 @@ def _populateLdpcTable(config: TestDefinition):  # pylint: disable=too-many-loca
     Creates the unrolled binary LDPC table file for the LDPC encoder testbench
     a CSV file with coefficients (from DVB-S2 spec's appendices B and C).
     """
-    bin_table = p.join(config.test_files_path, "ldpc_table.bin")
-    text_table = p.join(config.test_files_path, "ldpc_table.txt")
+    bin_table_path = p.join(config.test_files_path, "ldpc_table.bin")
+    text_table_path = p.join(config.test_files_path, "ldpc_table.txt")
 
-    if p.exists(bin_table) and p.exists(text_table):
+    if p.exists(bin_table_path) and p.exists(text_table_path):
         return
 
     csv_table = p.join(
@@ -389,50 +501,51 @@ def _populateLdpcTable(config: TestDefinition):  # pylint: disable=too-many-loca
         f'Binary data will be written to "{config.test_files_path}"',
     )
 
-    table = [x.split(",") for x in open(csv_table, "r").read().split("\n") if x]
+    with open(csv_table, "r") as fd:
+        table = [x.split(",") for x in fd.read().split("\n") if x]
 
     table_q = LDPC_Q[(config.frame_type, config.code_rate)]
     table_length = LDPC_LENGTH[(config.frame_type, config.code_rate)]
     word_cnt = 0
 
-    bin_fd = open(bin_table, "wb")
-    bin_fd.write(b"# Offset, next, bit index\n")
-    text_fd = open(text_table, "w")
+    bin_table: List[str] = []
+    text_table: List[str] = []
 
-    try:
-        # Each offset is 16 bits (to represent 64,800 bits of FECFRAME_NORMAL),
-        # but we'll also embed the s_ldpc_next values into the file as well on a
-        # byte, so data width will 24: data[16] is s_ldpc_next while data[15:0] is
-        # the actual offset
-        bit_index = 0
+    bin_table += ["# Offset, next, bit index"]
 
-        for line in table:
-            for _ in range(360):
-                text_fd.write(f"{bit_index:5d} || ")
-                for i, coefficient in enumerate(tuple(int(x) for x in line)):
-                    offset = (coefficient + (bit_index % 360) * table_q) % table_length
-                    bin_fd.write(bytes(f"{offset},", encoding="utf8"))
-                    bin_fd.write(bytes(f"{int(i == len(line) - 1)},", encoding="utf8"))
-                    bin_fd.write(bytes(f"{bit_index}\n", encoding="utf8"))
+    # Each offset is 16 bits (to represent 64,800 bits of FECFRAME_NORMAL),
+    # but we'll also embed the s_ldpc_next values into the file as well on a
+    # byte, so data width will 24: data[16] is s_ldpc_next while data[15:0] is
+    # the actual offset
+    bit_index = 0
 
-                    text_fd.write(f" {word_cnt:5d}, {offset:5d}  |")
-                    word_cnt += 1
+    for line in table:
+        for _ in range(360):
+            text_table += [f"{bit_index:5d} || "]
+            for i, coefficient in enumerate(tuple(int(x) for x in line)):
+                offset = (coefficient + (bit_index % 360) * table_q) % table_length
+                bin_table += [f"{offset},{int(i == len(line) - 1)},{bit_index}"]
 
-                text_fd.write("\n")
-                bit_index += 1
-    finally:
-        bin_fd.close()
-        text_fd.close()
+                text_table[-1] += f" {word_cnt:5d}, {offset:5d}  |"
+                word_cnt += 1
+
+            bit_index += 1
+
+    with open(bin_table_path, "wb") as bin_table_fd:
+        bin_table_fd.write(b"\n".join([bytes(x, encoding="utf8") for x in bin_table]))
+
+    with open(text_table_path, "w") as text_table_fd:
+        text_table_fd.write("\n".join(text_table))
 
 
 def _getModulationTable(
     frame_type: FrameType, constellation: ConstellationType, code_rate: CodeRate
 ):
     """
-    Returns the modulation table for a given config. Please note we're scaling the
-    constellation radius according to the old implementation of GNU Radio.  Once the CI's
-    GNU Radio version is updated to include
-    https://github.com/gnuradio/gnuradio/commit/efe3e6c1 we'll need to change here as well
+    Returns the modulation table for a given config. Please note we're scaling
+    the constellation radius to keep values between [-1, 1). Also, this is for
+    refence only since the RAMs now come with the correct initial values for
+    all configs
     """
     # pylint: disable=invalid-name
     if constellation == ConstellationType.MOD_QPSK:
