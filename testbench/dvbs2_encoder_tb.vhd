@@ -140,8 +140,6 @@ architecture dvbs2_encoder_tb of dvbs2_encoder_tb is
 
   -- AXI output
   signal axi_slave          : axi_stream_data_bus_t(tdata(IQ_WIDTH - 1 downto 0));
-  signal axi_slave_tvalid   : std_logic; -- Frame sizes don't match, mask off extra samples from RTL
-  signal is_trailing_data   : std_logic := '0';
   signal s_data_valid       : std_logic;
 
   signal expected_tdata     : std_logic_vector(IQ_WIDTH - 1 downto 0);
@@ -181,8 +179,6 @@ begin
     generic map (
       INPUT_DATA_WIDTH => INPUT_DATA_WIDTH,
       IQ_WIDTH         => IQ_WIDTH)
-      -- POLYPHASE_FILTER_NUMBER_TAPS => POLYPHASE_FILTER_NUMBER_TAPS,
-      -- POLYPHASE_FILTER_RATE_CHANGE => POLYPHASE_FILTER_RATE_CHANGE)
     port map (
       -- Usual ports
       clk             => clk,
@@ -255,9 +251,6 @@ begin
 
   -- DUT AXI tready is always set to high in this sim
   axi_slave.tready <= '1';
-  -- GNU Radio's tlast will come in before, we'll ignore data after that until dvbs2_encoder's
-  -- tlast
-  axi_slave_tvalid <= axi_slave.tvalid and not is_trailing_data;
 
   process
     constant logger      : logger_t := get_logger("output monitor");
@@ -284,19 +277,19 @@ begin
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  clk <= not clk after CLK_PERIOD/2;
-
   test_runner_watchdog(runner, 300 ms);
 
-  m_data_valid <= axi_master.tvalid and axi_master.tready;
-  s_data_valid <= axi_slave.tvalid and axi_slave.tready;
+  clk               <= not clk after CLK_PERIOD/2;
+
+  m_data_valid      <= axi_master.tvalid and axi_master.tready;
+  s_data_valid      <= axi_slave.tvalid and axi_slave.tready;
 
   cfg_constellation <= decode(axi_master.tuser).constellation;
   cfg_frame_type    <= decode(axi_master.tuser).frame_type;
   cfg_code_rate     <= decode(axi_master.tuser).code_rate;
 
-  recv_r     <= to_complex(axi_slave.tdata) when axi_slave.tvalid = '1';
-  expected_r <= to_complex(expected_tdata);
+  recv_r            <= to_complex(axi_slave.tdata) when axi_slave.tvalid = '1';
+  expected_r        <= to_complex(expected_tdata);
 
   -- Inspect inner buses if running on ModelSim
   -- ghdl translate_off
