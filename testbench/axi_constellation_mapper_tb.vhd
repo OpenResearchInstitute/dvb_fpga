@@ -57,7 +57,8 @@ entity axi_constellation_mapper_tb is
   generic (
     RUNNER_CFG            : string;
     TEST_CFG              : string;
-    NUMBER_OF_TEST_FRAMES : integer := 8);
+    NUMBER_OF_TEST_FRAMES : integer := 8;
+    SEED                  : integer);
 end axi_constellation_mapper_tb;
 
 architecture axi_constellation_mapper_tb of axi_constellation_mapper_tb is
@@ -105,7 +106,8 @@ begin
     generic map (
       READER_NAME => "input_data",
       DATA_WIDTH  => INPUT_DATA_WIDTH,
-      TID_WIDTH   => ENCODED_CONFIG_WIDTH)
+      TID_WIDTH   => ENCODED_CONFIG_WIDTH,
+      SEED        => SEED)
     port map (
       -- Usual ports
       clk                => clk,
@@ -342,10 +344,12 @@ begin
     wait;
   end process; -- }}
 
-  axi_slave_tready_gen : process(clk)
+  axi_slave_tready_gen : process(clk, rst)
     variable tready_rand : RandomPType;
   begin
-    if rising_edge(clk) then
+    if rst then
+      tready_rand.InitSeed("axi_slave_tready_gen" & integer'image(SEED) & time'image(now));
+    elsif rising_edge(clk) then
       -- Generate a tready enable with the configured probability
       axi_slave.tready <= '0';
       if tready_rand.RandReal(1.0) <= tready_probability then

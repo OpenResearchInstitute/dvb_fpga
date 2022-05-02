@@ -829,6 +829,7 @@ def setupTests(vunit, args):
                 name=config.name,
                 generics=dict(
                     test_cfg=config.getTestConfigString(),
+                    SEED=args.seed,
                     NUMBER_OF_TEST_FRAMES=8,
                 ),
             )
@@ -844,6 +845,7 @@ def setupTests(vunit, args):
                 name=config.name,
                 generics=dict(
                     test_cfg=config.getTestConfigString(),
+                    SEED=args.seed,
                     NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
@@ -861,6 +863,7 @@ def setupTests(vunit, args):
         addAllConfigsTest(
             entity=vunit.library("lib").entity("axi_bch_encoder_tb"),
             configs=TEST_CONFIGS,
+            seed=args.seed,
         )
 
         addAllConfigsTest(
@@ -892,6 +895,7 @@ def setupTests(vunit, args):
 
     addAllConfigsTest(
         entity=vunit.library("lib").entity("axi_baseband_scrambler_tb"),
+        seed=args.seed,
         configs=TEST_CONFIGS,
     )
 
@@ -950,6 +954,7 @@ def setupTests(vunit, args):
                         TDATA_WIDTH=data_width,
                         test_cfg=config.getTestConfigString(),
                         NUMBER_OF_TEST_FRAMES=8,
+                        SEED=args.seed,
                     ),
                 )
 
@@ -960,6 +965,7 @@ def setupTests(vunit, args):
                     TDATA_WIDTH=data_width,
                     test_cfg="|".join(all_configs),
                     NUMBER_OF_TEST_FRAMES=2,
+                    SEED=args.seed,
                 ),
             )
 
@@ -977,7 +983,7 @@ def setupTests(vunit, args):
     )
 
 
-def addAllConfigsTest(entity, configs, name=None):
+def addAllConfigsTest(entity, configs, seed=0, name=None):
     """
     Adds a test config with all combinations of configurations (assuming both
     input and reference files ca be found)
@@ -993,7 +999,7 @@ def addAllConfigsTest(entity, configs, name=None):
 
     entity.add_config(
         name=name or "test_all_configs",
-        generics=dict(test_cfg="|".join(params), NUMBER_OF_TEST_FRAMES=1),
+        generics=dict(test_cfg="|".join(params), NUMBER_OF_TEST_FRAMES=1, SEED=seed),
     )
 
 
@@ -1012,7 +1018,17 @@ def main():
         "all combinations of frame types, code rates and modulations are "
         "tested in the same simulation",
     )
+    cli.parser.add_argument(
+        "--seed",
+        action="store",
+        help="Random seed of the tests",
+        type=int,
+        default=random.randint(-1 << 31, 1 << 31),  # VHDL integer range
+    )
+
     args = cli.parse_args()
+
+    print(f"Seed: {args.seed}")
 
     vunit = VUnit.from_args(args=args)
     setupSources(vunit)

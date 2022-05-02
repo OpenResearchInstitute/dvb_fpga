@@ -47,6 +47,7 @@ use work.dvb_sim_utils_pkg.all;
 entity axi_bch_encoder_tb is
   generic (
     RUNNER_CFG            : string;
+    SEED                  : integer;
     TEST_CFG              : string;
     NUMBER_OF_TEST_FRAMES : integer := 8);
 end axi_bch_encoder_tb;
@@ -90,6 +91,7 @@ begin
   axi_file_reader_u : entity fpga_cores_sim.axi_file_reader
     generic map (
       READER_NAME => "axi_file_reader_u",
+      SEED        => SEED,
       DATA_WIDTH  => 8,
       TID_WIDTH   => ENCODED_CONFIG_WIDTH)
     port map (
@@ -130,6 +132,7 @@ begin
   axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
     generic map (
       READER_NAME     => "axi_file_compare_u",
+      SEED            => SEED,
       ERROR_CNT_WIDTH => 8,
       DATA_WIDTH      => 8)
     port map (

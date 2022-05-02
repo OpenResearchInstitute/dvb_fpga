@@ -28,9 +28,6 @@ library vunit_lib;
 context vunit_lib.vunit_context;
 context vunit_lib.com_context;
 
-library osvvm;
-use osvvm.RandomPkg.all;
-
 library str_format;
 use str_format.str_format_pkg.all;
 
@@ -54,7 +51,8 @@ entity axi_ldpc_encoder_core_tb is
   generic (
     RUNNER_CFG            : string;
     TEST_CFG              : string;
-    NUMBER_OF_TEST_FRAMES : integer := 8);
+    NUMBER_OF_TEST_FRAMES : integer := 8;
+    SEED                  : integer);
 end axi_ldpc_encoder_core_tb;
 
 architecture axi_ldpc_encoder_core_tb of axi_ldpc_encoder_core_tb is
@@ -68,6 +66,18 @@ architecture axi_ldpc_encoder_core_tb of axi_ldpc_encoder_core_tb is
   constant DATA_WIDTH        : integer := 8;
 
   constant DBG_CHECK_FRAME_RAM_WRITES : boolean := True;
+
+  -----------
+  -- Types --
+  -----------
+  type axi_stream_table_t is record
+    offset    : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+    is_next   : std_logic;
+    bit_index : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
+    tvalid    : std_logic;
+    tready    : std_logic;
+    tlast     : std_logic;
+  end record;
 
   -------------
   -- Signals --
@@ -91,16 +101,7 @@ architecture axi_ldpc_encoder_core_tb of axi_ldpc_encoder_core_tb is
   signal table_probability  : real range 0.0 to 1.0 := 1.0;
   signal tready_probability : real range 0.0 to 1.0 := 1.0;
 
-  type axi_stream_table_t is record
-    offset    : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
-    is_next   : std_logic;
-    bit_index : unsigned(numbits(max(DVB_N_LDPC)) - 1 downto 0);
-    tvalid    : std_logic;
-    tready    : std_logic;
-    tlast     : std_logic;
-  end record;
-
-  signal axi_table           : axi_stream_table_t;
+  signal axi_table          : axi_stream_table_t;
 
   signal axi_master         : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   signal axi_slave          : axi_stream_bus_t(tdata(DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
@@ -120,7 +121,8 @@ begin
     generic map (
       READER_NAME => "axi_file_reader_u",
       DATA_WIDTH  => DATA_WIDTH,
-      TID_WIDTH   => ENCODED_CONFIG_WIDTH)
+      TID_WIDTH   => ENCODED_CONFIG_WIDTH,
+      SEED        => SEED)
     port map (
       -- Usual ports
       clk                => clk,
@@ -172,7 +174,8 @@ begin
       READER_NAME     => "axi_file_compare_u",
       ERROR_CNT_WIDTH => 8,
       REPORT_SEVERITY => Error,
-      DATA_WIDTH      => DATA_WIDTH)
+      DATA_WIDTH      => DATA_WIDTH,
+      SEED            => SEED)
     port map (
       -- Usual ports
       clk                => clk,

@@ -32,6 +32,9 @@ library vunit_lib;
 context vunit_lib.vunit_context;
 context vunit_lib.com_context;
 
+library osvvm;
+use osvvm.RandomPkg.all;
+
 library str_format;
 use str_format.str_format_pkg.all;
 
@@ -48,7 +51,8 @@ entity axi_physical_layer_framer_tb is
   generic (
     RUNNER_CFG            : string;
     TEST_CFG              : string;
-    NUMBER_OF_TEST_FRAMES : integer := 8);
+    NUMBER_OF_TEST_FRAMES : integer := 8;
+    SEED                  : integer);
 end axi_physical_layer_framer_tb;
 
 architecture axi_physical_layer_framer_tb of axi_physical_layer_framer_tb is
@@ -94,7 +98,8 @@ begin
     generic map (
       READER_NAME => "axi_file_reader_u",
       DATA_WIDTH  => TDATA_WIDTH,
-      TID_WIDTH   => ENCODED_CONFIG_WIDTH)
+      TID_WIDTH   => ENCODED_CONFIG_WIDTH,
+      SEED        => SEED)
     port map (
       -- Usual ports
       clk                => clk,
@@ -164,8 +169,6 @@ begin
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  axi_slave.tready <= '1';
-
   clk <= not clk after CLK_PERIOD/2;
 
   test_runner_watchdog(runner, 3 ms);
@@ -343,6 +346,18 @@ begin
     end loop;
   end process; -- }} -------------------------------------------------------------------
 
+  axi_slave_tready_gen : process(clk) -- {{ --------------------------------------------
+    variable rand : RandomPType;
+  begin
+    if rst then
+      rand.InitSeed("axi_slave_tready_gen" & integer'image(SEED) & time'image(now));
+    elsif rising_edge(clk) then
+      -- Generate a tready enable with the configured probability
+      axi_slave.tready <= '0';
+      if rand.RandReal(1.0) <= tready_probability then
+        axi_slave.tready <= '1';
+      end if;
+    end if;
+  end process; -- }} -------------------------------------------------------------------
+
 end axi_physical_layer_framer_tb;
-
-

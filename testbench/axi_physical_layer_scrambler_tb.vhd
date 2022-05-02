@@ -51,6 +51,7 @@ entity axi_physical_layer_scrambler_tb is
   generic (
     RUNNER_CFG            : string;
     TEST_CFG              : string;
+    SEED                  : integer;
     NUMBER_OF_TEST_FRAMES : integer := 3);
 end axi_physical_layer_scrambler_tb;
 
@@ -113,7 +114,8 @@ begin
     generic map (
       READER_NAME => "axi_file_reader_u",
       DATA_WIDTH  => TDATA_WIDTH,
-      TID_WIDTH   => TID_WIDTH)
+      TID_WIDTH   => TID_WIDTH,
+      SEED        => SEED)
     port map (
       -- Usual ports
       clk                  => clk,
@@ -154,8 +156,9 @@ begin
 
   ref_data_u : entity fpga_cores_sim.axi_file_reader
     generic map (
-      READER_NAME     => "ref_data_u",
-      DATA_WIDTH      => TDATA_WIDTH)
+      READER_NAME => "ref_data_u",
+      DATA_WIDTH  => TDATA_WIDTH,
+      SEED        => SEED)
     port map (
       -- Usual ports
       clk            => clk,
@@ -245,7 +248,7 @@ begin
     test_runner_setup(runner, RUNNER_CFG);
     show(display_handler, debug);
 
-    tid_rand_gen.InitSeed("seed");
+    tid_rand_gen.InitSeed(SEED);
 
     while test_suite loop
       rst <= '1';
@@ -313,7 +316,7 @@ begin
     variable frame_cnt      : integer := 0;
     variable word_cnt       : integer := 0;
   begin
-    tid_rand_check.InitSeed("seed");
+    tid_rand_check.InitSeed(SEED);
     first_word := True;
     while true loop
       wait until rising_edge(clk) and axi_slave.tvalid = '1' and axi_slave.tready = '1';
@@ -398,10 +401,12 @@ begin
     end if;
   end process; -- }} -------------------------------------------------------------------
 
-  axi_slave_tready_gen : process(clk) -- {{ --------------------------------------------
+  axi_slave_tready_gen : process(clk, rst) -- {{ ---------------------------------------
     variable tready_rand : RandomPType;
   begin
-    if rising_edge(clk) then
+    if rst then
+      tready_rand.InitSeed("axi_slave_tready_gen" & integer'image(SEED) & time'image(now));
+    elsif rising_edge(clk) then
       -- Generate a tready enable with the configured probability
       axi_slave.tready <= '0';
       if tready_rand.RandReal(1.0) <= tready_probability then

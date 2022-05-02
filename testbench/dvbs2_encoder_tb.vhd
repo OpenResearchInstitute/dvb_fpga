@@ -32,9 +32,6 @@ library vunit_lib;
 context vunit_lib.vunit_context;
 context vunit_lib.com_context;
 
-library osvvm;
-use osvvm.RandomPkg.all;
-
 library str_format;
 use str_format.str_format_pkg.all;
 
@@ -58,7 +55,8 @@ entity dvbs2_encoder_tb is
   generic (
     RUNNER_CFG            : string;
     TEST_CFG              : string := "";
-    NUMBER_OF_TEST_FRAMES : integer := 1);
+    NUMBER_OF_TEST_FRAMES : integer := 1;
+    SEED                  : integer);
 end dvbs2_encoder_tb;
 
 architecture dvbs2_encoder_tb of dvbs2_encoder_tb is
@@ -66,13 +64,11 @@ architecture dvbs2_encoder_tb of dvbs2_encoder_tb is
   ---------------
   -- Constants --
   ---------------
-  constant configs    : config_array_t := get_test_cfg(TEST_CFG);
-  constant CLK_PERIOD : time := 5 ns;
+  constant configs          : config_array_t := get_test_cfg(TEST_CFG);
+  constant CLK_PERIOD       : time := 5 ns;
 
-  constant INPUT_DATA_WIDTH             : integer  := 64;
-  constant IQ_WIDTH                     : integer  := 32;
-  -- constant POLYPHASE_FILTER_NUMBER_TAPS : positive := 33;
-  -- constant POLYPHASE_FILTER_RATE_CHANGE : positive := 2;
+  constant INPUT_DATA_WIDTH : integer  := 64;
+  constant IQ_WIDTH         : integer  := 32;
 
   type axi_checker_t is record
     axi             : axi_stream_data_bus_t;
@@ -158,7 +154,8 @@ begin
     generic map (
       READER_NAME => "input_stream",
       DATA_WIDTH  => INPUT_DATA_WIDTH,
-      TID_WIDTH   => ENCODED_CONFIG_WIDTH)
+      TID_WIDTH   => ENCODED_CONFIG_WIDTH,
+      SEED        => SEED)
     port map (
       -- Usual ports
       clk                => clk,

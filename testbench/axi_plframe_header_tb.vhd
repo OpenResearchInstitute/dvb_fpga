@@ -30,9 +30,6 @@ library vunit_lib;
 context vunit_lib.vunit_context;
 context vunit_lib.com_context;
 
-library osvvm;
-use osvvm.RandomPkg.all;
-
 library str_format;
 use str_format.str_format_pkg.all;
 
@@ -50,7 +47,8 @@ entity axi_plframe_header_tb is
   generic (
     RUNNER_CFG            : string;
     TEST_CFG              : string;
-    NUMBER_OF_TEST_FRAMES : integer := 8);
+    NUMBER_OF_TEST_FRAMES : integer := 8;
+    SEED                  : integer);
 end axi_plframe_header_tb;
 
 architecture axi_plframe_header_tb of axi_plframe_header_tb is
@@ -93,7 +91,8 @@ begin
   axi_config_input_u : entity fpga_cores_sim.axi_stream_bfm
     generic map (
       NAME        => "cfg",
-      TDATA_WIDTH => sum(CONFIG_INPUT_WIDTHS))
+      TDATA_WIDTH => sum(CONFIG_INPUT_WIDTHS),
+      SEED        => SEED)
     port map (
       -- Usual ports
       clk      => clk,
@@ -132,7 +131,8 @@ begin
       READER_NAME     => "axi_file_compare_u",
       ERROR_CNT_WIDTH => 8,
       REPORT_SEVERITY => Error,
-      DATA_WIDTH      => axi_slave.tdata'length)
+      DATA_WIDTH      => axi_slave.tdata'length,
+      SEED            => SEED)
     port map (
       -- Usual ports
       clk                => clk,

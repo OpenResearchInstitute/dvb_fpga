@@ -49,6 +49,7 @@ entity axi_baseband_scrambler_tb is
   generic (
     RUNNER_CFG            : string;
     TEST_CFG              : string;
+    SEED                  : integer;
     TDATA_WIDTH           : integer := 8;
     NUMBER_OF_TEST_FRAMES : integer := 8);
 end axi_baseband_scrambler_tb;
@@ -95,6 +96,7 @@ begin
   axi_file_reader_u : entity fpga_cores_sim.axi_file_reader
     generic map (
       READER_NAME => "axi_file_reader_u",
+      SEED        => SEED,
       DATA_WIDTH  => TDATA_WIDTH,
       TID_WIDTH   => TID_WIDTH)
     port map (
@@ -135,6 +137,7 @@ begin
   axi_file_compare_u : entity fpga_cores_sim.axi_file_compare
     generic map (
       READER_NAME     => "axi_file_compare_u",
+      SEED            => SEED,
       ERROR_CNT_WIDTH => 8,
       REPORT_SEVERITY => Error,
       DATA_WIDTH      => TDATA_WIDTH)
@@ -212,7 +215,8 @@ begin
 
   begin
 
-    tid_rand_gen.InitSeed("seed");
+    tid_rand_gen.InitSeed(SEED);
+    rand.InitSeed(SEED);
     test_runner_setup(runner, RUNNER_CFG);
     show(display_handler, debug);
 
@@ -281,7 +285,7 @@ begin
     variable frame_cnt    : integer := 0;
     variable word_cnt     : integer := 0;
   begin
-    tid_rand_check.InitSeed("seed");
+    tid_rand_check.InitSeed(SEED);
     first_word := True;
     while true loop
       wait until rising_edge(clk) and axi_slave.tvalid = '1' and axi_slave.tready = '1';
@@ -311,5 +315,11 @@ begin
       end if;
     end loop;
   end process; -- }} -------------------------------------------------------------------
+
+  process
+  begin
+    info("Seed: " & integer'image(seed));
+    wait;
+  end process;
 
 end axi_baseband_scrambler_tb;

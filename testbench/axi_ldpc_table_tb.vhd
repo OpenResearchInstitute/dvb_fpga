@@ -42,7 +42,6 @@ use fpga_cores.common_pkg.all;
 
 library fpga_cores_sim;
 use fpga_cores_sim.axi_stream_bfm_pkg.all;
-use fpga_cores_sim.file_utils_pkg.all;
 use fpga_cores_sim.testbench_utils_pkg.all;
 
 use work.dvb_sim_utils_pkg.all;
@@ -58,6 +57,7 @@ entity axi_ldpc_table_tb is
   generic (
     RUNNER_CFG            : string;
     TEST_CFG              : string;
+    SEED                  : integer;
     NUMBER_OF_TEST_FRAMES : integer := 8);
 end axi_ldpc_table_tb;
 
@@ -115,6 +115,7 @@ begin
   axi_config_input_u : entity fpga_cores_sim.axi_stream_bfm
     generic map (
       NAME        => "axi_config_input_u",
+      SEED        => SEED,
       TDATA_WIDTH => sum(CONFIG_INPUT_WIDTHS))
     port map (
       -- Usual ports
@@ -238,7 +239,6 @@ begin
 
     test_runner_setup(runner, RUNNER_CFG);
     show(display_handler, debug);
-    hide(get_logger("file_reader_t(file_reader)"), display_handler, debug, True);
     show(get_logger("ldpc_table_check"), display_handler, debug, True);
 
 
@@ -363,16 +363,20 @@ begin
     acknowledge(net, msg);
   end process; -- }} -------------------------------------------------------------------
 
-  axi_slave_tready_gen : process(clk) -- {{ --------------------------------------------
+  axi_slave_tready_gen : process -- {{ -------------------------------------------------
     variable tready_rand : RandomPType;
   begin
-    if rising_edge(clk) then
+    info("Random seed: " & integer'image(SEED));
+    tready_rand.InitSeed(SEED);
+    wait until rst = '0';
+    while True loop
+      wait until rising_edge(clk);
       -- Generate a tready enable with the configured probability
       axi_slave.tready <= '0';
       if tready_rand.RandReal(1.0) <= tready_probability then
         axi_slave.tready <= '1';
       end if;
-    end if;
+    end loop;
   end process; -- }} -------------------------------------------------------------------
 
 
