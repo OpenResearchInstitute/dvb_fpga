@@ -801,11 +801,6 @@ def setupSources(vunit):
     library.add_source_files(p.join(ROOT, "third_party", "airhdl", "*.vhd"))
     library.add_source_files(p.join(ROOT, "testbench", "*.vhd"))
 
-    # Polyphase filter was removed from dvbs2_encoder, need to add it back
-    # somewhere
-    if vunit.get_simulator_name() != "ghdl":
-        library.add_source_files(p.join(ROOT, "third_party", "polyphase_filter", "*.v"))
-
     vunit.add_library("str_format").add_source_files(
         p.join(ROOT, "third_party", "hdl_string_format", "src", "*.vhd")
     )

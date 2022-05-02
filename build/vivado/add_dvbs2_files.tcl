@@ -40,7 +40,7 @@ proc add_dvbs2_files { } {
   set_property FILE_TYPE {VHDL 2008} [ get_files $str_format ]
   set_property FILE_TYPE {VHDL 2008} [ get_files $work ]
 
-  read_verilog -sv [ glob ${path_to_repo_root}/third_party/polyphase_filter/*.v ]
+  set_property FILE_TYPE {VHDL} [ add_files [ glob ${path_to_repo_root}/build/vivado/dvbs2_encoder_wrapper.vhd ] ]
 }
 
 add_dvbs2_files
