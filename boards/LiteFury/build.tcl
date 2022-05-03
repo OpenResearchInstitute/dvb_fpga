@@ -23,7 +23,6 @@ set path_to_repo_root [ file normalize "[ file dirname [ info script ] ]/../../"
 create_project dvbs2_encoder LiteFury -part xc7a100tfgg484-2L -force
 
 source ${path_to_repo_root}/build/vivado/add_dvbs2_files.tcl
-add_files ${path_to_repo_root}/build/vivado/dvbs2_encoder_wrapper.vhd
 source ${path_to_repo_root}/boards/LiteFury/block_design.tcl
 
 make_wrapper -files [ get_files LiteFury/dvbs2_encoder.srcs/sources_1/bd/design_1/design_1.bd ] -top
