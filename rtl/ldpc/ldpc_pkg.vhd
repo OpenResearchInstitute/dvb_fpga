@@ -1,7 +1,7 @@
 --
 -- DVB FPGA
 --
--- Copyright 2019 by suoto <andre820@gmail.com>
+-- Copyright 2019-2021 by suoto <andre820@gmail.com>
 --
 -- This source describes Open Hardware and is licensed under the CERN-OHL-W v2.
 --

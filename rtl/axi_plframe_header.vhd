@@ -2,7 +2,7 @@
 --
 -- DVB FPGA
 --
--- Copyright 2020 by Anshul Makkar <anshulmakkar@gmail.com>
+-- Copyright 2020-2022 by suoto <andre820@gmail.com>
 --
 -- This source describes Open Hardware and is licensed under the CERN-OHL-W v2.
 --
@@ -18,6 +18,9 @@
 -- As per CERN-OHL-W v2 section 4.1, should You produce hardware based on this
 -- source, You must maintain the Source Location visible on the external case of
 -- the DVB Encoder or other products you make using this source.
+
+-- Authors: Anshul Makkar <anshulmakkar@gmail.com>, suoto <andre820@gmail.com>
+
 ---------------
 -- Libraries --
 ---------------
