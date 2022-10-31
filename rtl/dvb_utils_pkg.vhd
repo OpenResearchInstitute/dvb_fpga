@@ -71,9 +71,9 @@ package dvb_utils_pkg is
   constant ENCODED_CONFIG_WIDTH : integer  := sum(CONFIG_TUPLE_WIDTHS);
 
   type config_tuple_t is record
-    constellation : constellation_t;
     frame_type    : frame_type_t;
     code_rate     : code_rate_t;
+    constellation : constellation_t;
   end record;
 
   type config_tuple_array_t is array (natural range <>) of config_tuple_t;

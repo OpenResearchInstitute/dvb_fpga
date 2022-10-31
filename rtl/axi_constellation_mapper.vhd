@@ -155,33 +155,31 @@ architecture axi_constellation_mapper of axi_constellation_mapper is
   );
 
   -- Radius table addresses
-  constant RADIUS_OTHERS              : integer := 0;
+  constant RADIUS_SHORT_16APSK_C2_3   : integer := 0;
+  constant RADIUS_SHORT_16APSK_C3_4   : integer := 1;
+  constant RADIUS_SHORT_16APSK_C3_5   : integer := 2;
+  constant RADIUS_SHORT_16APSK_C4_5   : integer := 3;
+  constant RADIUS_SHORT_16APSK_C5_6   : integer := 4;
+  constant RADIUS_SHORT_16APSK_C8_9   : integer := 5;
 
-  constant RADIUS_SHORT_16APSK_C2_3   : integer := 1;
-  constant RADIUS_SHORT_16APSK_C3_4   : integer := 2;
-  constant RADIUS_SHORT_16APSK_C3_5   : integer := 3;
-  constant RADIUS_SHORT_16APSK_C4_5   : integer := 4;
-  constant RADIUS_SHORT_16APSK_C5_6   : integer := 5;
-  constant RADIUS_SHORT_16APSK_C8_9   : integer := 6;
+  constant RADIUS_NORMAL_16APSK_C2_3  : integer := 6;
+  constant RADIUS_NORMAL_16APSK_C3_4  : integer := 7;
+  constant RADIUS_NORMAL_16APSK_C3_5  : integer := 8;
+  constant RADIUS_NORMAL_16APSK_C4_5  : integer := 9;
+  constant RADIUS_NORMAL_16APSK_C5_6  : integer := 10;
+  constant RADIUS_NORMAL_16APSK_C8_9  : integer := 11;
+  constant RADIUS_NORMAL_16APSK_C9_10 : integer := 12;
 
-  constant RADIUS_NORMAL_16APSK_C2_3  : integer := 7;
-  constant RADIUS_NORMAL_16APSK_C3_4  : integer := 8;
-  constant RADIUS_NORMAL_16APSK_C3_5  : integer := 9;
-  constant RADIUS_NORMAL_16APSK_C4_5  : integer := 10;
-  constant RADIUS_NORMAL_16APSK_C5_6  : integer := 11;
-  constant RADIUS_NORMAL_16APSK_C8_9  : integer := 12;
-  constant RADIUS_NORMAL_16APSK_C9_10 : integer := 13;
+  constant RADIUS_SHORT_32APSK_C3_4   : integer := 13;
+  constant RADIUS_SHORT_32APSK_C4_5   : integer := 14;
+  constant RADIUS_SHORT_32APSK_C5_6   : integer := 15;
+  constant RADIUS_SHORT_32APSK_C8_9   : integer := 16;
 
-  constant RADIUS_SHORT_32APSK_C3_4   : integer := 14;
-  constant RADIUS_SHORT_32APSK_C4_5   : integer := 15;
-  constant RADIUS_SHORT_32APSK_C5_6   : integer := 16;
-  constant RADIUS_SHORT_32APSK_C8_9   : integer := 17;
-
-  constant RADIUS_NORMAL_32APSK_C3_4  : integer := 18;
-  constant RADIUS_NORMAL_32APSK_C4_5  : integer := 19;
-  constant RADIUS_NORMAL_32APSK_C5_6  : integer := 20;
-  constant RADIUS_NORMAL_32APSK_C8_9  : integer := 21;
-  constant RADIUS_NORMAL_32APSK_C9_10 : integer := 22;
+  constant RADIUS_NORMAL_32APSK_C3_4  : integer := 17;
+  constant RADIUS_NORMAL_32APSK_C4_5  : integer := 18;
+  constant RADIUS_NORMAL_32APSK_C5_6  : integer := 19;
+  constant RADIUS_NORMAL_32APSK_C8_9  : integer := 20;
+  constant RADIUS_NORMAL_32APSK_C9_10 : integer := 21;
 
   function get_row_content ( constant r0, r1 : real ) return std_logic_vector is
     constant r0_uns : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0) := to_signed_fixed_point(r0, OUTPUT_DATA_WIDTH/2);
@@ -192,9 +190,7 @@ architecture axi_constellation_mapper of axi_constellation_mapper is
 
   constant UNIT_RADIUS : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0) := to_signed_fixed_point(1.0, OUTPUT_DATA_WIDTH/2);
 
-  constant RADIUS_COEFFICIENT_TABLE : std_logic_array_t(0 to 22)(OUTPUT_DATA_WIDTH - 1 downto 0) := (
-    RADIUS_OTHERS              => get_row_content(r0 => 1.0,                 r1 => 1.0),
-
+  constant RADIUS_COEFFICIENT_TABLE : std_logic_array_t(0 to 21)(OUTPUT_DATA_WIDTH - 1 downto 0) := (
     RADIUS_SHORT_16APSK_C2_3   => get_row_content(r0 => 0.31746031746031744, r1 => 1.0),
     RADIUS_SHORT_16APSK_C3_4   => get_row_content(r0 => 0.3508771929824561,  r1 => 1.0),
     RADIUS_SHORT_16APSK_C3_5   => get_row_content(r0 => 0.27027027027027023, r1 => 1.0),
@@ -457,33 +453,33 @@ begin
 
   -- Read the appropriate address of the radius RAM
   radius_rd_addr <=
-    (others => 'U')                                                when axi_out_cfg.constellation = mod_qpsk             else
-    (others => 'U')                                                when axi_out_cfg.constellation = mod_8psk             else
-    to_unsigned(RADIUS_SHORT_16APSK_C2_3, radius_rd_addr'length)   when axi_out_cfg = (MOD_16APSK, FECFRAME_SHORT, C2_3) else
-    to_unsigned(RADIUS_SHORT_16APSK_C3_4, radius_rd_addr'length)   when axi_out_cfg = (MOD_16APSK, FECFRAME_SHORT, C3_4) else
-    to_unsigned(RADIUS_SHORT_16APSK_C3_5, radius_rd_addr'length)   when axi_out_cfg = (MOD_16APSK, FECFRAME_SHORT, C3_5) else
-    to_unsigned(RADIUS_SHORT_16APSK_C4_5, radius_rd_addr'length)   when axi_out_cfg = (MOD_16APSK, FECFRAME_SHORT, C4_5) else
-    to_unsigned(RADIUS_SHORT_16APSK_C5_6, radius_rd_addr'length)   when axi_out_cfg = (MOD_16APSK, FECFRAME_SHORT, C5_6) else
-    to_unsigned(RADIUS_SHORT_16APSK_C8_9, radius_rd_addr'length)   when axi_out_cfg = (MOD_16APSK, FECFRAME_SHORT, C8_9) else
+    (others => 'U')                                                when axi_out_cfg.constellation = mod_qpsk                else
+    (others => 'U')                                                when axi_out_cfg.constellation = mod_8psk                else
+    to_unsigned(RADIUS_SHORT_16APSK_C2_3,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C2_3,  MOD_16APSK)  else
+    to_unsigned(RADIUS_SHORT_16APSK_C3_4,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C3_4,  MOD_16APSK)  else
+    to_unsigned(RADIUS_SHORT_16APSK_C3_5,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C3_5,  MOD_16APSK)  else
+    to_unsigned(RADIUS_SHORT_16APSK_C4_5,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C4_5,  MOD_16APSK)  else
+    to_unsigned(RADIUS_SHORT_16APSK_C5_6,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C5_6,  MOD_16APSK)  else
+    to_unsigned(RADIUS_SHORT_16APSK_C8_9,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C8_9,  MOD_16APSK)  else
 
-    to_unsigned(RADIUS_SHORT_32APSK_C3_4, radius_rd_addr'length)   when axi_out_cfg = (MOD_32APSK, FECFRAME_SHORT, C3_4) else
-    to_unsigned(RADIUS_SHORT_32APSK_C4_5, radius_rd_addr'length)   when axi_out_cfg = (MOD_32APSK, FECFRAME_SHORT, C4_5) else
-    to_unsigned(RADIUS_SHORT_32APSK_C5_6, radius_rd_addr'length)   when axi_out_cfg = (MOD_32APSK, FECFRAME_SHORT, C5_6) else
-    to_unsigned(RADIUS_SHORT_32APSK_C8_9, radius_rd_addr'length)   when axi_out_cfg = (MOD_32APSK, FECFRAME_SHORT, C8_9) else
+    to_unsigned(RADIUS_SHORT_32APSK_C3_4,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C3_4,  MOD_32APSK)  else
+    to_unsigned(RADIUS_SHORT_32APSK_C4_5,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C4_5,  MOD_32APSK)  else
+    to_unsigned(RADIUS_SHORT_32APSK_C5_6,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C5_6,  MOD_32APSK)  else
+    to_unsigned(RADIUS_SHORT_32APSK_C8_9,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C8_9,  MOD_32APSK)  else
 
-    to_unsigned(RADIUS_NORMAL_16APSK_C2_3 , radius_rd_addr'length) when axi_out_cfg = (MOD_16APSK, FECFRAME_NORMAL, C2_3) else
-    to_unsigned(RADIUS_NORMAL_16APSK_C3_4 , radius_rd_addr'length) when axi_out_cfg = (MOD_16APSK, FECFRAME_NORMAL, C3_4) else
-    to_unsigned(RADIUS_NORMAL_16APSK_C3_5 , radius_rd_addr'length) when axi_out_cfg = (MOD_16APSK, FECFRAME_NORMAL, C3_5) else
-    to_unsigned(RADIUS_NORMAL_16APSK_C4_5 , radius_rd_addr'length) when axi_out_cfg = (MOD_16APSK, FECFRAME_NORMAL, C4_5) else
-    to_unsigned(RADIUS_NORMAL_16APSK_C5_6 , radius_rd_addr'length) when axi_out_cfg = (MOD_16APSK, FECFRAME_NORMAL, C5_6) else
-    to_unsigned(RADIUS_NORMAL_16APSK_C8_9 , radius_rd_addr'length) when axi_out_cfg = (MOD_16APSK, FECFRAME_NORMAL, C8_9) else
-    to_unsigned(RADIUS_NORMAL_16APSK_C9_10, radius_rd_addr'length) when axi_out_cfg = (MOD_16APSK, FECFRAME_NORMAL, C9_10) else
+    to_unsigned(RADIUS_NORMAL_16APSK_C2_3,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C2_3,  MOD_16APSK)  else
+    to_unsigned(RADIUS_NORMAL_16APSK_C3_4,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C3_4,  MOD_16APSK)  else
+    to_unsigned(RADIUS_NORMAL_16APSK_C3_5,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C3_5,  MOD_16APSK)  else
+    to_unsigned(RADIUS_NORMAL_16APSK_C4_5,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C4_5,  MOD_16APSK)  else
+    to_unsigned(RADIUS_NORMAL_16APSK_C5_6,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C5_6,  MOD_16APSK)  else
+    to_unsigned(RADIUS_NORMAL_16APSK_C8_9,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C8_9,  MOD_16APSK)  else
+    to_unsigned(RADIUS_NORMAL_16APSK_C9_10, radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C9_10, MOD_16APSK)  else
 
-    to_unsigned(RADIUS_NORMAL_32APSK_C3_4 , radius_rd_addr'length) when axi_out_cfg = (MOD_32APSK, FECFRAME_NORMAL, C3_4) else
-    to_unsigned(RADIUS_NORMAL_32APSK_C4_5 , radius_rd_addr'length) when axi_out_cfg = (MOD_32APSK, FECFRAME_NORMAL, C4_5) else
-    to_unsigned(RADIUS_NORMAL_32APSK_C5_6 , radius_rd_addr'length) when axi_out_cfg = (MOD_32APSK, FECFRAME_NORMAL, C5_6) else
-    to_unsigned(RADIUS_NORMAL_32APSK_C8_9 , radius_rd_addr'length) when axi_out_cfg = (MOD_32APSK, FECFRAME_NORMAL, C8_9) else
-    to_unsigned(RADIUS_NORMAL_32APSK_C9_10, radius_rd_addr'length) when axi_out_cfg = (MOD_32APSK, FECFRAME_NORMAL, C9_10) else
+    to_unsigned(RADIUS_NORMAL_32APSK_C3_4,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C3_4,  MOD_32APSK)  else
+    to_unsigned(RADIUS_NORMAL_32APSK_C4_5,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C4_5,  MOD_32APSK)  else
+    to_unsigned(RADIUS_NORMAL_32APSK_C5_6,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C5_6,  MOD_32APSK)  else
+    to_unsigned(RADIUS_NORMAL_32APSK_C8_9,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C8_9,  MOD_32APSK)  else
+    to_unsigned(RADIUS_NORMAL_32APSK_C9_10, radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C9_10, MOD_32APSK)  else
 
     (others => 'U');
 
