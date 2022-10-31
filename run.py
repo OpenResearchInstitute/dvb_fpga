@@ -917,6 +917,7 @@ def setupTests(vunit, args):
                 generics=dict(
                     test_cfg=config.getTestConfigString(),
                     NUMBER_OF_TEST_FRAMES=1,
+                    SEED=args.seed,
                 ),
             )
 
