@@ -182,27 +182,61 @@ package body dvb_utils_pkg is
   end;
 
   function decode( constant v : std_logic_vector ) return frame_type_t is
+    variable index : integer;
   begin
     if not is_01(v) then
       return unknown;
     end if;
-    return frame_type_t'val(to_integer(unsigned(v)));
+    index := to_integer(unsigned(v));
+    if index >= frame_type_t'pos(frame_type_t'left) and index <= frame_type_t'pos(frame_type_t'right) then
+      return frame_type_t'val(index);
+    else
+      report "Value of " & integer'image(index) & " "
+           & "is outisde of frame_type_t range of "
+           & integer'image(frame_type_t'pos(frame_type_t'left)) & " to "
+           & integer'image(frame_type_t'pos(frame_type_t'right))
+      severity Warning;
+      return unknown;
+    end if;
   end;
 
   function decode( constant v : std_logic_vector ) return constellation_t is
+    variable index : integer;
   begin
     if not is_01(v) then
       return unknown;
     end if;
-    return constellation_t 'val(to_integer(unsigned(v)));
+    index := to_integer(unsigned(v));
+    if index >= constellation_t'pos(constellation_t'left) and index <= constellation_t'pos(constellation_t'right) then
+      return constellation_t 'val(index);
+    else
+      report "Value of " & integer'image(index) & " "
+           & "is outisde of constellation_t range of "
+           & integer'image(constellation_t'pos(constellation_t'left)) & " to "
+           & integer'image(constellation_t'pos(constellation_t'right))
+      severity Warning;
+      return unknown;
+    end if;
   end;
 
   function decode( constant v : std_logic_vector ) return code_rate_t is
+    variable index : integer;
   begin
     if not is_01(v) then
       return unknown;
     end if;
-    return code_rate_t'val(to_integer(unsigned(v)));
+
+    index := to_integer(unsigned(v));
+    if index >= code_rate_t'pos(code_rate_t'left) and index <= code_rate_t'pos(code_rate_t'right) then
+      return code_rate_t'val(index);
+    else
+      report "Value of " & integer'image(index) & " "
+           & "is outisde of code_rate_t range of "
+           & integer'image(code_rate_t'pos(code_rate_t'left)) & " to "
+           & integer'image(code_rate_t'pos(code_rate_t'right))
+      severity Warning;
+      return unknown;
+    end if;
   end;
 
   function to_signed_fixed_point (constant x : real; constant width : positive) return signed is

@@ -223,6 +223,7 @@ architecture axi_constellation_mapper of axi_constellation_mapper is
   -------------
   -- Signals --
   -------------
+  signal s_tready_i        : std_logic;
   -- IQ and radius RAM interface
   signal iq_ram_wren       : std_logic;
   signal iq_ram_rdata      : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
@@ -265,13 +266,17 @@ architecture axi_constellation_mapper of axi_constellation_mapper is
   signal output_i          : signed(OUTPUT_DATA_WIDTH - 1 downto 0);
   signal output_q          : signed(OUTPUT_DATA_WIDTH - 1 downto 0);
 
+  signal axi_out_tuser : std_logic_vector(ENCODED_CONFIG_WIDTH - 1 downto 0);
+
 begin
 
+  s_tready   <= '1' when s_constellation = unknown else s_tready_i;
+
   -- Mux the input data stream to the appropriate width converter
-  mux_sel(0) <= '1' when s_constellation = mod_qpsk or s_constellation = unknown else '0';
-  mux_sel(1) <= '1' when s_constellation = mod_8psk or s_constellation = unknown else '0';
-  mux_sel(2) <= '1' when s_constellation = mod_16apsk or s_constellation = unknown else '0';
-  mux_sel(3) <= '1' when s_constellation = mod_32apsk or s_constellation = unknown else '0';
+  mux_sel(0) <= '1' when s_constellation = mod_qpsk else '0';
+  mux_sel(1) <= '1' when s_constellation = mod_8psk else '0';
+  mux_sel(2) <= '1' when s_constellation = mod_16apsk else '0';
+  mux_sel(3) <= '1' when s_constellation = mod_32apsk else '0';
 
   s_cfg          <= (frame_type => s_frame_type, constellation => s_constellation, code_rate => s_code_rate);
   s_tid_internal <= s_tid & encode(s_cfg);
@@ -284,7 +289,7 @@ begin
       selection_mask => mux_sel,
 
       s_tvalid       => s_tvalid,
-      s_tready       => s_tready,
+      s_tready       => s_tready_i,
       s_tdata        => (others => 'U'),
 
       m_tvalid       => width_conv_tvalid,
@@ -449,7 +454,7 @@ begin
 
   end block;
 
-  axi_out_cfg        <= decode(axi_out.tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+  axi_out_cfg <= decode(axi_out.tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
 
   -- Read the appropriate address of the radius RAM
   radius_rd_addr <=
