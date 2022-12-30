@@ -298,7 +298,7 @@ proc create_root_design { parentCell } {
    CONFIG.PF3_DEVICE_ID_mqdma {9014} \
    CONFIG.axi_data_width {64_bit} \
    CONFIG.axil_master_64bit_en {true} \
-   CONFIG.axil_master_prefetchable {true} \
+   CONFIG.axil_master_prefetchable {false} \
    CONFIG.axilite_master_en {true} \
    CONFIG.axilite_master_scale {Kilobytes} \
    CONFIG.axilite_master_size {128} \
