@@ -18,7 +18,6 @@
 -- As per CERN-OHL-W v2 section 4.1, should You produce hardware based on this
 -- source, You must maintain the Source Location visible on the external case of
 -- the DVB Encoder or other products you make using this source.
--- vunit: run_all_in_same_sim
 
 use std.textio.all;
 
@@ -50,6 +49,9 @@ use work.dvbs2_encoder_regs_pkg.all;
 library modelsim_lib;
 use modelsim_lib.util.all;
 -- ghdl translate_on
+
+library osvvm;
+use osvvm.RandomPkg.all;
 
 entity dvbs2_encoder_tb is
   generic (
@@ -246,8 +248,20 @@ begin
       s_tvalid           => axi_slave.tvalid,
       s_tlast            => expected_tlast); --axi_slave.tlast);
 
-  -- DUT AXI tready is always set to high in this sim
-  axi_slave.tready <= '1';
+  -- Toggle axi_slave.tready based on tready_probability
+  process(clk, rst)
+    variable tready_rand : RandomPType;
+  begin
+    if rst then
+      axi_slave.tready <= '0';
+    elsif rising_edge(clk) then
+
+      axi_slave.tready <= '0';
+      if tready_rand.RandReal(1.0) <= tready_probability then
+        axi_slave.tready <= '1';
+      end if;
+    end if;
+  end process;
 
   process
     constant logger      : logger_t := get_logger("output monitor");
@@ -649,17 +663,37 @@ begin
       tready_probability <= 1.0;
 
       if run("back_to_back") then
-        data_probability <= 1.0;
+        data_probability   <= 1.0;
         tready_probability <= 1.0;
-
         for i in configs'range loop
           run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
         end loop;
 
-        info(logger, "Setup completed for all configurations, waiting for files to be consumed");
-        wait_for_completion;
+      elsif run("slow_tvalid") then
+        data_probability   <= 0.5;
+        tready_probability <= 1.0;
+        for i in configs'range loop
+          run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
+        end loop;
+
+      elsif run("slow_tready") then
+        data_probability   <= 1.0;
+        tready_probability <= 0.5;
+        for i in configs'range loop
+          run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
+        end loop;
+
+      elsif run("slow_tvalid_and_ready") then
+        data_probability   <= 0.75;
+        tready_probability <= 0.75;
+        for i in configs'range loop
+          run_test(configs(i), number_of_frames => NUMBER_OF_TEST_FRAMES);
+        end loop;
 
       end if;
+
+      info(logger, "Setup completed for all configurations, waiting for files to be consumed");
+      wait_for_completion;
 
       walk(32);
     end loop;
