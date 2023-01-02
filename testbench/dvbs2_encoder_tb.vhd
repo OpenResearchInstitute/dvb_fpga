@@ -595,13 +595,62 @@ begin
       info(logger, "All BFMs have now completed");
     end procedure wait_for_completion; -- }} -------------------------------------------
 
+  procedure print_constellation_mapper_tables is
+      variable data : std_logic_vector(31 downto 0);
+    begin
+      info(logger, "QPSK");
+      for i in 0 to 3 loop
+        axi_cfg_write(to_unsigned(12, 32), std_logic_vector(to_unsigned(i, 32)));
+        axi_cfg_read(to_unsigned(20, 32), data);
+        info(logger, sformat("QPSK[%d] => %r", fo(i), fo(data)));
+      end loop;
+
+      info(logger, "8PSK");
+      for i in 0 to 7 loop
+        axi_cfg_write(to_unsigned(12, 32), std_logic_vector(to_unsigned(i + 4, 32)));
+        axi_cfg_read(to_unsigned(20, 32), data);
+        info(logger, sformat("8PSK[%d] => %r", fo(i), fo(data)));
+      end loop;
+
+      info(logger, "16APSK");
+      for i in 0 to 15 loop
+        axi_cfg_write(to_unsigned(12, 32), std_logic_vector(to_unsigned(i + 12, 32)));
+        axi_cfg_read(to_unsigned(20, 32), data);
+        info(logger, sformat("16APSK[%d] => %r", fo(i), fo(data)));
+      end loop;
+
+      info(logger, "32APSK");
+      for i in 0 to 31 loop
+        axi_cfg_write(to_unsigned(12, 32), std_logic_vector(to_unsigned(i + 28, 32)));
+        axi_cfg_read(to_unsigned(20, 32), data);
+        info(logger, sformat("32APSK[%d] => %r", fo(i), fo(data)));
+      end loop;
+
+      info(logger, "Radius");
+      for i in 0 to 21 loop
+        axi_cfg_write(to_unsigned(12, 32), std_logic_vector(to_unsigned(i + 64, 32)));
+        axi_cfg_read(to_unsigned(20, 32), data);
+        info(
+          logger,
+          sformat(
+            "Radius[%d] => %r (%s, %s)",
+            fo(i),
+            fo(data),
+            real'image(to_real(signed(data(31 downto 16)))),
+            real'image(to_real(signed(data(15 downto  0))))
+          )
+        );
+
+      end loop;
+    end procedure print_constellation_mapper_tables;
+
+
     procedure run_test ( -- {{ ---------------------------------------------------------
       constant config           : config_t;
       constant number_of_frames : in positive) is
       variable file_reader_msg  : msg_t;
       constant data_path        : string := strip(config.base_path, chars => (1 to 1 => nul));
       variable initial_addr     : integer := 0;
-      variable data             : std_logic_vector(31 downto 0);
       constant config_tuple     : config_tuple_t := (code_rate => config.code_rate,
                                                      constellation => config.constellation,
                                                      frame_type => config.frame_type);
