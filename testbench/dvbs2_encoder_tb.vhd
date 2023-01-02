@@ -459,11 +459,11 @@ begin
         init_signal_spy(source & ".tready", dest & ".tready",  0);
       end procedure;
     begin
-      mirror_signal("/dvbs2_encoder_tb/dut/encoder_u/bb_scrambler", "/dvbs2_encoder_tb/signal_spy_block/bb_scrambler");
-      mirror_signal("/dvbs2_encoder_tb/dut/encoder_u/bch_encoder", "/dvbs2_encoder_tb/signal_spy_block/bch_encoder");
-      mirror_signal("/dvbs2_encoder_tb/dut/encoder_u/ldpc_encoder", "/dvbs2_encoder_tb/signal_spy_block/ldpc_encoder");
-      mirror_signal("/dvbs2_encoder_tb/dut/encoder_u/bit_interleaver", "/dvbs2_encoder_tb/signal_spy_block/bit_interleaver");
-      mirror_signal("/dvbs2_encoder_tb/dut/encoder_u/constellation_mapper", "/dvbs2_encoder_tb/signal_spy_block/constellation_mapper");
+      mirror_signal("/dvbs2_encoder_tb/dut/bb_scrambler", "/dvbs2_encoder_tb/signal_spy_block/bb_scrambler");
+      mirror_signal("/dvbs2_encoder_tb/dut/bch_encoder", "/dvbs2_encoder_tb/signal_spy_block/bch_encoder");
+      mirror_signal("/dvbs2_encoder_tb/dut/ldpc_encoder", "/dvbs2_encoder_tb/signal_spy_block/ldpc_encoder");
+      mirror_signal("/dvbs2_encoder_tb/dut/bit_interleaver", "/dvbs2_encoder_tb/signal_spy_block/bit_interleaver");
+      mirror_signal("/dvbs2_encoder_tb/dut/constellation_mapper", "/dvbs2_encoder_tb/signal_spy_block/constellation_mapper");
       wait;
     end process;
   end block signal_spy_block; -- }} ----------------------------------------------------
