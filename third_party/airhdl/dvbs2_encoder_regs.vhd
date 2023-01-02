@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
 -- 'dvbs2_encoder' Register Component
--- Revision: 326
+-- Revision: 336
 -- -----------------------------------------------------------------------------
--- Generated on 2022-04-24 at 21:50 (UTC) by airhdl version 2022.04.1-116
+-- Generated on 2023-01-02 at 19:46 (UTC) by airhdl version 2022.12.1-715060670
 -- -----------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -96,12 +96,12 @@ architecture RTL of dvbs2_encoder_regs is
     signal s_reg_ldpc_fifo_status_arbiter_selected : std_logic_vector(1 downto 0);
     signal s_frames_in_transit_strobe_r : std_logic;
     signal s_reg_frames_in_transit_value : std_logic_vector(7 downto 0);
-    signal s_bit_mapper_ram_raddr_r : std_logic_vector(7 downto 0);
-    signal s_bit_mapper_ram_ren_r : std_logic;
-    signal s_bit_mapper_ram_rdata : std_logic_vector(31 downto 0);
-    signal s_bit_mapper_ram_waddr_r : std_logic_vector(7 downto 0);
-    signal s_bit_mapper_ram_wen_r : std_logic_vector(3 downto 0);
-    signal s_bit_mapper_ram_wdata_r : std_logic_vector(31 downto 0);
+    signal s_constellation_mapper_address_strobe_r : std_logic;
+    signal s_reg_constellation_mapper_address_value_r : std_logic_vector(31 downto 0);
+    signal s_constellation_mapper_write_data_strobe_r : std_logic;
+    signal s_reg_constellation_mapper_write_data_value_r : std_logic_vector(31 downto 0);
+    signal s_constellation_mapper_read_data_strobe_r : std_logic;
+    signal s_reg_constellation_mapper_read_data_value : std_logic_vector(31 downto 0);
     signal s_axi_debug_input_width_converter_cfg_strobe_r : std_logic;
     signal s_reg_axi_debug_input_width_converter_cfg_block_data_r : std_logic_vector(0 downto 0);
     signal s_reg_axi_debug_input_width_converter_cfg_allow_word_r : std_logic_vector(0 downto 0);
@@ -239,7 +239,7 @@ begin
     s_reg_ldpc_fifo_status_ldpc_fifo_full <= user2regs.ldpc_fifo_status_ldpc_fifo_full;
     s_reg_ldpc_fifo_status_arbiter_selected <= user2regs.ldpc_fifo_status_arbiter_selected;
     s_reg_frames_in_transit_value <= user2regs.frames_in_transit_value;
-    s_bit_mapper_ram_rdata <= user2regs.bit_mapper_ram_rdata;
+    s_reg_constellation_mapper_read_data_value <= user2regs.constellation_mapper_read_data_value;
     s_reg_axi_debug_input_width_converter_frame_count_value <= user2regs.axi_debug_input_width_converter_frame_count_value;
     s_reg_axi_debug_input_width_converter_last_frame_length_value <= user2regs.axi_debug_input_width_converter_last_frame_length_value;
     s_reg_axi_debug_input_width_converter_min_max_frame_length_min_frame_length <= user2regs.axi_debug_input_width_converter_min_max_frame_length_min_frame_length;
@@ -331,8 +331,7 @@ begin
             s_axi_rdata_r      <= (others => '0');
             s_ldpc_fifo_status_strobe_r <= '0';
             s_frames_in_transit_strobe_r <= '0';
-            s_bit_mapper_ram_raddr_r <= (others => '0');
-            s_bit_mapper_ram_ren_r <= '0';
+            s_constellation_mapper_read_data_strobe_r <= '0';
             s_axi_debug_input_width_converter_frame_count_strobe_r <= '0';
             s_axi_debug_input_width_converter_last_frame_length_strobe_r <= '0';
             s_axi_debug_input_width_converter_min_max_frame_length_strobe_r <= '0';
@@ -374,7 +373,7 @@ begin
             s_axi_arready_r <= '0';
             s_ldpc_fifo_status_strobe_r <= '0';
             s_frames_in_transit_strobe_r <= '0';
-            s_bit_mapper_ram_raddr_r <= (others => '0');
+            s_constellation_mapper_read_data_strobe_r <= '0';
             s_axi_debug_input_width_converter_frame_count_strobe_r <= '0';
             s_axi_debug_input_width_converter_last_frame_length_strobe_r <= '0';
             s_axi_debug_input_width_converter_min_max_frame_length_strobe_r <= '0';
@@ -455,16 +454,24 @@ begin
                         s_frames_in_transit_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- memory 'bit_mapper_ram' at address offset 0xC
-                    if s_axi_araddr_reg_r >= resize(unsigned(BASEADDR) + BIT_MAPPER_RAM_OFFSET, AXI_ADDR_WIDTH) and
-                        s_axi_araddr_reg_r < resize(unsigned(BASEADDR) + BIT_MAPPER_RAM_OFFSET + BIT_MAPPER_RAM_DEPTH * 4, AXI_ADDR_WIDTH) then
+                    -- register 'constellation_mapper_address' at address offset 0xC
+                    if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + CONSTELLATION_MAPPER_ADDRESS_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
-                        -- generate memory read address:
-                        v_mem_addr := s_axi_araddr_reg_r - resize(unsigned(BASEADDR) + BIT_MAPPER_RAM_OFFSET, AXI_ADDR_WIDTH);
-                        s_bit_mapper_ram_raddr_r <= std_logic_vector(v_mem_addr(9 downto 2)); -- output address has 4-byte granularity
-                        s_bit_mapper_ram_ren_r <= '1';
-                        v_mem_wait_count_r := BIT_MAPPER_RAM_READ_LATENCY;
-                        v_state_r := WAIT_MEMORY_RDATA;
+                        v_rdata_r(31 downto 0) := s_reg_constellation_mapper_address_value_r;
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'constellation_mapper_write_data' at address offset 0x10
+                    if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + CONSTELLATION_MAPPER_WRITE_DATA_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
+                        v_addr_hit := true;
+                        v_rdata_r(31 downto 0) := s_reg_constellation_mapper_write_data_value_r;
+                        v_state_r := READ_RESPONSE;
+                    end if;
+                    -- register 'constellation_mapper_read_data' at address offset 0x14
+                    if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + CONSTELLATION_MAPPER_READ_DATA_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
+                        v_addr_hit := true;
+                        v_rdata_r(31 downto 0) := s_reg_constellation_mapper_read_data_value;
+                        s_constellation_mapper_read_data_strobe_r <= '1';
+                        v_state_r := READ_RESPONSE;
                     end if;
                     -- register 'axi_debug_input_width_converter_cfg' at address offset 0xD00
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
@@ -809,12 +816,6 @@ begin
                 -- Wait for memory read data
                 when WAIT_MEMORY_RDATA =>
                     if v_mem_wait_count_r = 0 then
-                        -- memory 'bit_mapper_ram' at address offset 0xC
-                        if s_axi_araddr_reg_r >= resize(unsigned(BASEADDR) + BIT_MAPPER_RAM_OFFSET, AXI_ADDR_WIDTH) and
-                            s_axi_araddr_reg_r < resize(unsigned(BASEADDR) + BIT_MAPPER_RAM_OFFSET + BIT_MAPPER_RAM_DEPTH * 4, AXI_ADDR_WIDTH) then
-                            v_rdata_r(31 downto 0) := s_bit_mapper_ram_rdata(31 downto 0);
-                            s_bit_mapper_ram_ren_r <= '0';
-                        end if;
                         v_state_r      := READ_RESPONSE;
                     else
                         v_mem_wait_count_r := v_mem_wait_count_r - 1;
@@ -864,9 +865,10 @@ begin
             s_reg_config_swap_input_data_byte_endianness_r <= CONFIG_SWAP_INPUT_DATA_BYTE_ENDIANNESS_RESET;
             s_reg_config_swap_output_data_byte_endianness_r <= CONFIG_SWAP_OUTPUT_DATA_BYTE_ENDIANNESS_RESET;
             s_reg_config_force_output_ready_r <= CONFIG_FORCE_OUTPUT_READY_RESET;
-            s_bit_mapper_ram_waddr_r <= (others => '0');
-            s_bit_mapper_ram_wen_r <= (others => '0');
-            s_bit_mapper_ram_wdata_r <= (others => '0');
+            s_constellation_mapper_address_strobe_r <= '0';
+            s_reg_constellation_mapper_address_value_r <= CONSTELLATION_MAPPER_ADDRESS_VALUE_RESET;
+            s_constellation_mapper_write_data_strobe_r <= '0';
+            s_reg_constellation_mapper_write_data_value_r <= CONSTELLATION_MAPPER_WRITE_DATA_VALUE_RESET;
             s_axi_debug_input_width_converter_cfg_strobe_r <= '0';
             s_reg_axi_debug_input_width_converter_cfg_block_data_r <= AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_BLOCK_DATA_RESET;
             s_reg_axi_debug_input_width_converter_cfg_allow_word_r <= AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_ALLOW_WORD_RESET;
@@ -901,8 +903,8 @@ begin
             s_axi_awready_r <= '0';
             s_axi_wready_r  <= '0';
             s_config_strobe_r <= '0';
-            s_bit_mapper_ram_waddr_r <= (others => '0'); -- always reset to zero because of wired OR
-            s_bit_mapper_ram_wen_r <= (others => '0');
+            s_constellation_mapper_address_strobe_r <= '0';
+            s_constellation_mapper_write_data_strobe_r <= '0';
             s_axi_debug_input_width_converter_cfg_strobe_r <= '0';
             s_axi_debug_bb_scrambler_cfg_strobe_r <= '0';
             s_axi_debug_bch_encoder_cfg_strobe_r <= '0';
@@ -1052,14 +1054,209 @@ begin
                             s_reg_config_force_output_ready_r(0) <= s_axi_wdata_reg_r(21); -- force_output_ready(0)
                         end if;
                     end if;
-                    -- memory 'bit_mapper_ram' at address offset 0xC
-                    if s_axi_awaddr_reg_r >= resize(unsigned(BASEADDR) + BIT_MAPPER_RAM_OFFSET, AXI_ADDR_WIDTH) and
-                        s_axi_awaddr_reg_r < resize(unsigned(BASEADDR) + BIT_MAPPER_RAM_OFFSET + BIT_MAPPER_RAM_DEPTH * 4, AXI_ADDR_WIDTH) then
+                    -- register 'constellation_mapper_address' at address offset 0xC
+                    if s_axi_awaddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + CONSTELLATION_MAPPER_ADDRESS_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
-                        v_mem_addr := s_axi_awaddr_reg_r - resize(unsigned(BASEADDR) + BIT_MAPPER_RAM_OFFSET, AXI_ADDR_WIDTH);
-                        s_bit_mapper_ram_waddr_r <= std_logic_vector(v_mem_addr(9 downto 2)); -- output address has 4-byte granularity
-                        s_bit_mapper_ram_wen_r <= s_axi_wstrb_reg_r;
-                        s_bit_mapper_ram_wdata_r <= s_axi_wdata_reg_r;
+                        s_constellation_mapper_address_strobe_r <= '1';
+                        -- field 'value':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_address_value_r(0) <= s_axi_wdata_reg_r(0); -- value(0)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_address_value_r(1) <= s_axi_wdata_reg_r(1); -- value(1)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_address_value_r(2) <= s_axi_wdata_reg_r(2); -- value(2)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_address_value_r(3) <= s_axi_wdata_reg_r(3); -- value(3)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_address_value_r(4) <= s_axi_wdata_reg_r(4); -- value(4)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_address_value_r(5) <= s_axi_wdata_reg_r(5); -- value(5)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_address_value_r(6) <= s_axi_wdata_reg_r(6); -- value(6)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_address_value_r(7) <= s_axi_wdata_reg_r(7); -- value(7)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_address_value_r(8) <= s_axi_wdata_reg_r(8); -- value(8)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_address_value_r(9) <= s_axi_wdata_reg_r(9); -- value(9)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_address_value_r(10) <= s_axi_wdata_reg_r(10); -- value(10)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_address_value_r(11) <= s_axi_wdata_reg_r(11); -- value(11)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_address_value_r(12) <= s_axi_wdata_reg_r(12); -- value(12)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_address_value_r(13) <= s_axi_wdata_reg_r(13); -- value(13)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_address_value_r(14) <= s_axi_wdata_reg_r(14); -- value(14)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_address_value_r(15) <= s_axi_wdata_reg_r(15); -- value(15)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_address_value_r(16) <= s_axi_wdata_reg_r(16); -- value(16)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_address_value_r(17) <= s_axi_wdata_reg_r(17); -- value(17)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_address_value_r(18) <= s_axi_wdata_reg_r(18); -- value(18)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_address_value_r(19) <= s_axi_wdata_reg_r(19); -- value(19)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_address_value_r(20) <= s_axi_wdata_reg_r(20); -- value(20)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_address_value_r(21) <= s_axi_wdata_reg_r(21); -- value(21)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_address_value_r(22) <= s_axi_wdata_reg_r(22); -- value(22)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_address_value_r(23) <= s_axi_wdata_reg_r(23); -- value(23)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_address_value_r(24) <= s_axi_wdata_reg_r(24); -- value(24)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_address_value_r(25) <= s_axi_wdata_reg_r(25); -- value(25)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_address_value_r(26) <= s_axi_wdata_reg_r(26); -- value(26)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_address_value_r(27) <= s_axi_wdata_reg_r(27); -- value(27)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_address_value_r(28) <= s_axi_wdata_reg_r(28); -- value(28)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_address_value_r(29) <= s_axi_wdata_reg_r(29); -- value(29)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_address_value_r(30) <= s_axi_wdata_reg_r(30); -- value(30)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_address_value_r(31) <= s_axi_wdata_reg_r(31); -- value(31)
+                        end if;
+                    end if;
+                    -- register 'constellation_mapper_write_data' at address offset 0x10
+                    if s_axi_awaddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + CONSTELLATION_MAPPER_WRITE_DATA_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
+                        v_addr_hit := true;
+                        s_constellation_mapper_write_data_strobe_r <= '1';
+                        -- field 'value':
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(0) <= s_axi_wdata_reg_r(0); -- value(0)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(1) <= s_axi_wdata_reg_r(1); -- value(1)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(2) <= s_axi_wdata_reg_r(2); -- value(2)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(3) <= s_axi_wdata_reg_r(3); -- value(3)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(4) <= s_axi_wdata_reg_r(4); -- value(4)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(5) <= s_axi_wdata_reg_r(5); -- value(5)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(6) <= s_axi_wdata_reg_r(6); -- value(6)
+                        end if;
+                        if s_axi_wstrb_reg_r(0) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(7) <= s_axi_wdata_reg_r(7); -- value(7)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(8) <= s_axi_wdata_reg_r(8); -- value(8)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(9) <= s_axi_wdata_reg_r(9); -- value(9)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(10) <= s_axi_wdata_reg_r(10); -- value(10)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(11) <= s_axi_wdata_reg_r(11); -- value(11)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(12) <= s_axi_wdata_reg_r(12); -- value(12)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(13) <= s_axi_wdata_reg_r(13); -- value(13)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(14) <= s_axi_wdata_reg_r(14); -- value(14)
+                        end if;
+                        if s_axi_wstrb_reg_r(1) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(15) <= s_axi_wdata_reg_r(15); -- value(15)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(16) <= s_axi_wdata_reg_r(16); -- value(16)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(17) <= s_axi_wdata_reg_r(17); -- value(17)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(18) <= s_axi_wdata_reg_r(18); -- value(18)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(19) <= s_axi_wdata_reg_r(19); -- value(19)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(20) <= s_axi_wdata_reg_r(20); -- value(20)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(21) <= s_axi_wdata_reg_r(21); -- value(21)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(22) <= s_axi_wdata_reg_r(22); -- value(22)
+                        end if;
+                        if s_axi_wstrb_reg_r(2) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(23) <= s_axi_wdata_reg_r(23); -- value(23)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(24) <= s_axi_wdata_reg_r(24); -- value(24)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(25) <= s_axi_wdata_reg_r(25); -- value(25)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(26) <= s_axi_wdata_reg_r(26); -- value(26)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(27) <= s_axi_wdata_reg_r(27); -- value(27)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(28) <= s_axi_wdata_reg_r(28); -- value(28)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(29) <= s_axi_wdata_reg_r(29); -- value(29)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(30) <= s_axi_wdata_reg_r(30); -- value(30)
+                        end if;
+                        if s_axi_wstrb_reg_r(3) = '1' then
+                            s_reg_constellation_mapper_write_data_value_r(31) <= s_axi_wdata_reg_r(31); -- value(31)
+                        end if;
                     end if;
                     -- register 'axi_debug_input_width_converter_cfg' at address offset 0xD00
                     if s_axi_awaddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
@@ -1223,10 +1420,11 @@ begin
     regs2user.config_force_output_ready <= s_reg_config_force_output_ready_r;
     regs2user.ldpc_fifo_status_strobe <= s_ldpc_fifo_status_strobe_r;
     regs2user.frames_in_transit_strobe <= s_frames_in_transit_strobe_r;
-    regs2user.bit_mapper_ram_addr <= s_bit_mapper_ram_waddr_r or s_bit_mapper_ram_raddr_r; -- using wired OR as read/write address multiplexer
-    regs2user.bit_mapper_ram_wen <= s_bit_mapper_ram_wen_r;
-    regs2user.bit_mapper_ram_wdata <= s_bit_mapper_ram_wdata_r;
-    regs2user.bit_mapper_ram_ren <= s_bit_mapper_ram_ren_r;
+    regs2user.constellation_mapper_address_strobe <= s_constellation_mapper_address_strobe_r;
+    regs2user.constellation_mapper_address_value <= s_reg_constellation_mapper_address_value_r;
+    regs2user.constellation_mapper_write_data_strobe <= s_constellation_mapper_write_data_strobe_r;
+    regs2user.constellation_mapper_write_data_value <= s_reg_constellation_mapper_write_data_value_r;
+    regs2user.constellation_mapper_read_data_strobe <= s_constellation_mapper_read_data_strobe_r;
     regs2user.axi_debug_input_width_converter_cfg_strobe <= s_axi_debug_input_width_converter_cfg_strobe_r;
     regs2user.axi_debug_input_width_converter_cfg_block_data <= s_reg_axi_debug_input_width_converter_cfg_block_data_r;
     regs2user.axi_debug_input_width_converter_cfg_allow_word <= s_reg_axi_debug_input_width_converter_cfg_allow_word_r;

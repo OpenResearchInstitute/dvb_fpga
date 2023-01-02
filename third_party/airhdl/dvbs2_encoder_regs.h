@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_encoder' Register Definitions
-// Revision: 326
+// Revision: 336
 // -----------------------------------------------------------------------------
-// Generated on 2022-04-24 at 21:50 (UTC) by airhdl version 2022.04.1-116
+// Generated on 2023-01-02 at 19:46 (UTC) by airhdl version 2022.12.1-715060670
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -21,7 +21,7 @@
 #define DVBS2_ENCODER_REGS_H
 
 /* Revision number of the 'dvbs2_encoder' register map */
-#define DVBS2_ENCODER_REVISION 326
+#define DVBS2_ENCODER_REVISION 336
 
 /* Default base address of the 'dvbs2_encoder' register map */
 #define DVBS2_ENCODER_DEFAULT_BASEADDR 0x00000000
@@ -98,15 +98,32 @@
 #define FRAMES_IN_TRANSIT_VALUE_BIT_MASK 0x000000FF /* bit mask of the 'value' field */
 #define FRAMES_IN_TRANSIT_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
-/* Register 'bit_mapper_ram' */
-#define BIT_MAPPER_RAM_OFFSET 0x0000000C /* address offset of the 'bit_mapper_ram' register */
-#define BIT_MAPPER_RAM_DEPTH 240 /* depth of the 'bit_mapper_ram' memory, in elements */
+/* Register 'constellation_mapper_address' */
+#define CONSTELLATION_MAPPER_ADDRESS_OFFSET 0x0000000C /* address offset of the 'constellation_mapper_address' register */
 
-/* Field  'bit_mapper_ram.data' */
-#define BIT_MAPPER_RAM_DATA_BIT_OFFSET 0 /* bit offset of the 'data' field */
-#define BIT_MAPPER_RAM_DATA_BIT_WIDTH 32 /* bit width of the 'data' field */
-#define BIT_MAPPER_RAM_DATA_BIT_MASK 0xFFFFFFFF /* bit mask of the 'data' field */
-#define BIT_MAPPER_RAM_DATA_RESET 0x0 /* reset value of the 'data' field */
+/* Field  'constellation_mapper_address.value' */
+#define CONSTELLATION_MAPPER_ADDRESS_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
+#define CONSTELLATION_MAPPER_ADDRESS_VALUE_BIT_WIDTH 32 /* bit width of the 'value' field */
+#define CONSTELLATION_MAPPER_ADDRESS_VALUE_BIT_MASK 0xFFFFFFFF /* bit mask of the 'value' field */
+#define CONSTELLATION_MAPPER_ADDRESS_VALUE_RESET 0x0 /* reset value of the 'value' field */
+
+/* Register 'constellation_mapper_write_data' */
+#define CONSTELLATION_MAPPER_WRITE_DATA_OFFSET 0x00000010 /* address offset of the 'constellation_mapper_write_data' register */
+
+/* Field  'constellation_mapper_write_data.value' */
+#define CONSTELLATION_MAPPER_WRITE_DATA_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
+#define CONSTELLATION_MAPPER_WRITE_DATA_VALUE_BIT_WIDTH 32 /* bit width of the 'value' field */
+#define CONSTELLATION_MAPPER_WRITE_DATA_VALUE_BIT_MASK 0xFFFFFFFF /* bit mask of the 'value' field */
+#define CONSTELLATION_MAPPER_WRITE_DATA_VALUE_RESET 0x0 /* reset value of the 'value' field */
+
+/* Register 'constellation_mapper_read_data' */
+#define CONSTELLATION_MAPPER_READ_DATA_OFFSET 0x00000014 /* address offset of the 'constellation_mapper_read_data' register */
+
+/* Field  'constellation_mapper_read_data.value' */
+#define CONSTELLATION_MAPPER_READ_DATA_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
+#define CONSTELLATION_MAPPER_READ_DATA_VALUE_BIT_WIDTH 32 /* bit width of the 'value' field */
+#define CONSTELLATION_MAPPER_READ_DATA_VALUE_BIT_MASK 0xFFFFFFFF /* bit mask of the 'value' field */
+#define CONSTELLATION_MAPPER_READ_DATA_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_input_width_converter_cfg' */
 #define AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET 0x00000D00 /* address offset of the 'axi_debug_input_width_converter_cfg' register */

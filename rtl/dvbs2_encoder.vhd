@@ -698,10 +698,10 @@ begin
       clk             => clk,
       rst             => rst,
       -- Mapping RAM config
-      ram_wren        => or(regs2user.bit_mapper_ram_wen),
-      ram_addr        => regs2user.bit_mapper_ram_addr(6 downto 0), -- register map addresses bytes
-      ram_wdata       => regs2user.bit_mapper_ram_wdata(IQ_WIDTH - 1 downto 0),
-      ram_rdata       => user2regs.bit_mapper_ram_rdata(IQ_WIDTH - 1 downto 0),
+      ram_wren        => regs2user.constellation_mapper_write_data_strobe,
+      ram_addr        => regs2user.constellation_mapper_address_value(6 downto 0),
+      ram_wdata       => regs2user.constellation_mapper_write_data_value(IQ_WIDTH - 1 downto 0),
+      ram_rdata       => user2regs.constellation_mapper_read_data_value(IQ_WIDTH - 1 downto 0),
       -- Per frame config input
       -- AXI input
       s_frame_type    => decode(arbiter_out.tid).frame_type,

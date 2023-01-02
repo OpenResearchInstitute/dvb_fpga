@@ -6,9 +6,9 @@
 | **Default base address** | `0x0` |
 | **Register width** | 32 bits |
 | **Default address width** | 32 bits |
-| **Register count** | 46 |
+| **Register count** | 48 |
 | **Range** | 4888 bytes |
-| **Revision** | 326 |
+| **Revision** | 336 |
 
 ## Overview
 
@@ -17,7 +17,9 @@
 | `0x0` | config |  | REG |
 | `0x4` | ldpc_fifo_status |  | REG |
 | `0x8` | frames_in_transit |  | REG |
-| `0xC` | bit_mapper_ram | - 0x00 - 0x03: QPSK map- 0x04 - 0x0B: 8PSK map- 0x0C - 0x1B: 16APSK map- 0x1C - 0x3B: 32APSK map | MEM[240] |
+| `0xC` | constellation_mapper_address |  | REG |
+| `0x10` | constellation_mapper_write_data |  | REG |
+| `0x14` | constellation_mapper_read_data |  | REG |
 | `0xD00` | axi_debug_input_width_converter_cfg |  | REG |
 | `0xD04` | axi_debug_input_width_converter_frame_count |  | REG |
 | `0xD08` | axi_debug_input_width_converter_last_frame_length |  | REG |
@@ -78,8 +80,12 @@
 |        |  [21:20] arbiter_selected |  |  |  |  | `0x0` |
 | `0x8` | frames_in_transit | | REG | R |  | `0x0` |
 |        |  [7:0] value |  |  |  |  | `0x0` |
-| `0xC` | bit_mapper_ram |- 0x00 - 0x03: QPSK map- 0x04 - 0x0B: 8PSK map- 0x0C - 0x1B: 16APSK map- 0x1C - 0x3B: 32APSK map | MEM[240] | R/W | read latency: 1 | `0x0` |
-|        |  [31:0] data | Raw IQ value pairs- 0x00 - 0x03: QPSK map- 0x04 - 0x0B: 8PSK map- 0x0C - 0x1B: 16APSK map- 0x1C - 0x3B: 32APSK map |  |  |  | `0x0` |
+| `0xC` | constellation_mapper_address | | REG | R/W |  | `0x0` |
+|        |  [31:0] value |  |  |  |  | `0x0` |
+| `0x10` | constellation_mapper_write_data | | REG | R/W |  | `0x0` |
+|        |  [31:0] value |  |  |  |  | `0x0` |
+| `0x14` | constellation_mapper_read_data | | REG | R |  | `0x0` |
+|        |  [31:0] value |  |  |  |  | `0x0` |
 | `0xD00` | axi_debug_input_width_converter_cfg | | REG | R/W |  | `0x0` |
 |        |  [0] block_data | Disables data from passing through |  |  |  | `0x0` |
 |        |  [1] allow_word | Allows a single word to pass through. Needs `block_data` to be set before setting this. |  |  | self-clearing | `0x0` |
@@ -207,4 +213,4 @@
 |        |  [2] m_tvalid |  |  |  |  | `0x0` |
 |        |  [3] m_tready |  |  |  |  | `0x0` |
 
-_Generated on 2022-04-24 at 21:50 (UTC) by airhdl version 2022.04.1-116_
+_Generated on 2023-01-02 at 19:46 (UTC) by airhdl version 2022.12.1-715060670_

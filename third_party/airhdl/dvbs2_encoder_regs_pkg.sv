@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_encoder' Register Definitions
-// Revision: 326
+// Revision: 336
 // -----------------------------------------------------------------------------
-// Generated on 2022-04-24 at 21:50 (UTC) by airhdl version 2022.04.1-116
+// Generated on 2023-01-02 at 19:46 (UTC) by airhdl version 2022.12.1-715060670
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -26,7 +26,7 @@ package dvbs2_encoder_regs_pkg;
         logic [0:0] ldpc_fifo_status_ldpc_fifo_full; // Value of register 'ldpc_fifo_status', field 'ldpc_fifo_full'
         logic [1:0] ldpc_fifo_status_arbiter_selected; // Value of register 'ldpc_fifo_status', field 'arbiter_selected'
         logic [7:0] frames_in_transit_value; // Value of register 'frames_in_transit', field 'value'
-        logic [31:0] bit_mapper_ram_rdata; // read data for memory 'bit_mapper_ram'
+        logic [31:0] constellation_mapper_read_data_value; // Value of register 'constellation_mapper_read_data', field 'value'
         logic [15:0] axi_debug_input_width_converter_frame_count_value; // Value of register 'axi_debug_input_width_converter_frame_count', field 'value'
         logic [15:0] axi_debug_input_width_converter_last_frame_length_value; // Value of register 'axi_debug_input_width_converter_last_frame_length', field 'value'
         logic [15:0] axi_debug_input_width_converter_min_max_frame_length_min_frame_length; // Value of register 'axi_debug_input_width_converter_min_max_frame_length', field 'min_frame_length'
@@ -102,10 +102,11 @@ package dvbs2_encoder_regs_pkg;
         logic [0:0] config_force_output_ready; // Value of register 'config', field 'force_output_ready'
         logic ldpc_fifo_status_strobe; // Strobe logic for register 'ldpc_fifo_status' (pulsed when the register is read from the bus)
         logic frames_in_transit_strobe; // Strobe logic for register 'frames_in_transit' (pulsed when the register is read from the bus)
-        logic [7:0] bit_mapper_ram_addr; // read/write address for memory 'bit_mapper_ram'
-        logic [31:0] bit_mapper_ram_wdata; // write data for memory 'bit_mapper_ram'
-        logic [3:0] bit_mapper_ram_wen; // byte-wide write-enable for memory 'bit_mapper_ram'
-        logic bit_mapper_ram_ren; // read-enable for memory 'bit_mapper_ram'
+        logic constellation_mapper_address_strobe; // Strobe logic for register 'constellation_mapper_address' (pulsed when the register is written from the bus)
+        logic [31:0] constellation_mapper_address_value; // Value of register 'constellation_mapper_address', field 'value'
+        logic constellation_mapper_write_data_strobe; // Strobe logic for register 'constellation_mapper_write_data' (pulsed when the register is written from the bus)
+        logic [31:0] constellation_mapper_write_data_value; // Value of register 'constellation_mapper_write_data', field 'value'
+        logic constellation_mapper_read_data_strobe; // Strobe logic for register 'constellation_mapper_read_data' (pulsed when the register is read from the bus)
         logic axi_debug_input_width_converter_cfg_strobe; // Strobe logic for register 'axi_debug_input_width_converter_cfg' (pulsed when the register is written from the bus)
         logic [0:0] axi_debug_input_width_converter_cfg_block_data; // Value of register 'axi_debug_input_width_converter_cfg', field 'block_data'
         logic [0:0] axi_debug_input_width_converter_cfg_allow_word; // Value of register 'axi_debug_input_width_converter_cfg', field 'allow_word'
@@ -172,7 +173,7 @@ package dvbs2_encoder_regs_pkg;
     } regs2user_t;
 
     // Revision number of the 'dvbs2_encoder' register map
-    localparam DVBS2_ENCODER_REVISION = 326;
+    localparam DVBS2_ENCODER_REVISION = 336;
 
     // Default base address of the 'dvbs2_encoder' register map
     localparam logic [31:0] DVBS2_ENCODER_DEFAULT_BASEADDR = 32'h00000000;
@@ -229,14 +230,26 @@ package dvbs2_encoder_regs_pkg;
     localparam FRAMES_IN_TRANSIT_VALUE_BIT_WIDTH = 8; // bit width of the 'value' field
     localparam logic [7:0] FRAMES_IN_TRANSIT_VALUE_RESET = 8'b00000000; // reset value of the 'value' field
 
-    // Register 'bit_mapper_ram'
-    localparam logic [31:0] BIT_MAPPER_RAM_OFFSET = 32'h0000000C; // address offset of the 'bit_mapper_ram' register
-    localparam BIT_MAPPER_RAM_DEPTH = 240; // depth of the 'bit_mapper_ram' memory, in elements
-    localparam BIT_MAPPER_RAM_READ_LATENCY = 1; // read latency of the 'bit_mapper_ram' memory, in clock cycles
-    // Field 'bit_mapper_ram.data'
-    localparam BIT_MAPPER_RAM_DATA_BIT_OFFSET = 0; // bit offset of the 'data' field
-    localparam BIT_MAPPER_RAM_DATA_BIT_WIDTH = 32; // bit width of the 'data' field
-    localparam logic [31:0] BIT_MAPPER_RAM_DATA_RESET = 32'b00000000000000000000000000000000; // reset value of the 'data' field
+    // Register 'constellation_mapper_address'
+    localparam logic [31:0] CONSTELLATION_MAPPER_ADDRESS_OFFSET = 32'h0000000C; // address offset of the 'constellation_mapper_address' register
+    // Field 'constellation_mapper_address.value'
+    localparam CONSTELLATION_MAPPER_ADDRESS_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
+    localparam CONSTELLATION_MAPPER_ADDRESS_VALUE_BIT_WIDTH = 32; // bit width of the 'value' field
+    localparam logic [31:0] CONSTELLATION_MAPPER_ADDRESS_VALUE_RESET = 32'b00000000000000000000000000000000; // reset value of the 'value' field
+
+    // Register 'constellation_mapper_write_data'
+    localparam logic [31:0] CONSTELLATION_MAPPER_WRITE_DATA_OFFSET = 32'h00000010; // address offset of the 'constellation_mapper_write_data' register
+    // Field 'constellation_mapper_write_data.value'
+    localparam CONSTELLATION_MAPPER_WRITE_DATA_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
+    localparam CONSTELLATION_MAPPER_WRITE_DATA_VALUE_BIT_WIDTH = 32; // bit width of the 'value' field
+    localparam logic [31:0] CONSTELLATION_MAPPER_WRITE_DATA_VALUE_RESET = 32'b00000000000000000000000000000000; // reset value of the 'value' field
+
+    // Register 'constellation_mapper_read_data'
+    localparam logic [31:0] CONSTELLATION_MAPPER_READ_DATA_OFFSET = 32'h00000014; // address offset of the 'constellation_mapper_read_data' register
+    // Field 'constellation_mapper_read_data.value'
+    localparam CONSTELLATION_MAPPER_READ_DATA_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
+    localparam CONSTELLATION_MAPPER_READ_DATA_VALUE_BIT_WIDTH = 32; // bit width of the 'value' field
+    localparam logic [31:0] CONSTELLATION_MAPPER_READ_DATA_VALUE_RESET = 32'b00000000000000000000000000000000; // reset value of the 'value' field
 
     // Register 'axi_debug_input_width_converter_cfg'
     localparam logic [31:0] AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET = 32'h00000D00; // address offset of the 'axi_debug_input_width_converter_cfg' register

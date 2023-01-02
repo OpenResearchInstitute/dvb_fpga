@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_encoder' Register Definitions
-// Revision: 326
+// Revision: 336
 // -----------------------------------------------------------------------------
-// Generated on 2022-04-24 at 21:50 (UTC) by airhdl version 2022.04.1-116
+// Generated on 2023-01-02 at 19:46 (UTC) by airhdl version 2022.12.1-715060670
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -28,7 +28,7 @@ namespace dvbs2_encoder_regs {
     static const std::string name = "dvbs2_encoder";
 
     /* Revision number of the 'dvbs2_encoder' register map */
-    static const std::uint32_t REVISION = 326;
+    static const std::uint32_t REVISION = 336;
 
     /* Default base address of the 'dvbs2_encoder' register map */
     static const std::uint32_t BASE_ADDRESS = 0x00000000;
@@ -105,15 +105,32 @@ namespace dvbs2_encoder_regs {
     static const std::uint32_t FRAMES_IN_TRANSIT_VALUE_BIT_MASK = 0x000000FF; /* bit mask of the 'value' field */
     static const std::uint32_t FRAMES_IN_TRANSIT_VALUE_RESET = 0x0; /* reset value of the 'value' field */
 
-    /* Register 'bit_mapper_ram' */
-    static const std::uint32_t BIT_MAPPER_RAM_OFFSET = 0x0000000C; /* address offset of the 'bit_mapper_ram' register */
-    static const int BIT_MAPPER_RAM_DEPTH = 240; /* depth of the 'bit_mapper_ram' memory, in elements */
+    /* Register 'constellation_mapper_address' */
+    static const std::uint32_t CONSTELLATION_MAPPER_ADDRESS_OFFSET = 0x0000000C; /* address offset of the 'constellation_mapper_address' register */
 
-    /* Field 'bit_mapper_ram.data' */
-    static const int BIT_MAPPER_RAM_DATA_BIT_OFFSET = 0; /* bit offset of the 'data' field */
-    static const int BIT_MAPPER_RAM_DATA_BIT_WIDTH = 32; /* bit width of the 'data' field */
-    static const std::uint32_t BIT_MAPPER_RAM_DATA_BIT_MASK = 0xFFFFFFFF; /* bit mask of the 'data' field */
-    static const std::uint32_t BIT_MAPPER_RAM_DATA_RESET = 0x0; /* reset value of the 'data' field */
+    /* Field 'constellation_mapper_address.value' */
+    static const int CONSTELLATION_MAPPER_ADDRESS_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
+    static const int CONSTELLATION_MAPPER_ADDRESS_VALUE_BIT_WIDTH = 32; /* bit width of the 'value' field */
+    static const std::uint32_t CONSTELLATION_MAPPER_ADDRESS_VALUE_BIT_MASK = 0xFFFFFFFF; /* bit mask of the 'value' field */
+    static const std::uint32_t CONSTELLATION_MAPPER_ADDRESS_VALUE_RESET = 0x0; /* reset value of the 'value' field */
+
+    /* Register 'constellation_mapper_write_data' */
+    static const std::uint32_t CONSTELLATION_MAPPER_WRITE_DATA_OFFSET = 0x00000010; /* address offset of the 'constellation_mapper_write_data' register */
+
+    /* Field 'constellation_mapper_write_data.value' */
+    static const int CONSTELLATION_MAPPER_WRITE_DATA_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
+    static const int CONSTELLATION_MAPPER_WRITE_DATA_VALUE_BIT_WIDTH = 32; /* bit width of the 'value' field */
+    static const std::uint32_t CONSTELLATION_MAPPER_WRITE_DATA_VALUE_BIT_MASK = 0xFFFFFFFF; /* bit mask of the 'value' field */
+    static const std::uint32_t CONSTELLATION_MAPPER_WRITE_DATA_VALUE_RESET = 0x0; /* reset value of the 'value' field */
+
+    /* Register 'constellation_mapper_read_data' */
+    static const std::uint32_t CONSTELLATION_MAPPER_READ_DATA_OFFSET = 0x00000014; /* address offset of the 'constellation_mapper_read_data' register */
+
+    /* Field 'constellation_mapper_read_data.value' */
+    static const int CONSTELLATION_MAPPER_READ_DATA_VALUE_BIT_OFFSET = 0; /* bit offset of the 'value' field */
+    static const int CONSTELLATION_MAPPER_READ_DATA_VALUE_BIT_WIDTH = 32; /* bit width of the 'value' field */
+    static const std::uint32_t CONSTELLATION_MAPPER_READ_DATA_VALUE_BIT_MASK = 0xFFFFFFFF; /* bit mask of the 'value' field */
+    static const std::uint32_t CONSTELLATION_MAPPER_READ_DATA_VALUE_RESET = 0x0; /* reset value of the 'value' field */
 
     /* Register 'axi_debug_input_width_converter_cfg' */
     static const std::uint32_t AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET = 0x00000D00; /* address offset of the 'axi_debug_input_width_converter_cfg' register */

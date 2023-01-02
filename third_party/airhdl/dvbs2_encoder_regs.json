@@ -128,18 +128,54 @@
         ]
       },
       {
-        "type": "Memory",
-        "depth": 240,
-        "readLatency": 1,
-        "name": "bit_mapper_ram",
-        "description": "- 0x00 - 0x03: QPSK map\r\n- 0x04 - 0x0B: 8PSK map\r\n- 0x0C - 0x1B: 16APSK map\r\n- 0x1C - 0x3B: 32APSK map",
+        "type": "Register",
+        "name": "constellation_mapper_address",
+        "description": "",
         "access": "READ_WRITE",
         "addressOffset": 12,
         "size": 32,
         "fields": [
           {
-            "name": "data",
-            "description": "Raw IQ value pairs\n- 0x00 - 0x03: QPSK map\n- 0x04 - 0x0B: 8PSK map\n- 0x0C - 0x1B: 16APSK map\n- 0x1C - 0x3B: 32APSK map",
+            "name": "value",
+            "description": "",
+            "bitWidth": 32,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "constellation_mapper_write_data",
+        "description": "",
+        "access": "READ_WRITE",
+        "addressOffset": 16,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
+            "bitWidth": 32,
+            "bitOffset": 0,
+            "reset": 0,
+            "selfClear": false,
+            "enumValues": []
+          }
+        ]
+      },
+      {
+        "type": "Register",
+        "name": "constellation_mapper_read_data",
+        "description": "",
+        "access": "READ_ONLY",
+        "addressOffset": 20,
+        "size": 32,
+        "fields": [
+          {
+            "name": "value",
+            "description": "",
             "bitWidth": 32,
             "bitOffset": 0,
             "reset": 0,
@@ -1325,7 +1361,7 @@
         ]
       }
     ],
-    "revision": 326,
+    "revision": 336,
     "generateRecordPorts": true
   }
 }
