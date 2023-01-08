@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
 -- 'dvbs2_encoder' Register Definitions
--- Revision: 336
+-- Revision: 347
 -- -----------------------------------------------------------------------------
--- Generated on 2023-01-02 at 19:46 (UTC) by airhdl version 2022.12.1-715060670
+-- Generated on 2023-01-08 at 17:59 (UTC) by airhdl version 2023.01.1-740440560
 -- -----------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -59,75 +59,76 @@ package dvbs2_encoder_regs_pkg is
 
     -- User-logic ports (from user-logic to register file)
     type user2regs_t is record
-        ldpc_fifo_status_ldpc_fifo_entries : std_logic_vector(13 downto 0); -- value of register 'ldpc_fifo_status', field 'ldpc_fifo_entries'
-        ldpc_fifo_status_ldpc_fifo_empty : std_logic_vector(0 downto 0); -- value of register 'ldpc_fifo_status', field 'ldpc_fifo_empty'
-        ldpc_fifo_status_ldpc_fifo_full : std_logic_vector(0 downto 0); -- value of register 'ldpc_fifo_status', field 'ldpc_fifo_full'
-        ldpc_fifo_status_arbiter_selected : std_logic_vector(1 downto 0); -- value of register 'ldpc_fifo_status', field 'arbiter_selected'
-        frames_in_transit_value : std_logic_vector(7 downto 0); -- value of register 'frames_in_transit', field 'value'
-        constellation_mapper_read_data_value : std_logic_vector(31 downto 0); -- value of register 'constellation_mapper_read_data', field 'value'
-        axi_debug_input_width_converter_frame_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_input_width_converter_frame_count', field 'value'
-        axi_debug_input_width_converter_last_frame_length_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_input_width_converter_last_frame_length', field 'value'
-        axi_debug_input_width_converter_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_input_width_converter_min_max_frame_length', field 'min_frame_length'
-        axi_debug_input_width_converter_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_input_width_converter_min_max_frame_length', field 'max_frame_length'
-        axi_debug_input_width_converter_word_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_input_width_converter_word_count', field 'value'
-        axi_debug_input_width_converter_strobes_s_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_input_width_converter_strobes', field 's_tvalid'
-        axi_debug_input_width_converter_strobes_s_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_input_width_converter_strobes', field 's_tready'
-        axi_debug_input_width_converter_strobes_m_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_input_width_converter_strobes', field 'm_tvalid'
-        axi_debug_input_width_converter_strobes_m_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_input_width_converter_strobes', field 'm_tready'
-        axi_debug_bb_scrambler_frame_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_bb_scrambler_frame_count', field 'value'
-        axi_debug_bb_scrambler_last_frame_length_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_bb_scrambler_last_frame_length', field 'value'
-        axi_debug_bb_scrambler_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_bb_scrambler_min_max_frame_length', field 'min_frame_length'
-        axi_debug_bb_scrambler_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_bb_scrambler_min_max_frame_length', field 'max_frame_length'
-        axi_debug_bb_scrambler_word_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_bb_scrambler_word_count', field 'value'
-        axi_debug_bb_scrambler_strobes_s_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_bb_scrambler_strobes', field 's_tvalid'
-        axi_debug_bb_scrambler_strobes_s_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_bb_scrambler_strobes', field 's_tready'
-        axi_debug_bb_scrambler_strobes_m_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_bb_scrambler_strobes', field 'm_tvalid'
-        axi_debug_bb_scrambler_strobes_m_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_bb_scrambler_strobes', field 'm_tready'
-        axi_debug_bch_encoder_frame_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_bch_encoder_frame_count', field 'value'
-        axi_debug_bch_encoder_last_frame_length_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_bch_encoder_last_frame_length', field 'value'
-        axi_debug_bch_encoder_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_bch_encoder_min_max_frame_length', field 'min_frame_length'
-        axi_debug_bch_encoder_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_bch_encoder_min_max_frame_length', field 'max_frame_length'
-        axi_debug_bch_encoder_word_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_bch_encoder_word_count', field 'value'
-        axi_debug_bch_encoder_strobes_s_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_bch_encoder_strobes', field 's_tvalid'
-        axi_debug_bch_encoder_strobes_s_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_bch_encoder_strobes', field 's_tready'
-        axi_debug_bch_encoder_strobes_m_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_bch_encoder_strobes', field 'm_tvalid'
-        axi_debug_bch_encoder_strobes_m_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_bch_encoder_strobes', field 'm_tready'
-        axi_debug_ldpc_encoder_frame_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_ldpc_encoder_frame_count', field 'value'
-        axi_debug_ldpc_encoder_last_frame_length_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_ldpc_encoder_last_frame_length', field 'value'
-        axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_ldpc_encoder_min_max_frame_length', field 'min_frame_length'
-        axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_ldpc_encoder_min_max_frame_length', field 'max_frame_length'
-        axi_debug_ldpc_encoder_word_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_ldpc_encoder_word_count', field 'value'
-        axi_debug_ldpc_encoder_strobes_s_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_ldpc_encoder_strobes', field 's_tvalid'
-        axi_debug_ldpc_encoder_strobes_s_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_ldpc_encoder_strobes', field 's_tready'
-        axi_debug_ldpc_encoder_strobes_m_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_ldpc_encoder_strobes', field 'm_tvalid'
-        axi_debug_ldpc_encoder_strobes_m_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_ldpc_encoder_strobes', field 'm_tready'
-        axi_debug_bit_interleaver_frame_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_bit_interleaver_frame_count', field 'value'
-        axi_debug_bit_interleaver_last_frame_length_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_bit_interleaver_last_frame_length', field 'value'
-        axi_debug_bit_interleaver_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_bit_interleaver_min_max_frame_length', field 'min_frame_length'
-        axi_debug_bit_interleaver_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_bit_interleaver_min_max_frame_length', field 'max_frame_length'
-        axi_debug_bit_interleaver_word_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_bit_interleaver_word_count', field 'value'
-        axi_debug_bit_interleaver_strobes_s_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_bit_interleaver_strobes', field 's_tvalid'
-        axi_debug_bit_interleaver_strobes_s_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_bit_interleaver_strobes', field 's_tready'
-        axi_debug_bit_interleaver_strobes_m_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_bit_interleaver_strobes', field 'm_tvalid'
-        axi_debug_bit_interleaver_strobes_m_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_bit_interleaver_strobes', field 'm_tready'
-        axi_debug_constellation_mapper_frame_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_constellation_mapper_frame_count', field 'value'
-        axi_debug_constellation_mapper_last_frame_length_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_constellation_mapper_last_frame_length', field 'value'
-        axi_debug_constellation_mapper_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_constellation_mapper_min_max_frame_length', field 'min_frame_length'
-        axi_debug_constellation_mapper_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_constellation_mapper_min_max_frame_length', field 'max_frame_length'
-        axi_debug_constellation_mapper_word_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_constellation_mapper_word_count', field 'value'
-        axi_debug_constellation_mapper_strobes_s_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_constellation_mapper_strobes', field 's_tvalid'
-        axi_debug_constellation_mapper_strobes_s_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_constellation_mapper_strobes', field 's_tready'
-        axi_debug_constellation_mapper_strobes_m_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_constellation_mapper_strobes', field 'm_tvalid'
-        axi_debug_constellation_mapper_strobes_m_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_constellation_mapper_strobes', field 'm_tready'
-        axi_debug_plframe_frame_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_plframe_frame_count', field 'value'
-        axi_debug_plframe_last_frame_length_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_plframe_last_frame_length', field 'value'
-        axi_debug_plframe_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_plframe_min_max_frame_length', field 'min_frame_length'
-        axi_debug_plframe_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- value of register 'axi_debug_plframe_min_max_frame_length', field 'max_frame_length'
-        axi_debug_plframe_word_count_value : std_logic_vector(15 downto 0); -- value of register 'axi_debug_plframe_word_count', field 'value'
-        axi_debug_plframe_strobes_s_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_plframe_strobes', field 's_tvalid'
-        axi_debug_plframe_strobes_s_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_plframe_strobes', field 's_tready'
-        axi_debug_plframe_strobes_m_tvalid : std_logic_vector(0 downto 0); -- value of register 'axi_debug_plframe_strobes', field 'm_tvalid'
-        axi_debug_plframe_strobes_m_tready : std_logic_vector(0 downto 0); -- value of register 'axi_debug_plframe_strobes', field 'm_tready'
+        ldpc_fifo_status_ldpc_fifo_entries : std_logic_vector(13 downto 0); -- read value of register 'ldpc_fifo_status', field 'ldpc_fifo_entries'
+        ldpc_fifo_status_ldpc_fifo_empty : std_logic_vector(0 downto 0); -- read value of register 'ldpc_fifo_status', field 'ldpc_fifo_empty'
+        ldpc_fifo_status_ldpc_fifo_full : std_logic_vector(0 downto 0); -- read value of register 'ldpc_fifo_status', field 'ldpc_fifo_full'
+        ldpc_fifo_status_arbiter_selected : std_logic_vector(1 downto 0); -- read value of register 'ldpc_fifo_status', field 'arbiter_selected'
+        frames_in_transit_value : std_logic_vector(7 downto 0); -- read value of register 'frames_in_transit', field 'value'
+        constellation_map_radius_ram_rdata : std_logic_vector(31 downto 0); -- read data for memory 'constellation_map_radius_ram'
+        constellation_map_iq_ram_rdata : std_logic_vector(31 downto 0); -- read data for memory 'constellation_map_iq_ram'
+        axi_debug_input_width_converter_frame_count_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_input_width_converter_frame_count', field 'value'
+        axi_debug_input_width_converter_last_frame_length_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_input_width_converter_last_frame_length', field 'value'
+        axi_debug_input_width_converter_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_input_width_converter_min_max_frame_length', field 'min_frame_length'
+        axi_debug_input_width_converter_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_input_width_converter_min_max_frame_length', field 'max_frame_length'
+        axi_debug_input_width_converter_word_count_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_input_width_converter_word_count', field 'value'
+        axi_debug_input_width_converter_strobes_s_tvalid : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_input_width_converter_strobes', field 's_tvalid'
+        axi_debug_input_width_converter_strobes_s_tready : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_input_width_converter_strobes', field 's_tready'
+        axi_debug_input_width_converter_strobes_m_tvalid : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_input_width_converter_strobes', field 'm_tvalid'
+        axi_debug_input_width_converter_strobes_m_tready : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_input_width_converter_strobes', field 'm_tready'
+        axi_debug_bb_scrambler_frame_count_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_bb_scrambler_frame_count', field 'value'
+        axi_debug_bb_scrambler_last_frame_length_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_bb_scrambler_last_frame_length', field 'value'
+        axi_debug_bb_scrambler_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_bb_scrambler_min_max_frame_length', field 'min_frame_length'
+        axi_debug_bb_scrambler_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_bb_scrambler_min_max_frame_length', field 'max_frame_length'
+        axi_debug_bb_scrambler_word_count_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_bb_scrambler_word_count', field 'value'
+        axi_debug_bb_scrambler_strobes_s_tvalid : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_bb_scrambler_strobes', field 's_tvalid'
+        axi_debug_bb_scrambler_strobes_s_tready : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_bb_scrambler_strobes', field 's_tready'
+        axi_debug_bb_scrambler_strobes_m_tvalid : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_bb_scrambler_strobes', field 'm_tvalid'
+        axi_debug_bb_scrambler_strobes_m_tready : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_bb_scrambler_strobes', field 'm_tready'
+        axi_debug_bch_encoder_frame_count_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_bch_encoder_frame_count', field 'value'
+        axi_debug_bch_encoder_last_frame_length_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_bch_encoder_last_frame_length', field 'value'
+        axi_debug_bch_encoder_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_bch_encoder_min_max_frame_length', field 'min_frame_length'
+        axi_debug_bch_encoder_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_bch_encoder_min_max_frame_length', field 'max_frame_length'
+        axi_debug_bch_encoder_word_count_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_bch_encoder_word_count', field 'value'
+        axi_debug_bch_encoder_strobes_s_tvalid : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_bch_encoder_strobes', field 's_tvalid'
+        axi_debug_bch_encoder_strobes_s_tready : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_bch_encoder_strobes', field 's_tready'
+        axi_debug_bch_encoder_strobes_m_tvalid : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_bch_encoder_strobes', field 'm_tvalid'
+        axi_debug_bch_encoder_strobes_m_tready : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_bch_encoder_strobes', field 'm_tready'
+        axi_debug_ldpc_encoder_frame_count_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_ldpc_encoder_frame_count', field 'value'
+        axi_debug_ldpc_encoder_last_frame_length_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_ldpc_encoder_last_frame_length', field 'value'
+        axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_ldpc_encoder_min_max_frame_length', field 'min_frame_length'
+        axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_ldpc_encoder_min_max_frame_length', field 'max_frame_length'
+        axi_debug_ldpc_encoder_word_count_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_ldpc_encoder_word_count', field 'value'
+        axi_debug_ldpc_encoder_strobes_s_tvalid : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_ldpc_encoder_strobes', field 's_tvalid'
+        axi_debug_ldpc_encoder_strobes_s_tready : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_ldpc_encoder_strobes', field 's_tready'
+        axi_debug_ldpc_encoder_strobes_m_tvalid : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_ldpc_encoder_strobes', field 'm_tvalid'
+        axi_debug_ldpc_encoder_strobes_m_tready : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_ldpc_encoder_strobes', field 'm_tready'
+        axi_debug_bit_interleaver_frame_count_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_bit_interleaver_frame_count', field 'value'
+        axi_debug_bit_interleaver_last_frame_length_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_bit_interleaver_last_frame_length', field 'value'
+        axi_debug_bit_interleaver_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_bit_interleaver_min_max_frame_length', field 'min_frame_length'
+        axi_debug_bit_interleaver_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_bit_interleaver_min_max_frame_length', field 'max_frame_length'
+        axi_debug_bit_interleaver_word_count_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_bit_interleaver_word_count', field 'value'
+        axi_debug_bit_interleaver_strobes_s_tvalid : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_bit_interleaver_strobes', field 's_tvalid'
+        axi_debug_bit_interleaver_strobes_s_tready : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_bit_interleaver_strobes', field 's_tready'
+        axi_debug_bit_interleaver_strobes_m_tvalid : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_bit_interleaver_strobes', field 'm_tvalid'
+        axi_debug_bit_interleaver_strobes_m_tready : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_bit_interleaver_strobes', field 'm_tready'
+        axi_debug_constellation_mapper_frame_count_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_constellation_mapper_frame_count', field 'value'
+        axi_debug_constellation_mapper_last_frame_length_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_constellation_mapper_last_frame_length', field 'value'
+        axi_debug_constellation_mapper_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_constellation_mapper_min_max_frame_length', field 'min_frame_length'
+        axi_debug_constellation_mapper_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_constellation_mapper_min_max_frame_length', field 'max_frame_length'
+        axi_debug_constellation_mapper_word_count_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_constellation_mapper_word_count', field 'value'
+        axi_debug_constellation_mapper_strobes_s_tvalid : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_constellation_mapper_strobes', field 's_tvalid'
+        axi_debug_constellation_mapper_strobes_s_tready : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_constellation_mapper_strobes', field 's_tready'
+        axi_debug_constellation_mapper_strobes_m_tvalid : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_constellation_mapper_strobes', field 'm_tvalid'
+        axi_debug_constellation_mapper_strobes_m_tready : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_constellation_mapper_strobes', field 'm_tready'
+        axi_debug_plframe_frame_count_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_plframe_frame_count', field 'value'
+        axi_debug_plframe_last_frame_length_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_plframe_last_frame_length', field 'value'
+        axi_debug_plframe_min_max_frame_length_min_frame_length : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_plframe_min_max_frame_length', field 'min_frame_length'
+        axi_debug_plframe_min_max_frame_length_max_frame_length : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_plframe_min_max_frame_length', field 'max_frame_length'
+        axi_debug_plframe_word_count_value : std_logic_vector(15 downto 0); -- read value of register 'axi_debug_plframe_word_count', field 'value'
+        axi_debug_plframe_strobes_s_tvalid : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_plframe_strobes', field 's_tvalid'
+        axi_debug_plframe_strobes_s_tready : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_plframe_strobes', field 's_tready'
+        axi_debug_plframe_strobes_m_tvalid : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_plframe_strobes', field 'm_tvalid'
+        axi_debug_plframe_strobes_m_tready : std_logic_vector(0 downto 0); -- read value of register 'axi_debug_plframe_strobes', field 'm_tready'
     end record;
 
     -- User-logic ports (from register file to user-logic)
@@ -140,11 +141,14 @@ package dvbs2_encoder_regs_pkg is
         config_force_output_ready : std_logic_vector(0 downto 0); -- Value of register 'config', field 'force_output_ready'
         ldpc_fifo_status_strobe : std_logic; -- Strobe signal for register 'ldpc_fifo_status' (pulsed when the register is read from the bus}
         frames_in_transit_strobe : std_logic; -- Strobe signal for register 'frames_in_transit' (pulsed when the register is read from the bus}
-        constellation_mapper_address_strobe : std_logic; -- Strobe signal for register 'constellation_mapper_address' (pulsed when the register is written from the bus}
-        constellation_mapper_address_value : std_logic_vector(31 downto 0); -- Value of register 'constellation_mapper_address', field 'value'
-        constellation_mapper_write_data_strobe : std_logic; -- Strobe signal for register 'constellation_mapper_write_data' (pulsed when the register is written from the bus}
-        constellation_mapper_write_data_value : std_logic_vector(31 downto 0); -- Value of register 'constellation_mapper_write_data', field 'value'
-        constellation_mapper_read_data_strobe : std_logic; -- Strobe signal for register 'constellation_mapper_read_data' (pulsed when the register is read from the bus}
+        constellation_map_radius_ram_addr : std_logic_vector(4 downto 0); -- read/write address for memory 'constellation_map_radius_ram'
+        constellation_map_radius_ram_wdata : std_logic_vector(31 downto 0); -- write data for memory 'constellation_map_radius_ram'
+        constellation_map_radius_ram_wen : std_logic_vector(3 downto 0); -- byte-wide write-enable for memory 'constellation_map_radius_ram'
+        constellation_map_radius_ram_ren : std_logic; -- read-enable for memory 'constellation_map_radius_ram'
+        constellation_map_iq_ram_addr : std_logic_vector(5 downto 0); -- read/write address for memory 'constellation_map_iq_ram'
+        constellation_map_iq_ram_wdata : std_logic_vector(31 downto 0); -- write data for memory 'constellation_map_iq_ram'
+        constellation_map_iq_ram_wen : std_logic_vector(3 downto 0); -- byte-wide write-enable for memory 'constellation_map_iq_ram'
+        constellation_map_iq_ram_ren : std_logic; -- read-enable for memory 'constellation_map_iq_ram'
         axi_debug_input_width_converter_cfg_strobe : std_logic; -- Strobe signal for register 'axi_debug_input_width_converter_cfg' (pulsed when the register is written from the bus}
         axi_debug_input_width_converter_cfg_block_data : std_logic_vector(0 downto 0); -- Value of register 'axi_debug_input_width_converter_cfg', field 'block_data'
         axi_debug_input_width_converter_cfg_allow_word : std_logic_vector(0 downto 0); -- Value of register 'axi_debug_input_width_converter_cfg', field 'allow_word'
@@ -211,7 +215,7 @@ package dvbs2_encoder_regs_pkg is
     end record;
 
     -- Revision number of the 'dvbs2_encoder' register map
-    constant DVBS2_ENCODER_REVISION : natural := 336;
+    constant DVBS2_ENCODER_REVISION : natural := 347;
 
     -- Default base address of the 'dvbs2_encoder' register map
     constant DVBS2_ENCODER_DEFAULT_BASEADDR : unsigned(31 downto 0) := unsigned'(x"00000000");
@@ -268,26 +272,23 @@ package dvbs2_encoder_regs_pkg is
     constant FRAMES_IN_TRANSIT_VALUE_BIT_WIDTH : natural := 8; -- bit width of the 'value' field
     constant FRAMES_IN_TRANSIT_VALUE_RESET : std_logic_vector(7 downto 0) := std_logic_vector'("00000000"); -- reset value of the 'value' field
 
-    -- Register 'constellation_mapper_address'
-    constant CONSTELLATION_MAPPER_ADDRESS_OFFSET : unsigned(31 downto 0) := unsigned'(x"0000000C"); -- address offset of the 'constellation_mapper_address' register
-    -- Field 'constellation_mapper_address.value'
-    constant CONSTELLATION_MAPPER_ADDRESS_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field
-    constant CONSTELLATION_MAPPER_ADDRESS_VALUE_BIT_WIDTH : natural := 32; -- bit width of the 'value' field
-    constant CONSTELLATION_MAPPER_ADDRESS_VALUE_RESET : std_logic_vector(31 downto 0) := std_logic_vector'("00000000000000000000000000000000"); -- reset value of the 'value' field
+    -- Register 'constellation_map_radius_ram'
+    constant CONSTELLATION_MAP_RADIUS_RAM_OFFSET : unsigned(31 downto 0) := unsigned'(x"00000010"); -- address offset of the 'constellation_map_radius_ram' register
+    constant CONSTELLATION_MAP_RADIUS_RAM_DEPTH : natural := 22; -- depth of the 'constellation_map_radius_ram' memory, in elements
+    constant CONSTELLATION_MAP_RADIUS_RAM_READ_LATENCY : natural := 2; -- read latency of the 'constellation_map_radius_ram' memory, in clock cycles
+    -- Field 'constellation_map_radius_ram.value'
+    constant CONSTELLATION_MAP_RADIUS_RAM_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field
+    constant CONSTELLATION_MAP_RADIUS_RAM_VALUE_BIT_WIDTH : natural := 32; -- bit width of the 'value' field
+    constant CONSTELLATION_MAP_RADIUS_RAM_VALUE_RESET : std_logic_vector(31 downto 0) := std_logic_vector'("00000000000000000000000000000000"); -- reset value of the 'value' field
 
-    -- Register 'constellation_mapper_write_data'
-    constant CONSTELLATION_MAPPER_WRITE_DATA_OFFSET : unsigned(31 downto 0) := unsigned'(x"00000010"); -- address offset of the 'constellation_mapper_write_data' register
-    -- Field 'constellation_mapper_write_data.value'
-    constant CONSTELLATION_MAPPER_WRITE_DATA_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field
-    constant CONSTELLATION_MAPPER_WRITE_DATA_VALUE_BIT_WIDTH : natural := 32; -- bit width of the 'value' field
-    constant CONSTELLATION_MAPPER_WRITE_DATA_VALUE_RESET : std_logic_vector(31 downto 0) := std_logic_vector'("00000000000000000000000000000000"); -- reset value of the 'value' field
-
-    -- Register 'constellation_mapper_read_data'
-    constant CONSTELLATION_MAPPER_READ_DATA_OFFSET : unsigned(31 downto 0) := unsigned'(x"00000014"); -- address offset of the 'constellation_mapper_read_data' register
-    -- Field 'constellation_mapper_read_data.value'
-    constant CONSTELLATION_MAPPER_READ_DATA_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field
-    constant CONSTELLATION_MAPPER_READ_DATA_VALUE_BIT_WIDTH : natural := 32; -- bit width of the 'value' field
-    constant CONSTELLATION_MAPPER_READ_DATA_VALUE_RESET : std_logic_vector(31 downto 0) := std_logic_vector'("00000000000000000000000000000000"); -- reset value of the 'value' field
+    -- Register 'constellation_map_iq_ram'
+    constant CONSTELLATION_MAP_IQ_RAM_OFFSET : unsigned(31 downto 0) := unsigned'(x"00000110"); -- address offset of the 'constellation_map_iq_ram' register
+    constant CONSTELLATION_MAP_IQ_RAM_DEPTH : natural := 60; -- depth of the 'constellation_map_iq_ram' memory, in elements
+    constant CONSTELLATION_MAP_IQ_RAM_READ_LATENCY : natural := 2; -- read latency of the 'constellation_map_iq_ram' memory, in clock cycles
+    -- Field 'constellation_map_iq_ram.value'
+    constant CONSTELLATION_MAP_IQ_RAM_VALUE_BIT_OFFSET : natural := 0; -- bit offset of the 'value' field
+    constant CONSTELLATION_MAP_IQ_RAM_VALUE_BIT_WIDTH : natural := 32; -- bit width of the 'value' field
+    constant CONSTELLATION_MAP_IQ_RAM_VALUE_RESET : std_logic_vector(31 downto 0) := std_logic_vector'("00000000000000000000000000000000"); -- reset value of the 'value' field
 
     -- Register 'axi_debug_input_width_converter_cfg'
     constant AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET : unsigned(31 downto 0) := unsigned'(x"00000D00"); -- address offset of the 'axi_debug_input_width_converter_cfg' register

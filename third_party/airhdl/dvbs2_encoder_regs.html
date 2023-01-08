@@ -29,11 +29,11 @@
                     <dt><strong>Default base address</strong></dt><dd style="font-family:monospace;">0x0</dd>
                     <dt><strong>Register width</strong></dt><dd>32 bits</dd>
                     <dt><strong>Default address width</strong></dt><dd>32 bits</dd>
-                    <dt><strong>Register count</strong></dt><dd>48</dd>
+                    <dt><strong>Register count</strong></dt><dd>47</dd>
                     <dt>Range</dt>
                     <dd>4888 bytes
                     </dd>
-                    <dt><strong>Revision</strong></dt><dd>336</dd>
+                    <dt><strong>Revision</strong></dt><dd>347</dd>
                 </dl>
 <a id="OVERVIEW"></a>
                 <h3 class="page-header">Overview</h3>
@@ -69,23 +69,55 @@
                             <td></td>
                             <td style="font-family: monospace;">REG</td>
                         </tr>
-                        <tr onclick="window.location='#REG@constellation_mapper_address';">
-                            <td style="font-family: monospace; padding-left: 2em;">0xC</td>
-                            <td>constellation_mapper_address</td>
-                            <td></td>
-                            <td style="font-family: monospace;">REG</td>
-                        </tr>
-                        <tr onclick="window.location='#REG@constellation_mapper_write_data';">
+                        <tr onclick="window.location='#REG@constellation_map_radius_ram';">
                             <td style="font-family: monospace; padding-left: 2em;">0x10</td>
-                            <td>constellation_mapper_write_data</td>
-                            <td></td>
-                            <td style="font-family: monospace;">REG</td>
+                            <td>constellation_map_radius_ram</td>
+                            <td>Radius for 16APSK and 32APSK constellation mapping.<br>
+                              <br>
+                              R0 uses bits 15:0, R1 uses bits 31:16.<br>
+                              <br>
+                              For 32APSK, r3 is always 1.0, so r1 and r0 need to be scaled appropriately<br>
+                              <br>
+                              Offsets:<br>
+                              <br>
+                              - 0x00: Short frames,  16APSK, 2/3<br>
+                              - 0x01: Short frames,  16APSK, 3/4<br>
+                              - 0x02: Short frames,  16APSK, 3/5<br>
+                              - 0x03: Short frames,  16APSK, 4/5<br>
+                              - 0x04: Short frames,  16APSK, 5/6<br>
+                              - 0x05: Short frames,  16APSK, 8/9<br>
+                              - 0x06: Normal frames, 16APSK, 2/3<br>
+                              - 0x07: Normal frames, 16APSK, 3/4<br>
+                              - 0x08: Normal frames, 16APSK, 3/5<br>
+                              - 0x09: Normal frames, 16APSK, 4/5<br>
+                              - 0x0a: Normal frames, 16APSK, 5/6<br>
+                              - 0x0b: Normal frames, 16APSK, 8/9<br>
+                              - 0x0c: Normal frames, 16APSK, 9/10<br>
+                              - 0x0d: Short frames,  32APSK, 3/4<br>
+                              - 0x0e: Short frames,  32APSK, 4/5<br>
+                              - 0x0f: Short frames,  32APSK, 5/6<br>
+                              - 0x10: Short frames,  32APSK, 8/9<br>
+                              - 0x11: Normal frames, 32APSK, 3/4<br>
+                              - 0x12: Normal frames, 32APSK, 4/5<br>
+                              - 0x13: Normal frames, 32APSK, 5/6<br>
+                              - 0x14: Normal frames, 32APSK, 8/9<br>
+                              - 0x15: Normal frames, 32APSK, 9/10</td>
+                            <td style="font-family: monospace;">MEM[22]</td>
                         </tr>
-                        <tr onclick="window.location='#REG@constellation_mapper_read_data';">
-                            <td style="font-family: monospace; padding-left: 2em;">0x14</td>
-                            <td>constellation_mapper_read_data</td>
-                            <td></td>
-                            <td style="font-family: monospace;">REG</td>
+                        <tr onclick="window.location='#REG@constellation_map_iq_ram';">
+                            <td style="font-family: monospace; padding-left: 2em;">0x110</td>
+                            <td>constellation_map_iq_ram</td>
+                            <td>IQ values for QPSK, 8PSK, 16APSK and 32APSK constellation mapping.<br>
+                              <br>
+                              I component uses bits 15:0, Q component uses bits 31:16.<br>
+                              <br>
+                              Offsets:<br>
+                              <br>
+                              - 0x00 to 0x03: QPSK<br>
+                              - 0x04 to 0x0B: 8PSK<br>
+                              - 0x0C to 0x1B: 16APSK<br>
+                              - 0x1C to 0x3B: 32APSK</td>
+                            <td style="font-family: monospace;">MEM[60]</td>
                         </tr>
                         <tr onclick="window.location='#REG@axi_debug_input_width_converter_cfg';">
                             <td style="font-family: monospace; padding-left: 2em;">0xD00</td>
@@ -489,36 +521,43 @@
                     </tr>
                 </table>
 </div>
-<a id="REG@constellation_mapper_address"></a>
+<a id="REG@constellation_map_radius_ram"></a>
 <div class="panel panel-default">
                 <table class="table">
                     <tr class="active">
-                        <td colspan="3"><span class="lead"><strong>constellation_mapper_address&nbsp;</span></strong><br/></td>
+                      <td colspan="3"><span class="lead"><strong>constellation_map_radius_ram&nbsp;</span></strong><br/>Radius for 16APSK and 32APSK constellation mapping.<br>
+                        <br>
+                        R0 uses bits 15:0, R1 uses bits 31:16.<br>
+                        <br>
+                        For 32APSK, r3 is always 1.0, so r1 and r0 need to be scaled appropriately<br>
+                        <br>
+                        Offsets:<br>
+                        <br>
+                        - 0x00: Short frames,  16APSK, 2/3<br>
+                        - 0x01: Short frames,  16APSK, 3/4<br>
+                        - 0x02: Short frames,  16APSK, 3/5<br>
+                        - 0x03: Short frames,  16APSK, 4/5<br>
+                        - 0x04: Short frames,  16APSK, 5/6<br>
+                        - 0x05: Short frames,  16APSK, 8/9<br>
+                        - 0x06: Normal frames, 16APSK, 2/3<br>
+                        - 0x07: Normal frames, 16APSK, 3/4<br>
+                        - 0x08: Normal frames, 16APSK, 3/5<br>
+                        - 0x09: Normal frames, 16APSK, 4/5<br>
+                        - 0x0a: Normal frames, 16APSK, 5/6<br>
+                        - 0x0b: Normal frames, 16APSK, 8/9<br>
+                        - 0x0c: Normal frames, 16APSK, 9/10<br>
+                        - 0x0d: Short frames,  32APSK, 3/4<br>
+                        - 0x0e: Short frames,  32APSK, 4/5<br>
+                        - 0x0f: Short frames,  32APSK, 5/6<br>
+                        - 0x10: Short frames,  32APSK, 8/9<br>
+                        - 0x11: Normal frames, 32APSK, 3/4<br>
+                        - 0x12: Normal frames, 32APSK, 4/5<br>
+                        - 0x13: Normal frames, 32APSK, 5/6<br>
+                        - 0x14: Normal frames, 32APSK, 8/9<br>
+                        - 0x15: Normal frames, 32APSK, 9/10</td>
                         <td colspan="2" style="font-family:monospace;">
-                            Register
-                            <br/>Offset: 0xC
-                            <br/>Access: READ_WRITE
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-right" style="font-family:monospace; width:4em;">[31:0]</td>
-                        <td><strong>value</strong><br/>
-                        </td>
-                        <td>
-                            &nbsp;
-                        </td>
-                        <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                        </td>
-                    </tr>
-                </table>
-</div>
-<a id="REG@constellation_mapper_write_data"></a>
-<div class="panel panel-default">
-                <table class="table">
-                    <tr class="active">
-                        <td colspan="3"><span class="lead"><strong>constellation_mapper_write_data&nbsp;</span></strong><br/></td>
-                        <td colspan="2" style="font-family:monospace;">
-                            Register
+                            Memory
+                            (depth: 22, read latency: 2)
                             <br/>Offset: 0x10
                             <br/>Access: READ_WRITE
                         </td>
@@ -535,15 +574,25 @@
                     </tr>
                 </table>
 </div>
-<a id="REG@constellation_mapper_read_data"></a>
+<a id="REG@constellation_map_iq_ram"></a>
 <div class="panel panel-default">
                 <table class="table">
                     <tr class="active">
-                        <td colspan="3"><span class="lead"><strong>constellation_mapper_read_data&nbsp;</span></strong><br/></td>
+                      <td colspan="3"><span class="lead"><strong>constellation_map_iq_ram&nbsp;</span></strong><br/>IQ values for QPSK, 8PSK, 16APSK and 32APSK constellation mapping.<br>
+                        <br>
+                        I component uses bits 15:0, Q component uses bits 31:16.<br>
+                        <br>
+                        Offsets:<br>
+                        <br>
+                        - 0x00 to 0x03: QPSK<br>
+                        - 0x04 to 0x0B: 8PSK<br>
+                        - 0x0C to 0x1B: 16APSK<br>
+                        - 0x1C to 0x3B: 32APSK</td>
                         <td colspan="2" style="font-family:monospace;">
-                            Register
-                            <br/>Offset: 0x14
-                            <br/>Access: READ_ONLY
+                            Memory
+                            (depth: 60, read latency: 2)
+                            <br/>Offset: 0x110
+                            <br/>Access: READ_WRITE
                         </td>
                     </tr>
                     <tr>
@@ -591,7 +640,7 @@
                             &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
+                                <br/><span class="badge">self-clearing</span>
                         </td>
                     </tr>
                     <tr>
@@ -604,7 +653,7 @@
                             &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
+                                <br/><span class="badge">self-clearing</span>
                         </td>
                     </tr>
                 </table>
@@ -797,7 +846,7 @@
                             &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
+                                <br/><span class="badge">self-clearing</span>
                         </td>
                     </tr>
                     <tr>
@@ -810,7 +859,7 @@
                             &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
+                                <br/><span class="badge">self-clearing</span>
                         </td>
                     </tr>
                 </table>
@@ -1003,7 +1052,7 @@
                             &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
+                                <br/><span class="badge">self-clearing</span>
                         </td>
                     </tr>
                     <tr>
@@ -1016,7 +1065,7 @@
                             &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
+                                <br/><span class="badge">self-clearing</span>
                         </td>
                     </tr>
                 </table>
@@ -1209,7 +1258,7 @@
                             &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
+                                <br/><span class="badge">self-clearing</span>
                         </td>
                     </tr>
                     <tr>
@@ -1222,7 +1271,7 @@
                             &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
+                                <br/><span class="badge">self-clearing</span>
                         </td>
                     </tr>
                 </table>
@@ -1415,7 +1464,7 @@
                             &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
+                                <br/><span class="badge">self-clearing</span>
                         </td>
                     </tr>
                     <tr>
@@ -1428,7 +1477,7 @@
                             &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
+                                <br/><span class="badge">self-clearing</span>
                         </td>
                     </tr>
                 </table>
@@ -1621,7 +1670,7 @@
                             &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
+                                <br/><span class="badge">self-clearing</span>
                         </td>
                     </tr>
                     <tr>
@@ -1634,7 +1683,7 @@
                             &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
+                                <br/><span class="badge">self-clearing</span>
                         </td>
                     </tr>
                 </table>
@@ -1827,7 +1876,7 @@
                             &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
+                                <br/><span class="badge">self-clearing</span>
                         </td>
                     </tr>
                     <tr>
@@ -1840,7 +1889,7 @@
                             &nbsp;
                         </td>
                         <td class="text-left" style="width:20em;">Reset: <span style="font-family:monospace;">0x0</span>
-                                <br/><span class="badge">Self-clearing</span>
+                                <br/><span class="badge">self-clearing</span>
                         </td>
                     </tr>
                 </table>
@@ -2004,7 +2053,7 @@
         </div>
         <div class="row">
             <div class="col-md-offset-3 col-md-6">
-                <p class="text-center" style="padding-top:1em; color:#888;">Generated on 2023-01-02 at 19:46 (UTC) by airhdl version 2022.12.1-715060670</p>
+                <p class="text-center" style="padding-top:1em; color:#888;">Generated on 2023-01-08 at 17:59 (UTC) by airhdl version 2023.01.1-740440560</p>
             </div>
         </div>
     </body>

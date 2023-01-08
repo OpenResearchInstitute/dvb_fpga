@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_encoder' Register Definitions
-// Revision: 336
+// Revision: 347
 // -----------------------------------------------------------------------------
-// Generated on 2023-01-02 at 19:46 (UTC) by airhdl version 2022.12.1-715060670
+// Generated on 2023-01-08 at 17:59 (UTC) by airhdl version 2023.01.1-740440560
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -21,7 +21,7 @@
 #define DVBS2_ENCODER_REGS_H
 
 /* Revision number of the 'dvbs2_encoder' register map */
-#define DVBS2_ENCODER_REVISION 336
+#define DVBS2_ENCODER_REVISION 347
 
 /* Default base address of the 'dvbs2_encoder' register map */
 #define DVBS2_ENCODER_DEFAULT_BASEADDR 0x00000000
@@ -98,32 +98,25 @@
 #define FRAMES_IN_TRANSIT_VALUE_BIT_MASK 0x000000FF /* bit mask of the 'value' field */
 #define FRAMES_IN_TRANSIT_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
-/* Register 'constellation_mapper_address' */
-#define CONSTELLATION_MAPPER_ADDRESS_OFFSET 0x0000000C /* address offset of the 'constellation_mapper_address' register */
+/* Register 'constellation_map_radius_ram' */
+#define CONSTELLATION_MAP_RADIUS_RAM_OFFSET 0x00000010 /* address offset of the 'constellation_map_radius_ram' register */
+#define CONSTELLATION_MAP_RADIUS_RAM_DEPTH 22 /* depth of the 'constellation_map_radius_ram' memory, in elements */
 
-/* Field  'constellation_mapper_address.value' */
-#define CONSTELLATION_MAPPER_ADDRESS_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
-#define CONSTELLATION_MAPPER_ADDRESS_VALUE_BIT_WIDTH 32 /* bit width of the 'value' field */
-#define CONSTELLATION_MAPPER_ADDRESS_VALUE_BIT_MASK 0xFFFFFFFF /* bit mask of the 'value' field */
-#define CONSTELLATION_MAPPER_ADDRESS_VALUE_RESET 0x0 /* reset value of the 'value' field */
+/* Field  'constellation_map_radius_ram.value' */
+#define CONSTELLATION_MAP_RADIUS_RAM_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
+#define CONSTELLATION_MAP_RADIUS_RAM_VALUE_BIT_WIDTH 32 /* bit width of the 'value' field */
+#define CONSTELLATION_MAP_RADIUS_RAM_VALUE_BIT_MASK 0xFFFFFFFF /* bit mask of the 'value' field */
+#define CONSTELLATION_MAP_RADIUS_RAM_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
-/* Register 'constellation_mapper_write_data' */
-#define CONSTELLATION_MAPPER_WRITE_DATA_OFFSET 0x00000010 /* address offset of the 'constellation_mapper_write_data' register */
+/* Register 'constellation_map_iq_ram' */
+#define CONSTELLATION_MAP_IQ_RAM_OFFSET 0x00000110 /* address offset of the 'constellation_map_iq_ram' register */
+#define CONSTELLATION_MAP_IQ_RAM_DEPTH 60 /* depth of the 'constellation_map_iq_ram' memory, in elements */
 
-/* Field  'constellation_mapper_write_data.value' */
-#define CONSTELLATION_MAPPER_WRITE_DATA_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
-#define CONSTELLATION_MAPPER_WRITE_DATA_VALUE_BIT_WIDTH 32 /* bit width of the 'value' field */
-#define CONSTELLATION_MAPPER_WRITE_DATA_VALUE_BIT_MASK 0xFFFFFFFF /* bit mask of the 'value' field */
-#define CONSTELLATION_MAPPER_WRITE_DATA_VALUE_RESET 0x0 /* reset value of the 'value' field */
-
-/* Register 'constellation_mapper_read_data' */
-#define CONSTELLATION_MAPPER_READ_DATA_OFFSET 0x00000014 /* address offset of the 'constellation_mapper_read_data' register */
-
-/* Field  'constellation_mapper_read_data.value' */
-#define CONSTELLATION_MAPPER_READ_DATA_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
-#define CONSTELLATION_MAPPER_READ_DATA_VALUE_BIT_WIDTH 32 /* bit width of the 'value' field */
-#define CONSTELLATION_MAPPER_READ_DATA_VALUE_BIT_MASK 0xFFFFFFFF /* bit mask of the 'value' field */
-#define CONSTELLATION_MAPPER_READ_DATA_VALUE_RESET 0x0 /* reset value of the 'value' field */
+/* Field  'constellation_map_iq_ram.value' */
+#define CONSTELLATION_MAP_IQ_RAM_VALUE_BIT_OFFSET 0 /* bit offset of the 'value' field */
+#define CONSTELLATION_MAP_IQ_RAM_VALUE_BIT_WIDTH 32 /* bit width of the 'value' field */
+#define CONSTELLATION_MAP_IQ_RAM_VALUE_BIT_MASK 0xFFFFFFFF /* bit mask of the 'value' field */
+#define CONSTELLATION_MAP_IQ_RAM_VALUE_RESET 0x0 /* reset value of the 'value' field */
 
 /* Register 'axi_debug_input_width_converter_cfg' */
 #define AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET 0x00000D00 /* address offset of the 'axi_debug_input_width_converter_cfg' register */

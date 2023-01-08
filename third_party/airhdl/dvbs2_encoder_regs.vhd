@@ -1,9 +1,9 @@
--- -----------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 -- 'dvbs2_encoder' Register Component
--- Revision: 336
--- -----------------------------------------------------------------------------
--- Generated on 2023-01-02 at 19:46 (UTC) by airhdl version 2022.12.1-715060670
--- -----------------------------------------------------------------------------
+-- Revision: 347
+----------------------------------------------------------------------------------------------------
+-- Generated on 2023-01-08 at 17:59 (UTC) by airhdl version 2023.01.1-740440560
+----------------------------------------------------------------------------------------------------
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 -- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 -- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -15,7 +15,7 @@
 -- CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 -- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 -- POSSIBILITY OF SUCH DAMAGE.
--- -----------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -64,9 +64,16 @@ end entity dvbs2_encoder_regs;
 
 architecture RTL of dvbs2_encoder_regs is
 
+    ------------------------------------------------------------------------------------------------
     -- Constants
+    ------------------------------------------------------------------------------------------------
+
     constant AXI_OKAY           : std_logic_vector(1 downto 0) := "00";
-    constant AXI_DECERR         : std_logic_vector(1 downto 0) := "11";
+    constant AXI_SLVERR         : std_logic_vector(1 downto 0) := "10";
+
+    ------------------------------------------------------------------------------------------------
+    -- Signals
+    ------------------------------------------------------------------------------------------------
 
     -- Registered signals
     signal s_axi_awready_r    : std_logic;
@@ -96,12 +103,18 @@ architecture RTL of dvbs2_encoder_regs is
     signal s_reg_ldpc_fifo_status_arbiter_selected : std_logic_vector(1 downto 0);
     signal s_frames_in_transit_strobe_r : std_logic;
     signal s_reg_frames_in_transit_value : std_logic_vector(7 downto 0);
-    signal s_constellation_mapper_address_strobe_r : std_logic;
-    signal s_reg_constellation_mapper_address_value_r : std_logic_vector(31 downto 0);
-    signal s_constellation_mapper_write_data_strobe_r : std_logic;
-    signal s_reg_constellation_mapper_write_data_value_r : std_logic_vector(31 downto 0);
-    signal s_constellation_mapper_read_data_strobe_r : std_logic;
-    signal s_reg_constellation_mapper_read_data_value : std_logic_vector(31 downto 0);
+    signal s_constellation_map_radius_ram_raddr_r : std_logic_vector(4 downto 0);
+    signal s_constellation_map_radius_ram_ren_r : std_logic;
+    signal s_constellation_map_radius_ram_rdata : std_logic_vector(31 downto 0);
+    signal s_constellation_map_radius_ram_waddr_r : std_logic_vector(4 downto 0);
+    signal s_constellation_map_radius_ram_wen_r : std_logic_vector(3 downto 0);
+    signal s_constellation_map_radius_ram_wdata_r : std_logic_vector(31 downto 0);
+    signal s_constellation_map_iq_ram_raddr_r : std_logic_vector(5 downto 0);
+    signal s_constellation_map_iq_ram_ren_r : std_logic;
+    signal s_constellation_map_iq_ram_rdata : std_logic_vector(31 downto 0);
+    signal s_constellation_map_iq_ram_waddr_r : std_logic_vector(5 downto 0);
+    signal s_constellation_map_iq_ram_wen_r : std_logic_vector(3 downto 0);
+    signal s_constellation_map_iq_ram_wdata_r : std_logic_vector(31 downto 0);
     signal s_axi_debug_input_width_converter_cfg_strobe_r : std_logic;
     signal s_reg_axi_debug_input_width_converter_cfg_block_data_r : std_logic_vector(0 downto 0);
     signal s_reg_axi_debug_input_width_converter_cfg_allow_word_r : std_logic_vector(0 downto 0);
@@ -231,15 +244,17 @@ architecture RTL of dvbs2_encoder_regs is
 
 begin
 
-    ----------------------------------------------------------------------------
+    ------------------------------------------------------------------------------------------------
     -- Inputs
-    --
+    ------------------------------------------------------------------------------------------------
+
     s_reg_ldpc_fifo_status_ldpc_fifo_entries <= user2regs.ldpc_fifo_status_ldpc_fifo_entries;
     s_reg_ldpc_fifo_status_ldpc_fifo_empty <= user2regs.ldpc_fifo_status_ldpc_fifo_empty;
     s_reg_ldpc_fifo_status_ldpc_fifo_full <= user2regs.ldpc_fifo_status_ldpc_fifo_full;
     s_reg_ldpc_fifo_status_arbiter_selected <= user2regs.ldpc_fifo_status_arbiter_selected;
     s_reg_frames_in_transit_value <= user2regs.frames_in_transit_value;
-    s_reg_constellation_mapper_read_data_value <= user2regs.constellation_mapper_read_data_value;
+    s_constellation_map_radius_ram_rdata <= user2regs.constellation_map_radius_ram_rdata;
+    s_constellation_map_iq_ram_rdata <= user2regs.constellation_map_iq_ram_rdata;
     s_reg_axi_debug_input_width_converter_frame_count_value <= user2regs.axi_debug_input_width_converter_frame_count_value;
     s_reg_axi_debug_input_width_converter_last_frame_length_value <= user2regs.axi_debug_input_width_converter_last_frame_length_value;
     s_reg_axi_debug_input_width_converter_min_max_frame_length_min_frame_length <= user2regs.axi_debug_input_width_converter_min_max_frame_length_min_frame_length;
@@ -304,9 +319,10 @@ begin
     s_reg_axi_debug_plframe_strobes_m_tvalid <= user2regs.axi_debug_plframe_strobes_m_tvalid;
     s_reg_axi_debug_plframe_strobes_m_tready <= user2regs.axi_debug_plframe_strobes_m_tready;
 
-    ----------------------------------------------------------------------------
+    ------------------------------------------------------------------------------------------------
     -- Read-transaction FSM
-    --
+    ------------------------------------------------------------------------------------------------
+
     read_fsm : process(axi_aclk, axi_aresetn) is
         constant MAX_MEMORY_LATENCY : natural := 5;
         type t_state is (IDLE, READ_REGISTER, WAIT_MEMORY_RDATA, READ_RESPONSE, DONE);
@@ -331,7 +347,10 @@ begin
             s_axi_rdata_r      <= (others => '0');
             s_ldpc_fifo_status_strobe_r <= '0';
             s_frames_in_transit_strobe_r <= '0';
-            s_constellation_mapper_read_data_strobe_r <= '0';
+            s_constellation_map_radius_ram_raddr_r <= (others => '0');
+            s_constellation_map_radius_ram_ren_r <= '0';
+            s_constellation_map_iq_ram_raddr_r <= (others => '0');
+            s_constellation_map_iq_ram_ren_r <= '0';
             s_axi_debug_input_width_converter_frame_count_strobe_r <= '0';
             s_axi_debug_input_width_converter_last_frame_length_strobe_r <= '0';
             s_axi_debug_input_width_converter_min_max_frame_length_strobe_r <= '0';
@@ -373,7 +392,8 @@ begin
             s_axi_arready_r <= '0';
             s_ldpc_fifo_status_strobe_r <= '0';
             s_frames_in_transit_strobe_r <= '0';
-            s_constellation_mapper_read_data_strobe_r <= '0';
+            s_constellation_map_radius_ram_raddr_r <= (others => '0');
+            s_constellation_map_iq_ram_raddr_r <= (others => '0');
             s_axi_debug_input_width_converter_frame_count_strobe_r <= '0';
             s_axi_debug_input_width_converter_last_frame_length_strobe_r <= '0';
             s_axi_debug_input_width_converter_min_max_frame_length_strobe_r <= '0';
@@ -412,8 +432,8 @@ begin
 
             case v_state_r is
 
-                -- Wait for the start of a read transaction, which is
-                -- initiated by the assertion of ARVALID
+                -- Wait for the start of a read transaction, which is initiated by the
+                -- assertion of ARVALID
                 when IDLE =>
                     if s_axi_arvalid = '1' then
                         s_axi_araddr_reg_r <= unsigned(s_axi_araddr); -- save the read address
@@ -423,11 +443,11 @@ begin
 
                 -- Read from the actual storage element
                 when READ_REGISTER =>
-                    -- defaults:
+                    -- Defaults:
                     v_addr_hit := false;
                     v_rdata_r  := (others => '0');
 
-                    -- register 'config' at address offset 0x0
+                    -- Register  'config' at address offset 0x0
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + CONFIG_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(17 downto 0) := s_reg_config_physical_layer_scrambler_shift_reg_init_r;
@@ -437,7 +457,7 @@ begin
                         v_rdata_r(21 downto 21) := s_reg_config_force_output_ready_r;
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'ldpc_fifo_status' at address offset 0x4
+                    -- Register  'ldpc_fifo_status' at address offset 0x4
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + LDPC_FIFO_STATUS_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(13 downto 0) := s_reg_ldpc_fifo_status_ldpc_fifo_entries;
@@ -447,33 +467,36 @@ begin
                         s_ldpc_fifo_status_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'frames_in_transit' at address offset 0x8
+                    -- Register  'frames_in_transit' at address offset 0x8
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + FRAMES_IN_TRANSIT_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(7 downto 0) := s_reg_frames_in_transit_value;
                         s_frames_in_transit_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'constellation_mapper_address' at address offset 0xC
-                    if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + CONSTELLATION_MAPPER_ADDRESS_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
+                    -- Memory 'constellation_map_radius_ram' at address offset 0x10
+                    if s_axi_araddr_reg_r >= resize(unsigned(BASEADDR) + CONSTELLATION_MAP_RADIUS_RAM_OFFSET, AXI_ADDR_WIDTH) and
+                        s_axi_araddr_reg_r < resize(unsigned(BASEADDR) + CONSTELLATION_MAP_RADIUS_RAM_OFFSET + CONSTELLATION_MAP_RADIUS_RAM_DEPTH * 4, AXI_ADDR_WIDTH) then
                         v_addr_hit := true;
-                        v_rdata_r(31 downto 0) := s_reg_constellation_mapper_address_value_r;
-                        v_state_r := READ_RESPONSE;
+                        -- Generate memory read address:
+                        v_mem_addr := s_axi_araddr_reg_r - resize(unsigned(BASEADDR) + CONSTELLATION_MAP_RADIUS_RAM_OFFSET, AXI_ADDR_WIDTH);
+                        s_constellation_map_radius_ram_raddr_r <= std_logic_vector(v_mem_addr(6 downto 2)); -- output address has 4-byte granularity
+                        s_constellation_map_radius_ram_ren_r <= '1';
+                        v_mem_wait_count_r := CONSTELLATION_MAP_RADIUS_RAM_READ_LATENCY;
+                        v_state_r := WAIT_MEMORY_RDATA;
                     end if;
-                    -- register 'constellation_mapper_write_data' at address offset 0x10
-                    if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + CONSTELLATION_MAPPER_WRITE_DATA_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
+                    -- Memory 'constellation_map_iq_ram' at address offset 0x110
+                    if s_axi_araddr_reg_r >= resize(unsigned(BASEADDR) + CONSTELLATION_MAP_IQ_RAM_OFFSET, AXI_ADDR_WIDTH) and
+                        s_axi_araddr_reg_r < resize(unsigned(BASEADDR) + CONSTELLATION_MAP_IQ_RAM_OFFSET + CONSTELLATION_MAP_IQ_RAM_DEPTH * 4, AXI_ADDR_WIDTH) then
                         v_addr_hit := true;
-                        v_rdata_r(31 downto 0) := s_reg_constellation_mapper_write_data_value_r;
-                        v_state_r := READ_RESPONSE;
+                        -- Generate memory read address:
+                        v_mem_addr := s_axi_araddr_reg_r - resize(unsigned(BASEADDR) + CONSTELLATION_MAP_IQ_RAM_OFFSET, AXI_ADDR_WIDTH);
+                        s_constellation_map_iq_ram_raddr_r <= std_logic_vector(v_mem_addr(7 downto 2)); -- output address has 4-byte granularity
+                        s_constellation_map_iq_ram_ren_r <= '1';
+                        v_mem_wait_count_r := CONSTELLATION_MAP_IQ_RAM_READ_LATENCY;
+                        v_state_r := WAIT_MEMORY_RDATA;
                     end if;
-                    -- register 'constellation_mapper_read_data' at address offset 0x14
-                    if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + CONSTELLATION_MAPPER_READ_DATA_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
-                        v_addr_hit := true;
-                        v_rdata_r(31 downto 0) := s_reg_constellation_mapper_read_data_value;
-                        s_constellation_mapper_read_data_strobe_r <= '1';
-                        v_state_r := READ_RESPONSE;
-                    end if;
-                    -- register 'axi_debug_input_width_converter_cfg' at address offset 0xD00
+                    -- Register  'axi_debug_input_width_converter_cfg' at address offset 0xD00
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(0 downto 0) := s_reg_axi_debug_input_width_converter_cfg_block_data_r;
@@ -481,21 +504,21 @@ begin
                         v_rdata_r(2 downto 2) := s_reg_axi_debug_input_width_converter_cfg_allow_frame_r;
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_input_width_converter_frame_count' at address offset 0xD04
+                    -- Register  'axi_debug_input_width_converter_frame_count' at address offset 0xD04
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_INPUT_WIDTH_CONVERTER_FRAME_COUNT_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_input_width_converter_frame_count_value;
                         s_axi_debug_input_width_converter_frame_count_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_input_width_converter_last_frame_length' at address offset 0xD08
+                    -- Register  'axi_debug_input_width_converter_last_frame_length' at address offset 0xD08
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_INPUT_WIDTH_CONVERTER_LAST_FRAME_LENGTH_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_input_width_converter_last_frame_length_value;
                         s_axi_debug_input_width_converter_last_frame_length_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_input_width_converter_min_max_frame_length' at address offset 0xD0C
+                    -- Register  'axi_debug_input_width_converter_min_max_frame_length' at address offset 0xD0C
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_INPUT_WIDTH_CONVERTER_MIN_MAX_FRAME_LENGTH_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_input_width_converter_min_max_frame_length_min_frame_length;
@@ -503,14 +526,14 @@ begin
                         s_axi_debug_input_width_converter_min_max_frame_length_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_input_width_converter_word_count' at address offset 0xD10
+                    -- Register  'axi_debug_input_width_converter_word_count' at address offset 0xD10
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_INPUT_WIDTH_CONVERTER_WORD_COUNT_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_input_width_converter_word_count_value;
                         s_axi_debug_input_width_converter_word_count_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_input_width_converter_strobes' at address offset 0xD14
+                    -- Register  'axi_debug_input_width_converter_strobes' at address offset 0xD14
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_INPUT_WIDTH_CONVERTER_STROBES_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(0 downto 0) := s_reg_axi_debug_input_width_converter_strobes_s_tvalid;
@@ -520,7 +543,7 @@ begin
                         s_axi_debug_input_width_converter_strobes_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bb_scrambler_cfg' at address offset 0xE00
+                    -- Register  'axi_debug_bb_scrambler_cfg' at address offset 0xE00
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BB_SCRAMBLER_CFG_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(0 downto 0) := s_reg_axi_debug_bb_scrambler_cfg_block_data_r;
@@ -528,21 +551,21 @@ begin
                         v_rdata_r(2 downto 2) := s_reg_axi_debug_bb_scrambler_cfg_allow_frame_r;
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bb_scrambler_frame_count' at address offset 0xE04
+                    -- Register  'axi_debug_bb_scrambler_frame_count' at address offset 0xE04
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BB_SCRAMBLER_FRAME_COUNT_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_bb_scrambler_frame_count_value;
                         s_axi_debug_bb_scrambler_frame_count_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bb_scrambler_last_frame_length' at address offset 0xE08
+                    -- Register  'axi_debug_bb_scrambler_last_frame_length' at address offset 0xE08
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BB_SCRAMBLER_LAST_FRAME_LENGTH_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_bb_scrambler_last_frame_length_value;
                         s_axi_debug_bb_scrambler_last_frame_length_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bb_scrambler_min_max_frame_length' at address offset 0xE0C
+                    -- Register  'axi_debug_bb_scrambler_min_max_frame_length' at address offset 0xE0C
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BB_SCRAMBLER_MIN_MAX_FRAME_LENGTH_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_bb_scrambler_min_max_frame_length_min_frame_length;
@@ -550,14 +573,14 @@ begin
                         s_axi_debug_bb_scrambler_min_max_frame_length_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bb_scrambler_word_count' at address offset 0xE10
+                    -- Register  'axi_debug_bb_scrambler_word_count' at address offset 0xE10
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BB_SCRAMBLER_WORD_COUNT_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_bb_scrambler_word_count_value;
                         s_axi_debug_bb_scrambler_word_count_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bb_scrambler_strobes' at address offset 0xE14
+                    -- Register  'axi_debug_bb_scrambler_strobes' at address offset 0xE14
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BB_SCRAMBLER_STROBES_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(0 downto 0) := s_reg_axi_debug_bb_scrambler_strobes_s_tvalid;
@@ -567,7 +590,7 @@ begin
                         s_axi_debug_bb_scrambler_strobes_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bch_encoder_cfg' at address offset 0xF00
+                    -- Register  'axi_debug_bch_encoder_cfg' at address offset 0xF00
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BCH_ENCODER_CFG_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(0 downto 0) := s_reg_axi_debug_bch_encoder_cfg_block_data_r;
@@ -575,21 +598,21 @@ begin
                         v_rdata_r(2 downto 2) := s_reg_axi_debug_bch_encoder_cfg_allow_frame_r;
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bch_encoder_frame_count' at address offset 0xF04
+                    -- Register  'axi_debug_bch_encoder_frame_count' at address offset 0xF04
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BCH_ENCODER_FRAME_COUNT_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_bch_encoder_frame_count_value;
                         s_axi_debug_bch_encoder_frame_count_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bch_encoder_last_frame_length' at address offset 0xF08
+                    -- Register  'axi_debug_bch_encoder_last_frame_length' at address offset 0xF08
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BCH_ENCODER_LAST_FRAME_LENGTH_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_bch_encoder_last_frame_length_value;
                         s_axi_debug_bch_encoder_last_frame_length_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bch_encoder_min_max_frame_length' at address offset 0xF0C
+                    -- Register  'axi_debug_bch_encoder_min_max_frame_length' at address offset 0xF0C
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BCH_ENCODER_MIN_MAX_FRAME_LENGTH_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_bch_encoder_min_max_frame_length_min_frame_length;
@@ -597,14 +620,14 @@ begin
                         s_axi_debug_bch_encoder_min_max_frame_length_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bch_encoder_word_count' at address offset 0xF10
+                    -- Register  'axi_debug_bch_encoder_word_count' at address offset 0xF10
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BCH_ENCODER_WORD_COUNT_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_bch_encoder_word_count_value;
                         s_axi_debug_bch_encoder_word_count_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bch_encoder_strobes' at address offset 0xF14
+                    -- Register  'axi_debug_bch_encoder_strobes' at address offset 0xF14
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BCH_ENCODER_STROBES_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(0 downto 0) := s_reg_axi_debug_bch_encoder_strobes_s_tvalid;
@@ -614,7 +637,7 @@ begin
                         s_axi_debug_bch_encoder_strobes_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_ldpc_encoder_cfg' at address offset 0x1000
+                    -- Register  'axi_debug_ldpc_encoder_cfg' at address offset 0x1000
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_LDPC_ENCODER_CFG_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(0 downto 0) := s_reg_axi_debug_ldpc_encoder_cfg_block_data_r;
@@ -622,21 +645,21 @@ begin
                         v_rdata_r(2 downto 2) := s_reg_axi_debug_ldpc_encoder_cfg_allow_frame_r;
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_ldpc_encoder_frame_count' at address offset 0x1004
+                    -- Register  'axi_debug_ldpc_encoder_frame_count' at address offset 0x1004
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_LDPC_ENCODER_FRAME_COUNT_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_ldpc_encoder_frame_count_value;
                         s_axi_debug_ldpc_encoder_frame_count_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_ldpc_encoder_last_frame_length' at address offset 0x1008
+                    -- Register  'axi_debug_ldpc_encoder_last_frame_length' at address offset 0x1008
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_LDPC_ENCODER_LAST_FRAME_LENGTH_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_ldpc_encoder_last_frame_length_value;
                         s_axi_debug_ldpc_encoder_last_frame_length_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_ldpc_encoder_min_max_frame_length' at address offset 0x100C
+                    -- Register  'axi_debug_ldpc_encoder_min_max_frame_length' at address offset 0x100C
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_LDPC_ENCODER_MIN_MAX_FRAME_LENGTH_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length;
@@ -644,14 +667,14 @@ begin
                         s_axi_debug_ldpc_encoder_min_max_frame_length_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_ldpc_encoder_word_count' at address offset 0x1010
+                    -- Register  'axi_debug_ldpc_encoder_word_count' at address offset 0x1010
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_LDPC_ENCODER_WORD_COUNT_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_ldpc_encoder_word_count_value;
                         s_axi_debug_ldpc_encoder_word_count_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_ldpc_encoder_strobes' at address offset 0x1014
+                    -- Register  'axi_debug_ldpc_encoder_strobes' at address offset 0x1014
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_LDPC_ENCODER_STROBES_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(0 downto 0) := s_reg_axi_debug_ldpc_encoder_strobes_s_tvalid;
@@ -661,7 +684,7 @@ begin
                         s_axi_debug_ldpc_encoder_strobes_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bit_interleaver_cfg' at address offset 0x1100
+                    -- Register  'axi_debug_bit_interleaver_cfg' at address offset 0x1100
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BIT_INTERLEAVER_CFG_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(0 downto 0) := s_reg_axi_debug_bit_interleaver_cfg_block_data_r;
@@ -669,21 +692,21 @@ begin
                         v_rdata_r(2 downto 2) := s_reg_axi_debug_bit_interleaver_cfg_allow_frame_r;
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bit_interleaver_frame_count' at address offset 0x1104
+                    -- Register  'axi_debug_bit_interleaver_frame_count' at address offset 0x1104
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BIT_INTERLEAVER_FRAME_COUNT_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_bit_interleaver_frame_count_value;
                         s_axi_debug_bit_interleaver_frame_count_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bit_interleaver_last_frame_length' at address offset 0x1108
+                    -- Register  'axi_debug_bit_interleaver_last_frame_length' at address offset 0x1108
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BIT_INTERLEAVER_LAST_FRAME_LENGTH_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_bit_interleaver_last_frame_length_value;
                         s_axi_debug_bit_interleaver_last_frame_length_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bit_interleaver_min_max_frame_length' at address offset 0x110C
+                    -- Register  'axi_debug_bit_interleaver_min_max_frame_length' at address offset 0x110C
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BIT_INTERLEAVER_MIN_MAX_FRAME_LENGTH_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_bit_interleaver_min_max_frame_length_min_frame_length;
@@ -691,14 +714,14 @@ begin
                         s_axi_debug_bit_interleaver_min_max_frame_length_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bit_interleaver_word_count' at address offset 0x1110
+                    -- Register  'axi_debug_bit_interleaver_word_count' at address offset 0x1110
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BIT_INTERLEAVER_WORD_COUNT_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_bit_interleaver_word_count_value;
                         s_axi_debug_bit_interleaver_word_count_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_bit_interleaver_strobes' at address offset 0x1114
+                    -- Register  'axi_debug_bit_interleaver_strobes' at address offset 0x1114
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_BIT_INTERLEAVER_STROBES_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(0 downto 0) := s_reg_axi_debug_bit_interleaver_strobes_s_tvalid;
@@ -708,7 +731,7 @@ begin
                         s_axi_debug_bit_interleaver_strobes_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_constellation_mapper_cfg' at address offset 0x1200
+                    -- Register  'axi_debug_constellation_mapper_cfg' at address offset 0x1200
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_CONSTELLATION_MAPPER_CFG_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(0 downto 0) := s_reg_axi_debug_constellation_mapper_cfg_block_data_r;
@@ -716,21 +739,21 @@ begin
                         v_rdata_r(2 downto 2) := s_reg_axi_debug_constellation_mapper_cfg_allow_frame_r;
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_constellation_mapper_frame_count' at address offset 0x1204
+                    -- Register  'axi_debug_constellation_mapper_frame_count' at address offset 0x1204
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_CONSTELLATION_MAPPER_FRAME_COUNT_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_constellation_mapper_frame_count_value;
                         s_axi_debug_constellation_mapper_frame_count_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_constellation_mapper_last_frame_length' at address offset 0x1208
+                    -- Register  'axi_debug_constellation_mapper_last_frame_length' at address offset 0x1208
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_CONSTELLATION_MAPPER_LAST_FRAME_LENGTH_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_constellation_mapper_last_frame_length_value;
                         s_axi_debug_constellation_mapper_last_frame_length_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_constellation_mapper_min_max_frame_length' at address offset 0x120C
+                    -- Register  'axi_debug_constellation_mapper_min_max_frame_length' at address offset 0x120C
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_CONSTELLATION_MAPPER_MIN_MAX_FRAME_LENGTH_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_constellation_mapper_min_max_frame_length_min_frame_length;
@@ -738,14 +761,14 @@ begin
                         s_axi_debug_constellation_mapper_min_max_frame_length_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_constellation_mapper_word_count' at address offset 0x1210
+                    -- Register  'axi_debug_constellation_mapper_word_count' at address offset 0x1210
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_CONSTELLATION_MAPPER_WORD_COUNT_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_constellation_mapper_word_count_value;
                         s_axi_debug_constellation_mapper_word_count_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_constellation_mapper_strobes' at address offset 0x1214
+                    -- Register  'axi_debug_constellation_mapper_strobes' at address offset 0x1214
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_CONSTELLATION_MAPPER_STROBES_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(0 downto 0) := s_reg_axi_debug_constellation_mapper_strobes_s_tvalid;
@@ -755,7 +778,7 @@ begin
                         s_axi_debug_constellation_mapper_strobes_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_plframe_cfg' at address offset 0x1300
+                    -- Register  'axi_debug_plframe_cfg' at address offset 0x1300
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_PLFRAME_CFG_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(0 downto 0) := s_reg_axi_debug_plframe_cfg_block_data_r;
@@ -763,21 +786,21 @@ begin
                         v_rdata_r(2 downto 2) := s_reg_axi_debug_plframe_cfg_allow_frame_r;
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_plframe_frame_count' at address offset 0x1304
+                    -- Register  'axi_debug_plframe_frame_count' at address offset 0x1304
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_PLFRAME_FRAME_COUNT_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_plframe_frame_count_value;
                         s_axi_debug_plframe_frame_count_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_plframe_last_frame_length' at address offset 0x1308
+                    -- Register  'axi_debug_plframe_last_frame_length' at address offset 0x1308
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_PLFRAME_LAST_FRAME_LENGTH_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_plframe_last_frame_length_value;
                         s_axi_debug_plframe_last_frame_length_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_plframe_min_max_frame_length' at address offset 0x130C
+                    -- Register  'axi_debug_plframe_min_max_frame_length' at address offset 0x130C
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_PLFRAME_MIN_MAX_FRAME_LENGTH_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_plframe_min_max_frame_length_min_frame_length;
@@ -785,14 +808,14 @@ begin
                         s_axi_debug_plframe_min_max_frame_length_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_plframe_word_count' at address offset 0x1310
+                    -- Register  'axi_debug_plframe_word_count' at address offset 0x1310
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_PLFRAME_WORD_COUNT_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(15 downto 0) := s_reg_axi_debug_plframe_word_count_value;
                         s_axi_debug_plframe_word_count_strobe_r <= '1';
                         v_state_r := READ_RESPONSE;
                     end if;
-                    -- register 'axi_debug_plframe_strobes' at address offset 0x1314
+                    -- Register  'axi_debug_plframe_strobes' at address offset 0x1314
                     if s_axi_araddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_PLFRAME_STROBES_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
                         v_addr_hit := true;
                         v_rdata_r(0 downto 0) := s_reg_axi_debug_plframe_strobes_s_tvalid;
@@ -806,7 +829,7 @@ begin
                     if v_addr_hit then
                         v_rresp_r := AXI_OKAY;
                     else
-                        v_rresp_r := AXI_DECERR;
+                        v_rresp_r := AXI_SLVERR;
                         -- pragma translate_off
                         report "ARADDR decode error" severity warning;
                         -- pragma translate_on
@@ -816,6 +839,18 @@ begin
                 -- Wait for memory read data
                 when WAIT_MEMORY_RDATA =>
                     if v_mem_wait_count_r = 0 then
+                        -- memory 'constellation_map_radius_ram' at address offset 0x10
+                        if s_axi_araddr_reg_r >= resize(unsigned(BASEADDR) + CONSTELLATION_MAP_RADIUS_RAM_OFFSET, AXI_ADDR_WIDTH) and
+                            s_axi_araddr_reg_r < resize(unsigned(BASEADDR) + CONSTELLATION_MAP_RADIUS_RAM_OFFSET + CONSTELLATION_MAP_RADIUS_RAM_DEPTH * 4, AXI_ADDR_WIDTH) then
+                            v_rdata_r(31 downto 0) := s_constellation_map_radius_ram_rdata(31 downto 0);
+                            s_constellation_map_radius_ram_ren_r <= '0';
+                        end if;
+                        -- memory 'constellation_map_iq_ram' at address offset 0x110
+                        if s_axi_araddr_reg_r >= resize(unsigned(BASEADDR) + CONSTELLATION_MAP_IQ_RAM_OFFSET, AXI_ADDR_WIDTH) and
+                            s_axi_araddr_reg_r < resize(unsigned(BASEADDR) + CONSTELLATION_MAP_IQ_RAM_OFFSET + CONSTELLATION_MAP_IQ_RAM_DEPTH * 4, AXI_ADDR_WIDTH) then
+                            v_rdata_r(31 downto 0) := s_constellation_map_iq_ram_rdata(31 downto 0);
+                            s_constellation_map_iq_ram_ren_r <= '0';
+                        end if;
                         v_state_r      := READ_RESPONSE;
                     else
                         v_mem_wait_count_r := v_mem_wait_count_r - 1;
@@ -840,9 +875,10 @@ begin
         end if;
     end process read_fsm;
 
-    ----------------------------------------------------------------------------
+    ------------------------------------------------------------------------------------------------
     -- Write-transaction FSM
-    --
+    ------------------------------------------------------------------------------------------------
+
     write_fsm : process(axi_aclk, axi_aresetn) is
         type t_state is (IDLE, ADDR_FIRST, DATA_FIRST, UPDATE_REGISTER, DONE);
         variable v_state_r  : t_state;
@@ -865,10 +901,12 @@ begin
             s_reg_config_swap_input_data_byte_endianness_r <= CONFIG_SWAP_INPUT_DATA_BYTE_ENDIANNESS_RESET;
             s_reg_config_swap_output_data_byte_endianness_r <= CONFIG_SWAP_OUTPUT_DATA_BYTE_ENDIANNESS_RESET;
             s_reg_config_force_output_ready_r <= CONFIG_FORCE_OUTPUT_READY_RESET;
-            s_constellation_mapper_address_strobe_r <= '0';
-            s_reg_constellation_mapper_address_value_r <= CONSTELLATION_MAPPER_ADDRESS_VALUE_RESET;
-            s_constellation_mapper_write_data_strobe_r <= '0';
-            s_reg_constellation_mapper_write_data_value_r <= CONSTELLATION_MAPPER_WRITE_DATA_VALUE_RESET;
+            s_constellation_map_radius_ram_waddr_r <= (others => '0');
+            s_constellation_map_radius_ram_wen_r <= (others => '0');
+            s_constellation_map_radius_ram_wdata_r <= (others => '0');
+            s_constellation_map_iq_ram_waddr_r <= (others => '0');
+            s_constellation_map_iq_ram_wen_r <= (others => '0');
+            s_constellation_map_iq_ram_wdata_r <= (others => '0');
             s_axi_debug_input_width_converter_cfg_strobe_r <= '0';
             s_reg_axi_debug_input_width_converter_cfg_block_data_r <= AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_BLOCK_DATA_RESET;
             s_reg_axi_debug_input_width_converter_cfg_allow_word_r <= AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_ALLOW_WORD_RESET;
@@ -903,8 +941,10 @@ begin
             s_axi_awready_r <= '0';
             s_axi_wready_r  <= '0';
             s_config_strobe_r <= '0';
-            s_constellation_mapper_address_strobe_r <= '0';
-            s_constellation_mapper_write_data_strobe_r <= '0';
+            s_constellation_map_radius_ram_waddr_r <= (others => '0'); -- always reset to zero because of wired OR
+            s_constellation_map_radius_ram_wen_r <= (others => '0');
+            s_constellation_map_iq_ram_waddr_r <= (others => '0'); -- always reset to zero because of wired OR
+            s_constellation_map_iq_ram_wen_r <= (others => '0');
             s_axi_debug_input_width_converter_cfg_strobe_r <= '0';
             s_axi_debug_bb_scrambler_cfg_strobe_r <= '0';
             s_axi_debug_bch_encoder_cfg_strobe_r <= '0';
@@ -1054,209 +1094,23 @@ begin
                             s_reg_config_force_output_ready_r(0) <= s_axi_wdata_reg_r(21); -- force_output_ready(0)
                         end if;
                     end if;
-                    -- register 'constellation_mapper_address' at address offset 0xC
-                    if s_axi_awaddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + CONSTELLATION_MAPPER_ADDRESS_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
+                    -- memory 'constellation_map_radius_ram' at address offset 0x10
+                    if s_axi_awaddr_reg_r >= resize(unsigned(BASEADDR) + CONSTELLATION_MAP_RADIUS_RAM_OFFSET, AXI_ADDR_WIDTH) and
+                        s_axi_awaddr_reg_r < resize(unsigned(BASEADDR) + CONSTELLATION_MAP_RADIUS_RAM_OFFSET + CONSTELLATION_MAP_RADIUS_RAM_DEPTH * 4, AXI_ADDR_WIDTH) then
                         v_addr_hit := true;
-                        s_constellation_mapper_address_strobe_r <= '1';
-                        -- field 'value':
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_address_value_r(0) <= s_axi_wdata_reg_r(0); -- value(0)
-                        end if;
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_address_value_r(1) <= s_axi_wdata_reg_r(1); -- value(1)
-                        end if;
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_address_value_r(2) <= s_axi_wdata_reg_r(2); -- value(2)
-                        end if;
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_address_value_r(3) <= s_axi_wdata_reg_r(3); -- value(3)
-                        end if;
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_address_value_r(4) <= s_axi_wdata_reg_r(4); -- value(4)
-                        end if;
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_address_value_r(5) <= s_axi_wdata_reg_r(5); -- value(5)
-                        end if;
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_address_value_r(6) <= s_axi_wdata_reg_r(6); -- value(6)
-                        end if;
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_address_value_r(7) <= s_axi_wdata_reg_r(7); -- value(7)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_address_value_r(8) <= s_axi_wdata_reg_r(8); -- value(8)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_address_value_r(9) <= s_axi_wdata_reg_r(9); -- value(9)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_address_value_r(10) <= s_axi_wdata_reg_r(10); -- value(10)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_address_value_r(11) <= s_axi_wdata_reg_r(11); -- value(11)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_address_value_r(12) <= s_axi_wdata_reg_r(12); -- value(12)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_address_value_r(13) <= s_axi_wdata_reg_r(13); -- value(13)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_address_value_r(14) <= s_axi_wdata_reg_r(14); -- value(14)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_address_value_r(15) <= s_axi_wdata_reg_r(15); -- value(15)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_address_value_r(16) <= s_axi_wdata_reg_r(16); -- value(16)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_address_value_r(17) <= s_axi_wdata_reg_r(17); -- value(17)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_address_value_r(18) <= s_axi_wdata_reg_r(18); -- value(18)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_address_value_r(19) <= s_axi_wdata_reg_r(19); -- value(19)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_address_value_r(20) <= s_axi_wdata_reg_r(20); -- value(20)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_address_value_r(21) <= s_axi_wdata_reg_r(21); -- value(21)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_address_value_r(22) <= s_axi_wdata_reg_r(22); -- value(22)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_address_value_r(23) <= s_axi_wdata_reg_r(23); -- value(23)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_address_value_r(24) <= s_axi_wdata_reg_r(24); -- value(24)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_address_value_r(25) <= s_axi_wdata_reg_r(25); -- value(25)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_address_value_r(26) <= s_axi_wdata_reg_r(26); -- value(26)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_address_value_r(27) <= s_axi_wdata_reg_r(27); -- value(27)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_address_value_r(28) <= s_axi_wdata_reg_r(28); -- value(28)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_address_value_r(29) <= s_axi_wdata_reg_r(29); -- value(29)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_address_value_r(30) <= s_axi_wdata_reg_r(30); -- value(30)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_address_value_r(31) <= s_axi_wdata_reg_r(31); -- value(31)
-                        end if;
+                        v_mem_addr := s_axi_awaddr_reg_r - resize(unsigned(BASEADDR) + CONSTELLATION_MAP_RADIUS_RAM_OFFSET, AXI_ADDR_WIDTH);
+                        s_constellation_map_radius_ram_waddr_r <= std_logic_vector(v_mem_addr(6 downto 2)); -- output address has 4-byte granularity
+                        s_constellation_map_radius_ram_wen_r <= s_axi_wstrb_reg_r;
+                        s_constellation_map_radius_ram_wdata_r <= s_axi_wdata_reg_r;
                     end if;
-                    -- register 'constellation_mapper_write_data' at address offset 0x10
-                    if s_axi_awaddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + CONSTELLATION_MAPPER_WRITE_DATA_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
+                    -- memory 'constellation_map_iq_ram' at address offset 0x110
+                    if s_axi_awaddr_reg_r >= resize(unsigned(BASEADDR) + CONSTELLATION_MAP_IQ_RAM_OFFSET, AXI_ADDR_WIDTH) and
+                        s_axi_awaddr_reg_r < resize(unsigned(BASEADDR) + CONSTELLATION_MAP_IQ_RAM_OFFSET + CONSTELLATION_MAP_IQ_RAM_DEPTH * 4, AXI_ADDR_WIDTH) then
                         v_addr_hit := true;
-                        s_constellation_mapper_write_data_strobe_r <= '1';
-                        -- field 'value':
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(0) <= s_axi_wdata_reg_r(0); -- value(0)
-                        end if;
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(1) <= s_axi_wdata_reg_r(1); -- value(1)
-                        end if;
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(2) <= s_axi_wdata_reg_r(2); -- value(2)
-                        end if;
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(3) <= s_axi_wdata_reg_r(3); -- value(3)
-                        end if;
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(4) <= s_axi_wdata_reg_r(4); -- value(4)
-                        end if;
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(5) <= s_axi_wdata_reg_r(5); -- value(5)
-                        end if;
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(6) <= s_axi_wdata_reg_r(6); -- value(6)
-                        end if;
-                        if s_axi_wstrb_reg_r(0) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(7) <= s_axi_wdata_reg_r(7); -- value(7)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(8) <= s_axi_wdata_reg_r(8); -- value(8)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(9) <= s_axi_wdata_reg_r(9); -- value(9)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(10) <= s_axi_wdata_reg_r(10); -- value(10)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(11) <= s_axi_wdata_reg_r(11); -- value(11)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(12) <= s_axi_wdata_reg_r(12); -- value(12)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(13) <= s_axi_wdata_reg_r(13); -- value(13)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(14) <= s_axi_wdata_reg_r(14); -- value(14)
-                        end if;
-                        if s_axi_wstrb_reg_r(1) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(15) <= s_axi_wdata_reg_r(15); -- value(15)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(16) <= s_axi_wdata_reg_r(16); -- value(16)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(17) <= s_axi_wdata_reg_r(17); -- value(17)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(18) <= s_axi_wdata_reg_r(18); -- value(18)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(19) <= s_axi_wdata_reg_r(19); -- value(19)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(20) <= s_axi_wdata_reg_r(20); -- value(20)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(21) <= s_axi_wdata_reg_r(21); -- value(21)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(22) <= s_axi_wdata_reg_r(22); -- value(22)
-                        end if;
-                        if s_axi_wstrb_reg_r(2) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(23) <= s_axi_wdata_reg_r(23); -- value(23)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(24) <= s_axi_wdata_reg_r(24); -- value(24)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(25) <= s_axi_wdata_reg_r(25); -- value(25)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(26) <= s_axi_wdata_reg_r(26); -- value(26)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(27) <= s_axi_wdata_reg_r(27); -- value(27)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(28) <= s_axi_wdata_reg_r(28); -- value(28)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(29) <= s_axi_wdata_reg_r(29); -- value(29)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(30) <= s_axi_wdata_reg_r(30); -- value(30)
-                        end if;
-                        if s_axi_wstrb_reg_r(3) = '1' then
-                            s_reg_constellation_mapper_write_data_value_r(31) <= s_axi_wdata_reg_r(31); -- value(31)
-                        end if;
+                        v_mem_addr := s_axi_awaddr_reg_r - resize(unsigned(BASEADDR) + CONSTELLATION_MAP_IQ_RAM_OFFSET, AXI_ADDR_WIDTH);
+                        s_constellation_map_iq_ram_waddr_r <= std_logic_vector(v_mem_addr(7 downto 2)); -- output address has 4-byte granularity
+                        s_constellation_map_iq_ram_wen_r <= s_axi_wstrb_reg_r;
+                        s_constellation_map_iq_ram_wdata_r <= s_axi_wdata_reg_r;
                     end if;
                     -- register 'axi_debug_input_width_converter_cfg' at address offset 0xD00
                     if s_axi_awaddr_reg_r(AXI_ADDR_WIDTH-1 downto 2) = resize(unsigned(BASEADDR(AXI_ADDR_WIDTH-1 downto 2)) + AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET(AXI_ADDR_WIDTH-1 downto 2), AXI_ADDR_WIDTH-2) then
@@ -1379,7 +1233,7 @@ begin
                     end if;
                     --
                     if not v_addr_hit then
-                        s_axi_bresp_r <= AXI_DECERR;
+                        s_axi_bresp_r <= AXI_SLVERR;
                         -- pragma translate_off
                         report "AWADDR decode error" severity warning;
                         -- pragma translate_on
@@ -1400,9 +1254,10 @@ begin
         end if;
     end process write_fsm;
 
-    ----------------------------------------------------------------------------
+    ------------------------------------------------------------------------------------------------
     -- Outputs
-    --
+    ------------------------------------------------------------------------------------------------
+
     s_axi_awready <= s_axi_awready_r;
     s_axi_wready  <= s_axi_wready_r;
     s_axi_bvalid  <= s_axi_bvalid_r;
@@ -1420,11 +1275,14 @@ begin
     regs2user.config_force_output_ready <= s_reg_config_force_output_ready_r;
     regs2user.ldpc_fifo_status_strobe <= s_ldpc_fifo_status_strobe_r;
     regs2user.frames_in_transit_strobe <= s_frames_in_transit_strobe_r;
-    regs2user.constellation_mapper_address_strobe <= s_constellation_mapper_address_strobe_r;
-    regs2user.constellation_mapper_address_value <= s_reg_constellation_mapper_address_value_r;
-    regs2user.constellation_mapper_write_data_strobe <= s_constellation_mapper_write_data_strobe_r;
-    regs2user.constellation_mapper_write_data_value <= s_reg_constellation_mapper_write_data_value_r;
-    regs2user.constellation_mapper_read_data_strobe <= s_constellation_mapper_read_data_strobe_r;
+    regs2user.constellation_map_radius_ram_addr <= s_constellation_map_radius_ram_waddr_r or s_constellation_map_radius_ram_raddr_r; -- using wired OR as read/write address multiplexer
+    regs2user.constellation_map_radius_ram_wen <= s_constellation_map_radius_ram_wen_r;
+    regs2user.constellation_map_radius_ram_wdata <= s_constellation_map_radius_ram_wdata_r;
+    regs2user.constellation_map_radius_ram_ren <= s_constellation_map_radius_ram_ren_r;
+    regs2user.constellation_map_iq_ram_addr <= s_constellation_map_iq_ram_waddr_r or s_constellation_map_iq_ram_raddr_r; -- using wired OR as read/write address multiplexer
+    regs2user.constellation_map_iq_ram_wen <= s_constellation_map_iq_ram_wen_r;
+    regs2user.constellation_map_iq_ram_wdata <= s_constellation_map_iq_ram_wdata_r;
+    regs2user.constellation_map_iq_ram_ren <= s_constellation_map_iq_ram_ren_r;
     regs2user.axi_debug_input_width_converter_cfg_strobe <= s_axi_debug_input_width_converter_cfg_strobe_r;
     regs2user.axi_debug_input_width_converter_cfg_block_data <= s_reg_axi_debug_input_width_converter_cfg_block_data_r;
     regs2user.axi_debug_input_width_converter_cfg_allow_word <= s_reg_axi_debug_input_width_converter_cfg_allow_word_r;

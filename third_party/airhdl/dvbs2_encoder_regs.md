@@ -6,9 +6,9 @@
 | **Default base address** | `0x0` |
 | **Register width** | 32 bits |
 | **Default address width** | 32 bits |
-| **Register count** | 48 |
+| **Register count** | 47 |
 | **Range** | 4888 bytes |
-| **Revision** | 336 |
+| **Revision** | 347 |
 
 ## Overview
 
@@ -17,9 +17,8 @@
 | `0x0` | config |  | REG |
 | `0x4` | ldpc_fifo_status |  | REG |
 | `0x8` | frames_in_transit |  | REG |
-| `0xC` | constellation_mapper_address |  | REG |
-| `0x10` | constellation_mapper_write_data |  | REG |
-| `0x14` | constellation_mapper_read_data |  | REG |
+| `0x10` | constellation_map_radius_ram | Radius for 16APSK and 32APSK constellation mapping.R0 uses bits 15:0, R1 uses bits 31:16.For 32APSK, r3 is always 1.0, so r1 and r0 need to be scaled appropriatelyOffsets:- 0x00: Short frames,  16APSK, 2/3- 0x01: Short frames,  16APSK, 3/4- 0x02: Short frames,  16APSK, 3/5- 0x03: Short frames,  16APSK, 4/5- 0x04: Short frames,  16APSK, 5/6- 0x05: Short frames,  16APSK, 8/9- 0x06: Normal frames, 16APSK, 2/3- 0x07: Normal frames, 16APSK, 3/4- 0x08: Normal frames, 16APSK, 3/5- 0x09: Normal frames, 16APSK, 4/5- 0x0a: Normal frames, 16APSK, 5/6- 0x0b: Normal frames, 16APSK, 8/9- 0x0c: Normal frames, 16APSK, 9/10- 0x0d: Short frames,  32APSK, 3/4- 0x0e: Short frames,  32APSK, 4/5- 0x0f: Short frames,  32APSK, 5/6- 0x10: Short frames,  32APSK, 8/9- 0x11: Normal frames, 32APSK, 3/4- 0x12: Normal frames, 32APSK, 4/5- 0x13: Normal frames, 32APSK, 5/6- 0x14: Normal frames, 32APSK, 8/9- 0x15: Normal frames, 32APSK, 9/10 | MEM[22] |
+| `0x110` | constellation_map_iq_ram | IQ values for QPSK, 8PSK, 16APSK and 32APSK constellation mapping.I component uses bits 15:0, Q component uses bits 31:16.Offsets:- 0x00 to 0x03: QPSK- 0x04 to 0x0B: 8PSK- 0x0C to 0x1B: 16APSK- 0x1C to 0x3B: 32APSK | MEM[60] |
 | `0xD00` | axi_debug_input_width_converter_cfg |  | REG |
 | `0xD04` | axi_debug_input_width_converter_frame_count |  | REG |
 | `0xD08` | axi_debug_input_width_converter_last_frame_length |  | REG |
@@ -65,7 +64,7 @@
 
 ## Registers
 
-| Offset | Name | Description | Type | Access | Attributes | Reset | 
+| Offset | Name | Description | Type | Access | Attributes | Reset |
 | ---    | --- | --- | --- | --- | --- | --- |
 | `0x0` | config | | REG | R/W |  | `0x1` |
 |        |  [17:0] physical_layer_scrambler_shift_reg_init | Initial value for the physical layer's scrambler X vector, used to set a device's gold code. |  |  |  | `0x1` |
@@ -80,11 +79,9 @@
 |        |  [21:20] arbiter_selected |  |  |  |  | `0x0` |
 | `0x8` | frames_in_transit | | REG | R |  | `0x0` |
 |        |  [7:0] value |  |  |  |  | `0x0` |
-| `0xC` | constellation_mapper_address | | REG | R/W |  | `0x0` |
+| `0x10` | constellation_map_radius_ram |Radius for 16APSK and 32APSK constellation mapping.R0 uses bits 15:0, R1 uses bits 31:16.For 32APSK, r3 is always 1.0, so r1 and r0 need to be scaled appropriatelyOffsets:- 0x00: Short frames,  16APSK, 2/3- 0x01: Short frames,  16APSK, 3/4- 0x02: Short frames,  16APSK, 3/5- 0x03: Short frames,  16APSK, 4/5- 0x04: Short frames,  16APSK, 5/6- 0x05: Short frames,  16APSK, 8/9- 0x06: Normal frames, 16APSK, 2/3- 0x07: Normal frames, 16APSK, 3/4- 0x08: Normal frames, 16APSK, 3/5- 0x09: Normal frames, 16APSK, 4/5- 0x0a: Normal frames, 16APSK, 5/6- 0x0b: Normal frames, 16APSK, 8/9- 0x0c: Normal frames, 16APSK, 9/10- 0x0d: Short frames,  32APSK, 3/4- 0x0e: Short frames,  32APSK, 4/5- 0x0f: Short frames,  32APSK, 5/6- 0x10: Short frames,  32APSK, 8/9- 0x11: Normal frames, 32APSK, 3/4- 0x12: Normal frames, 32APSK, 4/5- 0x13: Normal frames, 32APSK, 5/6- 0x14: Normal frames, 32APSK, 8/9- 0x15: Normal frames, 32APSK, 9/10 | MEM[22] | R/W | read latency: 2 | `0x0` |
 |        |  [31:0] value |  |  |  |  | `0x0` |
-| `0x10` | constellation_mapper_write_data | | REG | R/W |  | `0x0` |
-|        |  [31:0] value |  |  |  |  | `0x0` |
-| `0x14` | constellation_mapper_read_data | | REG | R |  | `0x0` |
+| `0x110` | constellation_map_iq_ram |IQ values for QPSK, 8PSK, 16APSK and 32APSK constellation mapping.I component uses bits 15:0, Q component uses bits 31:16.Offsets:- 0x00 to 0x03: QPSK- 0x04 to 0x0B: 8PSK- 0x0C to 0x1B: 16APSK- 0x1C to 0x3B: 32APSK | MEM[60] | R/W | read latency: 2 | `0x0` |
 |        |  [31:0] value |  |  |  |  | `0x0` |
 | `0xD00` | axi_debug_input_width_converter_cfg | | REG | R/W |  | `0x0` |
 |        |  [0] block_data | Disables data from passing through |  |  |  | `0x0` |
@@ -213,4 +210,4 @@
 |        |  [2] m_tvalid |  |  |  |  | `0x0` |
 |        |  [3] m_tready |  |  |  |  | `0x0` |
 
-_Generated on 2023-01-02 at 19:46 (UTC) by airhdl version 2022.12.1-715060670_
+_Generated on 2023-01-08 at 17:59 (UTC) by airhdl version 2023.01.1-740440560_

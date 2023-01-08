@@ -44,6 +44,7 @@ context fpga_cores_sim.sim_context;
 use work.dvb_utils_pkg.all;
 use work.dvb_sim_utils_pkg.all;
 use work.dvbs2_encoder_regs_pkg.all;
+use work.constellation_mapper_pkg.all;
 
 -- ghdl translate_off
 library modelsim_lib;
@@ -495,14 +496,14 @@ begin
       end if;
     end procedure walk; -- }} ----------------------------------------------------------
 
-    procedure axi_cfg_write (
+    procedure axi_cfg_write ( -- {{ ----------------------------------------------------
       constant addr      : unsigned(axi_cfg.awaddr'range);
       constant data      : std_logic_vector(axi_cfg.wdata'range)) is
       variable addr_ack  : boolean := False;
       variable data_ack  : boolean := False;
       variable resp_recv : boolean := False;
     begin
-      info(logger, sformat("axi_cfg_write: %r, %r", fo(addr), fo(data)));
+      debug(logger, sformat("axi_cfg_write: %r, %r", fo(addr), fo(data)));
       axi_cfg.awvalid <= '1';
       axi_cfg.awaddr  <= std_logic_vector(addr);
 
@@ -539,15 +540,15 @@ begin
         end if;
 
       end loop;
-    end procedure;
+    end procedure; -- }} ---------------------------------------------------------------
 
-    procedure axi_cfg_read (
+    procedure axi_cfg_read ( -- {{ -----------------------------------------------------
       constant addr      : unsigned(axi_cfg.araddr'range);
       variable data      : out std_logic_vector(axi_cfg.rdata'range)) is
       variable addr_ack  : boolean := False;
       variable data_recv : boolean := False;
     begin
-      info(logger, sformat("axi_cfg_read: %r", fo(addr)));
+      debug(logger, sformat("axi_cfg_read: %r", fo(addr)));
       axi_cfg.arvalid <= '1';
       axi_cfg.araddr  <= std_logic_vector(addr);
 
@@ -573,7 +574,14 @@ begin
         end if;
 
       end loop;
-    end procedure;
+    end procedure; -- }} ---------------------------------------------------------------
+
+    procedure axi_cfg_read ( -- {{ -----------------------------------------------------
+      constant addr : integer;
+      variable data : out std_logic_vector(axi_cfg.rdata'range)) is
+    begin
+        axi_cfg_read(to_unsigned(addr, 32), data);
+    end procedure; -- }} ---------------------------------------------------------------
 
     procedure wait_for_completion is -- {{ ---------------------------------------------
       variable msg : msg_t;
@@ -595,55 +603,129 @@ begin
       info(logger, "All BFMs have now completed");
     end procedure wait_for_completion; -- }} -------------------------------------------
 
-  procedure print_constellation_mapper_tables is
+    procedure print_radius_table is -- {{ ----------------------------------------------
+      function ram_address_to_config ( addr : integer ) return string is
+      begin
+        case addr is
+          when RADIUS_SHORT_16APSK_C2_3   => return "short,  16APSK, 2/3 ";
+          when RADIUS_SHORT_16APSK_C3_4   => return "short,  16APSK, 3/4 ";
+          when RADIUS_SHORT_16APSK_C3_5   => return "short,  16APSK, 3/5 ";
+          when RADIUS_SHORT_16APSK_C4_5   => return "short,  16APSK, 4/5 ";
+          when RADIUS_SHORT_16APSK_C5_6   => return "short,  16APSK, 5/6 ";
+          when RADIUS_SHORT_16APSK_C8_9   => return "short,  16APSK, 8/9 ";
+
+          when RADIUS_NORMAL_16APSK_C2_3  => return "normal, 16APSK, 2/3 ";
+          when RADIUS_NORMAL_16APSK_C3_4  => return "normal, 16APSK, 3/4 ";
+          when RADIUS_NORMAL_16APSK_C3_5  => return "normal, 16APSK, 3/5 ";
+          when RADIUS_NORMAL_16APSK_C4_5  => return "normal, 16APSK, 4/5 ";
+          when RADIUS_NORMAL_16APSK_C5_6  => return "normal, 16APSK, 5/6 ";
+          when RADIUS_NORMAL_16APSK_C8_9  => return "normal, 16APSK, 8/9 ";
+          when RADIUS_NORMAL_16APSK_C9_10 => return "normal, 16APSK, 9/10";
+
+          when RADIUS_SHORT_32APSK_C3_4   => return "short,  32APSK, 3/4 ";
+          when RADIUS_SHORT_32APSK_C4_5   => return "short,  32APSK, 4/5 ";
+          when RADIUS_SHORT_32APSK_C5_6   => return "short,  32APSK, 5/6 ";
+          when RADIUS_SHORT_32APSK_C8_9   => return "short,  32APSK, 8/9 ";
+
+          when RADIUS_NORMAL_32APSK_C3_4  => return "normal, 32APSK, 3/4 ";
+          when RADIUS_NORMAL_32APSK_C4_5  => return "normal, 32APSK, 4/5 ";
+          when RADIUS_NORMAL_32APSK_C5_6  => return "normal, 32APSK, 5/6 ";
+          when RADIUS_NORMAL_32APSK_C8_9  => return "normal, 32APSK, 8/9 ";
+          when RADIUS_NORMAL_32APSK_C9_10 => return "normal, 32APSK, 9/10";
+          when others => null;
+        end case;
+        -- Return the input address if unknown
+        return integer'image(addr);
+      end function ram_address_to_config;
+
+      variable data : std_logic_vector(31 downto 0);
+    begin
+      info(logger, "Radius");
+      for i in 0 to 21 loop
+        axi_cfg_read(16#10# + 4*i, data);
+        info(
+          logger,
+          sformat(
+            "Radius[%2d] (%s): %r => r0=%s, r1=%s",
+            fo(i),
+            ram_address_to_config(i),
+            fo(data),
+            real'image(to_real(signed(data(31 downto 16)))),
+            real'image(to_real(signed(data(15 downto  0))))
+          )
+        );
+      end loop;
+    end procedure print_radius_table; -- }} --------------------------------------------
+
+    procedure print_iq_table is -- {{ --------------------------------------------------
       variable data : std_logic_vector(31 downto 0);
     begin
       info(logger, "QPSK");
       for i in 0 to 3 loop
-        axi_cfg_write(to_unsigned(12, 32), std_logic_vector(to_unsigned(i, 32)));
-        axi_cfg_read(to_unsigned(20, 32), data);
-        info(logger, sformat("QPSK[%d] => %r", fo(i), fo(data)));
-      end loop;
-
-      info(logger, "8PSK");
-      for i in 0 to 7 loop
-        axi_cfg_write(to_unsigned(12, 32), std_logic_vector(to_unsigned(i + 4, 32)));
-        axi_cfg_read(to_unsigned(20, 32), data);
-        info(logger, sformat("8PSK[%d] => %r", fo(i), fo(data)));
-      end loop;
-
-      info(logger, "16APSK");
-      for i in 0 to 15 loop
-        axi_cfg_write(to_unsigned(12, 32), std_logic_vector(to_unsigned(i + 12, 32)));
-        axi_cfg_read(to_unsigned(20, 32), data);
-        info(logger, sformat("16APSK[%d] => %r", fo(i), fo(data)));
-      end loop;
-
-      info(logger, "32APSK");
-      for i in 0 to 31 loop
-        axi_cfg_write(to_unsigned(12, 32), std_logic_vector(to_unsigned(i + 28, 32)));
-        axi_cfg_read(to_unsigned(20, 32), data);
-        info(logger, sformat("32APSK[%d] => %r", fo(i), fo(data)));
-      end loop;
-
-      info(logger, "Radius");
-      for i in 0 to 21 loop
-        axi_cfg_write(to_unsigned(12, 32), std_logic_vector(to_unsigned(i + 64, 32)));
-        axi_cfg_read(to_unsigned(20, 32), data);
+        axi_cfg_read(16#110# + 4*i, data);
         info(
           logger,
           sformat(
-            "Radius[%d] => %r (%s, %s)",
+            "QPSK[%d] => %r => (%s, %s)",
             fo(i),
             fo(data),
             real'image(to_real(signed(data(31 downto 16)))),
             real'image(to_real(signed(data(15 downto  0))))
           )
         );
-
       end loop;
-    end procedure print_constellation_mapper_tables;
 
+      info(logger, "8PSK");
+      for i in 0 to 7 loop
+        axi_cfg_read(16#114# + 4*i, data);
+        info(
+          logger,
+          sformat(
+            "QPSK[%d] => %r => (%s, %s)",
+            fo(i),
+            fo(data),
+            real'image(to_real(signed(data(31 downto 16)))),
+            real'image(to_real(signed(data(15 downto  0))))
+          )
+        );
+      end loop;
+
+      info(logger, "16APSK");
+      for i in 0 to 15 loop
+        axi_cfg_read(16#11C# + 4*i, data);
+        info(
+          logger,
+          sformat(
+            "QPSK[%d] => %r => (%s, %s)",
+            fo(i),
+            fo(data),
+            real'image(to_real(signed(data(31 downto 16)))),
+            real'image(to_real(signed(data(15 downto  0))))
+          )
+        );
+      end loop;
+
+      info(logger, "32APSK");
+      for i in 0 to 31 loop
+        axi_cfg_read(16#12C# + 4*i, data);
+        info(
+          logger,
+          sformat(
+            "QPSK[%d] => %r => (%s, %s)",
+            fo(i),
+            fo(data),
+            real'image(to_real(signed(data(31 downto 16)))),
+            real'image(to_real(signed(data(15 downto  0))))
+          )
+        );
+      end loop;
+    end procedure print_iq_table; -- }} ------------------------------------------------
+
+    procedure print_constellation_mapper_tables is -- {{ -------------------------------
+    begin
+      print_radius_table;
+      print_iq_table;
+    end procedure print_constellation_mapper_tables; -- }} -----------------------------
 
     procedure run_test ( -- {{ ---------------------------------------------------------
       constant config           : config_t;
@@ -707,6 +789,8 @@ begin
       walk(4);
       rst <= '0';
       walk(4);
+
+      print_constellation_mapper_tables;
 
       data_probability <= 1.0;
       tready_probability <= 1.0;

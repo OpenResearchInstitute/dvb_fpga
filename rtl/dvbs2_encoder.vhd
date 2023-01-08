@@ -695,29 +695,34 @@ begin
     )
     port map (
       -- Usual ports
-      clk             => clk,
-      rst             => rst,
-      -- Mapping RAM config
-      ram_wren        => regs2user.constellation_mapper_write_data_strobe,
-      ram_addr        => regs2user.constellation_mapper_address_value(6 downto 0),
-      ram_wdata       => regs2user.constellation_mapper_write_data_value(IQ_WIDTH - 1 downto 0),
-      ram_rdata       => user2regs.constellation_mapper_read_data_value(IQ_WIDTH - 1 downto 0),
+      clk              => clk,
+      rst              => rst,
       -- Per frame config input
       -- AXI input
-      s_frame_type    => decode(arbiter_out.tid).frame_type,
-      s_constellation => decode(arbiter_out.tid).constellation,
-      s_code_rate     => decode(arbiter_out.tid).code_rate,
-      s_tvalid        => arbiter_out.tvalid,
-      s_tlast         => arbiter_out.tlast,
-      s_tready        => arbiter_out.tready,
-      s_tdata         => arbiter_out.tdata,
-      s_tid           => arbiter_out.tid,
+      s_frame_type     => decode(arbiter_out.tid).frame_type,
+      s_constellation  => decode(arbiter_out.tid).constellation,
+      s_code_rate      => decode(arbiter_out.tid).code_rate,
+      s_tvalid         => arbiter_out.tvalid,
+      s_tlast          => arbiter_out.tlast,
+      s_tready         => arbiter_out.tready,
+      s_tdata          => arbiter_out.tdata,
+      s_tid            => arbiter_out.tid,
       -- AXI output
-      m_tvalid        => constellation_mapper.tvalid,
-      m_tlast         => constellation_mapper.tlast,
-      m_tready        => constellation_mapper.tready,
-      m_tdata         => constellation_mapper.tdata,
-      m_tid           => constellation_mapper.tid);
+      m_tvalid         => constellation_mapper.tvalid,
+      m_tlast          => constellation_mapper.tlast,
+      m_tready         => constellation_mapper.tready,
+      m_tdata          => constellation_mapper.tdata,
+      m_tid            => constellation_mapper.tid,
+      -- IQ mapping RAM config
+      radius_ram_wren  => or(regs2user.constellation_map_radius_ram_wen),
+      radius_ram_addr  => regs2user.constellation_map_radius_ram_addr,
+      radius_ram_wdata => regs2user.constellation_map_radius_ram_wdata,
+      radius_ram_rdata => user2regs.constellation_map_radius_ram_rdata,
+      -- Mapping RAM config
+      iq_ram_wren      => or(regs2user.constellation_map_iq_ram_wen),
+      iq_ram_addr      => regs2user.constellation_map_iq_ram_addr,
+      iq_ram_wdata     => regs2user.constellation_map_iq_ram_wdata,
+      iq_ram_rdata     => user2regs.constellation_map_iq_ram_rdata);
 
   constellation_mapper_dbg_u : entity fpga_cores.axi_stream_debug
     generic map (

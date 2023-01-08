@@ -34,6 +34,7 @@ use fpga_cores.common_pkg.all;
 use fpga_cores.axi_pkg.all;
 
 use work.dvb_utils_pkg.all;
+use work.constellation_mapper_pkg.all;
 
 ------------------------
 -- Entity declaration --
@@ -46,189 +47,47 @@ entity axi_constellation_mapper is
   );
   port (
     -- Usual ports
-    clk             : in  std_logic;
-    rst             : in  std_logic;
-    -- Mapping RAM config
-    ram_wren        : in  std_logic;
-    ram_addr        : in  std_logic_vector(6 downto 0);
-    ram_wdata       : in  std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
-    ram_rdata       : out std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+    clk              : in  std_logic;
+    rst              : in  std_logic;
     -- AXI data input
-    s_frame_type    : in  frame_type_t;
-    s_constellation : in  constellation_t;
-    s_code_rate     : in  code_rate_t;
-    s_tready        : out std_logic;
-    s_tvalid        : in  std_logic;
-    s_tlast         : in  std_logic;
-    s_tdata         : in  std_logic_vector(INPUT_DATA_WIDTH - 1 downto 0);
-    s_tid           : in  std_logic_vector(TID_WIDTH - 1 downto 0);
+    s_frame_type     : in  frame_type_t;
+    s_constellation  : in  constellation_t;
+    s_code_rate      : in  code_rate_t;
+    s_tready         : out std_logic;
+    s_tvalid         : in  std_logic;
+    s_tlast          : in  std_logic;
+    s_tdata          : in  std_logic_vector(INPUT_DATA_WIDTH - 1 downto 0);
+    s_tid            : in  std_logic_vector(TID_WIDTH - 1 downto 0);
     -- AXI output
-    m_tready        : in  std_logic;
-    m_tvalid        : out std_logic;
-    m_tlast         : out std_logic;
-    m_tdata         : out std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
-    m_tid           : out std_logic_vector(TID_WIDTH - 1 downto 0));
+    m_tready         : in  std_logic;
+    m_tvalid         : out std_logic;
+    m_tlast          : out std_logic;
+    m_tdata          : out std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+    m_tid            : out std_logic_vector(TID_WIDTH - 1 downto 0);
+    -- IQ mapping RAM config (optional, default values should work)
+    iq_ram_wren      : in  std_logic  := 'U';
+    iq_ram_addr      : in  std_logic_vector(5 downto 0)  := (others => 'U');
+    iq_ram_wdata     : in  std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0)  := (others => 'U');
+    iq_ram_rdata     : out std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+    -- Mapping RAM config (optional, default values should work)
+    radius_ram_wren  : in  std_logic  := 'U';
+    radius_ram_addr  : in  std_logic_vector(numbits(RADIUS_TABLE_DEPTH) - 1 downto 0)  := (others => 'U');
+    radius_ram_wdata : in  std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0)  := (others => 'U');
+    radius_ram_rdata : out std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0)
+);
 end axi_constellation_mapper;
 
 architecture axi_constellation_mapper of axi_constellation_mapper is
 
-  constant BASE_OFFSET_QPSK   : integer := 0;
-  constant BASE_OFFSET_8PSK   : integer := BASE_OFFSET_QPSK + 4;
-  constant BASE_OFFSET_16APSK : integer := BASE_OFFSET_8PSK + 8;
-  constant BASE_OFFSET_32APSK : integer := BASE_OFFSET_16APSK + 16;
-
-  -- Small helpers to reduce footprint of calling this over and over
-  impure function get_iq_pair (constant x : real) return std_logic_vector is
-    variable result : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
-  begin
-    return std_logic_vector(cos(x, OUTPUT_DATA_WIDTH/2) & sin(x, OUTPUT_DATA_WIDTH/2));
-  end function get_iq_pair;
-
-  constant MAPPING_TABLE : std_logic_array_t(0 to 59)(OUTPUT_DATA_WIDTH - 1 downto 0) := (
-    -- QPSK
-    0 => get_iq_pair(        MATH_PI /  4.0),
-    1 => get_iq_pair(  7.0 * MATH_PI /  4.0),
-    2 => get_iq_pair(  3.0 * MATH_PI /  4.0),
-    3 => get_iq_pair(  5.0 * MATH_PI /  4.0),
-
-    -- 8PSK
-    4  => get_iq_pair(        MATH_PI /  4.0),
-    5  => get_iq_pair(  0.0),
-    6  => get_iq_pair(  4.0 * MATH_PI /  4.0),
-    7  => get_iq_pair(  5.0 * MATH_PI /  4.0),
-    8  => get_iq_pair(  2.0 * MATH_PI /  4.0),
-    9  => get_iq_pair(  7.0 * MATH_PI /  4.0),
-    10 => get_iq_pair(  3.0 * MATH_PI /  4.0),
-    11 => get_iq_pair(  6.0 * MATH_PI /  4.0),
-
-    -- 16APSK (although here we only have the the PSK part)
-    12 => get_iq_pair(        MATH_PI /  4.0),
-    13 => get_iq_pair(       -MATH_PI /  4.0),
-    14 => get_iq_pair(  3.0 * MATH_PI /  4.0),
-    15 => get_iq_pair( -3.0 * MATH_PI /  4.0),
-    16 => get_iq_pair(        MATH_PI / 12.0),
-    17 => get_iq_pair(       -MATH_PI / 12.0),
-    18 => get_iq_pair( 11.0 * MATH_PI / 12.0),
-    19 => get_iq_pair(-11.0 * MATH_PI / 12.0),
-    20 => get_iq_pair(  5.0 * MATH_PI / 12.0),
-    21 => get_iq_pair( -5.0 * MATH_PI / 12.0),
-    22 => get_iq_pair(  7.0 * MATH_PI / 12.0),
-    23 => get_iq_pair( -7.0 * MATH_PI / 12.0),
-    24 => get_iq_pair(        MATH_PI /  4.0),
-    25 => get_iq_pair(       -MATH_PI /  4.0),
-    26 => get_iq_pair(  3.0 * MATH_PI /  4.0),
-    27 => get_iq_pair( -3.0 * MATH_PI /  4.0),
-
-    -- 32APSK (although here we only have the the PSK part)
-    28 => get_iq_pair(        MATH_PI /  4.0),
-    29 => get_iq_pair(  5.0 * MATH_PI / 12.0),
-    30 => get_iq_pair(       -MATH_PI /  4.0),
-    31 => get_iq_pair( -5.0 * MATH_PI / 12.0),
-    32 => get_iq_pair(  3.0 * MATH_PI /  4.0),
-    33 => get_iq_pair(  7.0 * MATH_PI / 12.0),
-    34 => get_iq_pair( -3.0 * MATH_PI /  4.0),
-    35 => get_iq_pair( -7.0 * MATH_PI / 12.0),
-    36 => get_iq_pair(        MATH_PI /  8.0),
-    37 => get_iq_pair(  3.0 * MATH_PI /  8.0),
-    38 => get_iq_pair(       -MATH_PI /  4.0),
-    39 => get_iq_pair(       -MATH_PI /  2.0),
-    40 => get_iq_pair(  3.0 * MATH_PI /  4.0),
-    41 => get_iq_pair(        MATH_PI /  2.0),
-    42 => get_iq_pair( -7.0 * MATH_PI /  8.0),
-    43 => get_iq_pair( -5.0 * MATH_PI /  8.0),
-    44 => get_iq_pair(        MATH_PI / 12.0),
-    45 => get_iq_pair(        MATH_PI /  4.0),
-    46 => get_iq_pair(       -MATH_PI / 12.0),
-    47 => get_iq_pair(       -MATH_PI /  4.0),
-    48 => get_iq_pair( 11.0 * MATH_PI / 12.0),
-    49 => get_iq_pair(  3.0 * MATH_PI /  4.0),
-    50 => get_iq_pair(-11.0 * MATH_PI / 12.0),
-    51 => get_iq_pair( -3.0 * MATH_PI /  4.0),
-    52 => get_iq_pair(  0.0),
-    53 => get_iq_pair(        MATH_PI /  4.0),
-    54 => get_iq_pair(       -MATH_PI /  8.0),
-    55 => get_iq_pair( -3.0 * MATH_PI /  8.0),
-    56 => get_iq_pair(  7.0 * MATH_PI /  8.0),
-    57 => get_iq_pair(  5.0 * MATH_PI /  8.0),
-    58 => get_iq_pair(        MATH_PI),
-    59 => get_iq_pair( -3.0 * MATH_PI /  4.0)
-  );
-
-  -- Radius table addresses
-  constant RADIUS_SHORT_16APSK_C2_3   : integer := 0;
-  constant RADIUS_SHORT_16APSK_C3_4   : integer := 1;
-  constant RADIUS_SHORT_16APSK_C3_5   : integer := 2;
-  constant RADIUS_SHORT_16APSK_C4_5   : integer := 3;
-  constant RADIUS_SHORT_16APSK_C5_6   : integer := 4;
-  constant RADIUS_SHORT_16APSK_C8_9   : integer := 5;
-
-  constant RADIUS_NORMAL_16APSK_C2_3  : integer := 6;
-  constant RADIUS_NORMAL_16APSK_C3_4  : integer := 7;
-  constant RADIUS_NORMAL_16APSK_C3_5  : integer := 8;
-  constant RADIUS_NORMAL_16APSK_C4_5  : integer := 9;
-  constant RADIUS_NORMAL_16APSK_C5_6  : integer := 10;
-  constant RADIUS_NORMAL_16APSK_C8_9  : integer := 11;
-  constant RADIUS_NORMAL_16APSK_C9_10 : integer := 12;
-
-  constant RADIUS_SHORT_32APSK_C3_4   : integer := 13;
-  constant RADIUS_SHORT_32APSK_C4_5   : integer := 14;
-  constant RADIUS_SHORT_32APSK_C5_6   : integer := 15;
-  constant RADIUS_SHORT_32APSK_C8_9   : integer := 16;
-
-  constant RADIUS_NORMAL_32APSK_C3_4  : integer := 17;
-  constant RADIUS_NORMAL_32APSK_C4_5  : integer := 18;
-  constant RADIUS_NORMAL_32APSK_C5_6  : integer := 19;
-  constant RADIUS_NORMAL_32APSK_C8_9  : integer := 20;
-  constant RADIUS_NORMAL_32APSK_C9_10 : integer := 21;
-
-  function get_row_content ( constant r0, r1 : real ) return std_logic_vector is
-    constant r0_uns : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0) := to_signed_fixed_point(r0, OUTPUT_DATA_WIDTH/2);
-    constant r1_uns : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0) := to_signed_fixed_point(r1, OUTPUT_DATA_WIDTH/2);
-  begin
-      return std_logic_vector(r0_uns) & std_logic_vector(r1_uns);
-  end function get_row_content;
-
-  constant UNIT_RADIUS : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0) := to_signed_fixed_point(1.0, OUTPUT_DATA_WIDTH/2);
-
-  constant RADIUS_COEFFICIENT_TABLE : std_logic_array_t(0 to 21)(OUTPUT_DATA_WIDTH - 1 downto 0) := (
-    RADIUS_SHORT_16APSK_C2_3   => get_row_content(r0 => 0.31746031746031744, r1 => 1.0),
-    RADIUS_SHORT_16APSK_C3_4   => get_row_content(r0 => 0.3508771929824561,  r1 => 1.0),
-    RADIUS_SHORT_16APSK_C3_5   => get_row_content(r0 => 0.27027027027027023, r1 => 1.0),
-    RADIUS_SHORT_16APSK_C4_5   => get_row_content(r0 => 0.36363636363636365, r1 => 1.0),
-    RADIUS_SHORT_16APSK_C5_6   => get_row_content(r0 => 0.37037037037037035, r1 => 1.0),
-    RADIUS_SHORT_16APSK_C8_9   => get_row_content(r0 => 0.3846153846153846,  r1 => 1.0),
-
-    RADIUS_NORMAL_16APSK_C2_3  => get_row_content(r0 => 0.31746031746031744, r1 => 1.0),
-    RADIUS_NORMAL_16APSK_C3_4  => get_row_content(r0 => 0.3508771929824561,  r1 => 1.0),
-    RADIUS_NORMAL_16APSK_C3_5  => get_row_content(r0 => 0.27027027027027023, r1 => 1.0),
-    RADIUS_NORMAL_16APSK_C4_5  => get_row_content(r0 => 0.36363636363636365, r1 => 1.0),
-    RADIUS_NORMAL_16APSK_C5_6  => get_row_content(r0 => 0.37037037037037035, r1 => 1.0),
-    RADIUS_NORMAL_16APSK_C8_9  => get_row_content(r0 => 0.3846153846153846,  r1 => 1.0),
-    RADIUS_NORMAL_16APSK_C9_10 => get_row_content(r0 => 0.38910505836575876, r1 => 1.0),
-
-    RADIUS_SHORT_32APSK_C3_4   => get_row_content(r0 => 0.18975332068311196, r1 => 0.538899430740038),
-    RADIUS_SHORT_32APSK_C4_5   => get_row_content(r0 => 0.20533880903490762, r1 => 0.5585215605749487),
-    RADIUS_SHORT_32APSK_C5_6   => get_row_content(r0 => 0.21551724137931036, r1 => 0.5689655172413793),
-    RADIUS_SHORT_32APSK_C8_9   => get_row_content(r0 => 0.23094688221709006, r1 => 0.5866050808314087),
-
-    RADIUS_NORMAL_32APSK_C3_4  => get_row_content(r0 => 0.18975332068311196, r1 => 0.538899430740038),
-    RADIUS_NORMAL_32APSK_C4_5  => get_row_content(r0 => 0.20533880903490762, r1 => 0.5585215605749487),
-    RADIUS_NORMAL_32APSK_C5_6  => get_row_content(r0 => 0.21551724137931036, r1 => 0.5689655172413793),
-    RADIUS_NORMAL_32APSK_C8_9  => get_row_content(r0 => 0.23094688221709006, r1 => 0.5866050808314087),
-    RADIUS_NORMAL_32APSK_C9_10 => get_row_content(r0 => 0.23255813953488372, r1 => 0.5883720930232558)
-  );
-
-  constant TUSER_WIDTH : integer := TID_WIDTH + ENCODED_CONFIG_WIDTH;
+  constant MAPPING_TABLE : std_logic_array_t                        := get_iq_table(OUTPUT_DATA_WIDTH);
+  constant RADIUS_TABLE  : std_logic_array_t                        := get_radius_table(OUTPUT_DATA_WIDTH);
+  constant UNIT_RADIUS   : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0) := to_signed_fixed_point(1.0, OUTPUT_DATA_WIDTH/2);
+  constant TUSER_WIDTH   : integer                                  := TID_WIDTH + ENCODED_CONFIG_WIDTH;
 
   -------------
   -- Signals --
   -------------
   signal s_tready_i        : std_logic;
-  -- IQ and radius RAM interface
-  signal iq_ram_wren       : std_logic;
-  signal iq_ram_rdata      : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
-  signal radius_ram_wren   : std_logic;
-  signal radius_ram_rdata  : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
 
   signal mux_sel           : std_logic_vector(3 downto 0);
   signal width_conv_tready : std_logic_vector(3 downto 0);
@@ -255,7 +114,7 @@ architecture axi_constellation_mapper of axi_constellation_mapper is
   signal ram_out_i         : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0);
   signal ram_out_q         : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0);
 
-  signal radius_rd_addr    : unsigned(numbits(RADIUS_COEFFICIENT_TABLE'length) - 1 downto 0);
+  signal radius_rd_addr    : unsigned(numbits(RADIUS_TABLE_DEPTH) - 1 downto 0);
 
   signal radius_0          : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0);
   signal radius_1          : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0);
@@ -265,8 +124,6 @@ architecture axi_constellation_mapper of axi_constellation_mapper is
   signal output_multiplier : signed(OUTPUT_DATA_WIDTH/2 - 1 downto 0);
   signal output_i          : signed(OUTPUT_DATA_WIDTH - 1 downto 0);
   signal output_q          : signed(OUTPUT_DATA_WIDTH - 1 downto 0);
-
-  signal axi_out_tuser : std_logic_vector(ENCODED_CONFIG_WIDTH - 1 downto 0);
 
 begin
 
@@ -488,12 +345,6 @@ begin
 
     (others => 'U');
 
-  -- Split the RAM write port
-  iq_ram_wren     <= ram_wren and not ram_addr(6);
-  radius_ram_wren <= ram_wren and ram_addr(6);
-
-  ram_rdata       <= iq_ram_rdata when ram_addr(6) = '0' else
-                     radius_ram_rdata;
   ram_block : block
     signal tag_agg_in     : std_logic_vector(TID_WIDTH downto 0);
     signal tag_agg_out    : std_logic_vector(TID_WIDTH downto 0);
@@ -520,8 +371,8 @@ begin
         -- Write side
         wr_tready     => open,
         wr_tvalid     => iq_ram_wren,
-        wr_addr       => ram_addr(numbits(MAPPING_TABLE'length) - 1 downto 0),
-        wr_data_in    => ram_wdata,
+        wr_addr       => iq_ram_addr,
+        wr_data_in    => iq_ram_wdata,
         wr_data_out   => iq_ram_rdata,
 
         -- Read request side
@@ -542,9 +393,9 @@ begin
 
     radius_ram_u : entity fpga_cores.axi_stream_ram
       generic map (
-        DEPTH         => RADIUS_COEFFICIENT_TABLE'length,
+        DEPTH         => RADIUS_TABLE_DEPTH,
         DATA_WIDTH    => OUTPUT_DATA_WIDTH,
-        INITIAL_VALUE => RADIUS_COEFFICIENT_TABLE,
+        INITIAL_VALUE => RADIUS_TABLE,
         TAG_WIDTH     => ENCODED_CONFIG_WIDTH,
         RAM_TYPE      => auto)
       port map (
@@ -553,8 +404,8 @@ begin
         -- Write side
         wr_tready     => open,
         wr_tvalid     => radius_ram_wren,
-        wr_addr       => ram_addr(numbits(RADIUS_COEFFICIENT_TABLE'length) - 1 downto 0),
-        wr_data_in    => ram_wdata,
+        wr_addr       => radius_ram_addr,
+        wr_data_in    => radius_ram_wdata,
         wr_data_out   => radius_ram_rdata,
 
         -- Read request side

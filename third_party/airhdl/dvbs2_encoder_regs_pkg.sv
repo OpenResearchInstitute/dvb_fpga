@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // 'dvbs2_encoder' Register Definitions
-// Revision: 336
+// Revision: 347
 // -----------------------------------------------------------------------------
-// Generated on 2023-01-02 at 19:46 (UTC) by airhdl version 2022.12.1-715060670
+// Generated on 2023-01-08 at 17:59 (UTC) by airhdl version 2023.01.1-740440560
 // -----------------------------------------------------------------------------
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -20,79 +20,83 @@
 package dvbs2_encoder_regs_pkg;
 
     // User-logic ports (from user-logic to register file)
+    /* verilator lint_off UNPACKED */
     typedef struct {
-        logic [13:0] ldpc_fifo_status_ldpc_fifo_entries; // Value of register 'ldpc_fifo_status', field 'ldpc_fifo_entries'
-        logic [0:0] ldpc_fifo_status_ldpc_fifo_empty; // Value of register 'ldpc_fifo_status', field 'ldpc_fifo_empty'
-        logic [0:0] ldpc_fifo_status_ldpc_fifo_full; // Value of register 'ldpc_fifo_status', field 'ldpc_fifo_full'
-        logic [1:0] ldpc_fifo_status_arbiter_selected; // Value of register 'ldpc_fifo_status', field 'arbiter_selected'
-        logic [7:0] frames_in_transit_value; // Value of register 'frames_in_transit', field 'value'
-        logic [31:0] constellation_mapper_read_data_value; // Value of register 'constellation_mapper_read_data', field 'value'
-        logic [15:0] axi_debug_input_width_converter_frame_count_value; // Value of register 'axi_debug_input_width_converter_frame_count', field 'value'
-        logic [15:0] axi_debug_input_width_converter_last_frame_length_value; // Value of register 'axi_debug_input_width_converter_last_frame_length', field 'value'
-        logic [15:0] axi_debug_input_width_converter_min_max_frame_length_min_frame_length; // Value of register 'axi_debug_input_width_converter_min_max_frame_length', field 'min_frame_length'
-        logic [15:0] axi_debug_input_width_converter_min_max_frame_length_max_frame_length; // Value of register 'axi_debug_input_width_converter_min_max_frame_length', field 'max_frame_length'
-        logic [15:0] axi_debug_input_width_converter_word_count_value; // Value of register 'axi_debug_input_width_converter_word_count', field 'value'
-        logic [0:0] axi_debug_input_width_converter_strobes_s_tvalid; // Value of register 'axi_debug_input_width_converter_strobes', field 's_tvalid'
-        logic [0:0] axi_debug_input_width_converter_strobes_s_tready; // Value of register 'axi_debug_input_width_converter_strobes', field 's_tready'
-        logic [0:0] axi_debug_input_width_converter_strobes_m_tvalid; // Value of register 'axi_debug_input_width_converter_strobes', field 'm_tvalid'
-        logic [0:0] axi_debug_input_width_converter_strobes_m_tready; // Value of register 'axi_debug_input_width_converter_strobes', field 'm_tready'
-        logic [15:0] axi_debug_bb_scrambler_frame_count_value; // Value of register 'axi_debug_bb_scrambler_frame_count', field 'value'
-        logic [15:0] axi_debug_bb_scrambler_last_frame_length_value; // Value of register 'axi_debug_bb_scrambler_last_frame_length', field 'value'
-        logic [15:0] axi_debug_bb_scrambler_min_max_frame_length_min_frame_length; // Value of register 'axi_debug_bb_scrambler_min_max_frame_length', field 'min_frame_length'
-        logic [15:0] axi_debug_bb_scrambler_min_max_frame_length_max_frame_length; // Value of register 'axi_debug_bb_scrambler_min_max_frame_length', field 'max_frame_length'
-        logic [15:0] axi_debug_bb_scrambler_word_count_value; // Value of register 'axi_debug_bb_scrambler_word_count', field 'value'
-        logic [0:0] axi_debug_bb_scrambler_strobes_s_tvalid; // Value of register 'axi_debug_bb_scrambler_strobes', field 's_tvalid'
-        logic [0:0] axi_debug_bb_scrambler_strobes_s_tready; // Value of register 'axi_debug_bb_scrambler_strobes', field 's_tready'
-        logic [0:0] axi_debug_bb_scrambler_strobes_m_tvalid; // Value of register 'axi_debug_bb_scrambler_strobes', field 'm_tvalid'
-        logic [0:0] axi_debug_bb_scrambler_strobes_m_tready; // Value of register 'axi_debug_bb_scrambler_strobes', field 'm_tready'
-        logic [15:0] axi_debug_bch_encoder_frame_count_value; // Value of register 'axi_debug_bch_encoder_frame_count', field 'value'
-        logic [15:0] axi_debug_bch_encoder_last_frame_length_value; // Value of register 'axi_debug_bch_encoder_last_frame_length', field 'value'
-        logic [15:0] axi_debug_bch_encoder_min_max_frame_length_min_frame_length; // Value of register 'axi_debug_bch_encoder_min_max_frame_length', field 'min_frame_length'
-        logic [15:0] axi_debug_bch_encoder_min_max_frame_length_max_frame_length; // Value of register 'axi_debug_bch_encoder_min_max_frame_length', field 'max_frame_length'
-        logic [15:0] axi_debug_bch_encoder_word_count_value; // Value of register 'axi_debug_bch_encoder_word_count', field 'value'
-        logic [0:0] axi_debug_bch_encoder_strobes_s_tvalid; // Value of register 'axi_debug_bch_encoder_strobes', field 's_tvalid'
-        logic [0:0] axi_debug_bch_encoder_strobes_s_tready; // Value of register 'axi_debug_bch_encoder_strobes', field 's_tready'
-        logic [0:0] axi_debug_bch_encoder_strobes_m_tvalid; // Value of register 'axi_debug_bch_encoder_strobes', field 'm_tvalid'
-        logic [0:0] axi_debug_bch_encoder_strobes_m_tready; // Value of register 'axi_debug_bch_encoder_strobes', field 'm_tready'
-        logic [15:0] axi_debug_ldpc_encoder_frame_count_value; // Value of register 'axi_debug_ldpc_encoder_frame_count', field 'value'
-        logic [15:0] axi_debug_ldpc_encoder_last_frame_length_value; // Value of register 'axi_debug_ldpc_encoder_last_frame_length', field 'value'
-        logic [15:0] axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length; // Value of register 'axi_debug_ldpc_encoder_min_max_frame_length', field 'min_frame_length'
-        logic [15:0] axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length; // Value of register 'axi_debug_ldpc_encoder_min_max_frame_length', field 'max_frame_length'
-        logic [15:0] axi_debug_ldpc_encoder_word_count_value; // Value of register 'axi_debug_ldpc_encoder_word_count', field 'value'
-        logic [0:0] axi_debug_ldpc_encoder_strobes_s_tvalid; // Value of register 'axi_debug_ldpc_encoder_strobes', field 's_tvalid'
-        logic [0:0] axi_debug_ldpc_encoder_strobes_s_tready; // Value of register 'axi_debug_ldpc_encoder_strobes', field 's_tready'
-        logic [0:0] axi_debug_ldpc_encoder_strobes_m_tvalid; // Value of register 'axi_debug_ldpc_encoder_strobes', field 'm_tvalid'
-        logic [0:0] axi_debug_ldpc_encoder_strobes_m_tready; // Value of register 'axi_debug_ldpc_encoder_strobes', field 'm_tready'
-        logic [15:0] axi_debug_bit_interleaver_frame_count_value; // Value of register 'axi_debug_bit_interleaver_frame_count', field 'value'
-        logic [15:0] axi_debug_bit_interleaver_last_frame_length_value; // Value of register 'axi_debug_bit_interleaver_last_frame_length', field 'value'
-        logic [15:0] axi_debug_bit_interleaver_min_max_frame_length_min_frame_length; // Value of register 'axi_debug_bit_interleaver_min_max_frame_length', field 'min_frame_length'
-        logic [15:0] axi_debug_bit_interleaver_min_max_frame_length_max_frame_length; // Value of register 'axi_debug_bit_interleaver_min_max_frame_length', field 'max_frame_length'
-        logic [15:0] axi_debug_bit_interleaver_word_count_value; // Value of register 'axi_debug_bit_interleaver_word_count', field 'value'
-        logic [0:0] axi_debug_bit_interleaver_strobes_s_tvalid; // Value of register 'axi_debug_bit_interleaver_strobes', field 's_tvalid'
-        logic [0:0] axi_debug_bit_interleaver_strobes_s_tready; // Value of register 'axi_debug_bit_interleaver_strobes', field 's_tready'
-        logic [0:0] axi_debug_bit_interleaver_strobes_m_tvalid; // Value of register 'axi_debug_bit_interleaver_strobes', field 'm_tvalid'
-        logic [0:0] axi_debug_bit_interleaver_strobes_m_tready; // Value of register 'axi_debug_bit_interleaver_strobes', field 'm_tready'
-        logic [15:0] axi_debug_constellation_mapper_frame_count_value; // Value of register 'axi_debug_constellation_mapper_frame_count', field 'value'
-        logic [15:0] axi_debug_constellation_mapper_last_frame_length_value; // Value of register 'axi_debug_constellation_mapper_last_frame_length', field 'value'
-        logic [15:0] axi_debug_constellation_mapper_min_max_frame_length_min_frame_length; // Value of register 'axi_debug_constellation_mapper_min_max_frame_length', field 'min_frame_length'
-        logic [15:0] axi_debug_constellation_mapper_min_max_frame_length_max_frame_length; // Value of register 'axi_debug_constellation_mapper_min_max_frame_length', field 'max_frame_length'
-        logic [15:0] axi_debug_constellation_mapper_word_count_value; // Value of register 'axi_debug_constellation_mapper_word_count', field 'value'
-        logic [0:0] axi_debug_constellation_mapper_strobes_s_tvalid; // Value of register 'axi_debug_constellation_mapper_strobes', field 's_tvalid'
-        logic [0:0] axi_debug_constellation_mapper_strobes_s_tready; // Value of register 'axi_debug_constellation_mapper_strobes', field 's_tready'
-        logic [0:0] axi_debug_constellation_mapper_strobes_m_tvalid; // Value of register 'axi_debug_constellation_mapper_strobes', field 'm_tvalid'
-        logic [0:0] axi_debug_constellation_mapper_strobes_m_tready; // Value of register 'axi_debug_constellation_mapper_strobes', field 'm_tready'
-        logic [15:0] axi_debug_plframe_frame_count_value; // Value of register 'axi_debug_plframe_frame_count', field 'value'
-        logic [15:0] axi_debug_plframe_last_frame_length_value; // Value of register 'axi_debug_plframe_last_frame_length', field 'value'
-        logic [15:0] axi_debug_plframe_min_max_frame_length_min_frame_length; // Value of register 'axi_debug_plframe_min_max_frame_length', field 'min_frame_length'
-        logic [15:0] axi_debug_plframe_min_max_frame_length_max_frame_length; // Value of register 'axi_debug_plframe_min_max_frame_length', field 'max_frame_length'
-        logic [15:0] axi_debug_plframe_word_count_value; // Value of register 'axi_debug_plframe_word_count', field 'value'
-        logic [0:0] axi_debug_plframe_strobes_s_tvalid; // Value of register 'axi_debug_plframe_strobes', field 's_tvalid'
-        logic [0:0] axi_debug_plframe_strobes_s_tready; // Value of register 'axi_debug_plframe_strobes', field 's_tready'
-        logic [0:0] axi_debug_plframe_strobes_m_tvalid; // Value of register 'axi_debug_plframe_strobes', field 'm_tvalid'
-        logic [0:0] axi_debug_plframe_strobes_m_tready; // Value of register 'axi_debug_plframe_strobes', field 'm_tready'
+        logic [13:0] ldpc_fifo_status_ldpc_fifo_entries; // value of field 'ldpc_fifo_status.ldpc_fifo_entries'
+        logic [0:0] ldpc_fifo_status_ldpc_fifo_empty; // value of field 'ldpc_fifo_status.ldpc_fifo_empty'
+        logic [0:0] ldpc_fifo_status_ldpc_fifo_full; // value of field 'ldpc_fifo_status.ldpc_fifo_full'
+        logic [1:0] ldpc_fifo_status_arbiter_selected; // value of field 'ldpc_fifo_status.arbiter_selected'
+        logic [7:0] frames_in_transit_value; // value of field 'frames_in_transit.value'
+        logic [31:0] constellation_map_radius_ram_rdata; // read data for memory 'constellation_map_radius_ram'
+        logic [31:0] constellation_map_iq_ram_rdata; // read data for memory 'constellation_map_iq_ram'
+        logic [15:0] axi_debug_input_width_converter_frame_count_value; // value of field 'axi_debug_input_width_converter_frame_count.value'
+        logic [15:0] axi_debug_input_width_converter_last_frame_length_value; // value of field 'axi_debug_input_width_converter_last_frame_length.value'
+        logic [15:0] axi_debug_input_width_converter_min_max_frame_length_min_frame_length; // value of field 'axi_debug_input_width_converter_min_max_frame_length.min_frame_length'
+        logic [15:0] axi_debug_input_width_converter_min_max_frame_length_max_frame_length; // value of field 'axi_debug_input_width_converter_min_max_frame_length.max_frame_length'
+        logic [15:0] axi_debug_input_width_converter_word_count_value; // value of field 'axi_debug_input_width_converter_word_count.value'
+        logic [0:0] axi_debug_input_width_converter_strobes_s_tvalid; // value of field 'axi_debug_input_width_converter_strobes.s_tvalid'
+        logic [0:0] axi_debug_input_width_converter_strobes_s_tready; // value of field 'axi_debug_input_width_converter_strobes.s_tready'
+        logic [0:0] axi_debug_input_width_converter_strobes_m_tvalid; // value of field 'axi_debug_input_width_converter_strobes.m_tvalid'
+        logic [0:0] axi_debug_input_width_converter_strobes_m_tready; // value of field 'axi_debug_input_width_converter_strobes.m_tready'
+        logic [15:0] axi_debug_bb_scrambler_frame_count_value; // value of field 'axi_debug_bb_scrambler_frame_count.value'
+        logic [15:0] axi_debug_bb_scrambler_last_frame_length_value; // value of field 'axi_debug_bb_scrambler_last_frame_length.value'
+        logic [15:0] axi_debug_bb_scrambler_min_max_frame_length_min_frame_length; // value of field 'axi_debug_bb_scrambler_min_max_frame_length.min_frame_length'
+        logic [15:0] axi_debug_bb_scrambler_min_max_frame_length_max_frame_length; // value of field 'axi_debug_bb_scrambler_min_max_frame_length.max_frame_length'
+        logic [15:0] axi_debug_bb_scrambler_word_count_value; // value of field 'axi_debug_bb_scrambler_word_count.value'
+        logic [0:0] axi_debug_bb_scrambler_strobes_s_tvalid; // value of field 'axi_debug_bb_scrambler_strobes.s_tvalid'
+        logic [0:0] axi_debug_bb_scrambler_strobes_s_tready; // value of field 'axi_debug_bb_scrambler_strobes.s_tready'
+        logic [0:0] axi_debug_bb_scrambler_strobes_m_tvalid; // value of field 'axi_debug_bb_scrambler_strobes.m_tvalid'
+        logic [0:0] axi_debug_bb_scrambler_strobes_m_tready; // value of field 'axi_debug_bb_scrambler_strobes.m_tready'
+        logic [15:0] axi_debug_bch_encoder_frame_count_value; // value of field 'axi_debug_bch_encoder_frame_count.value'
+        logic [15:0] axi_debug_bch_encoder_last_frame_length_value; // value of field 'axi_debug_bch_encoder_last_frame_length.value'
+        logic [15:0] axi_debug_bch_encoder_min_max_frame_length_min_frame_length; // value of field 'axi_debug_bch_encoder_min_max_frame_length.min_frame_length'
+        logic [15:0] axi_debug_bch_encoder_min_max_frame_length_max_frame_length; // value of field 'axi_debug_bch_encoder_min_max_frame_length.max_frame_length'
+        logic [15:0] axi_debug_bch_encoder_word_count_value; // value of field 'axi_debug_bch_encoder_word_count.value'
+        logic [0:0] axi_debug_bch_encoder_strobes_s_tvalid; // value of field 'axi_debug_bch_encoder_strobes.s_tvalid'
+        logic [0:0] axi_debug_bch_encoder_strobes_s_tready; // value of field 'axi_debug_bch_encoder_strobes.s_tready'
+        logic [0:0] axi_debug_bch_encoder_strobes_m_tvalid; // value of field 'axi_debug_bch_encoder_strobes.m_tvalid'
+        logic [0:0] axi_debug_bch_encoder_strobes_m_tready; // value of field 'axi_debug_bch_encoder_strobes.m_tready'
+        logic [15:0] axi_debug_ldpc_encoder_frame_count_value; // value of field 'axi_debug_ldpc_encoder_frame_count.value'
+        logic [15:0] axi_debug_ldpc_encoder_last_frame_length_value; // value of field 'axi_debug_ldpc_encoder_last_frame_length.value'
+        logic [15:0] axi_debug_ldpc_encoder_min_max_frame_length_min_frame_length; // value of field 'axi_debug_ldpc_encoder_min_max_frame_length.min_frame_length'
+        logic [15:0] axi_debug_ldpc_encoder_min_max_frame_length_max_frame_length; // value of field 'axi_debug_ldpc_encoder_min_max_frame_length.max_frame_length'
+        logic [15:0] axi_debug_ldpc_encoder_word_count_value; // value of field 'axi_debug_ldpc_encoder_word_count.value'
+        logic [0:0] axi_debug_ldpc_encoder_strobes_s_tvalid; // value of field 'axi_debug_ldpc_encoder_strobes.s_tvalid'
+        logic [0:0] axi_debug_ldpc_encoder_strobes_s_tready; // value of field 'axi_debug_ldpc_encoder_strobes.s_tready'
+        logic [0:0] axi_debug_ldpc_encoder_strobes_m_tvalid; // value of field 'axi_debug_ldpc_encoder_strobes.m_tvalid'
+        logic [0:0] axi_debug_ldpc_encoder_strobes_m_tready; // value of field 'axi_debug_ldpc_encoder_strobes.m_tready'
+        logic [15:0] axi_debug_bit_interleaver_frame_count_value; // value of field 'axi_debug_bit_interleaver_frame_count.value'
+        logic [15:0] axi_debug_bit_interleaver_last_frame_length_value; // value of field 'axi_debug_bit_interleaver_last_frame_length.value'
+        logic [15:0] axi_debug_bit_interleaver_min_max_frame_length_min_frame_length; // value of field 'axi_debug_bit_interleaver_min_max_frame_length.min_frame_length'
+        logic [15:0] axi_debug_bit_interleaver_min_max_frame_length_max_frame_length; // value of field 'axi_debug_bit_interleaver_min_max_frame_length.max_frame_length'
+        logic [15:0] axi_debug_bit_interleaver_word_count_value; // value of field 'axi_debug_bit_interleaver_word_count.value'
+        logic [0:0] axi_debug_bit_interleaver_strobes_s_tvalid; // value of field 'axi_debug_bit_interleaver_strobes.s_tvalid'
+        logic [0:0] axi_debug_bit_interleaver_strobes_s_tready; // value of field 'axi_debug_bit_interleaver_strobes.s_tready'
+        logic [0:0] axi_debug_bit_interleaver_strobes_m_tvalid; // value of field 'axi_debug_bit_interleaver_strobes.m_tvalid'
+        logic [0:0] axi_debug_bit_interleaver_strobes_m_tready; // value of field 'axi_debug_bit_interleaver_strobes.m_tready'
+        logic [15:0] axi_debug_constellation_mapper_frame_count_value; // value of field 'axi_debug_constellation_mapper_frame_count.value'
+        logic [15:0] axi_debug_constellation_mapper_last_frame_length_value; // value of field 'axi_debug_constellation_mapper_last_frame_length.value'
+        logic [15:0] axi_debug_constellation_mapper_min_max_frame_length_min_frame_length; // value of field 'axi_debug_constellation_mapper_min_max_frame_length.min_frame_length'
+        logic [15:0] axi_debug_constellation_mapper_min_max_frame_length_max_frame_length; // value of field 'axi_debug_constellation_mapper_min_max_frame_length.max_frame_length'
+        logic [15:0] axi_debug_constellation_mapper_word_count_value; // value of field 'axi_debug_constellation_mapper_word_count.value'
+        logic [0:0] axi_debug_constellation_mapper_strobes_s_tvalid; // value of field 'axi_debug_constellation_mapper_strobes.s_tvalid'
+        logic [0:0] axi_debug_constellation_mapper_strobes_s_tready; // value of field 'axi_debug_constellation_mapper_strobes.s_tready'
+        logic [0:0] axi_debug_constellation_mapper_strobes_m_tvalid; // value of field 'axi_debug_constellation_mapper_strobes.m_tvalid'
+        logic [0:0] axi_debug_constellation_mapper_strobes_m_tready; // value of field 'axi_debug_constellation_mapper_strobes.m_tready'
+        logic [15:0] axi_debug_plframe_frame_count_value; // value of field 'axi_debug_plframe_frame_count.value'
+        logic [15:0] axi_debug_plframe_last_frame_length_value; // value of field 'axi_debug_plframe_last_frame_length.value'
+        logic [15:0] axi_debug_plframe_min_max_frame_length_min_frame_length; // value of field 'axi_debug_plframe_min_max_frame_length.min_frame_length'
+        logic [15:0] axi_debug_plframe_min_max_frame_length_max_frame_length; // value of field 'axi_debug_plframe_min_max_frame_length.max_frame_length'
+        logic [15:0] axi_debug_plframe_word_count_value; // value of field 'axi_debug_plframe_word_count.value'
+        logic [0:0] axi_debug_plframe_strobes_s_tvalid; // value of field 'axi_debug_plframe_strobes.s_tvalid'
+        logic [0:0] axi_debug_plframe_strobes_s_tready; // value of field 'axi_debug_plframe_strobes.s_tready'
+        logic [0:0] axi_debug_plframe_strobes_m_tvalid; // value of field 'axi_debug_plframe_strobes.m_tvalid'
+        logic [0:0] axi_debug_plframe_strobes_m_tready; // value of field 'axi_debug_plframe_strobes.m_tready'
     } user2regs_t;
+    /* verilator lint_on UNPACKED */
 
     // User-logic ports (from register file to user-logic)
+    /* verilator lint_off UNPACKED */
     typedef struct {
         logic config_strobe; // Strobe logic for register 'config' (pulsed when the register is written from the bus)
         logic [17:0] config_physical_layer_scrambler_shift_reg_init; // Value of register 'config', field 'physical_layer_scrambler_shift_reg_init'
@@ -102,11 +106,14 @@ package dvbs2_encoder_regs_pkg;
         logic [0:0] config_force_output_ready; // Value of register 'config', field 'force_output_ready'
         logic ldpc_fifo_status_strobe; // Strobe logic for register 'ldpc_fifo_status' (pulsed when the register is read from the bus)
         logic frames_in_transit_strobe; // Strobe logic for register 'frames_in_transit' (pulsed when the register is read from the bus)
-        logic constellation_mapper_address_strobe; // Strobe logic for register 'constellation_mapper_address' (pulsed when the register is written from the bus)
-        logic [31:0] constellation_mapper_address_value; // Value of register 'constellation_mapper_address', field 'value'
-        logic constellation_mapper_write_data_strobe; // Strobe logic for register 'constellation_mapper_write_data' (pulsed when the register is written from the bus)
-        logic [31:0] constellation_mapper_write_data_value; // Value of register 'constellation_mapper_write_data', field 'value'
-        logic constellation_mapper_read_data_strobe; // Strobe logic for register 'constellation_mapper_read_data' (pulsed when the register is read from the bus)
+        logic [4:0] constellation_map_radius_ram_addr; // read/write address for memory 'constellation_map_radius_ram'
+        logic [31:0] constellation_map_radius_ram_wdata; // write data for memory 'constellation_map_radius_ram'
+        logic [3:0] constellation_map_radius_ram_wen; // byte-wide write-enable for memory 'constellation_map_radius_ram'
+        logic constellation_map_radius_ram_ren; // read-enable for memory 'constellation_map_radius_ram'
+        logic [5:0] constellation_map_iq_ram_addr; // read/write address for memory 'constellation_map_iq_ram'
+        logic [31:0] constellation_map_iq_ram_wdata; // write data for memory 'constellation_map_iq_ram'
+        logic [3:0] constellation_map_iq_ram_wen; // byte-wide write-enable for memory 'constellation_map_iq_ram'
+        logic constellation_map_iq_ram_ren; // read-enable for memory 'constellation_map_iq_ram'
         logic axi_debug_input_width_converter_cfg_strobe; // Strobe logic for register 'axi_debug_input_width_converter_cfg' (pulsed when the register is written from the bus)
         logic [0:0] axi_debug_input_width_converter_cfg_block_data; // Value of register 'axi_debug_input_width_converter_cfg', field 'block_data'
         logic [0:0] axi_debug_input_width_converter_cfg_allow_word; // Value of register 'axi_debug_input_width_converter_cfg', field 'allow_word'
@@ -171,9 +178,10 @@ package dvbs2_encoder_regs_pkg;
         logic axi_debug_plframe_word_count_strobe; // Strobe logic for register 'axi_debug_plframe_word_count' (pulsed when the register is read from the bus)
         logic axi_debug_plframe_strobes_strobe; // Strobe logic for register 'axi_debug_plframe_strobes' (pulsed when the register is read from the bus)
     } regs2user_t;
+    /* verilator lint_on UNPACKED */
 
     // Revision number of the 'dvbs2_encoder' register map
-    localparam DVBS2_ENCODER_REVISION = 336;
+    localparam DVBS2_ENCODER_REVISION = 347;
 
     // Default base address of the 'dvbs2_encoder' register map
     localparam logic [31:0] DVBS2_ENCODER_DEFAULT_BASEADDR = 32'h00000000;
@@ -230,26 +238,23 @@ package dvbs2_encoder_regs_pkg;
     localparam FRAMES_IN_TRANSIT_VALUE_BIT_WIDTH = 8; // bit width of the 'value' field
     localparam logic [7:0] FRAMES_IN_TRANSIT_VALUE_RESET = 8'b00000000; // reset value of the 'value' field
 
-    // Register 'constellation_mapper_address'
-    localparam logic [31:0] CONSTELLATION_MAPPER_ADDRESS_OFFSET = 32'h0000000C; // address offset of the 'constellation_mapper_address' register
-    // Field 'constellation_mapper_address.value'
-    localparam CONSTELLATION_MAPPER_ADDRESS_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
-    localparam CONSTELLATION_MAPPER_ADDRESS_VALUE_BIT_WIDTH = 32; // bit width of the 'value' field
-    localparam logic [31:0] CONSTELLATION_MAPPER_ADDRESS_VALUE_RESET = 32'b00000000000000000000000000000000; // reset value of the 'value' field
+    // Register 'constellation_map_radius_ram'
+    localparam logic [31:0] CONSTELLATION_MAP_RADIUS_RAM_OFFSET = 32'h00000010; // address offset of the 'constellation_map_radius_ram' register
+    localparam CONSTELLATION_MAP_RADIUS_RAM_DEPTH = 22; // depth of the 'constellation_map_radius_ram' memory, in elements
+    localparam CONSTELLATION_MAP_RADIUS_RAM_READ_LATENCY = 2; // read latency of the 'constellation_map_radius_ram' memory, in clock cycles
+    // Field 'constellation_map_radius_ram.value'
+    localparam CONSTELLATION_MAP_RADIUS_RAM_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
+    localparam CONSTELLATION_MAP_RADIUS_RAM_VALUE_BIT_WIDTH = 32; // bit width of the 'value' field
+    localparam logic [31:0] CONSTELLATION_MAP_RADIUS_RAM_VALUE_RESET = 32'b00000000000000000000000000000000; // reset value of the 'value' field
 
-    // Register 'constellation_mapper_write_data'
-    localparam logic [31:0] CONSTELLATION_MAPPER_WRITE_DATA_OFFSET = 32'h00000010; // address offset of the 'constellation_mapper_write_data' register
-    // Field 'constellation_mapper_write_data.value'
-    localparam CONSTELLATION_MAPPER_WRITE_DATA_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
-    localparam CONSTELLATION_MAPPER_WRITE_DATA_VALUE_BIT_WIDTH = 32; // bit width of the 'value' field
-    localparam logic [31:0] CONSTELLATION_MAPPER_WRITE_DATA_VALUE_RESET = 32'b00000000000000000000000000000000; // reset value of the 'value' field
-
-    // Register 'constellation_mapper_read_data'
-    localparam logic [31:0] CONSTELLATION_MAPPER_READ_DATA_OFFSET = 32'h00000014; // address offset of the 'constellation_mapper_read_data' register
-    // Field 'constellation_mapper_read_data.value'
-    localparam CONSTELLATION_MAPPER_READ_DATA_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
-    localparam CONSTELLATION_MAPPER_READ_DATA_VALUE_BIT_WIDTH = 32; // bit width of the 'value' field
-    localparam logic [31:0] CONSTELLATION_MAPPER_READ_DATA_VALUE_RESET = 32'b00000000000000000000000000000000; // reset value of the 'value' field
+    // Register 'constellation_map_iq_ram'
+    localparam logic [31:0] CONSTELLATION_MAP_IQ_RAM_OFFSET = 32'h00000110; // address offset of the 'constellation_map_iq_ram' register
+    localparam CONSTELLATION_MAP_IQ_RAM_DEPTH = 60; // depth of the 'constellation_map_iq_ram' memory, in elements
+    localparam CONSTELLATION_MAP_IQ_RAM_READ_LATENCY = 2; // read latency of the 'constellation_map_iq_ram' memory, in clock cycles
+    // Field 'constellation_map_iq_ram.value'
+    localparam CONSTELLATION_MAP_IQ_RAM_VALUE_BIT_OFFSET = 0; // bit offset of the 'value' field
+    localparam CONSTELLATION_MAP_IQ_RAM_VALUE_BIT_WIDTH = 32; // bit width of the 'value' field
+    localparam logic [31:0] CONSTELLATION_MAP_IQ_RAM_VALUE_RESET = 32'b00000000000000000000000000000000; // reset value of the 'value' field
 
     // Register 'axi_debug_input_width_converter_cfg'
     localparam logic [31:0] AXI_DEBUG_INPUT_WIDTH_CONVERTER_CFG_OFFSET = 32'h00000D00; // address offset of the 'axi_debug_input_width_converter_cfg' register

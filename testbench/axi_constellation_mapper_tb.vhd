@@ -47,6 +47,7 @@ context fpga_cores_sim.sim_context;
 
 use work.dvb_sim_utils_pkg.all;
 use work.dvb_utils_pkg.all;
+use work.constellation_mapper_pkg.all;
 
 -- ghdl translate_off
 library modelsim_lib;
@@ -76,26 +77,31 @@ architecture axi_constellation_mapper_tb of axi_constellation_mapper_tb is
   -------------
   -- Signals --
   -------------
-  signal clk                    : std_logic := '1';
-  signal rst                    : std_logic;
+  signal clk                : std_logic := '1';
+  signal rst                : std_logic;
 
-  -- Mapping RAM config
-  signal ram_wren               : std_logic;
-  signal ram_addr               : std_logic_vector(6 downto 0);
-  signal ram_wdata              : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
-  signal ram_rdata              : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+    -- Mapping RAM config
+  signal iq_ram_wren        : std_logic;
+  signal iq_ram_addr        : std_logic_vector(5 downto 0);
+  signal iq_ram_wdata       : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+  signal iq_ram_rdata       : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+      -- Mapping RAM config (optional, default values should work)
+  signal radius_ram_wren    : std_logic;
+  signal radius_ram_addr    : std_logic_vector(numbits(RADIUS_TABLE_DEPTH) - 1 downto 0);
+  signal radius_ram_wdata   : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+  signal radius_ram_rdata   : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
 
-  signal data_probability       : real range 0.0 to 1.0 := 1.0;
-  signal tready_probability     : real range 0.0 to 1.0 := 1.0;
+  signal data_probability   : real range 0.0 to 1.0 := 1.0;
+  signal tready_probability : real range 0.0 to 1.0 := 1.0;
 
-  signal m_data_valid           : boolean;
-  signal s_data_valid           : boolean;
+  signal m_data_valid       : boolean;
+  signal s_data_valid       : boolean;
 
   -- AXI input
-  signal axi_master             : axi_stream_bus_t(tdata(INPUT_DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+  signal axi_master         : axi_stream_bus_t(tdata(INPUT_DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
   -- AXI output
-  signal axi_slave              : axi_stream_bus_t(tdata(OUTPUT_DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
-  signal expected_tdata         : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
+  signal axi_slave          : axi_stream_bus_t(tdata(OUTPUT_DATA_WIDTH - 1 downto 0), tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
+  signal expected_tdata     : std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0);
 
 begin
 
@@ -133,11 +139,6 @@ begin
       clk             => clk,
       rst             => rst,
 
-      ram_wren        => ram_wren,
-      ram_addr        => ram_addr,
-      ram_wdata       => ram_wdata,
-      ram_rdata       => ram_rdata,
-
       s_frame_type    => decode(axi_master.tuser).frame_type,
       s_constellation => decode(axi_master.tuser).constellation,
       s_code_rate     => decode(axi_master.tuser).code_rate,
@@ -154,7 +155,20 @@ begin
       m_tvalid        => axi_slave.tvalid,
       m_tlast         => axi_slave.tlast,
       m_tdata         => axi_slave.tdata,
-      m_tid           => axi_slave.tuser);
+      m_tid           => axi_slave.tuser,
+
+      -- IQ mapping RAM config (optional, default values should work)
+      iq_ram_wren      => iq_ram_wren,
+      iq_ram_addr      => iq_ram_addr,
+      iq_ram_wdata     => iq_ram_wdata,
+      iq_ram_rdata     => iq_ram_rdata,
+      -- Mapping RAM config (optional, default values should work)
+      radius_ram_wren  => radius_ram_wren,
+      radius_ram_addr  => radius_ram_addr,
+      radius_ram_wdata => radius_ram_wdata,
+      radius_ram_rdata => radius_ram_rdata
+    );
+
 
   output_checker_u : entity work.axi_file_compare_complex
     generic map (
@@ -221,17 +235,30 @@ begin
       walk(1);
     end procedure wait_for_completion; -- }} -------------------------------------------
 
-    procedure write_ram ( -- {{ --------------------------------------------------------
+    procedure write_radius_ram ( -- {{ --------------------------------------------------------
       constant addr : in integer;
       constant data : in std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0)) is
     begin
-      ram_wren  <= '1';
-      ram_addr  <= std_logic_vector(to_unsigned(addr, 7));
-      ram_wdata <= data;
+      radius_ram_wren  <= '1';
+      radius_ram_addr  <= std_logic_vector(to_unsigned(addr, radius_ram_addr'length));
+      radius_ram_wdata <= data;
       walk(1);
-      ram_wren  <= '0';
-      ram_addr  <= (others => 'U');
-      ram_wdata <= (others => 'U');
+      radius_ram_wren  <= '0';
+      radius_ram_addr  <= (others => 'U');
+      radius_ram_wdata <= (others => 'U');
+    end procedure; -- }} ---------------------------------------------------------------
+
+    procedure write_iq_ram ( -- {{ --------------------------------------------------------
+      constant addr : in integer;
+      constant data : in std_logic_vector(OUTPUT_DATA_WIDTH - 1 downto 0)) is
+    begin
+      iq_ram_wren  <= '1';
+      iq_ram_addr  <= std_logic_vector(to_unsigned(addr, iq_ram_addr'length));
+      iq_ram_wdata <= data;
+      walk(1);
+      iq_ram_wren  <= '0';
+      iq_ram_addr  <= (others => 'U');
+      iq_ram_wdata <= (others => 'U');
     end procedure; -- }} ---------------------------------------------------------------
 
     procedure run_test ( -- {{ ---------------------------------------------------------
@@ -276,8 +303,6 @@ begin
     end procedure run_test; -- }} ------------------------------------------------------
 
   begin
-
-    ram_wren  <= '0';
 
     test_runner_setup(runner, RUNNER_CFG);
     show(display_handler, debug);
