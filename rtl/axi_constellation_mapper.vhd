@@ -364,7 +364,8 @@ begin
         DATA_WIDTH    => OUTPUT_DATA_WIDTH,
         INITIAL_VALUE => MAPPING_TABLE,
         TAG_WIDTH     => TID_WIDTH + 1,
-        RAM_TYPE      => auto)
+        RAM_TYPE      => auto,
+        OUTPUT_DELAY  => 1)
       port map (
         clk           => clk,
         rst           => rst,
@@ -397,7 +398,8 @@ begin
         DATA_WIDTH    => OUTPUT_DATA_WIDTH,
         INITIAL_VALUE => RADIUS_TABLE,
         TAG_WIDTH     => ENCODED_CONFIG_WIDTH,
-        RAM_TYPE      => auto)
+        RAM_TYPE      => auto,
+        OUTPUT_DELAY  => 1)
       port map (
         clk           => clk,
         rst           => rst,
@@ -424,8 +426,6 @@ begin
       radius_0 <= signed(radius_agg(OUTPUT_DATA_WIDTH/2 - 1 downto 0));
       radius_1 <= signed(radius_agg(OUTPUT_DATA_WIDTH - 1 downto OUTPUT_DATA_WIDTH/2));
   end block;
-
-  ram_out.tready <= m_tready;
 
   -- Need the raw offset for 16APSK and 32APSK to determine which radius we should use
   ram_out_offset <= unsigned(ram_out_addr) - BASE_OFFSET_16APSK when radius_out_cfg.constellation = mod_16apsk else
@@ -480,26 +480,36 @@ begin
   output_q <= ram_out_q * output_multiplier;
 
   -- Add a FF at the output so that the multiplier doesn't cause timing issues
-  process(clk, rst)
+  output_block : block
+    signal tdata_agg_in  : std_logic_vector(OUTPUT_DATA_WIDTH + TID_WIDTH downto 0);
+    signal tdata_agg_out : std_logic_vector(OUTPUT_DATA_WIDTH + TID_WIDTH downto 0);
   begin
-    if rst then
-      m_tvalid <= '0';
-    elsif rising_edge(clk) then
-      if m_tready then
-        m_tvalid <= '0';
-        m_tid    <= (others => 'U');
-        m_tlast  <= 'U';
-        m_tdata  <= (others => 'U');
-      end if;
 
-      if ram_out.tvalid then
-        m_tvalid <= '1';
-        m_tid    <= ram_out.tuser;
-        m_tlast  <= ram_out.tlast;
-        m_tdata  <= std_logic_vector(output_i(OUTPUT_DATA_WIDTH - 2 downto OUTPUT_DATA_WIDTH/2 - 1)) &
-                    std_logic_vector(output_q(OUTPUT_DATA_WIDTH - 2 downto OUTPUT_DATA_WIDTH/2 - 1));
-      end if;
-    end if;
-  end process;
+    tdata_agg_in <= ram_out.tlast 
+                    & ram_out.tuser 
+                    & std_logic_vector(output_i(OUTPUT_DATA_WIDTH - 2 downto OUTPUT_DATA_WIDTH/2 - 1)) 
+                    & std_logic_vector(output_q(OUTPUT_DATA_WIDTH - 2 downto OUTPUT_DATA_WIDTH/2 - 1));
+
+    output_delay_u : entity fpga_cores.axi_stream_delay
+      generic map (
+        DELAY_CYCLES => 1,
+        TDATA_WIDTH  => OUTPUT_DATA_WIDTH + TID_WIDTH + 1)
+      port map (
+        -- Usual ports
+        clk     => clk,
+        rst     => rst,
+
+        -- AXI slave input
+        s_tvalid => ram_out.tvalid,
+        s_tready => ram_out.tready,
+        s_tdata  => tdata_agg_in,
+
+        -- AXI master output
+        m_tvalid => m_tvalid,
+        m_tready => m_tready,
+        m_tdata  => tdata_agg_out);
+
+        (m_tlast, m_tid, m_tdata) <= tdata_agg_out;
+  end block;
 
 end axi_constellation_mapper;
