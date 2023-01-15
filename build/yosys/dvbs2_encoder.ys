@@ -69,6 +69,7 @@ ghdl --std=08                                                                  \
                     rtl/axi_physical_layer_scrambler.vhd                       \
                     rtl/axi_bbframe_length_enforcer.vhd                        \
                     rtl/dvb_utils_pkg.vhd                                      \
+                    rtl/constellation_mapper_pkg.vhd                           \
                     rtl/bch_encoder_mux.vhd                                    \
                     rtl/axi_ldpc_table.vhd                                     \
                     rtl/ldpc/ldpc_input_sync.vhd                               \
