@@ -850,6 +850,7 @@ def setupTests(vunit, args):
                 name=config.name,
                 generics=dict(
                     test_cfg=config.getTestConfigString(),
+                    SEED=args.seed,
                     NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
