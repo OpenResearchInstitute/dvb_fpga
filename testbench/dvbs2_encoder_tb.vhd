@@ -128,9 +128,7 @@ architecture dvbs2_encoder_tb of dvbs2_encoder_tb is
   signal axi_cfg            : axi_mm_t;
 
   -- AXI input
-  signal cfg_constellation  : constellation_t;
-  signal cfg_frame_type     : frame_type_t;
-  signal cfg_code_rate      : code_rate_t;
+  signal cfg                : config_tuple_t;
 
   signal axi_master         : axi_stream_qualified_data_t(tdata(INPUT_DATA_WIDTH - 1 downto 0),
                                                           tkeep(INPUT_DATA_WIDTH/8 - 1 downto 0),
@@ -212,6 +210,7 @@ begin
       s_constellation => decode(axi_master.tuser).constellation,
       s_frame_type    => decode(axi_master.tuser).frame_type,
       s_code_rate     => decode(axi_master.tuser).code_rate,
+      s_pilots        => decode(axi_master.tuser).pilots,
       s_tvalid        => axi_master.tvalid,
       s_tdata         => axi_master.tdata,
       s_tkeep         => axi_master.tkeep,
@@ -296,9 +295,7 @@ begin
   m_data_valid      <= axi_master.tvalid and axi_master.tready;
   s_data_valid      <= axi_slave.tvalid and axi_slave.tready;
 
-  cfg_constellation <= decode(axi_master.tuser).constellation;
-  cfg_frame_type    <= decode(axi_master.tuser).frame_type;
-  cfg_code_rate     <= decode(axi_master.tuser).code_rate;
+  cfg               <= decode(axi_master.tuser) when axi_master.tvalid else (unknown, unknown, unknown, 'U');
 
   recv_r            <= to_complex(axi_slave.tdata) when axi_slave.tvalid = '1';
   expected_r        <= to_complex(expected_tdata);
@@ -735,13 +732,15 @@ begin
       variable initial_addr     : integer := 0;
       constant config_tuple     : config_tuple_t := (code_rate => config.code_rate,
                                                      constellation => config.constellation,
-                                                     frame_type => config.frame_type);
+                                                     frame_type => config.frame_type,
+                                                     pilots => config.pilots);
     begin
 
       info(logger, "Running test with:");
       info(logger, " - constellation  : " & constellation_t'image(config.constellation));
       info(logger, " - frame_type     : " & frame_type_t'image(config.frame_type));
       info(logger, " - code_rate      : " & code_rate_t'image(config.code_rate));
+      info(logger, " - pilots         : " & std_logic'image(config.pilots));
       info(logger, " - data path      : " & data_path);
 
       -- Only update the mapping RAM if the config actually requires that
@@ -758,7 +757,11 @@ begin
         file_reader_msg.sender := self;
 
         read_file(net, input_stream, data_path & "/input_data_packed.bin", encode(config_tuple));
-        read_file(net, output_checker, data_path & "/plframe_pilots_off_fixed_point.bin");
+        if config_tuple.pilots then
+          read_file(net, output_checker, data_path & "/plframe_pilots_on_fixed_point.bin");
+        else
+          read_file(net, output_checker, data_path & "/plframe_pilots_off_fixed_point.bin");
+        end if;
 
         -- ghdl translate_off
         read_file(net, bb_scrambler_checker, data_path & "/bb_scrambler_output_packed.bin");
