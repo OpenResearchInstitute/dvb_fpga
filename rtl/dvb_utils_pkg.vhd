@@ -68,18 +68,19 @@ package dvb_utils_pkg is
     1 => CONSTELLATION_WIDTH,
     2 => CODE_RATE_WIDTH);
 
-  constant ENCODED_CONFIG_WIDTH : integer  := sum(CONFIG_TUPLE_WIDTHS);
+  constant ENCODED_CONFIG_WIDTH : integer  := 8; --sum(CONFIG_TUPLE_WIDTHS);
 
   type config_tuple_t is record
     frame_type    : frame_type_t;
     code_rate     : code_rate_t;
     constellation : constellation_t;
+    pilots        : std_logic;
   end record;
 
   type config_tuple_array_t is array (natural range <>) of config_tuple_t;
 
   function encode ( constant cfg : config_tuple_t ) return std_logic_vector;
-  function decode ( constant v : std_logic_vector ) return config_tuple_t;
+  function decode ( constant v : std_logic_vector(7 downto 0) ) return config_tuple_t;
 
   function get_crc_length (
     constant frame_type : in  frame_type_t;
@@ -122,18 +123,106 @@ package body dvb_utils_pkg is
   end function get_crc_length;
 
   function encode ( constant cfg : config_tuple_t ) return std_logic_vector is
+    variable result : std_logic_vector(7 downto 0);
+    variable modcod : integer range 1 to 28;
   begin
-    return encode(cfg.code_rate) & encode(cfg.constellation) & encode(cfg.frame_type);
+    result(7) := '0';
+
+    if cfg.frame_type = fecframe_short then
+      result(6) := '1';
+    elsif cfg.frame_type = fecframe_normal then
+      result(6) := '0';
+    else
+      result(6) := 'U';
+    end if;
+
+    result(5) := cfg.pilots;
+
+    if cfg.constellation = mod_qpsk and cfg.code_rate = C1_4 then modcod := 1; end if;
+    if cfg.constellation = mod_qpsk and cfg.code_rate = C1_3 then modcod := 2; end if;
+    if cfg.constellation = mod_qpsk and cfg.code_rate = C2_5 then modcod := 3; end if;
+    if cfg.constellation = mod_qpsk and cfg.code_rate = C1_2 then modcod := 4; end if;
+    if cfg.constellation = mod_qpsk and cfg.code_rate = C3_5 then modcod := 5; end if;
+    if cfg.constellation = mod_qpsk and cfg.code_rate = C2_3 then modcod := 6; end if;
+    if cfg.constellation = mod_qpsk and cfg.code_rate = C3_4 then modcod := 7; end if;
+    if cfg.constellation = mod_qpsk and cfg.code_rate = C4_5 then modcod := 8; end if;
+    if cfg.constellation = mod_qpsk and cfg.code_rate = C5_6 then modcod := 9; end if;
+    if cfg.constellation = mod_qpsk and cfg.code_rate = C8_9 then modcod := 10; end if;
+    if cfg.constellation = mod_qpsk and cfg.code_rate = C9_10 then modcod := 11; end if;
+    if cfg.constellation = mod_8psk and cfg.code_rate = C3_5 then modcod := 12; end if;
+    if cfg.constellation = mod_8psk and cfg.code_rate = C2_3 then modcod := 13; end if;
+    if cfg.constellation = mod_8psk and cfg.code_rate = C3_4 then modcod := 14; end if;
+    if cfg.constellation = mod_8psk and cfg.code_rate = C5_6 then modcod := 15; end if;
+    if cfg.constellation = mod_8psk and cfg.code_rate = C8_9 then modcod := 16; end if;
+    if cfg.constellation = mod_8psk and cfg.code_rate = C9_10 then modcod := 17; end if;
+    if cfg.constellation = mod_16apsk and cfg.code_rate = C2_3 then modcod := 18; end if;
+    if cfg.constellation = mod_16apsk and cfg.code_rate = C3_4 then modcod := 19; end if;
+    if cfg.constellation = mod_16apsk and cfg.code_rate = C4_5 then modcod := 20; end if;
+    if cfg.constellation = mod_16apsk and cfg.code_rate = C5_6 then modcod := 21; end if;
+    if cfg.constellation = mod_16apsk and cfg.code_rate = C8_9 then modcod := 22; end if;
+    if cfg.constellation = mod_16apsk and cfg.code_rate = C9_10 then modcod := 23; end if;
+    if cfg.constellation = mod_32apsk and cfg.code_rate = C3_4 then modcod := 24; end if;
+    if cfg.constellation = mod_32apsk and cfg.code_rate = C4_5 then modcod := 25; end if;
+    if cfg.constellation = mod_32apsk and cfg.code_rate = C5_6 then modcod := 26; end if;
+    if cfg.constellation = mod_32apsk and cfg.code_rate = C8_9 then modcod := 27; end if;
+    if cfg.constellation = mod_32apsk and cfg.code_rate = C9_10 then modcod := 28; end if;
+
+    result(4 downto 0) := std_logic_vector(to_unsigned(modcod, 5));
+    return result;
   end function;
 
-  function decode ( constant v : std_logic_vector ) return config_tuple_t is
-    variable constellation : constellation_t;
-    variable frame_type    : frame_type_t;
-    variable code_rate     : code_rate_t;
+  function decode ( constant v : std_logic_vector(7 downto 0) ) return config_tuple_t is
+    variable cfg : config_tuple_t := (unknown, unknown, unknown, 'U');
   begin
-    return (frame_type    => decode(get_field(v, 0, CONFIG_TUPLE_WIDTHS)),
-            constellation => decode(get_field(v, 1, CONFIG_TUPLE_WIDTHS)),
-            code_rate     => decode(get_field(v, 2, CONFIG_TUPLE_WIDTHS)));
+    -- Copy directly, including Xs
+    cfg.pilots := v(5);
+
+    if v(6) then
+      cfg.frame_type := fecframe_short;
+    elsif not v(6) then
+      cfg.frame_type := fecframe_normal;
+    else
+      cfg.frame_type := unknown;
+    end if;
+
+    case to_integer(unsigned(v(4 downto 0))) is
+      when  1 => cfg.constellation := mod_qpsk;   cfg.code_rate := C1_4;
+      when  2 => cfg.constellation := mod_qpsk;   cfg.code_rate := C1_3;
+      when  3 => cfg.constellation := mod_qpsk;   cfg.code_rate := C2_5;
+      when  4 => cfg.constellation := mod_qpsk;   cfg.code_rate := C1_2;
+      when  5 => cfg.constellation := mod_qpsk;   cfg.code_rate := C3_5;
+      when  6 => cfg.constellation := mod_qpsk;   cfg.code_rate := C2_3;
+      when  7 => cfg.constellation := mod_qpsk;   cfg.code_rate := C3_4;
+      when  8 => cfg.constellation := mod_qpsk;   cfg.code_rate := C4_5;
+      when  9 => cfg.constellation := mod_qpsk;   cfg.code_rate := C5_6;
+      when 10 => cfg.constellation := mod_qpsk;   cfg.code_rate := C8_9;
+      when 11 => cfg.constellation := mod_qpsk;   cfg.code_rate := C9_10;
+      when 12 => cfg.constellation := mod_8psk;   cfg.code_rate := C3_5;
+      when 13 => cfg.constellation := mod_8psk;   cfg.code_rate := C2_3;
+      when 14 => cfg.constellation := mod_8psk;   cfg.code_rate := C3_4;
+      when 15 => cfg.constellation := mod_8psk;   cfg.code_rate := C5_6;
+      when 16 => cfg.constellation := mod_8psk;   cfg.code_rate := C8_9;
+      when 17 => cfg.constellation := mod_8psk;   cfg.code_rate := C9_10;
+      when 18 => cfg.constellation := mod_16apsk; cfg.code_rate := C2_3;
+      when 19 => cfg.constellation := mod_16apsk; cfg.code_rate := C3_4;
+      when 20 => cfg.constellation := mod_16apsk; cfg.code_rate := C4_5;
+      when 21 => cfg.constellation := mod_16apsk; cfg.code_rate := C5_6;
+      when 22 => cfg.constellation := mod_16apsk; cfg.code_rate := C8_9;
+      when 23 => cfg.constellation := mod_16apsk; cfg.code_rate := C9_10;
+      when 24 => cfg.constellation := mod_32apsk; cfg.code_rate := C3_4;
+      when 25 => cfg.constellation := mod_32apsk; cfg.code_rate := C4_5;
+      when 26 => cfg.constellation := mod_32apsk; cfg.code_rate := C5_6;
+      when 27 => cfg.constellation := mod_32apsk; cfg.code_rate := C8_9;
+      when 28 => cfg.constellation := mod_32apsk; cfg.code_rate := C9_10;
+
+      when others =>
+        -- cfg := (unknown, unknown, unknown, 'U');
+        -- report "Unable to decode TID: " & integer'image(to_integer(unsigned(v)))
+        -- severity Failure;
+    end case;
+
+    return cfg;
+
   end function;
 
 

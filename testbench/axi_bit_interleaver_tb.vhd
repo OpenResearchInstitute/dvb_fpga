@@ -214,7 +214,7 @@ begin
       info(" - code_rate      : " & code_rate_t'image(config.code_rate));
       info(" - data path      : " & data_path);
 
-      config_tuple := (code_rate => config.code_rate, constellation => config.constellation, frame_type => config.frame_type);
+      config_tuple := (code_rate => config.code_rate, constellation => config.constellation, frame_type => config.frame_type, pilots => '0');
 
       for i in 0 to number_of_frames - 1 loop
         -- Update the expected TID

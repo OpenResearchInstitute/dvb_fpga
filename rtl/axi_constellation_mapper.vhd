@@ -135,7 +135,7 @@ begin
   mux_sel(2) <= '1' when s_constellation = mod_16apsk else '0';
   mux_sel(3) <= '1' when s_constellation = mod_32apsk else '0';
 
-  s_cfg          <= (frame_type => s_frame_type, constellation => s_constellation, code_rate => s_code_rate);
+  s_cfg          <= (frame_type => s_frame_type, constellation => s_constellation, code_rate => s_code_rate, pilots => 'U');
   s_tid_internal <= s_tid & encode(s_cfg);
 
   input_mux_u : entity fpga_cores.axi_stream_demux
@@ -313,37 +313,97 @@ begin
 
   axi_out_cfg <= decode(axi_out.tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
 
-  -- Read the appropriate address of the radius RAM
   radius_rd_addr <=
     (others => 'U')                                                when axi_out_cfg.constellation = mod_qpsk                else
     (others => 'U')                                                when axi_out_cfg.constellation = mod_8psk                else
-    to_unsigned(RADIUS_SHORT_16APSK_C2_3,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C2_3,  MOD_16APSK)  else
-    to_unsigned(RADIUS_SHORT_16APSK_C3_4,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C3_4,  MOD_16APSK)  else
-    to_unsigned(RADIUS_SHORT_16APSK_C3_5,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C3_5,  MOD_16APSK)  else
-    to_unsigned(RADIUS_SHORT_16APSK_C4_5,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C4_5,  MOD_16APSK)  else
-    to_unsigned(RADIUS_SHORT_16APSK_C5_6,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C5_6,  MOD_16APSK)  else
-    to_unsigned(RADIUS_SHORT_16APSK_C8_9,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C8_9,  MOD_16APSK)  else
+    to_unsigned(RADIUS_SHORT_16APSK_C2_3,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C2_3,  MOD_16APSK, 'U')  else
+    to_unsigned(RADIUS_SHORT_16APSK_C3_4,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C3_4,  MOD_16APSK, 'U')  else
+    to_unsigned(RADIUS_SHORT_16APSK_C3_5,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C3_5,  MOD_16APSK, 'U')  else
+    to_unsigned(RADIUS_SHORT_16APSK_C4_5,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C4_5,  MOD_16APSK, 'U')  else
+    to_unsigned(RADIUS_SHORT_16APSK_C5_6,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C5_6,  MOD_16APSK, 'U')  else
+    to_unsigned(RADIUS_SHORT_16APSK_C8_9,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C8_9,  MOD_16APSK, 'U')  else
 
-    to_unsigned(RADIUS_SHORT_32APSK_C3_4,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C3_4,  MOD_32APSK)  else
-    to_unsigned(RADIUS_SHORT_32APSK_C4_5,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C4_5,  MOD_32APSK)  else
-    to_unsigned(RADIUS_SHORT_32APSK_C5_6,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C5_6,  MOD_32APSK)  else
-    to_unsigned(RADIUS_SHORT_32APSK_C8_9,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C8_9,  MOD_32APSK)  else
+    to_unsigned(RADIUS_SHORT_32APSK_C3_4,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C3_4,  MOD_32APSK, 'U')  else
+    to_unsigned(RADIUS_SHORT_32APSK_C4_5,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C4_5,  MOD_32APSK, 'U')  else
+    to_unsigned(RADIUS_SHORT_32APSK_C5_6,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C5_6,  MOD_32APSK, 'U')  else
+    to_unsigned(RADIUS_SHORT_32APSK_C8_9,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C8_9,  MOD_32APSK, 'U')  else
 
-    to_unsigned(RADIUS_NORMAL_16APSK_C2_3,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C2_3,  MOD_16APSK)  else
-    to_unsigned(RADIUS_NORMAL_16APSK_C3_4,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C3_4,  MOD_16APSK)  else
-    to_unsigned(RADIUS_NORMAL_16APSK_C3_5,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C3_5,  MOD_16APSK)  else
-    to_unsigned(RADIUS_NORMAL_16APSK_C4_5,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C4_5,  MOD_16APSK)  else
-    to_unsigned(RADIUS_NORMAL_16APSK_C5_6,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C5_6,  MOD_16APSK)  else
-    to_unsigned(RADIUS_NORMAL_16APSK_C8_9,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C8_9,  MOD_16APSK)  else
-    to_unsigned(RADIUS_NORMAL_16APSK_C9_10, radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C9_10, MOD_16APSK)  else
+    to_unsigned(RADIUS_NORMAL_16APSK_C2_3,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C2_3,  MOD_16APSK, 'U')  else
+    to_unsigned(RADIUS_NORMAL_16APSK_C3_4,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C3_4,  MOD_16APSK, 'U')  else
+    to_unsigned(RADIUS_NORMAL_16APSK_C3_5,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C3_5,  MOD_16APSK, 'U')  else
+    to_unsigned(RADIUS_NORMAL_16APSK_C4_5,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C4_5,  MOD_16APSK, 'U')  else
+    to_unsigned(RADIUS_NORMAL_16APSK_C5_6,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C5_6,  MOD_16APSK, 'U')  else
+    to_unsigned(RADIUS_NORMAL_16APSK_C8_9,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C8_9,  MOD_16APSK, 'U')  else
+    to_unsigned(RADIUS_NORMAL_16APSK_C9_10, radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C9_10, MOD_16APSK, 'U')  else
 
-    to_unsigned(RADIUS_NORMAL_32APSK_C3_4,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C3_4,  MOD_32APSK)  else
-    to_unsigned(RADIUS_NORMAL_32APSK_C4_5,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C4_5,  MOD_32APSK)  else
-    to_unsigned(RADIUS_NORMAL_32APSK_C5_6,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C5_6,  MOD_32APSK)  else
-    to_unsigned(RADIUS_NORMAL_32APSK_C8_9,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C8_9,  MOD_32APSK)  else
-    to_unsigned(RADIUS_NORMAL_32APSK_C9_10, radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C9_10, MOD_32APSK)  else
+    to_unsigned(RADIUS_NORMAL_32APSK_C3_4,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C3_4,  MOD_32APSK, 'U')  else
+    to_unsigned(RADIUS_NORMAL_32APSK_C4_5,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C4_5,  MOD_32APSK, 'U')  else
+    to_unsigned(RADIUS_NORMAL_32APSK_C5_6,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C5_6,  MOD_32APSK, 'U')  else
+    to_unsigned(RADIUS_NORMAL_32APSK_C8_9,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C8_9,  MOD_32APSK, 'U')  else
+    to_unsigned(RADIUS_NORMAL_32APSK_C9_10, radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C9_10, MOD_32APSK, 'U')  else
 
     (others => 'U');
+
+  -- -- Read the appropriate address of the radius RAM
+  -- process(axi_out_cfg)
+  -- begin
+  --   -- axi_out_cfg := (frame_type => axi_out_cfg.frame_type, code_rate => axi_out_cfg.code_rate, constellation => axi_out_cfg.constellation);
+  --   case axi_out_cfg.frame_type is
+  --     when FECFRAME_SHORT  =>
+  --       case axi_out_cfg.constellation is
+  --         when MOD_16APSK =>
+  --           case axi_out_cfg.code_rate is
+  --             when C2_3   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_16APSK_C2_3,   radius_rd_addr'length);
+  --             when C3_4   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_16APSK_C3_4,   radius_rd_addr'length);
+  --             when C3_5   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_16APSK_C3_5,   radius_rd_addr'length);
+  --             when C4_5   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_16APSK_C4_5,   radius_rd_addr'length);
+  --             when C5_6   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_16APSK_C5_6,   radius_rd_addr'length);
+  --             when C8_9   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_16APSK_C8_9,   radius_rd_addr'length);
+  --             when others => radius_rd_addr <= (others => 'U');
+  --           end case;
+
+  --         when MOD_32APSK =>
+  --           case axi_out_cfg.code_rate is
+  --             when C3_4 => radius_rd_addr <= to_unsigned(RADIUS_SHORT_32APSK_C3_4,   radius_rd_addr'length);
+  --             when C4_5 => radius_rd_addr <= to_unsigned(RADIUS_SHORT_32APSK_C4_5,   radius_rd_addr'length);
+  --             when C5_6 => radius_rd_addr <= to_unsigned(RADIUS_SHORT_32APSK_C5_6,   radius_rd_addr'length);
+  --             when C8_9 => radius_rd_addr <= to_unsigned(RADIUS_SHORT_32APSK_C8_9,   radius_rd_addr'length);
+  --             when others => radius_rd_addr <= (others => 'U');
+  --           end case;
+
+  --         when others => radius_rd_addr <= (others => 'U');
+  --       end case;
+
+  --     when FECFRAME_NORMAL  =>
+  --       case axi_out_cfg.constellation is
+  --         when MOD_16APSK =>
+  --           case axi_out_cfg.code_rate is
+  --             when C2_3 => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_16APSK_C2_3,  radius_rd_addr'length);
+  --             when C3_4 => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_16APSK_C3_4,  radius_rd_addr'length);
+  --             when C3_5 => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_16APSK_C3_5,  radius_rd_addr'length);
+  --             when C4_5 => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_16APSK_C4_5,  radius_rd_addr'length);
+  --             when C5_6 => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_16APSK_C5_6,  radius_rd_addr'length);
+  --             when C8_9 => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_16APSK_C8_9,  radius_rd_addr'length);
+  --             when C9_10 => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_16APSK_C9_10, radius_rd_addr'length);
+  --             when others => radius_rd_addr <= (others => 'U');
+  --           end case;
+
+  --         when MOD_32APSK =>
+  --           case axi_out_cfg.code_rate is
+  --             when C3_4  => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_32APSK_C3_4,  radius_rd_addr'length);
+  --             when C4_5  => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_32APSK_C4_5,  radius_rd_addr'length);
+  --             when C5_6  => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_32APSK_C5_6,  radius_rd_addr'length);
+  --             when C8_9  => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_32APSK_C8_9,  radius_rd_addr'length);
+  --             when C9_10 => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_32APSK_C9_10, radius_rd_addr'length);
+  --             when others => radius_rd_addr <= (others => 'U');
+  --           end case;
+
+  --         when others => radius_rd_addr <= (others => 'U');
+  --       end case;
+
+  --     when others => radius_rd_addr <= (others => 'U');
+  --     end case;
+  -- end process;
 
   ram_block : block
     signal tag_agg_in     : std_logic_vector(TID_WIDTH downto 0);
@@ -364,8 +424,7 @@ begin
         DATA_WIDTH    => OUTPUT_DATA_WIDTH,
         INITIAL_VALUE => MAPPING_TABLE,
         TAG_WIDTH     => TID_WIDTH + 1,
-        RAM_TYPE      => auto,
-        OUTPUT_DELAY  => 1)
+        RAM_TYPE      => auto)
       port map (
         clk           => clk,
         rst           => rst,
@@ -398,8 +457,7 @@ begin
         DATA_WIDTH    => OUTPUT_DATA_WIDTH,
         INITIAL_VALUE => RADIUS_TABLE,
         TAG_WIDTH     => ENCODED_CONFIG_WIDTH,
-        RAM_TYPE      => auto,
-        OUTPUT_DELAY  => 1)
+        RAM_TYPE      => auto)
       port map (
         clk           => clk,
         rst           => rst,

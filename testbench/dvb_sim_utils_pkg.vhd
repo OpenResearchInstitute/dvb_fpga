@@ -50,6 +50,7 @@ package dvb_sim_utils_pkg is
     constellation : constellation_t;
     frame_type    : frame_type_t;
     code_rate     : code_rate_t;
+    pilots        : std_logic;
     base_path     : string(1 to 256);
   end record;
 
@@ -133,6 +134,7 @@ package body dvb_sim_utils_pkg is
     push(msg, value.constellation);
     push(msg, value.frame_type);
     push(msg, value.code_rate);
+    push(msg, value.pilots);
     push(msg, value.base_path);
   end;
 
@@ -140,12 +142,14 @@ package body dvb_sim_utils_pkg is
     constant constellation : constellation_t := pop(msg);
     constant frame_type    : frame_type_t    := pop(msg);
     constant code_rate     : code_rate_t     := pop(msg);
+    constant pilots        : std_logic       := pop(msg);
     constant base_path     : string          := pop(msg);
   begin
     return (
       constellation => constellation,
       frame_type    => frame_type,
       code_rate     => code_rate,
+      pilots        => pilots,
       base_path     => base_path);
   end;
 
@@ -166,16 +170,22 @@ package body dvb_sim_utils_pkg is
     for i in 0 to cfg_strings'length - 1 loop
       cfg_items := split(cfg_strings(i).all, ",");
 
-      if cfg_items'length /= 4 then
-        failure("Malformed config string " & quote(cfg_strings(i).all));
+      if cfg_items'length /= 5 then
+        failure("Malformed config string " & quote(cfg_strings(i).all) & ". "
+              & "Expected 5 items but found " & integer'image(cfg_items'length));
       end if;
 
       current.constellation := constellation_t'value(cfg_items(0).all);
       current.frame_type := frame_type_t'value(cfg_items(1).all);
       current.code_rate := code_rate_t'value(cfg_items(2).all);
+      if boolean'value(cfg_items(3).all) then
+        current.pilots := '1';
+      else
+        current.pilots := '0';
+      end if;
 
       current.base_path := (others => nul);
-      current.base_path(cfg_items(3).all'range) := cfg_items(3).all;
+      current.base_path(cfg_items(4).all'range) := cfg_items(4).all;
 
       result(i) := current;
 
@@ -205,7 +215,7 @@ package body dvb_sim_utils_pkg is
     for i in 0 to cfg_strings'length - 1 loop
       cfg_items := split(cfg_strings(i).all, ",");
 
-      if cfg_items'length /= 2 then
+      if cfg_items'length /= 3 then
         failure("Malformed config string " & quote(cfg_strings(i).all));
       end if;
 
@@ -241,10 +251,11 @@ package body dvb_sim_utils_pkg is
       & "constellation=" & quote(constellation_t'image(config.constellation)) & ", "
       & "frame_type=" & quote(frame_type_t'image(config.frame_type)) & ", "
       & "code_rate=" & quote(code_rate_t'image(config.code_rate)) & ", "
+      & "pilots=" & std_logic'image(config.pilots) & ", "
       & "base_path=" & quote(config.base_path) & ")";
   end function to_string;
 
-  -- Returns a string representation of config_t
+  -- Returns a string representation of file_pair_t
   function to_string( constant config : file_pair_t ) return string is
   begin
     return "file_pair("
