@@ -737,10 +737,10 @@ begin
     begin
 
       info(logger, "Running test with:");
-      info(logger, " - constellation  : " & constellation_t'image(config.constellation));
-      info(logger, " - frame_type     : " & frame_type_t'image(config.frame_type));
-      info(logger, " - code_rate      : " & code_rate_t'image(config.code_rate));
-      info(logger, " - pilots         : " & std_logic'image(config.pilots));
+      info(logger, " - constellation  : " & constellation_t'image(config_tuple.constellation));
+      info(logger, " - frame_type     : " & frame_type_t'image(config_tuple.frame_type));
+      info(logger, " - code_rate      : " & code_rate_t'image(config_tuple.code_rate));
+      info(logger, " - pilots         : " & std_logic'image(config_tuple.pilots));
       info(logger, " - data path      : " & data_path);
 
       -- Only update the mapping RAM if the config actually requires that
@@ -756,10 +756,11 @@ begin
         file_reader_msg        := new_msg;
         file_reader_msg.sender := self;
 
-        read_file(net, input_stream, data_path & "/input_data_packed.bin", encode(config_tuple));
         if config_tuple.pilots then
+          read_file(net, input_stream, data_path & "/input_data_packed_pilots_on.bin", encode(config_tuple));
           read_file(net, output_checker, data_path & "/plframe_pilots_on_fixed_point.bin");
         else
+          read_file(net, input_stream, data_path & "/input_data_packed_pilots_off.bin", encode(config_tuple));
           read_file(net, output_checker, data_path & "/plframe_pilots_off_fixed_point.bin");
         end if;
 

@@ -48,6 +48,7 @@ entity inline_config_adapter is
     m_frame_type    : out frame_type_t;
     m_constellation : out constellation_t;
     m_code_rate     : out code_rate_t;
+    m_pilots        : out std_logic;
     m_tvalid        : out std_logic;
     m_tready        : in  std_logic;
     m_tlast         : out std_logic;
@@ -164,6 +165,7 @@ begin
   m_frame_type    <= cfg.frame_type when m_tvalid_i else unknown;
   m_constellation <= cfg.constellation when m_tvalid_i else unknown;
   m_code_rate     <= cfg.code_rate when m_tvalid_i else unknown;
+  m_pilots        <= cfg.pilots when m_tvalid_i else 'U';
 
   m_tvalid        <= m_tvalid_i;
   m_tdata         <= m_tdata_i when m_tvalid_i else (others => 'U');

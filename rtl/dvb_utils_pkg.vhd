@@ -126,14 +126,17 @@ package body dvb_utils_pkg is
     variable result : std_logic_vector(7 downto 0);
     variable modcod : integer range 1 to 28;
   begin
-    result(5) := cfg.pilots;
+    result(7) := '0';
+
     if cfg.frame_type = fecframe_short then
       result(6) := '1';
-    elsif cfg.frame_type = fecframe_short then
+    elsif cfg.frame_type = fecframe_normal then
       result(6) := '0';
     else
       result(6) := 'U';
     end if;
+
+    result(5) := cfg.pilots;
 
     if cfg.constellation = mod_qpsk and cfg.code_rate = C1_4 then modcod := 1; end if;
     if cfg.constellation = mod_qpsk and cfg.code_rate = C1_3 then modcod := 2; end if;
@@ -165,7 +168,6 @@ package body dvb_utils_pkg is
     if cfg.constellation = mod_32apsk and cfg.code_rate = C9_10 then modcod := 28; end if;
 
     result(4 downto 0) := std_logic_vector(to_unsigned(modcod, 5));
-
     return result;
   end function;
 

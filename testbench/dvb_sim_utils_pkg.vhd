@@ -142,7 +142,7 @@ package body dvb_sim_utils_pkg is
     constant constellation : constellation_t := pop(msg);
     constant frame_type    : frame_type_t    := pop(msg);
     constant code_rate     : code_rate_t     := pop(msg);
-    constant pilots        : std_logic     := pop(msg);
+    constant pilots        : std_logic       := pop(msg);
     constant base_path     : string          := pop(msg);
   begin
     return (
@@ -255,7 +255,7 @@ package body dvb_sim_utils_pkg is
       & "base_path=" & quote(config.base_path) & ")";
   end function to_string;
 
-  -- Returns a string representation of config_t
+  -- Returns a string representation of file_pair_t
   function to_string( constant config : file_pair_t ) return string is
   begin
     return "file_pair("
