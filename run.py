@@ -274,24 +274,23 @@ def _runGnuRadio(config):
         _getAcmCommandByte(
             config.frame_type, config.constellation, config.code_rate, False
         ),
-        p.join(config.test_files_path, "input_data_packed_pilots_off.bin"),
+        p.join(config.test_files_path, "input_data_packed.bin"),
+        p.join(config.test_files_path, "input_data_with_metadata_pilots_off.bin"),
     )
 
     _addModcodToInputData(
         _getAcmCommandByte(
             config.frame_type, config.constellation, config.code_rate, True
         ),
-        p.join(config.test_files_path, "input_data_packed_pilots_on.bin"),
+        p.join(config.test_files_path, "input_data_packed.bin"),
+        p.join(config.test_files_path, "input_data_with_metadata_pilots_on.bin"),
     )
 
 
-def _addModcodToInputData(metadata: int, source: str):
+def _addModcodToInputData(metadata: int, source: str, target: str):
     """
-    DVBS2 Wrapper assumes the first byte determines the frame config, followed
-    by 3 bytes of zeros then the actual data
+    Add in-band signalling according to ETSI EN 302 307 Appendix I.2
     """
-    target = source.replace("input_data_packed", "input_data_with_metadata")
-
     with open(target, "wb") as target_fd:
         target_fd.write(b"%c" % 0xB8)
         target_fd.write(b"%c" % metadata)

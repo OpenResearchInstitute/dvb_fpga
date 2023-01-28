@@ -567,7 +567,9 @@ begin
         m_tready => m_tready,
         m_tdata  => tdata_agg_out);
 
-        (m_tlast, m_tid, m_tdata) <= tdata_agg_out;
+        m_tdata <= tdata_agg_out(OUTPUT_DATA_WIDTH - 1 downto 0);
+        m_tid   <= tdata_agg_out(OUTPUT_DATA_WIDTH + TID_WIDTH - 1 downto OUTPUT_DATA_WIDTH);
+        m_tlast <= tdata_agg_out(OUTPUT_DATA_WIDTH + TID_WIDTH);
   end block;
 
 end axi_constellation_mapper;
