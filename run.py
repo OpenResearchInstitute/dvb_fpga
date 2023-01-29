@@ -122,8 +122,8 @@ class TestDefinition(
                 f"FrameType={frame_type.value}",
                 f"ConstellationType={constellation.value}",
                 f"CodeRate={code_rate.value}",
-                f"pilots={pilots}",
             ]
+            + (["pilots"] if pilots else [])
         )
 
         return TestDefinition(
@@ -157,7 +157,7 @@ def _getConfigs(
     pilots=None,
 ):
     "Iterates over the configs enums and returns a iterator of TestDefinition"
-    pilots = pilots or [False, True]
+    pilots = (pilots,) or [False, True]
     for code_rate in code_rates:
         for frame_type in frame_types:
             for constellation in constellations:
@@ -223,14 +223,13 @@ def _getAcmCommandByte(
             (ConstellationType.MOD_32APSK, CodeRate.C9_10): 28,
         }[(constellation, code_rate)]
     except KeyError:
-        _logger.error(
+        _logger.warning(
             "Failed to get ACM command byte for %s, %s, %s, %s",
             frame_type,
             constellation,
             code_rate,
             pilots,
         )
-        pass
 
     return result
 
@@ -275,7 +274,7 @@ def _runGnuRadio(config):
             config.frame_type, config.constellation, config.code_rate, False
         ),
         p.join(config.test_files_path, "input_data_packed.bin"),
-        p.join(config.test_files_path, "input_data_with_metadata_pilots_off.bin"),
+        p.join(config.test_files_path, "dvbs2_encoder_wrapper_input_pilots_off.bin"),
     )
 
     _addModcodToInputData(
@@ -283,7 +282,7 @@ def _runGnuRadio(config):
             config.frame_type, config.constellation, config.code_rate, True
         ),
         p.join(config.test_files_path, "input_data_packed.bin"),
-        p.join(config.test_files_path, "input_data_with_metadata_pilots_on.bin"),
+        p.join(config.test_files_path, "dvbs2_encoder_wrapper_input_pilots_on.bin"),
     )
 
 
@@ -362,134 +361,61 @@ LDPC_LENGTH = {
 }
 
 PLFRAME_HEADER_CONFIGS = {
-    TestDefinition.fromConfigTuple(frame_type, constellation, code_rate, pilots)
-    for frame_type, constellation, code_rate, pilots in (
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C2_3, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C3_4, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C4_5, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C5_6, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C8_9, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C3_4, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C4_5, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C5_6, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C8_9, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C2_3, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C3_4, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C3_5, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C5_6, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C8_9, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C1_2, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C1_3, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C1_4, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C2_3, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C2_5, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C3_4, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C3_5, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C4_5, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C5_6, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C8_9, False),
-        #  (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C9_10, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C2_3, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C3_4, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C4_5, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C5_6, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C8_9, False),
-        (
-            FrameType.FECFRAME_NORMAL,
-            ConstellationType.MOD_16APSK,
-            CodeRate.C9_10,
-            False,
-        ),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C3_4, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C4_5, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C5_6, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C8_9, False),
-        (
-            FrameType.FECFRAME_NORMAL,
-            ConstellationType.MOD_32APSK,
-            CodeRate.C9_10,
-            False,
-        ),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C2_3, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C3_4, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C3_5, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C5_6, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C8_9, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C9_10, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C1_2, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C1_3, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C1_4, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C2_3, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C2_5, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C3_4, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C3_5, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C4_5, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C5_6, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C8_9, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C9_10, False),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C2_3, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C3_4, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C4_5, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C5_6, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C8_9, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C3_4, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C4_5, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C5_6, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C8_9, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C2_3, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C3_4, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C3_5, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C5_6, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C8_9, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C1_2, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C1_3, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C1_4, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C2_3, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C2_5, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C3_4, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C3_5, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C4_5, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C5_6, True),
-        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C8_9, True),
-        #  (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C9_10, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C2_3, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C3_4, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C4_5, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C5_6, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C8_9, True),
-        (
-            FrameType.FECFRAME_NORMAL,
-            ConstellationType.MOD_16APSK,
-            CodeRate.C9_10,
-            True,
-        ),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C3_4, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C4_5, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C5_6, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C8_9, True),
-        (
-            FrameType.FECFRAME_NORMAL,
-            ConstellationType.MOD_32APSK,
-            CodeRate.C9_10,
-            True,
-        ),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C2_3, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C3_4, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C3_5, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C5_6, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C8_9, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C9_10, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C1_2, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C1_3, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C1_4, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C2_3, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C2_5, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C3_4, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C3_5, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C4_5, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C5_6, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C8_9, True),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C9_10, True),
+    TestDefinition.fromConfigTuple(frame_type, constellation, code_rate, False)
+    for frame_type, constellation, code_rate in (
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C2_3),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C3_4),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C4_5),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C5_6),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C8_9),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C3_4),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C4_5),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C5_6),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C8_9),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C2_3),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C3_4),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C3_5),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C5_6),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_8PSK, CodeRate.C8_9),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C1_2),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C1_3),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C1_4),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C2_3),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C2_5),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C3_4),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C3_5),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C4_5),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C5_6),
+        (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C8_9),
+        #  (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C9_10),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C2_3),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C3_4),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C4_5),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C5_6),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C8_9),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C9_10),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C3_4),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C4_5),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C5_6),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C8_9),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C9_10),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C2_3),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C3_4),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C3_5),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C5_6),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C8_9),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C9_10),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C1_2),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C1_3),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C1_4),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C2_3),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C2_5),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C3_4),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C3_5),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C4_5),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C5_6),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C8_9),
+        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C9_10),
     )
 }
 
@@ -498,272 +424,52 @@ CONSTELLATION_MAPPER_CONFIGS = (
     set(_getConfigs(constellations=(ConstellationType.MOD_QPSK,)))
     | set(_getConfigs(constellations=(ConstellationType.MOD_8PSK,)))
     | {
-        TestDefinition.fromConfigTuple(frame_type, constellation, code_rate, pilots)
-        for frame_type, constellation, code_rate, pilots in (
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C2_3,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C3_4,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C4_5,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C5_6,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C8_9,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C9_10,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C3_5,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C2_3,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C3_4,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C4_5,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C5_6,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C8_9,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C3_5,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C3_4,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C4_5,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C5_6,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C8_9,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C9_10,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C3_4,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C4_5,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C5_6,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C8_9,
-                True,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C2_3,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C3_4,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C4_5,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C5_6,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C8_9,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C9_10,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C3_5,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C2_3,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C3_4,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C4_5,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C5_6,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C8_9,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_16APSK,
-                CodeRate.C3_5,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C3_4,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C4_5,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C5_6,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C8_9,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C9_10,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C3_4,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C4_5,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C5_6,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_SHORT,
-                ConstellationType.MOD_32APSK,
-                CodeRate.C8_9,
-                False,
-            ),
+        TestDefinition.fromConfigTuple(frame_type, constellation, code_rate, False)
+        for frame_type, constellation, code_rate in (
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C2_3),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C3_4),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C4_5),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C5_6),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C8_9),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C9_10),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C3_5),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C2_3),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C3_4),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C4_5),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C5_6),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C8_9),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C3_5),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C3_4),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C4_5),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C5_6),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C8_9),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C9_10),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C3_4),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C4_5),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C5_6),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C8_9),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C2_3),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C3_4),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C4_5),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C5_6),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C8_9),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C9_10),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C3_5),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C2_3),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C3_4),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C4_5),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C5_6),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C8_9),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C3_5),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C3_4),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C4_5),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C5_6),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C8_9),
+            (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C9_10),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C3_4),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C4_5),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C5_6),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C8_9),
             # this should work but GNU Radio itself doesn't handle it for some
             # reason
             # (FrameType.FECFRAME_SHORT, ConstellationType.MOD_32APSK, CodeRate.C9_10),
@@ -1114,7 +820,9 @@ def setupTests(vunit, args):
     """
     if args.individual_config_runs:
         # BCH and LDPC encoding don't depend on the constellation type, choose any
-        for config in _getConfigs(constellations=(ConstellationType.MOD_8PSK,)):
+        for config in _getConfigs(
+            constellations=(ConstellationType.MOD_8PSK,), pilots=False
+        ):
             vunit.library("lib").entity("axi_bch_encoder_tb").add_config(
                 name=config.name,
                 generics=dict(
@@ -1165,14 +873,14 @@ def setupTests(vunit, args):
         addAllConfigsTest(
             entity=vunit.library("lib").entity("axi_ldpc_encoder_core_tb"),
             configs=_getConfigs(
-                constellations=(ConstellationType.MOD_8PSK,),
+                constellations=(ConstellationType.MOD_8PSK,), pilots=False
             ),
         )
 
         addAllConfigsTest(
             entity=vunit.library("lib").entity("axi_ldpc_table_tb"),
             configs=_getConfigs(
-                constellations=(ConstellationType.MOD_8PSK,),
+                constellations=(ConstellationType.MOD_8PSK,), pilots=False
             ),
         )
 
@@ -1235,7 +943,8 @@ def setupTests(vunit, args):
                 ConstellationType.MOD_8PSK,
                 ConstellationType.MOD_16APSK,
                 ConstellationType.MOD_32APSK,
-            )
+            ),
+            pilots=False,
         ):
             all_configs += [config.getTestConfigString()]
 
@@ -1264,18 +973,48 @@ def setupTests(vunit, args):
     # Physical layer framer only connects axi_plframe_header and
     # axi_physical_layer_scrambler and both are tested individually, so we
     # don't need to test all configs
-    vunit.library("lib").entity("axi_physical_layer_framer_tb").add_config(
-        name="test",
-        generics=dict(
-            test_cfg=TestDefinition.fromConfigTuple(
+
+    physical_layer_framer_configs = {
+        TestDefinition.fromConfigTuple(frame_type, constellation, code_rate, pilots)
+        for frame_type, constellation, code_rate, pilots in (
+            (
+                FrameType.FECFRAME_SHORT,
+                ConstellationType.MOD_QPSK,
+                CodeRate.C1_2,
+                False,
+            ),
+            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C1_2, True),
+            (
                 FrameType.FECFRAME_NORMAL,
                 ConstellationType.MOD_QPSK,
                 CodeRate.C1_2,
                 False,
-            ).getTestConfigString(),
-            NUMBER_OF_TEST_FRAMES=3,
-        ),
-    )
+            ),
+            (
+                FrameType.FECFRAME_NORMAL,
+                ConstellationType.MOD_QPSK,
+                CodeRate.C1_2,
+                True,
+            ),
+        )
+    }
+
+    if args.individual_config_runs:
+        for config in physical_layer_framer_configs:
+            vunit.library("lib").entity("axi_physical_layer_framer_tb").add_config(
+                name=config.name,
+                generics=dict(
+                    test_cfg=config.getTestConfigString(),
+                    SEED=args.seed,
+                    NUMBER_OF_TEST_FRAMES=3,
+                ),
+            )
+    else:
+        addAllConfigsTest(
+            vunit.library("lib").entity("axi_physical_layer_framer_tb"),
+            physical_layer_framer_configs,
+            seed=args.seed,
+        )
 
 
 def addAllConfigsTest(entity, configs, seed=0, name=None):
