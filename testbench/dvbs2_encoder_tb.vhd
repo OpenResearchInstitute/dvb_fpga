@@ -756,11 +756,11 @@ begin
         file_reader_msg        := new_msg;
         file_reader_msg.sender := self;
 
+        read_file(net, input_stream, data_path & "/input_data_packed.bin", encode(config_tuple));
+
         if config_tuple.pilots then
-          read_file(net, input_stream, data_path & "/input_data_packed_pilots_on.bin", encode(config_tuple));
           read_file(net, output_checker, data_path & "/plframe_pilots_on_fixed_point.bin");
         else
-          read_file(net, input_stream, data_path & "/input_data_packed_pilots_off.bin", encode(config_tuple));
           read_file(net, output_checker, data_path & "/plframe_pilots_off_fixed_point.bin");
         end if;
 
