@@ -78,6 +78,8 @@ package dvb_utils_pkg is
     pilots        : std_logic;
   end record;
 
+  function to_string( constant cfg : config_tuple_t ) return string;
+
   type config_tuple_array_t is array (natural range <>) of config_tuple_t;
 
   function encode ( constant cfg : config_tuple_t ) return std_logic_vector;
@@ -122,6 +124,16 @@ package body dvb_utils_pkg is
 
     return result;
   end function get_crc_length;
+
+  function to_string( constant cfg : config_tuple_t ) return string is
+  begin
+    return "config_tuple("
+      & "constellation=" & quote(constellation_t'image(cfg.constellation)) & ", "
+      & "frame_type=" & quote(frame_type_t'image(cfg.frame_type)) & ", "
+      & "code_rate=" & quote(code_rate_t'image(cfg.code_rate)) & ", "
+      & "pilots=" & std_logic'image(cfg.pilots) & ")";
+  end function to_string;
+
 
   function encode ( constant cfg : config_tuple_t ) return std_logic_vector is
   begin
