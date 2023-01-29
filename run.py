@@ -836,6 +836,7 @@ def setupTests(vunit, args):
                 name=config.name,
                 generics=dict(
                     test_cfg=config.getTestConfigString(),
+                    seed=args.seed,
                     NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
@@ -868,6 +869,7 @@ def setupTests(vunit, args):
         addAllConfigsTest(
             entity=vunit.library("lib").entity("axi_constellation_mapper_tb"),
             configs=CONSTELLATION_MAPPER_CONFIGS,
+            seed=args.seed,
         )
 
         addAllConfigsTest(
@@ -875,6 +877,7 @@ def setupTests(vunit, args):
             configs=_getConfigs(
                 constellations=(ConstellationType.MOD_8PSK,), pilots=False
             ),
+            seed=args.seed,
         )
 
         addAllConfigsTest(
@@ -882,6 +885,7 @@ def setupTests(vunit, args):
             configs=_getConfigs(
                 constellations=(ConstellationType.MOD_8PSK,), pilots=False
             ),
+            seed=args.seed,
         )
 
         # Run the DVB S2 Tx testbench with a smaller sample of configs to check
@@ -890,12 +894,13 @@ def setupTests(vunit, args):
         addAllConfigsTest(
             entity=vunit.library("lib").entity("dvbs2_encoder_tb"),
             configs=PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS,
+            seed=args.seed,
         )
 
     addAllConfigsTest(
         entity=vunit.library("lib").entity("axi_baseband_scrambler_tb"),
-        seed=args.seed,
         configs=TEST_CONFIGS,
+        seed=args.seed,
     )
 
     # axi_plframe_header does not support every combination out there
@@ -905,6 +910,7 @@ def setupTests(vunit, args):
                 name=config.name,
                 generics=dict(
                     test_cfg=config.getTestConfigString(),
+                    SEED=args.seed,
                     NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
@@ -912,6 +918,7 @@ def setupTests(vunit, args):
                 name=config.name,
                 generics=dict(
                     test_cfg=config.getTestConfigString(),
+                    seed=args.seed,
                     NUMBER_OF_TEST_FRAMES=3,
                 ),
             )
@@ -920,8 +927,8 @@ def setupTests(vunit, args):
                 name=config.name,
                 generics=dict(
                     test_cfg=config.getTestConfigString(),
-                    NUMBER_OF_TEST_FRAMES=1,
                     SEED=args.seed,
+                    NUMBER_OF_TEST_FRAMES=1,
                 ),
             )
 
@@ -929,10 +936,12 @@ def setupTests(vunit, args):
         addAllConfigsTest(
             vunit.library("lib").entity("axi_plframe_header_tb"),
             configs=PLFRAME_HEADER_CONFIGS,
+            seed=args.seed,
         )
         addAllConfigsTest(
             vunit.library("lib").entity("axi_physical_layer_scrambler_tb"),
             configs=PLFRAME_HEADER_CONFIGS,
+            seed=args.seed,
         )
 
     # Generate bit interleaver tests
@@ -1012,7 +1021,7 @@ def setupTests(vunit, args):
     else:
         addAllConfigsTest(
             vunit.library("lib").entity("axi_physical_layer_framer_tb"),
-            physical_layer_framer_configs,
+            configs=physical_layer_framer_configs,
             seed=args.seed,
         )
 
