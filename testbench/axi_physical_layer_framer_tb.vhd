@@ -213,9 +213,16 @@ begin
       info(logger, " - constellation  : " & constellation_t'image(config.constellation));
       info(logger, " - frame_type     : " & frame_type_t'image(config.frame_type));
       info(logger, " - code_rate      : " & code_rate_t'image(config.code_rate));
+      info(logger, " - pilots         : " & std_logic'image(config.pilots));
       info(logger, " - data path      : " & data_path);
 
-      config_tuple := (code_rate => config.code_rate, constellation => config.constellation, frame_type => config.frame_type, pilots => '0');
+      config_tuple := (
+        code_rate     => config.code_rate,
+        constellation => config.constellation,
+        frame_type    => config.frame_type,
+        pilots        => config.pilots
+      );
+
 
       for i in 0 to number_of_frames - 1 loop
         debug(logger, "Setting up frame #" & to_string(i));
@@ -226,7 +233,11 @@ begin
           tid         => encode(config_tuple)
         );
 
-        read_file( net, file_checker, data_path & "/plframe_pilots_off_fixed_point.bin");
+        if config.pilots then
+          read_file( net, file_checker, data_path & "/plframe_pilots_on_fixed_point.bin");
+        else
+          read_file( net, file_checker, data_path & "/plframe_pilots_off_fixed_point.bin");
+        end if;
 
         -- Update the expected TID
         msg := new_msg;

@@ -221,7 +221,11 @@ begin
           probability => 1.0,
           blocking    => False);
 
-        read_file(net, file_reader, data_path & "/plframe_header_pilots_off_fixed_point.bin");
+        if config.pilots then
+          read_file(net, file_reader, data_path & "/plframe_header_pilots_on_fixed_point.bin");
+        else
+          read_file(net, file_reader, data_path & "/plframe_header_pilots_off_fixed_point.bin");
+        end if;
       end loop;
 
       join(net, dut);
