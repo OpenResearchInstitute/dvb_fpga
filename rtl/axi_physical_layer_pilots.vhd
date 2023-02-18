@@ -48,7 +48,7 @@ use work.plframe_header_pkg.all;
 ------------------------
 -- Entity declaration --
 ------------------------
-entity axi_physical_layer_header is
+entity axi_physical_layer_pilots is
   generic (
     DATA_WIDTH : integer := 8
   );
@@ -60,7 +60,6 @@ entity axi_physical_layer_header is
     s_constellation : in  constellation_t;
     s_frame_type    : in  frame_type_t;
     s_code_rate     : in  code_rate_t;
-    s_pilots        : in  std_logic;
     s_tready        : out std_logic;
     s_tvalid        : in  std_logic;
     -- AXI output
@@ -68,9 +67,9 @@ entity axi_physical_layer_header is
     m_tvalid        : out std_logic;
     m_tlast         : out std_logic;
     m_tdata         : out std_logic_vector(DATA_WIDTH - 1 downto 0));
-end axi_physical_layer_header;
+end axi_physical_layer_pilots;
 
-architecture axi_physical_layer_header of axi_physical_layer_header is
+architecture axi_physical_layer_pilots of axi_physical_layer_pilots is
 
   ---------------
   -- Constants --
@@ -117,8 +116,8 @@ begin
 
   m_tlast_i <= '1' when header_sr_cnt = 89 else '0';
 
-  pls_rom_addr    <= (others => 'U') when get_pls_rom_addr(s_constellation, s_frame_type, s_code_rate, s_pilots = '1') = -1 else
-                     std_logic_vector(to_unsigned(get_pls_rom_addr(s_constellation, s_frame_type, s_code_rate, s_pilots = '1'), numbits(PLS_ROM_DEPTH)));
+  pls_rom_addr    <= (others => 'U') when get_pls_rom_addr(s_constellation, s_frame_type, s_code_rate) = -1 else
+                     std_logic_vector(to_unsigned(get_pls_rom_addr(s_constellation, s_frame_type, s_code_rate), numbits(PLS_ROM_DEPTH)));
 
   header          <= SOF & pls_code;
   modulation_addr <= '0' & modulation_index & header_sr(89);
@@ -183,4 +182,4 @@ begin
     end if;
   end process;
 
-end axi_physical_layer_header;
+end axi_physical_layer_pilots;

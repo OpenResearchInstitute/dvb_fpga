@@ -112,6 +112,7 @@ begin
       s_constellation => decode(axi_master.tdata).constellation,
       s_frame_type    => decode(axi_master.tdata).frame_type,
       s_code_rate     => decode(axi_master.tdata).code_rate,
+      s_pilots        => decode(axi_master.tdata).pilots,
 
       s_tready        => axi_master.tready,
       s_tvalid        => axi_master.tvalid,
