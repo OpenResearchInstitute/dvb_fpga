@@ -75,7 +75,7 @@ ghdl --std=08                                                                  \
                     rtl/ldpc/ldpc_input_sync.vhd                               \
                     rtl/axi_ldpc_encoder_core.vhd                              \
                     rtl/axi_ldpc_encoder.vhd                                   \
-                    rtl/axi_plframe_header.vhd                                 \
+                    rtl/axi_physical_layer_header.vhd                          \
                     rtl/dummy_frame_generator.vhd                              \
                     rtl/plframe_header_pkg.vhd                                 \
                     rtl/ldpc/ldpc_pkg.vhd                                      \

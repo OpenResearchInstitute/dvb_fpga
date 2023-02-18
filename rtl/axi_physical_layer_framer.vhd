@@ -123,7 +123,7 @@ begin
       sampled.tlast <= tdata_agg_out(TDATA_WIDTH);
     end block;
 
-  plframe_header_gen_u : entity work.axi_plframe_header
+  plframe_header_gen_u : entity work.axi_physical_layer_header
     generic map ( DATA_WIDTH => TDATA_WIDTH)
     port map (
       -- Usual ports

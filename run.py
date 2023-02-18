@@ -958,10 +958,10 @@ def setupTests(vunit, args):
         seed=args.seed,
     )
 
-    # axi_plframe_header does not support every combination out there
+    # axi_physical_layer_header does not support every combination out there
     if args.individual_config_runs:
         for config in PLFRAME_HEADER_CONFIGS:
-            vunit.library("lib").entity("axi_plframe_header_tb").add_config(
+            vunit.library("lib").entity("axi_physical_layer_header_tb").add_config(
                 name=config.name,
                 generics=dict(
                     test_cfg=config.getTestConfigString(),
@@ -989,7 +989,7 @@ def setupTests(vunit, args):
 
     else:
         addAllConfigsTest(
-            vunit.library("lib").entity("axi_plframe_header_tb"),
+            vunit.library("lib").entity("axi_physical_layer_header_tb"),
             configs=PLFRAME_HEADER_CONFIGS,
             seed=args.seed,
         )
@@ -1034,7 +1034,7 @@ def setupTests(vunit, args):
                 ),
             )
 
-    # Physical layer framer only connects axi_plframe_header and
+    # Physical layer framer only connects axi_physical_layer_header and
     # axi_physical_layer_scrambler and both are tested individually, so we
     # don't need to test all configs
 

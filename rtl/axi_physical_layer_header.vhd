@@ -48,7 +48,7 @@ use work.plframe_header_pkg.all;
 ------------------------
 -- Entity declaration --
 ------------------------
-entity axi_plframe_header is
+entity axi_physical_layer_header is
   generic (
     DATA_WIDTH : integer := 8
   );
@@ -67,9 +67,9 @@ entity axi_plframe_header is
     m_tvalid        : out std_logic;
     m_tlast         : out std_logic;
     m_tdata         : out std_logic_vector(DATA_WIDTH - 1 downto 0));
-end axi_plframe_header;
+end axi_physical_layer_header;
 
-architecture axi_plframe_header of axi_plframe_header is
+architecture axi_physical_layer_header of axi_physical_layer_header is
 
   ---------------
   -- Constants --
@@ -182,4 +182,4 @@ begin
     end if;
   end process;
 
-end axi_plframe_header;
+end axi_physical_layer_header;

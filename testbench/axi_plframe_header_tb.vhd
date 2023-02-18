@@ -43,15 +43,15 @@ context fpga_cores_sim.sim_context;
 use work.dvb_sim_utils_pkg.all;
 use work.dvb_utils_pkg.all;
 
-entity axi_plframe_header_tb is
+entity axi_physical_layer_header_tb is
   generic (
     RUNNER_CFG            : string;
     TEST_CFG              : string;
     NUMBER_OF_TEST_FRAMES : integer := 8;
     SEED                  : integer);
-end axi_plframe_header_tb;
+end axi_physical_layer_header_tb;
 
-architecture axi_plframe_header_tb of axi_plframe_header_tb is
+architecture axi_physical_layer_header_tb of axi_physical_layer_header_tb is
 
   ---------------
   -- Constants --
@@ -102,7 +102,7 @@ begin
       m_tvalid => axi_master.tvalid,
       m_tlast  => open);
 
-  dut : entity work.axi_plframe_header
+  dut : entity work.axi_physical_layer_header
     generic map (DATA_WIDTH => DATA_WIDTH)
     port map (
       -- Usual ports
@@ -322,4 +322,4 @@ begin
     end if;
   end process;
 
-end axi_plframe_header_tb;
+end axi_physical_layer_header_tb;
