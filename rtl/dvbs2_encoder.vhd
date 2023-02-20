@@ -784,6 +784,7 @@ begin
       s_constellation   => decode(constellation_mapper_dbg.tid).constellation,
       s_frame_type      => decode(constellation_mapper_dbg.tid).frame_type,
       s_code_rate       => decode(constellation_mapper_dbg.tid).code_rate,
+      s_pilots          => decode(constellation_mapper_dbg.tid).pilots,
       s_tvalid          => constellation_mapper_dbg.tvalid,
       s_tlast           => constellation_mapper_dbg.tlast,
       s_tready          => constellation_mapper_dbg.tready,

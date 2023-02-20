@@ -129,6 +129,7 @@ begin
       s_constellation => decode(axi_master.tuser).constellation,
       s_frame_type    => decode(axi_master.tuser).frame_type,
       s_code_rate     => decode(axi_master.tuser).code_rate,
+      s_pilots        => decode(axi_master.tuser).pilots,
       s_tvalid        => axi_master.tvalid,
       s_tlast         => axi_master.tlast,
       s_tready        => axi_master.tready,
@@ -220,9 +221,7 @@ begin
         code_rate     => config.code_rate,
         constellation => config.constellation,
         frame_type    => config.frame_type,
-        pilots        => config.pilots
-      );
-
+        pilots        => config.pilots);
 
       for i in 0 to number_of_frames - 1 loop
         debug(logger, "Setting up frame #" & to_string(i));

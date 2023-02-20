@@ -65,6 +65,7 @@ ghdl --std=08                                                                  \
                     rtl/axi_baseband_scrambler.vhd                             \
                     rtl/axi_bit_interleaver.vhd                                \
                     rtl/axi_constellation_mapper.vhd                           \
+                    rtl/axi_physical_layer_pilots.vhd                          \
                     rtl/axi_physical_layer_framer.vhd                          \
                     rtl/axi_physical_layer_scrambler.vhd                       \
                     rtl/axi_bbframe_length_enforcer.vhd                        \
