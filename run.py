@@ -122,8 +122,8 @@ class TestDefinition(
                 f"FrameType={frame_type.value}",
                 f"ConstellationType={constellation.value}",
                 f"CodeRate={code_rate.value}",
+                f"pilots={'on' if pilots else 'off'}",
             ]
-            + (["pilots"] if pilots else [])
         )
 
         return TestDefinition(
@@ -1038,7 +1038,7 @@ def setupTests(vunit, args):
     # axi_physical_layer_scrambler and both are tested individually, so we
     # don't need to test all configs
 
-    physical_layer_framer_configs = {
+    physical_layer_framer_configs = (
         TestDefinition.fromConfigTuple(frame_type, constellation, code_rate, pilots)
         for frame_type, constellation, code_rate, pilots in (
             (
@@ -1047,21 +1047,26 @@ def setupTests(vunit, args):
                 CodeRate.C1_2,
                 False,
             ),
-            (FrameType.FECFRAME_SHORT, ConstellationType.MOD_QPSK, CodeRate.C1_2, True),
             (
-                FrameType.FECFRAME_NORMAL,
-                ConstellationType.MOD_QPSK,
-                CodeRate.C1_2,
-                False,
-            ),
-            (
-                FrameType.FECFRAME_NORMAL,
+                FrameType.FECFRAME_SHORT,
                 ConstellationType.MOD_QPSK,
                 CodeRate.C1_2,
                 True,
             ),
+            (
+                FrameType.FECFRAME_SHORT,
+                ConstellationType.MOD_QPSK,
+                CodeRate.C1_3,
+                False,
+            ),
+            (
+                FrameType.FECFRAME_SHORT,
+                ConstellationType.MOD_QPSK,
+                CodeRate.C1_3,
+                True,
+            ),
         )
-    }
+    )
 
     if args.individual_config_runs:
         for config in physical_layer_framer_configs:
