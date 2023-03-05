@@ -391,7 +391,7 @@ begin
     signal radius_out_tag : std_logic_vector(ENCODED_CONFIG_WIDTH - 1 downto 0);
   begin
     -- Remove the encoded code rate from tuser here, we'll use it to address the radius RAM
-    tag_agg_in    <= axi_out.tlast & axi_out.tuser(TID_WIDTH - 1 downto 0);
+    tag_agg_in    <= axi_out.tlast & axi_out.tuser(TUSER_WIDTH - 1 downto TUSER_WIDTH - TID_WIDTH);
 
     ram_out.tuser <= tag_agg_out(TID_WIDTH - 1 downto 0);
     ram_out.tlast <= tag_agg_out(TID_WIDTH);
