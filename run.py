@@ -157,7 +157,7 @@ def _getConfigs(
     pilots=None,
 ):
     "Iterates over the configs enums and returns a iterator of TestDefinition"
-    pilots = (pilots,) or [False, True]
+    pilots = [False, True] if pilots is None else (pilots,)
     for code_rate in code_rates:
         for frame_type in frame_types:
             for constellation in constellations:
