@@ -100,8 +100,11 @@ architecture axi_physical_layer_framer of axi_physical_layer_framer is
 begin
 
   input_delay_block : block
+    signal tdata_agg_in : std_logic_vector(TDATA_WIDTH + TID_WIDTH + 1 downto 0);
     signal tdata_agg_out : std_logic_vector(TDATA_WIDTH + TID_WIDTH + 1 downto 0);
   begin
+    tdata_agg_in <= s_pilots & s_tlast & s_tid & s_tdata;
+
     input_delay_u : entity fpga_cores.axi_stream_delay
       generic map (
         DELAY_CYCLES => 1,
@@ -113,7 +116,7 @@ begin
         -- AXI slave input
         s_tvalid => s_tvalid,
         s_tready => s_tready_i,
-        s_tdata  => s_pilots & s_tlast & s_tid & s_tdata,
+        s_tdata  => tdata_agg_in,
 
         -- AXI master output
         m_tvalid => sampled.tvalid,
@@ -146,9 +149,11 @@ begin
       m_tdata         => axi_header_out.tdata);
 
   pilots_mux : block
+    signal tdata_agg_in : std_logic_vector(TDATA_WIDTH + TID_WIDTH downto 0);
     signal tdata0_agg_out : std_logic_vector(TDATA_WIDTH + TID_WIDTH downto 0);
     signal tdata1_agg_out : std_logic_vector(TDATA_WIDTH + TID_WIDTH downto 0);
   begin
+    tdata_agg_in <= sampled.tlast & sampled.tuser & sampled.tdata;
 
     pilots_mux_u : entity fpga_cores.axi_stream_demux
       generic map (
@@ -160,7 +165,7 @@ begin
 
         s_tvalid          => sampled.tvalid,
         s_tready          => sampled.tready,
-        s_tdata           => sampled.tlast & sampled.tuser & sampled.tdata,
+        s_tdata           => tdata_agg_in,
 
         m_tvalid(0)       => sampled_no_pilots.tvalid,
         m_tvalid(1)       => sampled_pilots.tvalid,
@@ -203,43 +208,47 @@ begin
 
   physical_layer_scrambler_arbiter : block
     signal tdata_agg_out : std_logic_vector(TDATA_WIDTH + TID_WIDTH - 1 downto 0);
+    signal tdata0_agg_in : std_logic_vector(TDATA_WIDTH + TID_WIDTH - 1 downto 0);
+    signal tdata1_agg_in : std_logic_vector(TDATA_WIDTH + TID_WIDTH - 1 downto 0);
   begin
+    tdata0_agg_in <= sampled_no_pilots.tuser & sampled_no_pilots.tdata;
+    tdata1_agg_in <= pilots.tuser & pilots.tdata;
 
     physical_layer_scrambler_arbiter_u : entity fpga_cores.axi_stream_arbiter
       generic map (
-        MODE            => "ROUND_ROBIN",
-        INTERFACES      => 2,
-        DATA_WIDTH      => TDATA_WIDTH + TID_WIDTH,
-        REGISTER_INPUTS => False)
-      port map (
-        -- Usual ports
-        clk              => clk,
-        rst              => rst,
+          MODE            => "ROUND_ROBIN",
+          INTERFACES      => 2,
+          DATA_WIDTH      => TDATA_WIDTH + TID_WIDTH,
+          REGISTER_INPUTS => False)
+        port map (
+          -- Usual ports
+          clk              => clk,
+          rst              => rst,
 
-        selected         => open,
-        selected_encoded => open,
+          selected         => open,
+          selected_encoded => open,
 
-        -- AXI slave input
-        s_tvalid(0)      => sampled_no_pilots.tvalid,
-        s_tvalid(1)      => pilots.tvalid,
+          -- AXI slave input
+          s_tvalid(0)      => sampled_no_pilots.tvalid,
+          s_tvalid(1)      => pilots.tvalid,
 
-        s_tready(0)      => sampled_no_pilots.tready,
-        s_tready(1)      => pilots.tready,
+          s_tready(0)      => sampled_no_pilots.tready,
+          s_tready(1)      => pilots.tready,
 
-        s_tdata(0)       => sampled_no_pilots.tuser & sampled_no_pilots.tdata,
-        s_tdata(1)       => pilots.tuser & pilots.tdata,
+          s_tdata(0)       => tdata0_agg_in,
+          s_tdata(1)       => tdata1_agg_in,
 
-        s_tlast(0)       => sampled_no_pilots.tlast,
-        s_tlast(1)       => pilots.tlast,
+          s_tlast(0)       => sampled_no_pilots.tlast,
+          s_tlast(1)       => pilots.tlast,
 
-        -- AXI master output
-        m_tvalid         => scrambler_input.tvalid,
-        m_tready         => scrambler_input.tready,
-        m_tdata          => tdata_agg_out,
-        m_tlast          => scrambler_input.tlast);
+          -- AXI master output
+          m_tvalid         => scrambler_input.tvalid,
+          m_tready         => scrambler_input.tready,
+          m_tdata          => tdata_agg_out,
+          m_tlast          => scrambler_input.tlast);
 
-      scrambler_input.tdata <= tdata_agg_out(TDATA_WIDTH - 1 downto 0);
-      scrambler_input.tuser <= tdata_agg_out(TDATA_WIDTH + TID_WIDTH - 1 downto TDATA_WIDTH);
+        scrambler_input.tdata <= tdata_agg_out(TDATA_WIDTH - 1 downto 0);
+        scrambler_input.tuser <= tdata_agg_out(TDATA_WIDTH + TID_WIDTH - 1 downto TDATA_WIDTH);
   end block;
 
   physical_layer_scrambler : entity work.axi_physical_layer_scrambler
@@ -268,8 +277,13 @@ begin
 
 
   arbiter_header_payload : block
+    signal tdata0_agg_in : std_logic_vector(TDATA_WIDTH + TID_WIDTH - 1 downto 0);
+    signal tdata1_agg_in : std_logic_vector(TDATA_WIDTH + TID_WIDTH - 1 downto 0);
     signal tdata_agg_out : std_logic_vector(TDATA_WIDTH + TID_WIDTH - 1 downto 0);
   begin
+    tdata0_agg_in <= axi_header_out.tuser & axi_header_out.tdata;
+    tdata1_agg_in <= scrambled.tuser & scrambled.tdata;
+
     arbiter_header_payload_u : entity fpga_cores.axi_stream_arbiter
       generic map (
         MODE            => "INTERLEAVED",
@@ -290,8 +304,8 @@ begin
         s_tready(0)      => axi_header_out.tready,
         s_tready(1)      => scrambled.tready,
 
-        s_tdata(0)       => axi_header_out.tuser & axi_header_out.tdata,
-        s_tdata(1)       => scrambled.tuser & scrambled.tdata,
+        s_tdata(0)       => tdata0_agg_in,
+        s_tdata(1)       => tdata1_agg_in,
 
         s_tlast(0)       => axi_header_out.tlast,
         s_tlast(1)       => scrambled.tlast,

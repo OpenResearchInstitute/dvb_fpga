@@ -102,10 +102,15 @@ begin
   -- Port Mappings --
   -------------------
   output_mux_block : block
+    signal tdata0_agg_in : std_logic_vector(TDATA_WIDTH + TID_WIDTH downto 0);
+    signal tdata1_agg_in : std_logic_vector(TDATA_WIDTH + TID_WIDTH downto 0);
     signal tdata_agg_out : std_logic_vector(TDATA_WIDTH + TID_WIDTH downto 0);
     signal pilots_tdata  : std_logic_vector(TDATA_WIDTH - 1 downto 0);
     signal pilots_tready : std_logic;
   begin
+
+    tdata0_agg_in <= s_tlast & s_tid & s_tdata;
+    tdata1_agg_in <= '0' & s_tid & pilots_tdata;
 
     pilots_tdata  <= std_logic_vector(sin(MATH_PI / 4.0, TDATA_WIDTH/2) & cos(MATH_PI / 4.0, TDATA_WIDTH/2));
 
@@ -122,8 +127,8 @@ begin
         s_tready(0)    => s_tready,
         s_tready(1)    => pilots_tready,
 
-        s_tdata(0)     => s_tlast & s_tid & s_tdata,
-        s_tdata(1)     => '0' & s_tid & pilots_tdata,
+        s_tdata(0)     => tdata0_agg_in,
+        s_tdata(1)     => tdata1_agg_in,
 
         m_tvalid       => m_tvalid_i,
         m_tready       => m_tready,
