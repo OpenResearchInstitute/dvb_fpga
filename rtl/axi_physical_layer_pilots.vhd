@@ -73,8 +73,10 @@ architecture axi_physical_layer_pilots of axi_physical_layer_pilots is
   -------------
   -- Signals --
   -------------
+  signal s_tready_i    : std_logic;
   signal m_tvalid_i    : std_logic;
   signal m_dv          : std_logic;
+  signal s_tid_reg     : std_logic_vector(TID_WIDTH - 1 downto 0);
 
   signal slot_count    : unsigned(4 downto 0); -- Count up to 16 (inclusive)
   signal symbol_count  : unsigned(numbits(SYMBOLS_PER_SLOT) - 1 downto 0);
@@ -90,6 +92,8 @@ begin
   ------------------------------
   m_dv          <= m_tvalid_i and m_tready;
   m_tvalid      <= m_tvalid_i;
+  s_tready <= s_tready_i;
+
 
   insert_pilots <= '1' when slot_count = 16 else
                    '0' when slot_count /= 16 else
@@ -106,11 +110,11 @@ begin
     signal tdata1_agg_in : std_logic_vector(TDATA_WIDTH + TID_WIDTH downto 0);
     signal tdata_agg_out : std_logic_vector(TDATA_WIDTH + TID_WIDTH downto 0);
     signal pilots_tdata  : std_logic_vector(TDATA_WIDTH - 1 downto 0);
-    signal pilots_tready : std_logic;
+    signal pilots_tready : std_logic; -- Unused
   begin
 
     tdata0_agg_in <= s_tlast & s_tid & s_tdata;
-    tdata1_agg_in <= '0' & s_tid & pilots_tdata;
+    tdata1_agg_in <= '0' & s_tid_reg & pilots_tdata;
 
     pilots_tdata  <= std_logic_vector(sin(MATH_PI / 4.0, TDATA_WIDTH/2) & cos(MATH_PI / 4.0, TDATA_WIDTH/2));
 
@@ -124,7 +128,7 @@ begin
         s_tvalid(0)    => s_tvalid,
         s_tvalid(1)    => '1',
 
-        s_tready(0)    => s_tready,
+        s_tready(0)    => s_tready_i,
         s_tready(1)    => pilots_tready,
 
         s_tdata(0)     => tdata0_agg_in,
@@ -139,6 +143,7 @@ begin
       m_tlast <= tdata_agg_out(TDATA_WIDTH + TID_WIDTH);
   end block;
 
+
   ---------------
   -- Processes --
   ---------------
@@ -148,6 +153,10 @@ begin
       symbol_count <= (others => '0');
       slot_count   <= (others => '0');
     elsif rising_edge(clk) then
+      if s_tvalid then
+        s_tid_reg <= s_tid;
+      end if;
+
       if m_dv then
         symbol_count <= symbol_count + 1;
         if last_symbol or last_pilot then
