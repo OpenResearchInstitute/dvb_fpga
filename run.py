@@ -360,7 +360,7 @@ LDPC_LENGTH = {
     (FrameType.FECFRAME_SHORT, CodeRate.C8_9): 16_200 - 14_400,
 }
 
-PLFRAME_HEADER_CONFIGS = {
+PHYSICAL_LAYER_HEADER_CONFIGS = {
     TestDefinition.fromConfigTuple(frame_type, constellation, code_rate, pilots)
     for frame_type, constellation, code_rate, pilots in (
         (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C2_3, False),
@@ -393,12 +393,22 @@ PLFRAME_HEADER_CONFIGS = {
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C4_5, False),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C5_6, False),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C8_9, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_16APSK, CodeRate.C9_10, False),
+        (
+            FrameType.FECFRAME_NORMAL,
+            ConstellationType.MOD_16APSK,
+            CodeRate.C9_10,
+            False,
+        ),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C3_4, False),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C4_5, False),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C5_6, False),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C8_9, False),
-        (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_32APSK, CodeRate.C9_10, False),
+        (
+            FrameType.FECFRAME_NORMAL,
+            ConstellationType.MOD_32APSK,
+            CodeRate.C9_10,
+            False,
+        ),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C2_3, False),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C3_4, False),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_8PSK, CodeRate.C3_5, False),
@@ -416,8 +426,6 @@ PLFRAME_HEADER_CONFIGS = {
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C5_6, False),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C8_9, False),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C9_10, False),
-
-
         (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C2_3, True),
         (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C3_4, True),
         (FrameType.FECFRAME_SHORT, ConstellationType.MOD_16APSK, CodeRate.C4_5, True),
@@ -472,6 +480,11 @@ PLFRAME_HEADER_CONFIGS = {
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C8_9, True),
         (FrameType.FECFRAME_NORMAL, ConstellationType.MOD_QPSK, CodeRate.C9_10, True),
     )
+}
+
+# Physical layer scrambler doesn't do anything with pilots
+PHYSICAL_LAYER_SCRAMBLER_CONFIGS = {
+    config for config in PHYSICAL_LAYER_HEADER_CONFIGS if not config.pilots
 }
 
 # List specific valid 16 APSK and 32 APSK configs
@@ -659,22 +672,22 @@ def _getModulationTable(
         r2 = r2 / scaling
 
         return (
-            (r2 * math.cos(math.pi / 4.0), r2 * math.sin(math.pi / 4.0)),
-            (r2 * math.cos(-math.pi / 4.0), r2 * math.sin(-math.pi / 4.0)),
-            (r2 * math.cos(3 * math.pi / 4.0), r2 * math.sin(3 * math.pi / 4.0)),
-            (r2 * math.cos(-3 * math.pi / 4.0), r2 * math.sin(-3 * math.pi / 4.0)),
-            (r2 * math.cos(math.pi / 12.0), r2 * math.sin(math.pi / 12.0)),
-            (r2 * math.cos(-math.pi / 12.0), r2 * math.sin(-math.pi / 12.0)),
-            (r2 * math.cos(11 * math.pi / 12.0), r2 * math.sin(11 * math.pi / 12.0)),
-            (r2 * math.cos(-11 * math.pi / 12.0), r2 * math.sin(-11 * math.pi / 12.0)),
-            (r2 * math.cos(5 * math.pi / 12.0), r2 * math.sin(5 * math.pi / 12.0)),
-            (r2 * math.cos(-5 * math.pi / 12.0), r2 * math.sin(-5 * math.pi / 12.0)),
-            (r2 * math.cos(7 * math.pi / 12.0), r2 * math.sin(7 * math.pi / 12.0)),
-            (r2 * math.cos(-7 * math.pi / 12.0), r2 * math.sin(-7 * math.pi / 12.0)),
-            (r1 * math.cos(math.pi / 4.0), r1 * math.sin(math.pi / 4.0)),
-            (r1 * math.cos(-math.pi / 4.0), r1 * math.sin(-math.pi / 4.0)),
-            (r1 * math.cos(3 * math.pi / 4.0), r1 * math.sin(3 * math.pi / 4.0)),
-            (r1 * math.cos(-3 * math.pi / 4.0), r1 * math.sin(-3 * math.pi / 4.0)),
+            (r2 * math.cos(math.pi / 4), r2 * math.sin(math.pi / 4)),
+            (r2 * math.cos(-math.pi / 4), r2 * math.sin(-math.pi / 4)),
+            (r2 * math.cos(3 * math.pi / 4), r2 * math.sin(3 * math.pi / 4)),
+            (r2 * math.cos(-3 * math.pi / 4), r2 * math.sin(-3 * math.pi / 4)),
+            (r2 * math.cos(math.pi / 12), r2 * math.sin(math.pi / 12)),
+            (r2 * math.cos(-math.pi / 12), r2 * math.sin(-math.pi / 12)),
+            (r2 * math.cos(11 * math.pi / 12), r2 * math.sin(11 * math.pi / 12)),
+            (r2 * math.cos(-11 * math.pi / 12), r2 * math.sin(-11 * math.pi / 12)),
+            (r2 * math.cos(5 * math.pi / 12), r2 * math.sin(5 * math.pi / 12)),
+            (r2 * math.cos(-5 * math.pi / 12), r2 * math.sin(-5 * math.pi / 12)),
+            (r2 * math.cos(7 * math.pi / 12), r2 * math.sin(7 * math.pi / 12)),
+            (r2 * math.cos(-7 * math.pi / 12), r2 * math.sin(-7 * math.pi / 12)),
+            (r1 * math.cos(math.pi / 4), r1 * math.sin(math.pi / 4)),
+            (r1 * math.cos(-math.pi / 4), r1 * math.sin(-math.pi / 4)),
+            (r1 * math.cos(3 * math.pi / 4), r1 * math.sin(3 * math.pi / 4)),
+            (r1 * math.cos(-3 * math.pi / 4), r1 * math.sin(-3 * math.pi / 4)),
         )
 
     if constellation == ConstellationType.MOD_32APSK:
@@ -710,50 +723,38 @@ def _getModulationTable(
         r3 = r3 / scaling
 
         return (
-            (r2 * math.cos(math.pi / 4.0), r2 * math.sin(math.pi / 4.0)),
-            (r2 * math.cos(5 * math.pi / 12.0), r2 * math.sin(5 * math.pi / 12.0)),
-            (r2 * math.cos(-math.pi / 4.0), r2 * math.sin(-math.pi / 4.0)),
-            (
-                r2 * math.cos(-5 * math.pi / 12.0),
-                r2 * math.sin(-5 * math.pi / 12.0),
-            ),
-            (r2 * math.cos(3 * math.pi / 4.0), r2 * math.sin(3 * math.pi / 4.0)),
-            (r2 * math.cos(7 * math.pi / 12.0), r2 * math.sin(7 * math.pi / 12.0)),
-            (r2 * math.cos(-3 * math.pi / 4.0), r2 * math.sin(-3 * math.pi / 4.0)),
-            (
-                r2 * math.cos(-7 * math.pi / 12.0),
-                r2 * math.sin(-7 * math.pi / 12.0),
-            ),
-            (r3 * math.cos(math.pi / 8.0), r3 * math.sin(math.pi / 8.0)),
-            (r3 * math.cos(3 * math.pi / 8.0), r3 * math.sin(3 * math.pi / 8.0)),
-            (r3 * math.cos(-math.pi / 4.0), r3 * math.sin(-math.pi / 4.0)),
-            (r3 * math.cos(-math.pi / 2.0), r3 * math.sin(-math.pi / 2.0)),
-            (r3 * math.cos(3 * math.pi / 4.0), r3 * math.sin(3 * math.pi / 4.0)),
-            (r3 * math.cos(math.pi / 2.0), r3 * math.sin(math.pi / 2.0)),
-            (r3 * math.cos(-7 * math.pi / 8.0), r3 * math.sin(-7 * math.pi / 8.0)),
-            (r3 * math.cos(-5 * math.pi / 8.0), r3 * math.sin(-5 * math.pi / 8.0)),
-            (r2 * math.cos(math.pi / 12.0), r2 * math.sin(math.pi / 12.0)),
-            (r1 * math.cos(math.pi / 4.0), r1 * math.sin(math.pi / 4.0)),
-            (r2 * math.cos(-math.pi / 12.0), r2 * math.sin(-math.pi / 12.0)),
-            (r1 * math.cos(-math.pi / 4.0), r1 * math.sin(-math.pi / 4.0)),
-            (
-                r2 * math.cos(11 * math.pi / 12.0),
-                r2 * math.sin(11 * math.pi / 12.0),
-            ),
-            (r1 * math.cos(3 * math.pi / 4.0), r1 * math.sin(3 * math.pi / 4.0)),
-            (
-                r2 * math.cos(-11 * math.pi / 12.0),
-                r2 * math.sin(-11 * math.pi / 12.0),
-            ),
-            (r1 * math.cos(-3 * math.pi / 4.0), r1 * math.sin(-3 * math.pi / 4.0)),
-            (r3 * math.cos(0.0), r3 * math.sin(0.0)),
-            (r3 * math.cos(math.pi / 4.0), r3 * math.sin(math.pi / 4.0)),
-            (r3 * math.cos(-math.pi / 8.0), r3 * math.sin(-math.pi / 8.0)),
-            (r3 * math.cos(-3 * math.pi / 8.0), r3 * math.sin(-3 * math.pi / 8.0)),
-            (r3 * math.cos(7 * math.pi / 8.0), r3 * math.sin(7 * math.pi / 8.0)),
-            (r3 * math.cos(5 * math.pi / 8.0), r3 * math.sin(5 * math.pi / 8.0)),
+            (r2 * math.cos(math.pi / 4), r2 * math.sin(math.pi / 4)),
+            (r2 * math.cos(5 * math.pi / 12), r2 * math.sin(5 * math.pi / 12)),
+            (r2 * math.cos(-math.pi / 4), r2 * math.sin(-math.pi / 4)),
+            (r2 * math.cos(-5 * math.pi / 12), r2 * math.sin(-5 * math.pi / 12)),
+            (r2 * math.cos(3 * math.pi / 4), r2 * math.sin(3 * math.pi / 4)),
+            (r2 * math.cos(7 * math.pi / 12), r2 * math.sin(7 * math.pi / 12)),
+            (r2 * math.cos(-3 * math.pi / 4), r2 * math.sin(-3 * math.pi / 4)),
+            (r2 * math.cos(-7 * math.pi / 12), r2 * math.sin(-7 * math.pi / 12)),
+            (r3 * math.cos(math.pi / 8), r3 * math.sin(math.pi / 8)),
+            (r3 * math.cos(3 * math.pi / 8), r3 * math.sin(3 * math.pi / 8)),
+            (r3 * math.cos(-math.pi / 4), r3 * math.sin(-math.pi / 4)),
+            (r3 * math.cos(-math.pi / 2), r3 * math.sin(-math.pi / 2)),
+            (r3 * math.cos(3 * math.pi / 4), r3 * math.sin(3 * math.pi / 4)),
+            (r3 * math.cos(math.pi / 2), r3 * math.sin(math.pi / 2)),
+            (r3 * math.cos(-7 * math.pi / 8), r3 * math.sin(-7 * math.pi / 8)),
+            (r3 * math.cos(-5 * math.pi / 8), r3 * math.sin(-5 * math.pi / 8)),
+            (r2 * math.cos(math.pi / 12), r2 * math.sin(math.pi / 12)),
+            (r1 * math.cos(math.pi / 4), r1 * math.sin(math.pi / 4)),
+            (r2 * math.cos(-math.pi / 12), r2 * math.sin(-math.pi / 12)),
+            (r1 * math.cos(-math.pi / 4), r1 * math.sin(-math.pi / 4)),
+            (r2 * math.cos(11 * math.pi / 12), r2 * math.sin(11 * math.pi / 12)),
+            (r1 * math.cos(3 * math.pi / 4), r1 * math.sin(3 * math.pi / 4)),
+            (r2 * math.cos(-11 * math.pi / 12), r2 * math.sin(-11 * math.pi / 12)),
+            (r1 * math.cos(-3 * math.pi / 4), r1 * math.sin(-3 * math.pi / 4)),
+            (r3 * math.cos(0), r3 * math.sin(0)),
+            (r3 * math.cos(math.pi / 4), r3 * math.sin(math.pi / 4)),
+            (r3 * math.cos(-math.pi / 8), r3 * math.sin(-math.pi / 8)),
+            (r3 * math.cos(-3 * math.pi / 8), r3 * math.sin(-3 * math.pi / 8)),
+            (r3 * math.cos(7 * math.pi / 8), r3 * math.sin(7 * math.pi / 8)),
+            (r3 * math.cos(5 * math.pi / 8), r3 * math.sin(5 * math.pi / 8)),
             (r3 * math.cos(math.pi), r3 * math.sin(math.pi)),
-            (r3 * math.cos(-3 * math.pi / 4.0), r3 * math.sin(-3 * math.pi / 4.0)),
+            (r3 * math.cos(-3 * math.pi / 4), r3 * math.sin(-3 * math.pi / 4)),
         )
 
     # pylint: enable=invalid-name
@@ -873,131 +874,53 @@ def setupTests(vunit, args):
     """
     Creates tests for components
     """
-    if args.individual_config_runs:
-        # BCH and LDPC encoding don't depend on the constellation type, choose any
-        for config in _getConfigs(
-            constellations=(ConstellationType.MOD_8PSK,), pilots=False
-        ):
-            vunit.library("lib").entity("axi_bch_encoder_tb").add_config(
-                name=config.name,
-                generics=dict(
-                    test_cfg=config.getTestConfigString(),
-                    SEED=args.seed,
-                    NUMBER_OF_TEST_FRAMES=8,
-                ),
-            )
-
-            vunit.library("lib").entity("axi_ldpc_encoder_core_tb").add_config(
-                name=config.name,
-                generics=dict(
-                    test_cfg=config.getTestConfigString(),
-                    seed=args.seed,
-                    NUMBER_OF_TEST_FRAMES=3,
-                ),
-            )
-            vunit.library("lib").entity("axi_ldpc_table_tb").add_config(
-                name=config.name,
-                generics=dict(
-                    test_cfg=config.getTestConfigString(),
-                    SEED=args.seed,
-                    NUMBER_OF_TEST_FRAMES=3,
-                ),
-            )
-
-        for config in CONSTELLATION_MAPPER_CONFIGS:
-            vunit.library("lib").entity("axi_constellation_mapper_tb").add_config(
-                name=config.name,
-                generics=dict(
-                    test_cfg=config.getTestConfigString(),
-                    SEED=args.seed,
-                    NUMBER_OF_TEST_FRAMES=3,
-                ),
-            )
-
-    else:
-        addAllConfigsTest(
-            entity=vunit.library("lib").entity("axi_bch_encoder_tb"),
-            configs=TEST_CONFIGS,
+    for testbench, tests in (
+        (
+            "axi_bch_encoder_tb",
+            _getConfigs(constellations=(ConstellationType.MOD_8PSK,), pilots=False),
+        ),
+        ("axi_constellation_mapper_tb", CONSTELLATION_MAPPER_CONFIGS),
+        (
+            "axi_ldpc_encoder_core_tb",
+            _getConfigs(constellations=(ConstellationType.MOD_8PSK,), pilots=False),
+        ),
+        (
+            "axi_ldpc_table_tb",
+            _getConfigs(constellations=(ConstellationType.MOD_8PSK,), pilots=False),
+        ),
+        (
+            # Run the DVB S2 Tx testbench with a smaller sample of configs to check
+            # integration, otherwise sim takes way too long. Note that when
+            # --individual-config-runs is passed, all configs are added
+            "dvbs2_encoder_tb",
+            PHYSICAL_LAYER_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS,
+        ),
+    ):
+        addConfigsTest(
+            entity=vunit.library("lib").entity(testbench),
+            configs=tests,
+            individual_config_runs=args.individual_config_runs,
             seed=args.seed,
         )
 
-        addAllConfigsTest(
-            entity=vunit.library("lib").entity("axi_constellation_mapper_tb"),
-            configs=CONSTELLATION_MAPPER_CONFIGS,
-            seed=args.seed,
-        )
-
-        addAllConfigsTest(
-            entity=vunit.library("lib").entity("axi_ldpc_encoder_core_tb"),
-            configs=_getConfigs(
-                constellations=(ConstellationType.MOD_8PSK,), pilots=False
-            ),
-            seed=args.seed,
-        )
-
-        addAllConfigsTest(
-            entity=vunit.library("lib").entity("axi_ldpc_table_tb"),
-            configs=_getConfigs(
-                constellations=(ConstellationType.MOD_8PSK,), pilots=False
-            ),
-            seed=args.seed,
-        )
-
-        # Run the DVB S2 Tx testbench with a smaller sample of configs to check
-        # integration, otherwise sim takes way too long. Note that when
-        # --individual-config-runs is passed, all configs are added
-        addAllConfigsTest(
-            entity=vunit.library("lib").entity("dvbs2_encoder_tb"),
-            configs=PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS,
-            seed=args.seed,
-        )
-
-    addAllConfigsTest(
-        entity=vunit.library("lib").entity("axi_baseband_scrambler_tb"),
+    addConfigsTest(
+        vunit.library("lib").entity("axi_baseband_scrambler_tb"),
         configs=TEST_CONFIGS,
+        individual_config_runs=False,
         seed=args.seed,
     )
-
-    # axi_physical_layer_header does not support every combination out there
-    if args.individual_config_runs:
-        for config in PLFRAME_HEADER_CONFIGS:
-            vunit.library("lib").entity("axi_physical_layer_header_tb").add_config(
-                name=config.name,
-                generics=dict(
-                    test_cfg=config.getTestConfigString(),
-                    SEED=args.seed,
-                    NUMBER_OF_TEST_FRAMES=3,
-                ),
-            )
-            vunit.library("lib").entity("axi_physical_layer_scrambler_tb").add_config(
-                name=config.name,
-                generics=dict(
-                    test_cfg=config.getTestConfigString(),
-                    seed=args.seed,
-                    NUMBER_OF_TEST_FRAMES=3,
-                ),
-            )
-        for config in PLFRAME_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS:
-            vunit.library("lib").entity("dvbs2_encoder_tb").add_config(
-                name=config.name,
-                generics=dict(
-                    test_cfg=config.getTestConfigString(),
-                    SEED=args.seed,
-                    NUMBER_OF_TEST_FRAMES=1,
-                ),
-            )
-
-    else:
-        addAllConfigsTest(
-            vunit.library("lib").entity("axi_physical_layer_header_tb"),
-            configs=PLFRAME_HEADER_CONFIGS,
-            seed=args.seed,
-        )
-        addAllConfigsTest(
-            vunit.library("lib").entity("axi_physical_layer_scrambler_tb"),
-            configs=PLFRAME_HEADER_CONFIGS,
-            seed=args.seed,
-        )
+    addConfigsTest(
+        vunit.library("lib").entity("axi_physical_layer_header_tb"),
+        configs=PHYSICAL_LAYER_HEADER_CONFIGS,
+        individual_config_runs=args.individual_config_runs,
+        seed=args.seed,
+    )
+    addConfigsTest(
+        vunit.library("lib").entity("axi_physical_layer_scrambler_tb"),
+        configs=PHYSICAL_LAYER_SCRAMBLER_CONFIGS,
+        individual_config_runs=args.individual_config_runs,
+        seed=args.seed,
+    )
 
     # Generate bit interleaver tests
     for data_width in (8,):
@@ -1068,29 +991,40 @@ def setupTests(vunit, args):
         )
     )
 
-    if args.individual_config_runs:
-        for config in physical_layer_framer_configs:
-            vunit.library("lib").entity("axi_physical_layer_framer_tb").add_config(
-                name=config.name,
-                generics=dict(
-                    test_cfg=config.getTestConfigString(),
-                    SEED=args.seed,
-                    NUMBER_OF_TEST_FRAMES=3,
-                ),
-            )
-    else:
-        addAllConfigsTest(
-            vunit.library("lib").entity("axi_physical_layer_framer_tb"),
-            configs=physical_layer_framer_configs,
-            seed=args.seed,
-        )
+    addConfigsTest(
+        vunit.library("lib").entity("axi_physical_layer_framer_tb"),
+        configs=physical_layer_framer_configs,
+        individual_config_runs=args.individual_config_runs,
+        seed=args.seed,
+    )
 
 
-def addAllConfigsTest(entity, configs, seed=0, name=None):
+def addConfigsTest(entity, configs, individual_config_runs, seed=0):
     """
     Adds a test config with all combinations of configurations (assuming both
     input and reference files ca be found)
     """
+    if individual_config_runs:
+        for config in configs:
+            entity.add_config(
+                name=config.name,
+                generics=dict(
+                    test_cfg=config.getTestConfigString(),
+                    NUMBER_OF_TEST_FRAMES=1,
+                    SEED=seed,
+                ),
+            )
+        return
+
+        # vunit.library("lib").entity("axi_physical_layer_scrambler_tb").add_config(
+        #     name=config.name,
+        #     generics=dict(
+        #         test_cfg=config.getTestConfigString(),
+        #         seed=args.seed,
+        #         NUMBER_OF_TEST_FRAMES=3,
+        #     ),
+        # )
+
     params = []
 
     for config in configs:
@@ -1101,7 +1035,7 @@ def addAllConfigsTest(entity, configs, seed=0, name=None):
     assert params, "Could not find any config files!"
 
     entity.add_config(
-        name=name or "test_all_configs",
+        name="test_all_configs",
         generics=dict(test_cfg="|".join(params), NUMBER_OF_TEST_FRAMES=1, SEED=seed),
     )
 
