@@ -90,8 +90,8 @@ begin
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  m_dv          <= m_tvalid_i and m_tready;
-  m_tvalid      <= m_tvalid_i;
+  m_dv     <= m_tvalid_i and m_tready;
+  m_tvalid <= m_tvalid_i;
   s_tready <= s_tready_i;
 
 
