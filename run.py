@@ -888,13 +888,6 @@ def setupTests(vunit, args):
             "axi_ldpc_table_tb",
             _getConfigs(constellations=(ConstellationType.MOD_8PSK,), pilots=False),
         ),
-        (
-            # Run the DVB S2 Tx testbench with a smaller sample of configs to check
-            # integration, otherwise sim takes way too long. Note that when
-            # --individual-config-runs is passed, all configs are added
-            "dvbs2_encoder_tb",
-            PHYSICAL_LAYER_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS,
-        ),
     ):
         addConfigsTest(
             entity=vunit.library("lib").entity(testbench),
@@ -902,6 +895,18 @@ def setupTests(vunit, args):
             individual_config_runs=args.individual_config_runs,
             seed=args.seed,
         )
+
+    # Run the DVB S2 Tx testbench with a smaller sample of configs to check
+    # integration, otherwise sim takes way too long. Note that when
+    # --individual-config-runs is passed, all configs are added
+    configs = list(PHYSICAL_LAYER_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS)
+    random.shuffle(configs)
+    addConfigsTest(
+        entity=vunit.library("lib").entity("dvbs2_encoder_tb"),
+        configs=configs[:32],
+        individual_config_runs=args.individual_config_runs,
+        seed=args.seed,
+    )
 
     addConfigsTest(
         vunit.library("lib").entity("axi_baseband_scrambler_tb"),
