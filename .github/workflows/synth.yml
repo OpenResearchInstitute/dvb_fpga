@@ -1,6 +1,6 @@
 ---
 
-name: Unit tests
+name: Synthesis
 
 on: [push, pull_request]
 
@@ -8,7 +8,7 @@ env:
   PY_COLORS: 1
 
 jobs:
-  unit_tests:
+  yosys:
 
     runs-on: ubuntu-latest
 
@@ -17,6 +17,6 @@ jobs:
       - name: Get submodules
         run: git submodule update --init --recursive
       - name: Get Docker image
-        run: docker pull suoto/dvb_fpga_ci:3.8
-      - name: Run unit tests
-        run: misc/run_tests.sh --num-threads 4
+        run: docker pull ghdl/synth:beta
+      - name: Run Yosys
+        run: misc/run_synth.sh
