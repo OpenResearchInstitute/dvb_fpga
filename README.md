@@ -1,6 +1,7 @@
 # DVB FPGA
 
-![CI](https://github.com/phase4ground/dvb_fpga/workflows/Continuous%20integration/badge.svg)
+[![Unit tests](https://github.com/OpenResearchInstitute/dvb_fpga/actions/workflows/main.yml/badge.svg)](https://github.com/OpenResearchInstitute/dvb_fpga/actions/workflows/main.yml)
+[![Synthesis](https://github.com/OpenResearchInstitute/dvb_fpga/actions/workflows/synth.yml/badge.svg)](https://github.com/OpenResearchInstitute/dvb_fpga/actions/workflows/synth.yml)
 
 This project aims to implement RTL components for DVB-S2, initially focusing on
 the transmission side.
