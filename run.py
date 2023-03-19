@@ -901,12 +901,20 @@ def setupTests(vunit, args):
     # --individual-config-runs is passed, all configs are added
     configs = list(PHYSICAL_LAYER_HEADER_CONFIGS & CONSTELLATION_MAPPER_CONFIGS)
     random.shuffle(configs)
-    addConfigsTest(
-        entity=vunit.library("lib").entity("dvbs2_encoder_tb"),
-        configs=configs[:32],
-        individual_config_runs=args.individual_config_runs,
-        seed=args.seed,
-    )
+    if args.individual_config_runs:
+        addConfigsTest(
+            entity=vunit.library("lib").entity("dvbs2_encoder_tb"),
+            configs=configs,
+            individual_config_runs=True,
+            seed=args.seed,
+        )
+    else:
+        addConfigsTest(
+            entity=vunit.library("lib").entity("dvbs2_encoder_tb"),
+            configs=configs[:8],
+            individual_config_runs=False,
+            seed=args.seed,
+        )
 
     addConfigsTest(
         vunit.library("lib").entity("axi_baseband_scrambler_tb"),
