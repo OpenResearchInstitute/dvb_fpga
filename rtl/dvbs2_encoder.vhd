@@ -71,6 +71,7 @@ entity dvbs2_encoder is
     s_constellation : in  constellation_t;
     s_frame_type    : in  frame_type_t;
     s_code_rate     : in  code_rate_t;
+    s_pilots        : in  std_logic;
     s_tvalid        : in  std_logic;
     s_tdata         : in  std_logic_vector(INPUT_DATA_WIDTH - 1 downto 0);
     s_tkeep         : in  std_logic_vector(INPUT_DATA_WIDTH/8 - 1 downto 0);
@@ -145,7 +146,41 @@ architecture dvbs2_encoder of dvbs2_encoder is
   signal user2regs                : user2regs_t;
   signal regs2user                : regs2user_t;
 
+  signal dbg_frame_type    : std_logic_vector(1 downto 0);
+  signal dbg_constellation : std_logic_vector(7 downto 0);
+  signal dbg_code_rate     : std_logic_vector(9 downto 0);
+
+  attribute MARK_DEBUG : boolean;
+  attribute MARK_DEBUG of dbg_frame_type, dbg_constellation, dbg_code_rate : signal is True;
+
 begin
+
+  ---------------
+  -- Debugging --
+  ---------------
+  dbg_frame_type <= "01" when s_frame_type = fecframe_short else
+                    "10" when s_frame_type = fecframe_normal else
+                    "00";
+
+
+  dbg_constellation <= x"04" when s_constellation = mod_qpsk else
+                       x"08" when s_constellation  = mod_8psk else
+                       x"10" when s_constellation  = mod_16apsk else
+                       x"20" when s_constellation  = mod_32apsk else
+                       x"00";
+
+  dbg_code_rate <= std_logic_vector(to_unsigned(14, 10)) when s_code_rate = C1_4 else
+                   std_logic_vector(to_unsigned(13, 10)) when s_code_rate = C1_3 else
+                   std_logic_vector(to_unsigned(25, 10)) when s_code_rate = C2_5 else
+                   std_logic_vector(to_unsigned(12, 10)) when s_code_rate = C1_2 else
+                   std_logic_vector(to_unsigned(35, 10)) when s_code_rate = C3_5 else
+                   std_logic_vector(to_unsigned(23, 10)) when s_code_rate = C2_3 else
+                   std_logic_vector(to_unsigned(34, 10)) when s_code_rate = C3_4 else
+                   std_logic_vector(to_unsigned(45, 10)) when s_code_rate = C4_5 else
+                   std_logic_vector(to_unsigned(56, 10)) when s_code_rate = C5_6 else
+                   std_logic_vector(to_unsigned(89, 10)) when s_code_rate = C8_9 else
+                   std_logic_vector(to_unsigned(910, 10)) when s_code_rate = C9_10 else
+                   (others => '0');
 
   -------------------
   -- Port mappings --
@@ -783,6 +818,7 @@ begin
       s_constellation   => decode(constellation_mapper_dbg.tid).constellation,
       s_frame_type      => decode(constellation_mapper_dbg.tid).frame_type,
       s_code_rate       => decode(constellation_mapper_dbg.tid).code_rate,
+      s_pilots          => decode(constellation_mapper_dbg.tid).pilots,
       s_tvalid          => constellation_mapper_dbg.tvalid,
       s_tlast           => constellation_mapper_dbg.tlast,
       s_tready          => constellation_mapper_dbg.tready,
@@ -894,7 +930,8 @@ begin
 
   s_tid <= encode((frame_type    => s_frame_type,
                    constellation => s_constellation,
-                   code_rate     => s_code_rate));
+                   code_rate     => s_code_rate,
+                   pilots        => s_pilots));
 
   m_tlast  <= m_tlast_i and m_tvalid_i;
   s_tready <= s_tready_i;

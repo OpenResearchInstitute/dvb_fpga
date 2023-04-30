@@ -1,6 +1,7 @@
 # DVB FPGA
 
-![CI](https://github.com/phase4ground/dvb_fpga/workflows/Continuous%20integration/badge.svg)
+[![Unit tests](https://github.com/OpenResearchInstitute/dvb_fpga/actions/workflows/main.yml/badge.svg)](https://github.com/OpenResearchInstitute/dvb_fpga/actions/workflows/main.yml)
+[![Synthesis](https://github.com/OpenResearchInstitute/dvb_fpga/actions/workflows/synth.yml/badge.svg)](https://github.com/OpenResearchInstitute/dvb_fpga/actions/workflows/synth.yml)
 
 This project aims to implement RTL components for DVB-S2, initially focusing on
 the transmission side.
@@ -74,7 +75,7 @@ assumes default values for generics, i.e., `POLYPHASE_FILTER_NUMBER_TAPS` =
 | axi_bit_interleaver            | 339       | 262       | 10     | 0      |
 | axi_constellation_mapper       | 599       | 253       | 0      | 0      |
 | axi_physical_layer_framer      | 280       | 268       | 0      | 0      |
-| + axi_plframe_header           | 13        | 100       | 0      | 0      |
+| + axi_physical_layer_header    | 13        | 100       | 0      | 0      |
 | + axi_physical_layer_scrambler | 39        | 70        | 0      | 0      |
 | + dummy_frame_generator        | 48        | 21        | 0      | 0      |
 | polyphase_filter_i/q           | 162       | 2168      | 0      | 64     |

@@ -43,26 +43,22 @@ context fpga_cores_sim.sim_context;
 use work.dvb_sim_utils_pkg.all;
 use work.dvb_utils_pkg.all;
 
-entity axi_plframe_header_tb is
+entity axi_physical_layer_header_tb is
   generic (
     RUNNER_CFG            : string;
     TEST_CFG              : string;
     NUMBER_OF_TEST_FRAMES : integer := 8;
     SEED                  : integer);
-end axi_plframe_header_tb;
+end axi_physical_layer_header_tb;
 
-architecture axi_plframe_header_tb of axi_plframe_header_tb is
+architecture axi_physical_layer_header_tb of axi_physical_layer_header_tb is
 
   ---------------
   -- Constants --
   ---------------
-  constant configs             : config_array_t := get_test_cfg(TEST_CFG);
-  constant CLK_PERIOD          : time    := 5 ns;
-  constant DATA_WIDTH          : integer := 32;
-  constant CONFIG_INPUT_WIDTHS: fpga_cores.common_pkg.integer_vector_t := (
-    0 => FRAME_TYPE_WIDTH,
-    1 => CONSTELLATION_WIDTH,
-    2 => CODE_RATE_WIDTH);
+  constant configs    : config_array_t := get_test_cfg(TEST_CFG);
+  constant CLK_PERIOD : time    := 5 ns;
+  constant DATA_WIDTH : integer := 32;
 
   -------------
   -- Signals --
@@ -70,7 +66,7 @@ architecture axi_plframe_header_tb of axi_plframe_header_tb is
   signal clk             : std_logic := '1';
   signal rst             : std_logic;
 
-  signal axi_master      : axi_stream_data_bus_t(tdata(sum(CONFIG_INPUT_WIDTHS) - 1 downto 0));
+  signal axi_master      : axi_stream_data_bus_t(tdata(sum(CONFIG_TUPLE_WIDTHS) - 1 downto 0));
   signal axi_slave       : axi_stream_data_bus_t(tdata(DATA_WIDTH - 1 downto 0));
 
   signal m_data_valid    : boolean;
@@ -91,7 +87,7 @@ begin
   axi_config_input_u : entity fpga_cores_sim.axi_stream_bfm
     generic map (
       NAME        => "cfg",
-      TDATA_WIDTH => sum(CONFIG_INPUT_WIDTHS),
+      TDATA_WIDTH => sum(CONFIG_TUPLE_WIDTHS),
       SEED        => SEED)
     port map (
       -- Usual ports
@@ -106,7 +102,7 @@ begin
       m_tvalid => axi_master.tvalid,
       m_tlast  => open);
 
-  dut : entity work.axi_plframe_header
+  dut : entity work.axi_physical_layer_header
     generic map (DATA_WIDTH => DATA_WIDTH)
     port map (
       -- Usual ports
@@ -116,6 +112,7 @@ begin
       s_constellation => decode(axi_master.tdata).constellation,
       s_frame_type    => decode(axi_master.tdata).frame_type,
       s_code_rate     => decode(axi_master.tdata).code_rate,
+      s_pilots        => decode(axi_master.tdata).pilots,
 
       s_tready        => axi_master.tready,
       s_tvalid        => axi_master.tvalid,
@@ -198,7 +195,7 @@ begin
       variable calc_ldpc_msg    : msg_t;
 
       -- GHDL doens't play well with anonymous vectors, so let's be explicit
-      subtype bfm_data_t is std_logic_array_t(0 to 0)(FRAME_TYPE_WIDTH + CONSTELLATION_WIDTH + CODE_RATE_WIDTH - 1 downto 0);
+      subtype bfm_data_t is std_logic_array_t(0 to 0)(ENCODED_CONFIG_WIDTH - 1 downto 0);
       variable config_tuple : config_tuple_t;
     begin
 
@@ -206,9 +203,15 @@ begin
       info(" - constellation  : " & constellation_t'image(config.constellation));
       info(" - frame_type     : " & frame_type_t'image(config.frame_type));
       info(" - code_rate      : " & code_rate_t'image(config.code_rate));
+      info(" - pilots         : " & std_logic'image(config.pilots));
       info(" - data path      : " & data_path);
 
-      config_tuple := (code_rate => config.code_rate, constellation => config.constellation, frame_type => config.frame_type);
+      config_tuple := (
+        code_rate     => config.code_rate,
+        constellation => config.constellation,
+        frame_type    => config.frame_type,
+        pilots        => config.pilots
+      );
 
       for i in 0 to number_of_frames - 1 loop
         debug(logger, "Setting up frame #" & to_string(i));
@@ -219,7 +222,11 @@ begin
           probability => 1.0,
           blocking    => False);
 
-        read_file(net, file_reader, data_path & "/plframe_header_pilots_off_fixed_point.bin");
+        if config.pilots then
+          read_file(net, file_reader, data_path & "/plframe_header_pilots_on_fixed_point.bin");
+        else
+          read_file(net, file_reader, data_path & "/plframe_header_pilots_off_fixed_point.bin");
+        end if;
       end loop;
 
       join(net, dut);
@@ -316,4 +323,4 @@ begin
     end if;
   end process;
 
-end axi_plframe_header_tb;
+end axi_physical_layer_header_tb;

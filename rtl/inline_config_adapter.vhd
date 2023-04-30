@@ -30,15 +30,14 @@ use work.dvb_utils_pkg.all;
 
 library fpga_cores;
 
+library str_format;
+use str_format.str_format_pkg.all;
+
 ------------------------
 -- Entity declaration --
 ------------------------
 entity inline_config_adapter is
-  generic (
-    -- AXI streaming widths
-    INPUT_DATA_WIDTH     : integer := 32;
-    IQ_WIDTH             : integer := 32
-  );
+  generic ( INPUT_DATA_WIDTH : integer := 32);
   port (
     clk             : in  std_logic;
     rst             : in  std_logic;
@@ -52,144 +51,57 @@ entity inline_config_adapter is
     m_frame_type    : out frame_type_t;
     m_constellation : out constellation_t;
     m_code_rate     : out code_rate_t;
+    m_pilots        : out std_logic;
     m_tvalid        : out std_logic;
     m_tready        : in  std_logic;
     m_tlast         : out std_logic;
-    m_tdata         : out std_logic_vector(IQ_WIDTH - 1 downto 0);
-    m_tkeep         : out std_logic_vector(IQ_WIDTH/8 - 1 downto 0));
+    m_tdata         : out std_logic_vector(15 downto 0);
+    m_tkeep         : out std_logic_vector(1 downto 0));
 end inline_config_adapter;
 
 architecture inline_config_adapter of inline_config_adapter is
 
-  -- Follow modcodes for the physical layer framer
-  function decode_tid ( constant v : std_logic_vector(7 downto 0) ) return config_tuple_t is
-    variable cfg : config_tuple_t := (unknown, unknown, unknown);
-  begin
+  -- -----------------------------------------------------------------------------------
+  -- -- Constants ----------------------------------------------------------------------
+  -- -----------------------------------------------------------------------------------
+  constant TRANSPORT_HEADER_WIDTH : integer := 16;
 
-    case to_integer(unsigned(v)) is
-      when 16#00# => cfg := (frame_type => fecframe_short, constellation => mod_qpsk, code_rate => C1_4);
-      when 16#01# => cfg := (frame_type => fecframe_short, constellation => mod_qpsk, code_rate => C1_3);
-      when 16#02# => cfg := (frame_type => fecframe_short, constellation => mod_qpsk, code_rate => C2_5);
-      when 16#03# => cfg := (frame_type => fecframe_short, constellation => mod_qpsk, code_rate => C1_2);
-      when 16#04# => cfg := (frame_type => fecframe_short, constellation => mod_qpsk, code_rate => C3_5);
-      when 16#05# => cfg := (frame_type => fecframe_short, constellation => mod_qpsk, code_rate => C2_3);
-      when 16#06# => cfg := (frame_type => fecframe_short, constellation => mod_qpsk, code_rate => C3_4);
-      when 16#07# => cfg := (frame_type => fecframe_short, constellation => mod_qpsk, code_rate => C4_5);
-      when 16#08# => cfg := (frame_type => fecframe_short, constellation => mod_qpsk, code_rate => C5_6);
-      when 16#09# => cfg := (frame_type => fecframe_short, constellation => mod_qpsk, code_rate => C8_9);
-      when 16#0a# => cfg := (frame_type => fecframe_short, constellation => mod_qpsk, code_rate => C9_10);
-      when 16#0b# => cfg := (frame_type => fecframe_short, constellation => mod_8psk, code_rate => C1_4);
-      when 16#0c# => cfg := (frame_type => fecframe_short, constellation => mod_8psk, code_rate => C1_3);
-      when 16#0d# => cfg := (frame_type => fecframe_short, constellation => mod_8psk, code_rate => C2_5);
-      when 16#0e# => cfg := (frame_type => fecframe_short, constellation => mod_8psk, code_rate => C1_2);
-      when 16#0f# => cfg := (frame_type => fecframe_short, constellation => mod_8psk, code_rate => C3_5);
-      when 16#10# => cfg := (frame_type => fecframe_short, constellation => mod_8psk, code_rate => C2_3);
-      when 16#11# => cfg := (frame_type => fecframe_short, constellation => mod_8psk, code_rate => C3_4);
-      when 16#12# => cfg := (frame_type => fecframe_short, constellation => mod_8psk, code_rate => C4_5);
-      when 16#13# => cfg := (frame_type => fecframe_short, constellation => mod_8psk, code_rate => C5_6);
-      when 16#14# => cfg := (frame_type => fecframe_short, constellation => mod_8psk, code_rate => C8_9);
-      when 16#15# => cfg := (frame_type => fecframe_short, constellation => mod_8psk, code_rate => C9_10);
-      when 16#16# => cfg := (frame_type => fecframe_short, constellation => mod_16apsk, code_rate => C1_4);
-      when 16#17# => cfg := (frame_type => fecframe_short, constellation => mod_16apsk, code_rate => C1_3);
-      when 16#18# => cfg := (frame_type => fecframe_short, constellation => mod_16apsk, code_rate => C2_5);
-      when 16#19# => cfg := (frame_type => fecframe_short, constellation => mod_16apsk, code_rate => C1_2);
-      when 16#1a# => cfg := (frame_type => fecframe_short, constellation => mod_16apsk, code_rate => C3_5);
-      when 16#1b# => cfg := (frame_type => fecframe_short, constellation => mod_16apsk, code_rate => C2_3);
-      when 16#1c# => cfg := (frame_type => fecframe_short, constellation => mod_16apsk, code_rate => C3_4);
-      when 16#1d# => cfg := (frame_type => fecframe_short, constellation => mod_16apsk, code_rate => C4_5);
-      when 16#1e# => cfg := (frame_type => fecframe_short, constellation => mod_16apsk, code_rate => C5_6);
-      when 16#1f# => cfg := (frame_type => fecframe_short, constellation => mod_16apsk, code_rate => C8_9);
-      when 16#20# => cfg := (frame_type => fecframe_short, constellation => mod_16apsk, code_rate => C9_10);
-      when 16#21# => cfg := (frame_type => fecframe_short, constellation => mod_32apsk, code_rate => C1_4);
-      when 16#22# => cfg := (frame_type => fecframe_short, constellation => mod_32apsk, code_rate => C1_3);
-      when 16#23# => cfg := (frame_type => fecframe_short, constellation => mod_32apsk, code_rate => C2_5);
-      when 16#24# => cfg := (frame_type => fecframe_short, constellation => mod_32apsk, code_rate => C1_2);
-      when 16#25# => cfg := (frame_type => fecframe_short, constellation => mod_32apsk, code_rate => C3_5);
-      when 16#26# => cfg := (frame_type => fecframe_short, constellation => mod_32apsk, code_rate => C2_3);
-      when 16#27# => cfg := (frame_type => fecframe_short, constellation => mod_32apsk, code_rate => C3_4);
-      when 16#28# => cfg := (frame_type => fecframe_short, constellation => mod_32apsk, code_rate => C4_5);
-      when 16#29# => cfg := (frame_type => fecframe_short, constellation => mod_32apsk, code_rate => C5_6);
-      when 16#2a# => cfg := (frame_type => fecframe_short, constellation => mod_32apsk, code_rate => C8_9);
-      when 16#2b# => cfg := (frame_type => fecframe_short, constellation => mod_32apsk, code_rate => C9_10);
-      when 16#2c# => cfg := (frame_type => fecframe_normal, constellation => mod_qpsk, code_rate => C1_4);
-      when 16#2d# => cfg := (frame_type => fecframe_normal, constellation => mod_qpsk, code_rate => C1_3);
-      when 16#2e# => cfg := (frame_type => fecframe_normal, constellation => mod_qpsk, code_rate => C2_5);
-      when 16#2f# => cfg := (frame_type => fecframe_normal, constellation => mod_qpsk, code_rate => C1_2);
-      when 16#30# => cfg := (frame_type => fecframe_normal, constellation => mod_qpsk, code_rate => C3_5);
-      when 16#31# => cfg := (frame_type => fecframe_normal, constellation => mod_qpsk, code_rate => C2_3);
-      when 16#32# => cfg := (frame_type => fecframe_normal, constellation => mod_qpsk, code_rate => C3_4);
-      when 16#33# => cfg := (frame_type => fecframe_normal, constellation => mod_qpsk, code_rate => C4_5);
-      when 16#34# => cfg := (frame_type => fecframe_normal, constellation => mod_qpsk, code_rate => C5_6);
-      when 16#35# => cfg := (frame_type => fecframe_normal, constellation => mod_qpsk, code_rate => C8_9);
-      when 16#36# => cfg := (frame_type => fecframe_normal, constellation => mod_qpsk, code_rate => C9_10);
-      when 16#37# => cfg := (frame_type => fecframe_normal, constellation => mod_8psk, code_rate => C1_4);
-      when 16#38# => cfg := (frame_type => fecframe_normal, constellation => mod_8psk, code_rate => C1_3);
-      when 16#39# => cfg := (frame_type => fecframe_normal, constellation => mod_8psk, code_rate => C2_5);
-      when 16#3a# => cfg := (frame_type => fecframe_normal, constellation => mod_8psk, code_rate => C1_2);
-      when 16#3b# => cfg := (frame_type => fecframe_normal, constellation => mod_8psk, code_rate => C3_5);
-      when 16#3c# => cfg := (frame_type => fecframe_normal, constellation => mod_8psk, code_rate => C2_3);
-      when 16#3d# => cfg := (frame_type => fecframe_normal, constellation => mod_8psk, code_rate => C3_4);
-      when 16#3e# => cfg := (frame_type => fecframe_normal, constellation => mod_8psk, code_rate => C4_5);
-      when 16#3f# => cfg := (frame_type => fecframe_normal, constellation => mod_8psk, code_rate => C5_6);
-      when 16#40# => cfg := (frame_type => fecframe_normal, constellation => mod_8psk, code_rate => C8_9);
-      when 16#41# => cfg := (frame_type => fecframe_normal, constellation => mod_8psk, code_rate => C9_10);
-      when 16#42# => cfg := (frame_type => fecframe_normal, constellation => mod_16apsk, code_rate => C1_4);
-      when 16#43# => cfg := (frame_type => fecframe_normal, constellation => mod_16apsk, code_rate => C1_3);
-      when 16#44# => cfg := (frame_type => fecframe_normal, constellation => mod_16apsk, code_rate => C2_5);
-      when 16#45# => cfg := (frame_type => fecframe_normal, constellation => mod_16apsk, code_rate => C1_2);
-      when 16#46# => cfg := (frame_type => fecframe_normal, constellation => mod_16apsk, code_rate => C3_5);
-      when 16#47# => cfg := (frame_type => fecframe_normal, constellation => mod_16apsk, code_rate => C2_3);
-      when 16#48# => cfg := (frame_type => fecframe_normal, constellation => mod_16apsk, code_rate => C3_4);
-      when 16#49# => cfg := (frame_type => fecframe_normal, constellation => mod_16apsk, code_rate => C4_5);
-      when 16#4a# => cfg := (frame_type => fecframe_normal, constellation => mod_16apsk, code_rate => C5_6);
-      when 16#4b# => cfg := (frame_type => fecframe_normal, constellation => mod_16apsk, code_rate => C8_9);
-      when 16#4c# => cfg := (frame_type => fecframe_normal, constellation => mod_16apsk, code_rate => C9_10);
-      when 16#4d# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C1_4);
-      when 16#4e# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C1_3);
-      when 16#4f# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C2_5);
-      when 16#50# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C1_2);
-      when 16#51# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C3_5);
-      when 16#52# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C2_3);
-      when 16#53# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C3_4);
-      when 16#54# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C4_5);
-      when 16#55# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C5_6);
-      when 16#56# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C8_9);
-      when 16#57# => cfg := (frame_type => fecframe_normal, constellation => mod_32apsk, code_rate => C9_10);
-      when others =>
-        cfg := (unknown, unknown, unknown);
-        report "Unable to decode TID: " & integer'image(to_integer(unsigned(v)))
-        severity Failure;
-    end case;
+  -- -----------------------------------------------------------------------------------
+  -- -- Signals ------------------------------------------------------------------------
+  -- -----------------------------------------------------------------------------------
+  signal axi_first_word      : std_logic;
+  signal axi_tvalid          : std_logic;
+  signal axi_tlast           : std_logic;
+  signal axi_tready          : std_logic;
+  signal axi_tkeep           : std_logic_vector(1 downto 0);
+  signal axi_tdata           : std_logic_vector(TRANSPORT_HEADER_WIDTH - 1 downto 0);
 
-    return cfg;
-  end function;
+  signal transport_header_vld: std_logic;
+  signal transport_header    : std_logic_vector(TRANSPORT_HEADER_WIDTH - 1 downto 0);
+  signal bbf_sync_word       : std_logic_vector(TRANSPORT_HEADER_WIDTH/2 - 1 downto 0);
+  signal config_word         : std_logic_vector(TRANSPORT_HEADER_WIDTH/2 - 1 downto 0);
 
-  signal axi_first_word    : std_logic;
-  signal axi_tvalid        : std_logic;
-  signal axi_tlast         : std_logic;
-  signal axi_tready        : std_logic;
-  signal axi_tkeep         : std_logic_vector(IQ_WIDTH/8 - 1 downto 0);
-  signal axi_tdata         : std_logic_vector(IQ_WIDTH - 1 downto 0);
+  signal m_tvalid_i          : std_logic;
+  signal m_tdata_i           : std_logic_vector(TRANSPORT_HEADER_WIDTH - 1 downto 0);
+  signal m_tkeep_i           : std_logic_vector(TRANSPORT_HEADER_WIDTH/8 - 1 downto 0);
+  signal m_tlast_i           : std_logic;
 
-  signal config_word_valid : std_logic;
-  signal config_word       : std_logic_vector(IQ_WIDTH - 1 downto 0);
+  signal dbg_bbf_synch_error : std_logic;
+  signal dbg_decode_error    : std_logic;
+  signal cfg                 : config_tuple_t;
 
-  signal m_tvalid_i        : std_logic;
-  signal m_tdata_i         : std_logic_vector(IQ_WIDTH - 1 downto 0);
-  signal m_tkeep_i         : std_logic_vector(IQ_WIDTH/8 - 1 downto 0);
-  signal m_tlast_i         : std_logic;
-
-  signal cfg               : config_tuple_t;
+  attribute MARK_DEBUG : boolean;
+  attribute MARK_DEBUG of dbg_bbf_synch_error, dbg_decode_error : signal is True;
 
 begin
 
-  -- Config word takes 1 IQ_WIDTH word, so we force input data to IQ_WIDTH first to make
+  -- Config word takes 1 16 word, so we force input data to 16 first to make
   -- it easier to select only the first word. The encoder will further convert the stream
   -- to 8 bits so we're not losing anything by the way.
   width_converter_u : entity fpga_cores.axi_stream_width_converter
     generic map (
       INPUT_DATA_WIDTH    => INPUT_DATA_WIDTH,
-      OUTPUT_DATA_WIDTH   => IQ_WIDTH,
+      OUTPUT_DATA_WIDTH   => TRANSPORT_HEADER_WIDTH,
       AXI_TID_WIDTH       => 0,
       IGNORE_TKEEP        => False)
     port map (
@@ -211,9 +123,9 @@ begin
       m_tlast  => axi_tlast);
 
   demux_block : block
-    signal tdata_add_in   : std_logic_vector(IQ_WIDTH + IQ_WIDTH/8 downto 0);
-    signal tdata0_agg_out : std_logic_vector(IQ_WIDTH + IQ_WIDTH/8 downto 0);
-    signal tdata1_agg_out : std_logic_vector(IQ_WIDTH + IQ_WIDTH/8 downto 0);
+    signal tdata_add_in   : std_logic_vector(TRANSPORT_HEADER_WIDTH/8 + TRANSPORT_HEADER_WIDTH downto 0);
+    signal tdata0_agg_out : std_logic_vector(TRANSPORT_HEADER_WIDTH/8 + TRANSPORT_HEADER_WIDTH downto 0);
+    signal tdata1_agg_out : std_logic_vector(TRANSPORT_HEADER_WIDTH/8 + TRANSPORT_HEADER_WIDTH downto 0);
   begin
 
     demux_interface_selection_p : process(clk, rst)
@@ -229,16 +141,16 @@ begin
 
     tdata_add_in <= axi_tlast & axi_tkeep & axi_tdata;
 
-    m_tdata_i   <= tdata1_agg_out(IQ_WIDTH - 1 downto 0);
-    m_tkeep_i   <= tdata1_agg_out(IQ_WIDTH/8 + IQ_WIDTH - 1 downto IQ_WIDTH);
-    m_tlast_i   <= tdata1_agg_out(IQ_WIDTH/8 + IQ_WIDTH);
+    m_tdata_i   <= tdata1_agg_out(TRANSPORT_HEADER_WIDTH - 1 downto 0);
+    m_tkeep_i   <= tdata1_agg_out(TRANSPORT_HEADER_WIDTH/8 + TRANSPORT_HEADER_WIDTH - 1 downto TRANSPORT_HEADER_WIDTH);
+    m_tlast_i   <= tdata1_agg_out(TRANSPORT_HEADER_WIDTH/8 + TRANSPORT_HEADER_WIDTH);
 
-    config_word <= tdata0_agg_out(IQ_WIDTH - 1 downto 0);
+    transport_header <= tdata0_agg_out(15 downto 0);
 
     config_demux_u : entity fpga_cores.axi_stream_demux
       generic map (
         INTERFACES => 2,
-        DATA_WIDTH => IQ_WIDTH + IQ_WIDTH/8 + 1)
+        DATA_WIDTH => TRANSPORT_HEADER_WIDTH/8 + TRANSPORT_HEADER_WIDTH + 1)
       port map (
         selection_mask => not axi_first_word & axi_first_word,
 
@@ -246,7 +158,7 @@ begin
         s_tready    => axi_tready,
         s_tdata     => tdata_add_in,
 
-        m_tvalid(0) => config_word_valid,
+        m_tvalid(0) => transport_header_vld,
         m_tvalid(1) => m_tvalid_i,
         m_tready(0) => '1', -- config word is sampled every first word, without backpressure
         m_tready(1) => m_tready,
@@ -256,21 +168,81 @@ begin
       );
   end block;
 
+  bbf_sync_word <= transport_header(TRANSPORT_HEADER_WIDTH/2 - 1 downto 0);
+  config_word   <= transport_header(TRANSPORT_HEADER_WIDTH - 1 downto TRANSPORT_HEADER_WIDTH/2);
+
   config_ff : process(clk, rst)
   begin
     if rst = '1' then
-      cfg <= (unknown, unknown, unknown);
+      cfg                 <= (unknown, unknown, unknown, 'U');
+      dbg_bbf_synch_error <= '0';
     elsif rising_edge(clk) then
-      if config_word_valid = '1' then
-        cfg <= decode_tid(config_word(7 downto 0));
+      dbg_bbf_synch_error <= '0';
+      dbg_decode_error    <= '0';
+
+      if transport_header_vld = '1' then
+        cfg.pilots <= config_word(5);
+
+        if config_word(6) then
+          cfg.frame_type <= fecframe_short;
+        elsif not config_word(6) then
+          cfg.frame_type <= fecframe_normal;
+        else
+          cfg.frame_type <= unknown;
+        end if;
+
+        case to_integer(unsigned(config_word(4 downto 0))) is
+          when  1 => cfg.constellation <= mod_qpsk;   cfg.code_rate <= C1_4;
+          when  2 => cfg.constellation <= mod_qpsk;   cfg.code_rate <= C1_3;
+          when  3 => cfg.constellation <= mod_qpsk;   cfg.code_rate <= C2_5;
+          when  4 => cfg.constellation <= mod_qpsk;   cfg.code_rate <= C1_2;
+          when  5 => cfg.constellation <= mod_qpsk;   cfg.code_rate <= C3_5;
+          when  6 => cfg.constellation <= mod_qpsk;   cfg.code_rate <= C2_3;
+          when  7 => cfg.constellation <= mod_qpsk;   cfg.code_rate <= C3_4;
+          when  8 => cfg.constellation <= mod_qpsk;   cfg.code_rate <= C4_5;
+          when  9 => cfg.constellation <= mod_qpsk;   cfg.code_rate <= C5_6;
+          when 10 => cfg.constellation <= mod_qpsk;   cfg.code_rate <= C8_9;
+          when 11 => cfg.constellation <= mod_qpsk;   cfg.code_rate <= C9_10;
+          when 12 => cfg.constellation <= mod_8psk;   cfg.code_rate <= C3_5;
+          when 13 => cfg.constellation <= mod_8psk;   cfg.code_rate <= C2_3;
+          when 14 => cfg.constellation <= mod_8psk;   cfg.code_rate <= C3_4;
+          when 15 => cfg.constellation <= mod_8psk;   cfg.code_rate <= C5_6;
+          when 16 => cfg.constellation <= mod_8psk;   cfg.code_rate <= C8_9;
+          when 17 => cfg.constellation <= mod_8psk;   cfg.code_rate <= C9_10;
+          when 18 => cfg.constellation <= mod_16apsk; cfg.code_rate <= C2_3;
+          when 19 => cfg.constellation <= mod_16apsk; cfg.code_rate <= C3_4;
+          when 20 => cfg.constellation <= mod_16apsk; cfg.code_rate <= C4_5;
+          when 21 => cfg.constellation <= mod_16apsk; cfg.code_rate <= C5_6;
+          when 22 => cfg.constellation <= mod_16apsk; cfg.code_rate <= C8_9;
+          when 23 => cfg.constellation <= mod_16apsk; cfg.code_rate <= C9_10;
+          when 24 => cfg.constellation <= mod_32apsk; cfg.code_rate <= C3_4;
+          when 25 => cfg.constellation <= mod_32apsk; cfg.code_rate <= C4_5;
+          when 26 => cfg.constellation <= mod_32apsk; cfg.code_rate <= C5_6;
+          when 27 => cfg.constellation <= mod_32apsk; cfg.code_rate <= C8_9;
+          when 28 => cfg.constellation <= mod_32apsk; cfg.code_rate <= C9_10;
+
+          when others =>
+            dbg_bbf_synch_error <= '1';
+            cfg                 <= (unknown, unknown, unknown, 'U');
+
+            report sformat("Unable to decode TID: %x / %r / %d", fo(config_word), fo(config_word), fo(config_word))
+            severity Error;
+        end case;
+
+        if bbf_sync_word /= x"B8" then
+          dbg_bbf_synch_error <= '1';
+          report sformat("BBF synchronization error. Expected 0xB8 but got %r", fo(bbf_sync_word))
+            severity Error;
+        end if;
       end if;
     end if;
   end process;
 
   -- Assign outputs
-  m_frame_type    <= cfg.frame_type when m_tvalid_i else unknown;
+  m_frame_type    <= cfg.frame_type    when m_tvalid_i else unknown;
   m_constellation <= cfg.constellation when m_tvalid_i else unknown;
-  m_code_rate     <= cfg.code_rate when m_tvalid_i else unknown;
+  m_code_rate     <= cfg.code_rate     when m_tvalid_i else unknown;
+  m_pilots        <= cfg.pilots        when m_tvalid_i else 'U';
 
   m_tvalid        <= m_tvalid_i;
   m_tdata         <= m_tdata_i when m_tvalid_i else (others => 'U');

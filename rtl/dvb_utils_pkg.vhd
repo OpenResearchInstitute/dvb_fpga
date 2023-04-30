@@ -66,7 +66,8 @@ package dvb_utils_pkg is
   constant CONFIG_TUPLE_WIDTHS: integer_vector_t := (
     0 => FRAME_TYPE_WIDTH,
     1 => CONSTELLATION_WIDTH,
-    2 => CODE_RATE_WIDTH);
+    2 => CODE_RATE_WIDTH,
+    3 => 1); -- Pilots is a single bit
 
   constant ENCODED_CONFIG_WIDTH : integer  := sum(CONFIG_TUPLE_WIDTHS);
 
@@ -74,7 +75,10 @@ package dvb_utils_pkg is
     frame_type    : frame_type_t;
     code_rate     : code_rate_t;
     constellation : constellation_t;
+    pilots        : std_logic;
   end record;
+
+  function to_string( constant cfg : config_tuple_t ) return string;
 
   type config_tuple_array_t is array (natural range <>) of config_tuple_t;
 
@@ -121,19 +125,27 @@ package body dvb_utils_pkg is
     return result;
   end function get_crc_length;
 
+  function to_string( constant cfg : config_tuple_t ) return string is
+  begin
+    return "config_tuple("
+      & "constellation=" & quote(constellation_t'image(cfg.constellation)) & ", "
+      & "frame_type=" & quote(frame_type_t'image(cfg.frame_type)) & ", "
+      & "code_rate=" & quote(code_rate_t'image(cfg.code_rate)) & ", "
+      & "pilots=" & std_logic'image(cfg.pilots) & ")";
+  end function to_string;
+
+
   function encode ( constant cfg : config_tuple_t ) return std_logic_vector is
   begin
-    return encode(cfg.code_rate) & encode(cfg.constellation) & encode(cfg.frame_type);
+    return cfg.pilots & encode(cfg.code_rate) & encode(cfg.constellation) & encode(cfg.frame_type);
   end function;
 
   function decode ( constant v : std_logic_vector ) return config_tuple_t is
-    variable constellation : constellation_t;
-    variable frame_type    : frame_type_t;
-    variable code_rate     : code_rate_t;
   begin
     return (frame_type    => decode(get_field(v, 0, CONFIG_TUPLE_WIDTHS)),
             constellation => decode(get_field(v, 1, CONFIG_TUPLE_WIDTHS)),
-            code_rate     => decode(get_field(v, 2, CONFIG_TUPLE_WIDTHS)));
+            code_rate     => decode(get_field(v, 2, CONFIG_TUPLE_WIDTHS)),
+            pilots        => get_field(v, 3, CONFIG_TUPLE_WIDTHS));
   end function;
 
 

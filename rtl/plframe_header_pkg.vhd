@@ -43,7 +43,8 @@ package plframe_header_pkg is
   function get_pls_rom_addr (
     constant constellation : constellation_t;
     constant frame_type    : frame_type_t;
-    constant code_rate     : code_rate_t) return integer;
+    constant code_rate     : code_rate_t;
+    constant has_pilots    : boolean) return integer;
 
   constant SOF                  : std_logic_vector(25 downto 0) := "01" & x"8D2E82";
   constant DUMMY_FRAME_PLS_CODE : std_logic_vector;
@@ -139,7 +140,7 @@ package body plframe_header_pkg is
 
     for m in 0 to 31 loop
       result(m*2)       := or(temp and bit_mask);
-      result((m*2) + 1) := or((7 downto 0 => result(m*2)) xor (v and x"01"));
+      result((m*2) + 1) := result(m*2) xor v(0);
       bit_mask          := '0' & bit_mask(31 downto 1);
     end loop;
 
@@ -153,16 +154,14 @@ package body plframe_header_pkg is
   end function;
 
   function pl_header_encode(
-    constant modcode          : std_logic_vector(7 downto 0);
-    constant type_code        : std_logic_vector(1 downto 0)) return std_logic_vector is
-    variable type_code_padded : std_logic_vector(7 downto 0);
-    variable code             : std_logic_vector(7 downto 0);
+    constant modcode   : std_logic_vector(7 downto 0);
+    constant type_code : std_logic_vector(1 downto 0)) return std_logic_vector is
+    variable code      : std_logic_vector(7 downto 0);
   begin
-    type_code_padded(type_code'range) := type_code;
-    if or(modcode and x"80") then
-      code := modcode or (type_code_padded and x"01");
+    if modcode(7) then
+      code := modcode(7 downto 2) & (type_code and "01");
     else
-      code := (modcode(5 downto 0) & "00") or type_code_padded;
+      code := modcode(5 downto 0) & type_code;
     end if;
     return b_64_8_code(code);
   end function;
@@ -170,11 +169,11 @@ package body plframe_header_pkg is
   function get_pls_code(
     constant constellation : in constellation_t;
     constant frame_type    : in frame_type_t;
-    constant code_rate     : in code_rate_t) return std_logic_vector is
+    constant code_rate     : in code_rate_t;
+    constant has_pilots    : in boolean) return std_logic_vector is
 
     variable modcode       : std_logic_vector(7 downto 0);
     variable type_code     : std_logic_vector(1 downto 0);
-    variable has_pilots    : boolean := False;
 
   begin
     modcode := std_logic_vector(to_unsigned(get_modcode(constellation, code_rate), 8));
@@ -198,14 +197,16 @@ package body plframe_header_pkg is
       variable depth : integer := 0;
       variable cnt   : integer := 0;
     begin
-      for constellation in constellation_t'left to constellation_t'right loop
-        for code_rate in code_rate_t'left to code_rate_t'right loop
-          for frame_type in frame_type_t'left to frame_type_t'right loop
-            addr := get_pls_rom_addr(constellation, frame_type, code_rate);
-            if addr >= 0 then
-              depth := max(addr, depth);
-              cnt   := cnt + 1;
-            end if;
+      for has_pilots in boolean'left to boolean'right loop
+        for frame_type in frame_type_t'left to frame_type_t'right loop
+          for constellation in constellation_t'left to constellation_t'right loop
+            for code_rate in code_rate_t'left to code_rate_t'right loop
+              addr := get_pls_rom_addr(constellation, frame_type, code_rate, has_pilots);
+              if addr >= 0 then
+                depth := max(addr, depth);
+                cnt   := cnt + 1;
+              end if;
+            end loop;
           end loop;
         end loop;
       end loop;
@@ -215,13 +216,15 @@ package body plframe_header_pkg is
     variable result    : std_logic_array_t(0 to ROM_DEPTH)(63 downto 0);
     variable addr      : integer;
   begin
-    for constellation in constellation_t'left to constellation_t'right loop
-      for code_rate in code_rate_t'left to code_rate_t'right loop
-        for frame_type in frame_type_t'left to frame_type_t'right loop
-          addr := get_pls_rom_addr(constellation, frame_type, code_rate);
-          if addr /= -1 then
-            result(addr) := get_pls_code(constellation, frame_type, code_rate);
-          end if;
+    for has_pilots in boolean'left to boolean'right loop
+      for frame_type in frame_type_t'left to frame_type_t'right loop
+        for constellation in constellation_t'left to constellation_t'right loop
+          for code_rate in code_rate_t'left to code_rate_t'right loop
+            addr := get_pls_rom_addr(constellation, frame_type, code_rate, has_pilots);
+            if addr /= -1 then
+              result(addr) := get_pls_code(constellation, frame_type, code_rate, has_pilots);
+            end if;
+          end loop;
         end loop;
       end loop;
     end loop;
@@ -231,7 +234,8 @@ package body plframe_header_pkg is
   function get_pls_rom_addr (
     constant constellation : constellation_t;
     constant frame_type    : frame_type_t;
-    constant code_rate     : code_rate_t) return integer is
+    constant code_rate     : code_rate_t;
+    constant has_pilots    : boolean) return integer is
     variable addr          : integer := get_modcode(constellation, code_rate);
   begin
     if addr = -1 then
@@ -240,12 +244,22 @@ package body plframe_header_pkg is
     if frame_type = unknown then
       return -1;
     end if;
+    if not has_pilots then
+      if frame_type = fecframe_short then
+        return addr;
+      end if;
+      if frame_type = fecframe_normal then
+        return addr + 32;
+      end if;
+    end if;
+
     if frame_type = fecframe_short then
-      return addr;
+      return addr + 64;
     end if;
     if frame_type = fecframe_normal then
-      return addr + 32;
+      return addr + 96;
     end if;
+
   end;
 
   constant DUMMY_FRAME_PLS_CODE : std_logic_vector := pl_header_encode(

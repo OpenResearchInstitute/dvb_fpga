@@ -273,9 +273,13 @@ begin
       info(logger, " - constellation  : " & constellation_t'image(config.constellation));
       info(logger, " - frame_type     : " & frame_type_t'image(config.frame_type));
       info(logger, " - code_rate      : " & code_rate_t'image(config.code_rate));
+      info(logger, " - pilots         : " & std_logic'image(config.pilots));
       info(logger, " - data path      : " & data_path);
 
-      config_tuple := (code_rate => config.code_rate, constellation => config.constellation, frame_type => config.frame_type);
+      config_tuple := (code_rate     => config.code_rate,
+                       constellation => config.constellation,
+                       frame_type    => config.frame_type,
+                       pilots        => config.pilots);
 
       -- Only update the mapping RAM if the config actually requires that
       case config.constellation is

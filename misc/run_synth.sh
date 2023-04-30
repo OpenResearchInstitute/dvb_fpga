@@ -23,11 +23,10 @@ set -e
 PATH_TO_REPO=$(git rev-parse --show-toplevel)
 CONTAINER="ghdl/synth:beta"
 
-docker run                                                    \
-  --rm                                                        \
-  --user "$(id -u)":"$(id -g)"                                \
-  -v "${PATH_TO_REPO}":/project                               \
-  $CONTAINER                                                  \
-  /bin/sh -c "cd /project                                  && \
-  echo \"$ yosys -m ghdl build/yosys/dvbs2_encoder.ys $*\" && \
-  yosys -m ghdl build/yosys/dvbs2_encoder.ys $*"
+docker run                                             \
+  --rm                                                 \
+  --user "$(id -u)":"$(id -g)"                         \
+  -v "${PATH_TO_REPO}":/project                        \
+  $CONTAINER                                           \
+  /bin/sh -c "set -xe && cd /project                && \
+  yosys -q -m ghdl build/yosys/dvbs2_encoder.ys $*"

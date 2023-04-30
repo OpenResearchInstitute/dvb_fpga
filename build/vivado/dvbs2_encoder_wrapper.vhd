@@ -138,23 +138,21 @@ architecture rtl of dvbs2_encoder_wrapper is
   signal encoder_frame_type    : frame_type_t;
   signal encoder_constellation : constellation_t;
   signal encoder_code_rate     : code_rate_t;
+  signal encoder_pilots        : std_logic;
   signal encoder_tvalid        : std_logic;
   signal encoder_tready        : std_logic;
   signal encoder_tlast         : std_logic;
-  signal encoder_tdata         : std_logic_vector(IQ_WIDTH - 1 downto 0);
-  signal encoder_tkeep         : std_logic_vector(IQ_WIDTH/8 - 1 downto 0);
+  signal encoder_tdata         : std_logic_vector(15 downto 0);
+  signal encoder_tkeep         : std_logic_vector(1 downto 0);
 
 begin
 
   inline_config_adapter : entity work.inline_config_adapter
-    generic map (
-      -- AXI streaming widths
-      INPUT_DATA_WIDTH => INPUT_DATA_WIDTH,
-      IQ_WIDTH         => IQ_WIDTH)
+    generic map ( INPUT_DATA_WIDTH => INPUT_DATA_WIDTH )
     port map (
       clk             => clk,
       rst             => rst,
-      -- Input data where the first 4-byte word is interpreted as configuration
+      -- Input data where the first 2-byte word is interpreted as in-band signalling
       s_tvalid        => s_axis_tvalid,
       s_tready        => s_axis_tready,
       s_tlast         => s_axis_tlast,
@@ -164,6 +162,7 @@ begin
       m_frame_type    => encoder_frame_type,
       m_constellation => encoder_constellation,
       m_code_rate     => encoder_code_rate,
+      m_pilots        => encoder_pilots,
       m_tvalid        => encoder_tvalid,
       m_tready        => encoder_tready,
       m_tlast         => encoder_tlast,
@@ -172,7 +171,7 @@ begin
 
   encoder_u : entity work.dvbs2_encoder
     generic map (
-      INPUT_DATA_WIDTH => IQ_WIDTH,
+      INPUT_DATA_WIDTH => 16,
       IQ_WIDTH         => IQ_WIDTH
     )
     port map (
@@ -208,6 +207,7 @@ begin
       s_constellation => encoder_constellation,
       s_frame_type    => encoder_frame_type,
       s_code_rate     => encoder_code_rate,
+      s_pilots        => encoder_pilots,
       s_tvalid        => encoder_tvalid,
       s_tdata         => encoder_tdata,
       s_tkeep         => encoder_tkeep,

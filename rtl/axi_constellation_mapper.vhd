@@ -125,6 +125,13 @@ architecture axi_constellation_mapper of axi_constellation_mapper is
   signal output_i          : signed(OUTPUT_DATA_WIDTH - 1 downto 0);
   signal output_q          : signed(OUTPUT_DATA_WIDTH - 1 downto 0);
 
+  signal dbg_radius_rd_addr_gen_error : std_logic := '0';
+  signal dbg_output_multiplier_error  : std_logic := '0';
+
+  attribute MARK_DEBUG : boolean;
+  attribute MARK_DEBUG of dbg_radius_rd_addr_gen_error : signal is True;
+  attribute MARK_DEBUG of dbg_output_multiplier_error : signal is True;
+
 begin
 
   s_tready   <= '1' when s_constellation = unknown else s_tready_i;
@@ -135,7 +142,7 @@ begin
   mux_sel(2) <= '1' when s_constellation = mod_16apsk else '0';
   mux_sel(3) <= '1' when s_constellation = mod_32apsk else '0';
 
-  s_cfg          <= (frame_type => s_frame_type, constellation => s_constellation, code_rate => s_code_rate);
+  s_cfg          <= (frame_type => s_frame_type, constellation => s_constellation, code_rate => s_code_rate, pilots => '0');
   s_tid_internal <= s_tid & encode(s_cfg);
 
   input_mux_u : entity fpga_cores.axi_stream_demux
@@ -314,36 +321,67 @@ begin
   axi_out_cfg <= decode(axi_out.tuser(ENCODED_CONFIG_WIDTH - 1 downto 0));
 
   -- Read the appropriate address of the radius RAM
-  radius_rd_addr <=
-    (others => 'U')                                                when axi_out_cfg.constellation = mod_qpsk                else
-    (others => 'U')                                                when axi_out_cfg.constellation = mod_8psk                else
-    to_unsigned(RADIUS_SHORT_16APSK_C2_3,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C2_3,  MOD_16APSK)  else
-    to_unsigned(RADIUS_SHORT_16APSK_C3_4,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C3_4,  MOD_16APSK)  else
-    to_unsigned(RADIUS_SHORT_16APSK_C3_5,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C3_5,  MOD_16APSK)  else
-    to_unsigned(RADIUS_SHORT_16APSK_C4_5,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C4_5,  MOD_16APSK)  else
-    to_unsigned(RADIUS_SHORT_16APSK_C5_6,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C5_6,  MOD_16APSK)  else
-    to_unsigned(RADIUS_SHORT_16APSK_C8_9,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C8_9,  MOD_16APSK)  else
+  process(axi_out.tvalid, axi_out_cfg)
+  begin
+    radius_rd_addr               <= (others => 'U');
+    dbg_radius_rd_addr_gen_error <= '0';
 
-    to_unsigned(RADIUS_SHORT_32APSK_C3_4,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C3_4,  MOD_32APSK)  else
-    to_unsigned(RADIUS_SHORT_32APSK_C4_5,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C4_5,  MOD_32APSK)  else
-    to_unsigned(RADIUS_SHORT_32APSK_C5_6,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C5_6,  MOD_32APSK)  else
-    to_unsigned(RADIUS_SHORT_32APSK_C8_9,   radius_rd_addr'length) when axi_out_cfg = (FECFRAME_SHORT,  C8_9,  MOD_32APSK)  else
+    case axi_out_cfg.frame_type is
+      when FECFRAME_SHORT  =>
+        case axi_out_cfg.constellation is
+          when MOD_16APSK =>
+            case axi_out_cfg.code_rate is
+              when C2_3   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_16APSK_C2_3,   radius_rd_addr'length);
+              when C3_4   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_16APSK_C3_4,   radius_rd_addr'length);
+              when C3_5   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_16APSK_C3_5,   radius_rd_addr'length);
+              when C4_5   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_16APSK_C4_5,   radius_rd_addr'length);
+              when C5_6   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_16APSK_C5_6,   radius_rd_addr'length);
+              when C8_9   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_16APSK_C8_9,   radius_rd_addr'length);
+              when others => dbg_radius_rd_addr_gen_error <= axi_out.tvalid;
+            end case;
 
-    to_unsigned(RADIUS_NORMAL_16APSK_C2_3,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C2_3,  MOD_16APSK)  else
-    to_unsigned(RADIUS_NORMAL_16APSK_C3_4,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C3_4,  MOD_16APSK)  else
-    to_unsigned(RADIUS_NORMAL_16APSK_C3_5,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C3_5,  MOD_16APSK)  else
-    to_unsigned(RADIUS_NORMAL_16APSK_C4_5,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C4_5,  MOD_16APSK)  else
-    to_unsigned(RADIUS_NORMAL_16APSK_C5_6,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C5_6,  MOD_16APSK)  else
-    to_unsigned(RADIUS_NORMAL_16APSK_C8_9,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C8_9,  MOD_16APSK)  else
-    to_unsigned(RADIUS_NORMAL_16APSK_C9_10, radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C9_10, MOD_16APSK)  else
+          when MOD_32APSK =>
+            case axi_out_cfg.code_rate is
+              when C3_4   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_32APSK_C3_4,   radius_rd_addr'length);
+              when C4_5   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_32APSK_C4_5,   radius_rd_addr'length);
+              when C5_6   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_32APSK_C5_6,   radius_rd_addr'length);
+              when C8_9   => radius_rd_addr <= to_unsigned(RADIUS_SHORT_32APSK_C8_9,   radius_rd_addr'length);
+              when others => dbg_radius_rd_addr_gen_error <= axi_out.tvalid;
+            end case;
 
-    to_unsigned(RADIUS_NORMAL_32APSK_C3_4,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C3_4,  MOD_32APSK)  else
-    to_unsigned(RADIUS_NORMAL_32APSK_C4_5,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C4_5,  MOD_32APSK)  else
-    to_unsigned(RADIUS_NORMAL_32APSK_C5_6,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C5_6,  MOD_32APSK)  else
-    to_unsigned(RADIUS_NORMAL_32APSK_C8_9,  radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C8_9,  MOD_32APSK)  else
-    to_unsigned(RADIUS_NORMAL_32APSK_C9_10, radius_rd_addr'length) when axi_out_cfg = (FECFRAME_NORMAL, C9_10, MOD_32APSK)  else
+          when others => dbg_radius_rd_addr_gen_error <= axi_out.tvalid;
+        end case;
 
-    (others => 'U');
+      when FECFRAME_NORMAL  =>
+        case axi_out_cfg.constellation is
+          when MOD_16APSK =>
+            case axi_out_cfg.code_rate is
+              when C2_3   => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_16APSK_C2_3,  radius_rd_addr'length);
+              when C3_4   => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_16APSK_C3_4,  radius_rd_addr'length);
+              when C3_5   => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_16APSK_C3_5,  radius_rd_addr'length);
+              when C4_5   => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_16APSK_C4_5,  radius_rd_addr'length);
+              when C5_6   => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_16APSK_C5_6,  radius_rd_addr'length);
+              when C8_9   => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_16APSK_C8_9,  radius_rd_addr'length);
+              when C9_10  => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_16APSK_C9_10, radius_rd_addr'length);
+              when others => dbg_radius_rd_addr_gen_error <= axi_out.tvalid;
+            end case;
+
+          when MOD_32APSK =>
+            case axi_out_cfg.code_rate is
+              when C3_4   => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_32APSK_C3_4,  radius_rd_addr'length);
+              when C4_5   => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_32APSK_C4_5,  radius_rd_addr'length);
+              when C5_6   => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_32APSK_C5_6,  radius_rd_addr'length);
+              when C8_9   => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_32APSK_C8_9,  radius_rd_addr'length);
+              when C9_10  => radius_rd_addr <= to_unsigned(RADIUS_NORMAL_32APSK_C9_10, radius_rd_addr'length);
+              when others => dbg_radius_rd_addr_gen_error <= axi_out.tvalid;
+            end case;
+
+          when others => dbg_radius_rd_addr_gen_error <= axi_out.tvalid;
+        end case;
+
+      when others => dbg_radius_rd_addr_gen_error <= axi_out.tvalid;
+      end case;
+  end process;
 
   ram_block : block
     signal tag_agg_in     : std_logic_vector(TID_WIDTH downto 0);
@@ -353,7 +391,7 @@ begin
     signal radius_out_tag : std_logic_vector(ENCODED_CONFIG_WIDTH - 1 downto 0);
   begin
     -- Remove the encoded code rate from tuser here, we'll use it to address the radius RAM
-    tag_agg_in    <= axi_out.tlast & axi_out.tuser(TID_WIDTH - 1 downto 0);
+    tag_agg_in    <= axi_out.tlast & axi_out.tuser(TUSER_WIDTH - 1 downto TUSER_WIDTH - TID_WIDTH);
 
     ram_out.tuser <= tag_agg_out(TID_WIDTH - 1 downto 0);
     ram_out.tlast <= tag_agg_out(TID_WIDTH);
@@ -364,8 +402,7 @@ begin
         DATA_WIDTH    => OUTPUT_DATA_WIDTH,
         INITIAL_VALUE => MAPPING_TABLE,
         TAG_WIDTH     => TID_WIDTH + 1,
-        RAM_TYPE      => auto,
-        OUTPUT_DELAY  => 1)
+        RAM_TYPE      => auto)
       port map (
         clk           => clk,
         rst           => rst,
@@ -398,8 +435,7 @@ begin
         DATA_WIDTH    => OUTPUT_DATA_WIDTH,
         INITIAL_VALUE => RADIUS_TABLE,
         TAG_WIDTH     => ENCODED_CONFIG_WIDTH,
-        RAM_TYPE      => auto,
-        OUTPUT_DELAY  => 1)
+        RAM_TYPE      => auto)
       port map (
         clk           => clk,
         rst           => rst,
@@ -432,44 +468,101 @@ begin
                     unsigned(ram_out_addr) - BASE_OFFSET_32APSK when radius_out_cfg.constellation = mod_32apsk else
                     (others => 'U');
 
-  -- Select the correct multiplier based on frame length/constellation/code rate *AND*
-  -- wether the address is outer, middle or inner radius
-  output_multiplier <= UNIT_RADIUS      when radius_out_cfg.constellation = mod_qpsk or radius_out_cfg.constellation = mod_8psk else
-                       radius_0         when radius_out_cfg.constellation = mod_16apsk and ram_out_offset < 12 else
-                       radius_1         when radius_out_cfg.constellation = mod_16apsk and ram_out_offset >= 12 else
-                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 0 else
-                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 1 else
-                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 2 else
-                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 3 else
-                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 4 else
-                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 5 else
-                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 6 else
-                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 7 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 8 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 9 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 10 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 11 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 12 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 13 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 14 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 15 else
-                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 16 else
-                       radius_1         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 17 else
-                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 18 else
-                       radius_1         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 19 else
-                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 20 else
-                       radius_1         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 21 else
-                       radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 22 else
-                       radius_1         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 23 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 24 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 25 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 26 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 27 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 28 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 29 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 30 else
-                       UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 31 else
-                       (others => 'U');
+  -- -- Select the correct multiplier based on frame length/constellation/code rate *AND*
+  -- -- wether the address is outer, middle or inner radius
+  -- output_multiplier <= UNIT_RADIUS      when radius_out_cfg.constellation = mod_qpsk or radius_out_cfg.constellation = mod_8psk else
+  --                      radius_0         when radius_out_cfg.constellation = mod_16apsk and ram_out_offset < 12 else
+  --                      radius_1         when radius_out_cfg.constellation = mod_16apsk and ram_out_offset >= 12 else
+  --                      radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 0 else
+  --                      radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 1 else
+  --                      radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 2 else
+  --                      radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 3 else
+  --                      radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 4 else
+  --                      radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 5 else
+  --                      radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 6 else
+  --                      radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 7 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 8 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 9 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 10 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 11 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 12 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 13 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 14 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 15 else
+  --                      radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 16 else
+  --                      radius_1         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 17 else
+  --                      radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 18 else
+  --                      radius_1         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 19 else
+  --                      radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 20 else
+  --                      radius_1         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 21 else
+  --                      radius_0         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 22 else
+  --                      radius_1         when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 23 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 24 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 25 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 26 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 27 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 28 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 29 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 30 else
+  --                      UNIT_RADIUS      when radius_out_cfg.constellation = mod_32apsk and ram_out_offset = 31 else
+  --                      (others => 'U');
+
+  output_multiplier_p : process(radius_out_cfg, ram_out_offset, radius_0, radius_1)
+  begin
+    output_multiplier           <= (others => 'U');
+    dbg_output_multiplier_error <= '0';
+
+    case radius_out_cfg.constellation is
+      when mod_qpsk | mod_8psk =>
+        output_multiplier <= UNIT_RADIUS;
+
+      when mod_16apsk =>
+        if ram_out_offset < 12 then
+          output_multiplier <= radius_0;
+        else
+          output_multiplier <= radius_1;
+        end if;
+
+      when mod_32apsk =>
+        case to_integer(ram_out_offset) is
+          when 0  => output_multiplier <= radius_0;
+          when 1  => output_multiplier <= radius_0;
+          when 2  => output_multiplier <= radius_0;
+          when 3  => output_multiplier <= radius_0;
+          when 4  => output_multiplier <= radius_0;
+          when 5  => output_multiplier <= radius_0;
+          when 6  => output_multiplier <= radius_0;
+          when 7  => output_multiplier <= radius_0;
+          when 8  => output_multiplier <= UNIT_RADIUS;
+          when 9  => output_multiplier <= UNIT_RADIUS;
+          when 10 => output_multiplier <= UNIT_RADIUS;
+          when 11 => output_multiplier <= UNIT_RADIUS;
+          when 12 => output_multiplier <= UNIT_RADIUS;
+          when 13 => output_multiplier <= UNIT_RADIUS;
+          when 14 => output_multiplier <= UNIT_RADIUS;
+          when 15 => output_multiplier <= UNIT_RADIUS;
+          when 16 => output_multiplier <= radius_0;
+          when 17 => output_multiplier <= radius_1;
+          when 18 => output_multiplier <= radius_0;
+          when 19 => output_multiplier <= radius_1;
+          when 20 => output_multiplier <= radius_0;
+          when 21 => output_multiplier <= radius_1;
+          when 22 => output_multiplier <= radius_0;
+          when 23 => output_multiplier <= radius_1;
+          when 24 => output_multiplier <= UNIT_RADIUS;
+          when 25 => output_multiplier <= UNIT_RADIUS;
+          when 26 => output_multiplier <= UNIT_RADIUS;
+          when 27 => output_multiplier <= UNIT_RADIUS;
+          when 28 => output_multiplier <= UNIT_RADIUS;
+          when 29 => output_multiplier <= UNIT_RADIUS;
+          when 30 => output_multiplier <= UNIT_RADIUS;
+          when 31 => output_multiplier <= UNIT_RADIUS;
+          when others => dbg_output_multiplier_error <= '1';
+        end case;
+
+      when others => dbg_output_multiplier_error <= '1';
+    end case;
+  end process;
 
   -- Separate IQ components to make multipliying easier
   ram_out_i <= signed(ram_out.tdata(OUTPUT_DATA_WIDTH/2 - 1 downto 0));
@@ -485,9 +578,9 @@ begin
     signal tdata_agg_out : std_logic_vector(OUTPUT_DATA_WIDTH + TID_WIDTH downto 0);
   begin
 
-    tdata_agg_in <= ram_out.tlast 
-                    & ram_out.tuser 
-                    & std_logic_vector(output_i(OUTPUT_DATA_WIDTH - 2 downto OUTPUT_DATA_WIDTH/2 - 1)) 
+    tdata_agg_in <= ram_out.tlast
+                    & ram_out.tuser
+                    & std_logic_vector(output_i(OUTPUT_DATA_WIDTH - 2 downto OUTPUT_DATA_WIDTH/2 - 1))
                     & std_logic_vector(output_q(OUTPUT_DATA_WIDTH - 2 downto OUTPUT_DATA_WIDTH/2 - 1));
 
     output_delay_u : entity fpga_cores.axi_stream_delay
@@ -509,7 +602,9 @@ begin
         m_tready => m_tready,
         m_tdata  => tdata_agg_out);
 
-        (m_tlast, m_tid, m_tdata) <= tdata_agg_out;
+        m_tdata <= tdata_agg_out(OUTPUT_DATA_WIDTH - 1 downto 0);
+        m_tid   <= tdata_agg_out(OUTPUT_DATA_WIDTH + TID_WIDTH - 1 downto OUTPUT_DATA_WIDTH);
+        m_tlast <= tdata_agg_out(OUTPUT_DATA_WIDTH + TID_WIDTH);
   end block;
 
 end axi_constellation_mapper;

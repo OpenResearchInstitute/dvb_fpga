@@ -186,7 +186,8 @@ begin
       variable msg              : msg_t;
       constant config_tuple     : config_tuple_t := (code_rate => config.code_rate,
                                                      constellation => config.constellation,
-                                                     frame_type => config.frame_type);
+                                                     frame_type => config.frame_type,
+                                                     pilots => '0');
     begin
 
       info("Running test with:");
