@@ -325,6 +325,7 @@ begin
     port map (
       clk            => clk,
       rst            => rst,
+      cfg_shift_reg_init => cfg_shift_reg_init,
       -- Pulse to trigger generating a dummy frame
       generate_frame => cfg_enable_dummy_frames,
       -- AXI output
