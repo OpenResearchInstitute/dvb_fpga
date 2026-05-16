@@ -207,10 +207,10 @@ begin
       s_axi_bresp     => axi_cfg.bresp,
 
       -- AXI input
-      s_constellation => decode(axi_master.tuser).constellation,
-      s_frame_type    => decode(axi_master.tuser).frame_type,
-      s_code_rate     => decode(axi_master.tuser).code_rate,
-      s_pilots        => decode(axi_master.tuser).pilots,
+      s_constellation => decode_config_tuple(axi_master.tuser).constellation,
+      s_frame_type    => decode_config_tuple(axi_master.tuser).frame_type,
+      s_code_rate     => decode_config_tuple(axi_master.tuser).code_rate,
+      s_pilots        => decode_config_tuple(axi_master.tuser).pilots,
       s_tvalid        => axi_master.tvalid,
       s_tdata         => axi_master.tdata,
       s_tkeep         => axi_master.tkeep,
@@ -295,7 +295,7 @@ begin
   m_data_valid      <= axi_master.tvalid and axi_master.tready;
   s_data_valid      <= axi_slave.tvalid and axi_slave.tready;
 
-  cfg               <= decode(axi_master.tuser) when axi_master.tvalid else (unknown, unknown, unknown, 'U');
+  cfg               <= decode_config_tuple(axi_master.tuser) when axi_master.tvalid else (unknown, unknown, unknown, 'U');
 
   recv_r            <= to_complex(axi_slave.tdata) when axi_slave.tvalid = '1';
   expected_r        <= to_complex(expected_tdata);

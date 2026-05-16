@@ -139,9 +139,9 @@ begin
       clk             => clk,
       rst             => rst,
 
-      s_frame_type    => decode(axi_master.tuser).frame_type,
-      s_constellation => decode(axi_master.tuser).constellation,
-      s_code_rate     => decode(axi_master.tuser).code_rate,
+      s_frame_type    => decode_config_tuple(axi_master.tuser).frame_type,
+      s_constellation => decode_config_tuple(axi_master.tuser).constellation,
+      s_code_rate     => decode_config_tuple(axi_master.tuser).code_rate,
 
       -- AXI input
       s_tvalid        => axi_master.tvalid,

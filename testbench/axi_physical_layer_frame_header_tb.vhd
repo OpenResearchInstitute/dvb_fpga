@@ -109,10 +109,10 @@ begin
       clk             => clk,
       rst             => rst,
 
-      s_constellation => decode(axi_master.tdata).constellation,
-      s_frame_type    => decode(axi_master.tdata).frame_type,
-      s_code_rate     => decode(axi_master.tdata).code_rate,
-      s_pilots        => decode(axi_master.tdata).pilots,
+      s_constellation => decode_config_tuple(axi_master.tdata).constellation,
+      s_frame_type    => decode_config_tuple(axi_master.tdata).frame_type,
+      s_code_rate     => decode_config_tuple(axi_master.tdata).code_rate,
+      s_pilots        => decode_config_tuple(axi_master.tdata).pilots,
 
       s_tready        => axi_master.tready,
       s_tvalid        => axi_master.tvalid,

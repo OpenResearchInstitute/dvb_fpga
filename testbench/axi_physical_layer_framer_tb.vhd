@@ -126,10 +126,10 @@ begin
       -- Static config
       cfg_enable_dummy_frames  => '0', -- Not supported by the TB yet
       -- AXI input
-      s_constellation => decode(axi_master.tuser).constellation,
-      s_frame_type    => decode(axi_master.tuser).frame_type,
-      s_code_rate     => decode(axi_master.tuser).code_rate,
-      s_pilots        => decode(axi_master.tuser).pilots,
+      s_constellation => decode_config_tuple(axi_master.tuser).constellation,
+      s_frame_type    => decode_config_tuple(axi_master.tuser).frame_type,
+      s_code_rate     => decode_config_tuple(axi_master.tuser).code_rate,
+      s_pilots        => decode_config_tuple(axi_master.tuser).pilots,
       s_tvalid        => axi_master.tvalid,
       s_tlast         => axi_master.tlast,
       s_tready        => axi_master.tready,

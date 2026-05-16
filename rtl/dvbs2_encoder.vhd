@@ -299,8 +299,8 @@ begin
       clk          => clk,
       rst          => rst,
 
-      s_frame_type => decode(width_conv_reg_dbg.tid).frame_type,
-      s_code_rate  => decode(width_conv_reg_dbg.tid).code_rate,
+      s_frame_type => decode_config_tuple(width_conv_reg_dbg.tid).frame_type,
+      s_code_rate  => decode_config_tuple(width_conv_reg_dbg.tid).code_rate,
 
       s_tvalid     => width_conv_reg_dbg.tvalid,
       s_tlast      => width_conv_reg_dbg.tlast,
@@ -389,8 +389,8 @@ begin
       clk          => clk,
       rst          => rst,
       -- AXI input
-      s_frame_type => decode(bb_scrambler_dbg.tid).frame_type,
-      s_code_rate  => decode(bb_scrambler_dbg.tid).code_rate,
+      s_frame_type => decode_config_tuple(bb_scrambler_dbg.tid).frame_type,
+      s_code_rate  => decode_config_tuple(bb_scrambler_dbg.tid).code_rate,
       s_tvalid     => bb_scrambler_dbg.tvalid,
       s_tlast      => bb_scrambler_dbg.tlast,
       s_tready     => bb_scrambler_dbg.tready,
@@ -455,9 +455,9 @@ begin
       rst             => rst,
       -- Per frame config input
       -- AXI input
-      s_frame_type    => decode(bch_encoder_dbg.tid).frame_type,
-      s_code_rate     => decode(bch_encoder_dbg.tid).code_rate,
-      s_constellation => decode(bch_encoder_dbg.tid).constellation,
+      s_frame_type    => decode_config_tuple(bch_encoder_dbg.tid).frame_type,
+      s_code_rate     => decode_config_tuple(bch_encoder_dbg.tid).code_rate,
+      s_constellation => decode_config_tuple(bch_encoder_dbg.tid).constellation,
       s_tready        => bch_encoder_dbg.tready,
       s_tvalid        => bch_encoder_dbg.tvalid,
       s_tlast         => bch_encoder_dbg.tlast,
@@ -578,11 +578,11 @@ begin
 
     -- Interface 0 of the demux connects to the bit interleaver, interface 1 connects to
     -- the frame FIFO
-    demux_sel <= "00" when frames_in_transit > 0 and decode(ldpc_encoder_dbg.tid).constellation = mod_qpsk else
-                 "10" when decode(ldpc_encoder_dbg.tid).constellation = mod_qpsk else
-                 "01" when decode(ldpc_encoder_dbg.tid).constellation = mod_8psk else
-                 "01" when decode(ldpc_encoder_dbg.tid).constellation = mod_16apsk else
-                 "01" when decode(ldpc_encoder_dbg.tid).constellation = mod_32apsk else
+    demux_sel <= "00" when frames_in_transit > 0 and decode_config_tuple(ldpc_encoder_dbg.tid).constellation = mod_qpsk else
+                 "10" when decode_config_tuple(ldpc_encoder_dbg.tid).constellation = mod_qpsk else
+                 "01" when decode_config_tuple(ldpc_encoder_dbg.tid).constellation = mod_8psk else
+                 "01" when decode_config_tuple(ldpc_encoder_dbg.tid).constellation = mod_16apsk else
+                 "01" when decode_config_tuple(ldpc_encoder_dbg.tid).constellation = mod_32apsk else
                  demux_sel_reg;
 
     -- Bit interleaver is not needed for QPSK
@@ -616,9 +616,9 @@ begin
       clk             => clk,
       rst             => rst,
       -- AXI input
-      s_frame_type    => decode(ldpc_encoder_dbg.tid).frame_type,
-      s_constellation => decode(ldpc_encoder_dbg.tid).constellation,
-      s_code_rate     => decode(ldpc_encoder_dbg.tid).code_rate,
+      s_frame_type    => decode_config_tuple(ldpc_encoder_dbg.tid).frame_type,
+      s_constellation => decode_config_tuple(ldpc_encoder_dbg.tid).constellation,
+      s_code_rate     => decode_config_tuple(ldpc_encoder_dbg.tid).code_rate,
       s_tready        => fork_bit_interleaver.tready,
       s_tvalid        => fork_bit_interleaver.tvalid,
       s_tlast         => ldpc_encoder_dbg.tlast,
@@ -734,9 +734,9 @@ begin
       rst              => rst,
       -- Per frame config input
       -- AXI input
-      s_frame_type     => decode(arbiter_out.tid).frame_type,
-      s_constellation  => decode(arbiter_out.tid).constellation,
-      s_code_rate      => decode(arbiter_out.tid).code_rate,
+      s_frame_type     => decode_config_tuple(arbiter_out.tid).frame_type,
+      s_constellation  => decode_config_tuple(arbiter_out.tid).constellation,
+      s_code_rate      => decode_config_tuple(arbiter_out.tid).code_rate,
       s_tvalid         => arbiter_out.tvalid,
       s_tlast          => arbiter_out.tlast,
       s_tready         => arbiter_out.tready,
@@ -815,10 +815,10 @@ begin
       cfg_shift_reg_init      => regs2user.config_physical_layer_scrambler_shift_reg_init,
       cfg_enable_dummy_frames => regs2user.config_enable_dummy_frames(0),
       -- AXI input
-      s_constellation   => decode(constellation_mapper_dbg.tid).constellation,
-      s_frame_type      => decode(constellation_mapper_dbg.tid).frame_type,
-      s_code_rate       => decode(constellation_mapper_dbg.tid).code_rate,
-      s_pilots          => decode(constellation_mapper_dbg.tid).pilots,
+      s_constellation   => decode_config_tuple(constellation_mapper_dbg.tid).constellation,
+      s_frame_type      => decode_config_tuple(constellation_mapper_dbg.tid).frame_type,
+      s_code_rate       => decode_config_tuple(constellation_mapper_dbg.tid).code_rate,
+      s_pilots          => decode_config_tuple(constellation_mapper_dbg.tid).pilots,
       s_tvalid          => constellation_mapper_dbg.tvalid,
       s_tlast           => constellation_mapper_dbg.tlast,
       s_tready          => constellation_mapper_dbg.tready,

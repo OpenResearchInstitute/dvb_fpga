@@ -82,6 +82,7 @@ package dvb_utils_pkg is
 
   type config_tuple_array_t is array (natural range <>) of config_tuple_t;
 
+  function decode_config_tuple( constant v : std_logic_vector ) return config_tuple_t;
   function encode ( constant cfg : config_tuple_t ) return std_logic_vector;
   function decode ( constant v : std_logic_vector ) return config_tuple_t;
 
@@ -140,12 +141,17 @@ package body dvb_utils_pkg is
     return cfg.pilots & encode(cfg.code_rate) & encode(cfg.constellation) & encode(cfg.frame_type);
   end function;
 
-  function decode ( constant v : std_logic_vector ) return config_tuple_t is
+  function decode_config_tuple( constant v : std_logic_vector ) return config_tuple_t is
   begin
     return (frame_type    => decode(get_field(v, 0, CONFIG_TUPLE_WIDTHS)),
             constellation => decode(get_field(v, 1, CONFIG_TUPLE_WIDTHS)),
             code_rate     => decode(get_field(v, 2, CONFIG_TUPLE_WIDTHS)),
             pilots        => get_field(v, 3, CONFIG_TUPLE_WIDTHS));
+  end function;
+
+  function decode ( constant v : std_logic_vector ) return config_tuple_t is
+  begin
+    return decode_config_tuple(v);
   end function;
 
 
