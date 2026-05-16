@@ -807,7 +807,7 @@ def _createAuxiliaryTables():
         pool.map(_createModulationTable, CONSTELLATION_MAPPER_CONFIGS)
 
 
-class GhdlPragmaHandler:
+class NonModelSimPragmaHandler:
     """
     Removes code between arbitraty pragmas
     -- ghdl translate_off
@@ -849,8 +849,8 @@ def setupSources(vunit):
     vunit.add_osvvm()
     vunit.add_com()
     vunit.enable_location_preprocessing()
-    if vunit.get_simulator_name() == "ghdl":
-        vunit.add_preprocessor(GhdlPragmaHandler())
+    if vunit.get_simulator_name() in ("ghdl", "nvc"):
+        vunit.add_preprocessor(NonModelSimPragmaHandler())
     library = vunit.add_library("lib")
     library.add_source_files(p.join(ROOT, "rtl", "*.vhd"))
     library.add_source_files(p.join(ROOT, "rtl", "ldpc", "*.vhd"))
@@ -1089,6 +1089,9 @@ def main():
     # Not all options are supported by all GHDL backends
     vunit.set_sim_option("ghdl.elab_flags", ["-frelaxed-rules"])
     vunit.set_compile_option("ghdl.a_flags", ["-frelaxed-rules", "-O2", "-g"])
+
+    # Allow shared variables with non-protected types (VHDL-2008 relaxation)
+    vunit.set_compile_option("nvc.a_flags", ["--relaxed"])
 
     # Make components not bound (error 3473) an error
     vsim_flags = ["-error", "3473"]
