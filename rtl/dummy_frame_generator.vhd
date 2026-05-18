@@ -32,6 +32,7 @@ use ieee.math_real.MATH_PI;
 use ieee.math_real.MATH_SQRT_2;
 
 library fpga_cores;
+use fpga_cores.axi_pkg.all;
 use fpga_cores.common_pkg.all;
 
 use work.dvb_utils_pkg.all;
@@ -47,6 +48,7 @@ entity dummy_frame_generator is
     rst            : in  std_logic;
     -- Pulse to trigger generating a dummy frame
     generate_frame : in  std_logic;
+    cfg_shift_reg_init      : in  std_logic_vector(17 downto 0) := (0 => '1', others => '0');
     -- AXI output
     m_tready       : in  std_logic;
     m_tvalid       : out std_logic;
@@ -102,8 +104,95 @@ architecture dummy_frame_generator of dummy_frame_generator is
   signal is_header  : std_logic;
   signal rom_addr   : unsigned(numbits(ENCODED_HEADER_ROM'length) - 1 downto 0);
   signal rom_data   : std_logic_vector(TDATA_WIDTH - 1 downto 0);
+  signal dummy_frame_input         : axi_stream_data_bus_t(tdata(TDATA_WIDTH - 1 downto 0));
+  signal scrambled               : axi_stream_bus_t(tdata(TDATA_WIDTH - 1 downto 0), tuser(1 - 1 downto 0));
+  signal plframe                 : axi_stream_bus_t(tdata(TDATA_WIDTH - 1 downto 0), tuser(1 - 1 downto 0));
+  signal s_scrambler_tready : std_logic;
+  signal interleaver_s_tready : std_logic;
+  signal dummy_header_tlast : std_logic;
 
 begin
+
+  -- interleave scrambler and header
+  -- this ready logic is for both the scrambler and interleaver
+  -- the generator first generates the PLHeader when interleaver is ready, then generates the dummy data when scrambler is ready
+      dummy_frame_input.tready <= ((interleaver_s_tready and is_header) or (s_scrambler_tready and NOT(is_header)));
+
+  physical_layer_scrambler : entity work.axi_physical_layer_scrambler
+    generic map (
+      TDATA_WIDTH => TDATA_WIDTH,
+      TID_WIDTH   => 1)
+    port map (
+      clk               => clk,
+      rst               => rst,
+
+      cfg_shift_reg_init => cfg_shift_reg_init,
+
+      -- AXI input
+      s_tvalid          => (dummy_frame_input.tvalid and (NOT is_header)),
+      s_tready          => s_scrambler_tready,
+      s_tlast           => dummy_frame_input.tlast,
+      s_tdata           => dummy_frame_input.tdata,
+      s_tid             => "0",
+
+      -- AXI output
+      m_tready          => scrambled.tready,
+      m_tvalid          => scrambled.tvalid,
+      m_tlast           => scrambled.tlast,
+      m_tdata           => scrambled.tdata,
+      m_tid             => scrambled.tuser
+      );
+
+
+  arbiter_header_payload : block
+    signal tdata0_agg_in : std_logic_vector(TDATA_WIDTH + 1 - 1 downto 0);
+    signal tdata1_agg_in : std_logic_vector(TDATA_WIDTH + 1 - 1 downto 0);
+    signal tdata_agg_out : std_logic_vector(TDATA_WIDTH + 1 - 1 downto 0);
+    signal arbiter_tlast : std_logic;
+    signal selected : std_logic_vector(1 downto 0);
+  begin
+    tdata0_agg_in <= '0' & dummy_frame_input.tdata;
+    tdata1_agg_in <= scrambled.tuser & scrambled.tdata;
+
+    arbiter_header_payload_u : entity fpga_cores.axi_stream_arbiter
+      generic map (
+        MODE            => "INTERLEAVED",
+        INTERFACES      => 2,
+        DATA_WIDTH      => TDATA_WIDTH + 1,
+        REGISTER_INPUTS => False)
+      port map (
+        clk              => clk,
+        rst              => rst,
+
+        selected         => selected,
+        selected_encoded => open,
+
+        -- AXI slave input
+        s_tvalid(0)      => (dummy_frame_input.tvalid and is_header),
+        s_tvalid(1)      => scrambled.tvalid,
+
+        s_tready(0)      => interleaver_s_tready,
+        s_tready(1)      => scrambled.tready,
+
+        s_tdata(0)       => tdata0_agg_in,
+        s_tdata(1)       => tdata1_agg_in,
+
+        s_tlast(0)       => dummy_header_tlast,
+        s_tlast(1)       => scrambled.tlast,
+
+        -- AXI master output
+        m_tvalid         => plframe.tvalid,
+        m_tready         => plframe.tready,
+        m_tdata          => tdata_agg_out,
+        m_tlast          => arbiter_tlast);
+
+      (plframe.tuser, plframe.tdata) <= tdata_agg_out;
+      m_tdata <= plframe.tdata;
+      m_tvalid <= plframe.tvalid;
+      plframe.tready <= m_tready;
+      plframe.tlast <= arbiter_tlast and selected(1); -- only want the frame's tlast
+      m_tlast <= plframe.tlast;
+  end block;
 
   -------------------
   -- Port mappings --
@@ -122,11 +211,11 @@ begin
   ------------------------------
   -- Asynchronous assignments --
   ------------------------------
-  m_tvalid   <= tvalid_1;
-  m_tlast    <= tlast_1 and tvalid_1;
+  dummy_frame_input.tvalid   <= tvalid_1;
+  dummy_frame_input.tlast    <= tlast_1 and tvalid_1;
   tlast_0  <= '1' when word_count = DUMMY_FRAME_LENGTH - 1 else '0';
 
-  m_tdata  <= (others => 'U') when tvalid_1 = '0' else
+  dummy_frame_input.tdata  <= (others => 'U') when tvalid_1 = '0' else
               (rom_data and (TDATA_WIDTH - 1 downto 0 => is_header)) or
               (PAYLOAD_DATA and (TDATA_WIDTH - 1 downto 0 => not is_header));
 
@@ -150,12 +239,12 @@ begin
       tlast_1  <= tlast_0;
 
       -- Only reload the counter when not already sending a frame
-      if generate_frame and (not tvalid_0 or (tvalid_0 and m_tready and tlast_0))then
+      if generate_frame and (not tvalid_0 or (tvalid_0 and dummy_frame_input.tready and tlast_0))then
         word_count <= (others => '0');
         tvalid_0   <= '1';
       end if;
 
-      if tvalid_0 = '1' and m_tready = '1' then
+      if tvalid_0 = '1' and dummy_frame_input.tready = '1' then
         word_count <= word_count + 1;
         if word_count = DUMMY_FRAME_LENGTH - 1 then
           word_count <= (others => '0');
@@ -164,8 +253,12 @@ begin
       end if;
 
       is_header <= '0';
+      dummy_header_tlast <= '0';
       if word_count < ENCODED_HEADER_ROM'length then
         is_header <= '1';
+      end if;
+      if (word_count + 1 = ENCODED_HEADER_ROM'length) then
+        dummy_header_tlast <= '1' and tvalid_1;
       end if;
 
     end if;
