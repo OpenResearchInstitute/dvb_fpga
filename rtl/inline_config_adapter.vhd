@@ -41,6 +41,8 @@ entity inline_config_adapter is
   port (
     clk             : in  std_logic;
     rst             : in  std_logic;
+    -- Error indications
+    errors          : out work.error_types_pkg.inline_config_adapter_error_type;
     -- Input data where the first 4-byte word is interpreted as configuration
     s_tvalid        : in  std_logic;
     s_tready        : out std_logic;
@@ -57,6 +59,9 @@ entity inline_config_adapter is
     m_tlast         : out std_logic;
     m_tdata         : out std_logic_vector(15 downto 0);
     m_tkeep         : out std_logic_vector(1 downto 0));
+
+  attribute MARK_DEBUG : boolean;
+  attribute MARK_DEBUG of errors : signal is True;
 end inline_config_adapter;
 
 architecture inline_config_adapter of inline_config_adapter is
@@ -69,29 +74,24 @@ architecture inline_config_adapter of inline_config_adapter is
   -- -----------------------------------------------------------------------------------
   -- -- Signals ------------------------------------------------------------------------
   -- -----------------------------------------------------------------------------------
-  signal axi_first_word      : std_logic;
-  signal axi_tvalid          : std_logic;
-  signal axi_tlast           : std_logic;
-  signal axi_tready          : std_logic;
-  signal axi_tkeep           : std_logic_vector(1 downto 0);
-  signal axi_tdata           : std_logic_vector(TRANSPORT_HEADER_WIDTH - 1 downto 0);
+  signal axi_first_word       : std_logic;
+  signal axi_tvalid           : std_logic;
+  signal axi_tlast            : std_logic;
+  signal axi_tready           : std_logic;
+  signal axi_tkeep            : std_logic_vector(1 downto 0);
+  signal axi_tdata            : std_logic_vector(TRANSPORT_HEADER_WIDTH - 1 downto 0);
 
-  signal transport_header_vld: std_logic;
-  signal transport_header    : std_logic_vector(TRANSPORT_HEADER_WIDTH - 1 downto 0);
-  signal bbf_sync_word       : std_logic_vector(TRANSPORT_HEADER_WIDTH/2 - 1 downto 0);
-  signal config_word         : std_logic_vector(TRANSPORT_HEADER_WIDTH/2 - 1 downto 0);
+  signal transport_header_vld : std_logic;
+  signal transport_header     : std_logic_vector(TRANSPORT_HEADER_WIDTH - 1 downto 0);
+  signal bbf_sync_word        : std_logic_vector(TRANSPORT_HEADER_WIDTH/2 - 1 downto 0);
+  signal config_word          : std_logic_vector(TRANSPORT_HEADER_WIDTH/2 - 1 downto 0);
 
-  signal m_tvalid_i          : std_logic;
-  signal m_tdata_i           : std_logic_vector(TRANSPORT_HEADER_WIDTH - 1 downto 0);
-  signal m_tkeep_i           : std_logic_vector(TRANSPORT_HEADER_WIDTH/8 - 1 downto 0);
-  signal m_tlast_i           : std_logic;
+  signal m_tvalid_i           : std_logic;
+  signal m_tdata_i            : std_logic_vector(TRANSPORT_HEADER_WIDTH - 1 downto 0);
+  signal m_tkeep_i            : std_logic_vector(TRANSPORT_HEADER_WIDTH/8 - 1 downto 0);
+  signal m_tlast_i            : std_logic;
 
-  signal dbg_bbf_synch_error : std_logic;
-  signal dbg_decode_error    : std_logic;
-  signal cfg                 : config_tuple_t;
-
-  attribute MARK_DEBUG : boolean;
-  attribute MARK_DEBUG of dbg_bbf_synch_error, dbg_decode_error : signal is True;
+  signal cfg                  : config_tuple_t;
 
 begin
 
@@ -174,11 +174,11 @@ begin
   config_ff : process(clk, rst)
   begin
     if rst = '1' then
-      cfg                 <= (unknown, unknown, unknown, 'U');
-      dbg_bbf_synch_error <= '0';
+      cfg                      <= (unknown, unknown, unknown, 'U');
+      errors.invalid_sync_word <= '0';
     elsif rising_edge(clk) then
-      dbg_bbf_synch_error <= '0';
-      dbg_decode_error    <= '0';
+      errors.invalid_sync_word   <= '0';
+      errors.invalid_config_word <= '0';
 
       if transport_header_vld = '1' then
         cfg.pilots <= config_word(5);
@@ -222,15 +222,15 @@ begin
           when 28 => cfg.constellation <= mod_32apsk; cfg.code_rate <= C9_10;
 
           when others =>
-            dbg_bbf_synch_error <= '1';
-            cfg                 <= (unknown, unknown, unknown, 'U');
+            errors.invalid_config_word <= '1';
+            cfg                        <= (unknown, unknown, unknown, 'U');
 
             report sformat("Unable to decode TID: %x / %r / %d", fo(config_word), fo(config_word), fo(config_word))
-            severity Error;
+              severity Error;
         end case;
 
         if bbf_sync_word /= x"B8" then
-          dbg_bbf_synch_error <= '1';
+          errors.invalid_sync_word <= '1';
           report sformat("BBF synchronization error. Expected 0xB8 but got %r", fo(bbf_sync_word))
             severity Error;
         end if;

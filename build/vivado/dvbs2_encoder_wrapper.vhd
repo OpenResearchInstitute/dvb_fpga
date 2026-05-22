@@ -42,6 +42,9 @@ entity dvbs2_encoder_wrapper is
     --Clock and Reset
     clk               : in  std_logic;
     rst_n             : in  std_logic;
+    --
+    error_irq         : out std_logic;
+    error_irq_ack     : in  std_logic;
     --write address channel
     s_axi_awvalid     : in  std_logic;
     s_axi_awready     : out std_logic;
@@ -80,6 +83,7 @@ entity dvbs2_encoder_wrapper is
 end dvbs2_encoder_wrapper;
 
 architecture rtl of dvbs2_encoder_wrapper is
+  signal s_axis_tready_i : std_logic;
 
   ATTRIBUTE X_INTERFACE_INFO : STRING;
   ATTRIBUTE X_INTERFACE_INFO of s_axi_araddr  : SIGNAL is "xilinx.com:interface:aximm:1.0 s_axi_lite ARADDR";
@@ -145,16 +149,22 @@ architecture rtl of dvbs2_encoder_wrapper is
   signal encoder_tdata         : std_logic_vector(15 downto 0);
   signal encoder_tkeep         : std_logic_vector(1 downto 0);
 
+  signal inline_config_adapter_errors : work.error_types_pkg.inline_config_adapter_error_type;
+
 begin
+
+  s_axis_tready <= s_axis_tready_i;
 
   inline_config_adapter : entity work.inline_config_adapter
     generic map ( INPUT_DATA_WIDTH => INPUT_DATA_WIDTH )
     port map (
       clk             => clk,
       rst             => rst,
+      -- Errors
+      errors          => inline_config_adapter_errors,
       -- Input data where the first 2-byte word is interpreted as in-band signalling
       s_tvalid        => s_axis_tvalid,
-      s_tready        => s_axis_tready,
+      s_tready        => s_axis_tready_i,
       s_tlast         => s_axis_tlast,
       s_tkeep         => s_axis_tkeep,
       s_tdata         => s_axis_tdata,
@@ -227,13 +237,20 @@ begin
     extend_reset : process(clk, rst_n)
     begin
       if rst_n = '0' then
-        rst_count <= (others => '0');
-        rst       <= '1';
+        rst_count     <= (others => '0');
+        rst           <= '1';
+        error_irq <= '0';
       elsif rising_edge(clk) then
         if rst_count < 15 then
           rst_count <= rst_count + 1;
         else
           rst       <= '0';
+        end if;
+
+        if inline_config_adapter_errors.invalid_sync_word = '1' or inline_config_adapter_errors.invalid_config_word = '1' then
+          error_irq <= '1';
+        elsif error_irq_ack = '1' then
+          error_irq <= '0';
         end if;
       end if;
     end process;
