@@ -459,7 +459,7 @@ begin
     end function;
 
     procedure check_ram_write (
-      signal   net           : inout std_logic;
+      signal   net           : inout network_t;
       constant cfg           : cfg_t ) is
       variable msg           : msg_t;
 
