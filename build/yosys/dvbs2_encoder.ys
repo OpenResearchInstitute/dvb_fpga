@@ -26,7 +26,7 @@ ghdl --std=08                                                                  \
                     third_party/fpga_cores/src/axi_stream_frame_slicer.vhd     \
                     third_party/fpga_cores/src/axi_stream_frame_padder.vhd     \
                     third_party/fpga_cores/src/sr_delay.vhd                    \
-                    third_party/fpga_cores/src/skidbuffer.vhd                  \
+                    third_party/fpga_cores/src/axi_stream_forward_slice.vhd    \
                     third_party/fpga_cores/src/ram_inference_dport.vhd         \
                     third_party/fpga_cores/src/ram_inference.vhd               \
                     third_party/fpga_cores/src/rom_inference.vhd               \
